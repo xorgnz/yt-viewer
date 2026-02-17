@@ -1,4 +1,4 @@
-import { SqliteDAO } from '$lib/daos/_shared';
+import { SqliteDAO } from '$lib/daos/shared/SqliteDAO';
 import type { Profile } from '$lib/entities/profile';
 
 export class ProfileDAO extends SqliteDAO

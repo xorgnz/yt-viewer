@@ -1,4 +1,4 @@
-import { SqliteDAO } from '$lib/daos/_shared';
+import { SqliteDAO } from '$lib/daos/shared/SqliteDAO';
 import type { VideoFlags } from '$lib/entities/videoFlags';
 
 export class FlagsDAO extends SqliteDAO

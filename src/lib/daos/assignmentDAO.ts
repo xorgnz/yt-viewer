@@ -1,4 +1,4 @@
-import { SqliteDAO } from '$lib/daos/_shared';
+import { SqliteDAO } from '$lib/daos/shared/SqliteDAO';
 import type { ChannelGroupAssignment } from '$lib/entities/channelGroupAssignment';
 
 export class AssignmentDAO extends SqliteDAO

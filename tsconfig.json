@@ -28,6 +28,7 @@
     "src/**/*.d.ts",
     "src/**/*.ts",
     "src/**/*.svelte",
+    "scripts/**/*.ts",
     "vite.config.ts"
   ]
 }

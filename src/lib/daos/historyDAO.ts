@@ -1,4 +1,4 @@
-import { SqliteDAO } from '$lib/daos/_shared';
+import { SqliteDAO } from '$lib/daos/shared/SqliteDAO';
 import type { WatchHistory } from '$lib/entities/watchHistory';
 
 export class HistoryDAO extends SqliteDAO

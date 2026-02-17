@@ -1,6 +1,10 @@
 // DDL statements for database schema (tables and indexes) and aggregated list.
 // Note: This file intentionally contains only schema DDL, not database creation/connection code.
 
+// Schema version
+export const SCHEMA_VERSION = 1;
+
+
 export const CREATE_TABLE_CHANNELS = `
 CREATE TABLE IF NOT EXISTS channels (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
