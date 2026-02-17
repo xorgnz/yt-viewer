@@ -27,7 +27,10 @@
 ### Notes
 
 - Unit tests should typically be placed alongside the code files they are testing (e.g., `MyComponent.tsx` and `MyComponent.test.tsx` in the same directory).
-- Use `npx jest [optional/path/to/test/file]` to run tests. Running without a path executes all tests found by the Jest configuration.
+- Testing uses Vitest. Common commands:
+  - `npm run test` to run the full test suite once (CI mode).
+  - `npm run test:watch` to run tests in watch mode during development.
+  - Alternatively, `npx vitest run [optional/path/to/test/file]` to run a specific file or subset.
 - All commands must be run in WSL Bash. Never use PowerShell, Windows CMD, or `wsl`/`bash -lc` bridging.
 
 ## Instructions for Completing Tasks
@@ -43,6 +46,8 @@ Update the file after completing each sub-task, not just after completing an ent
 
 - [x] 0.0 Create feature branch
   - [x] 0.1 Create and checkout a new branch for this feature (e.g., `git checkout -b feature/01-initial`)
+  - [x] 0.2 Create node project and import required modules
+  - [ ] 0.3 Set up initial project files for Svelte and TypeScript
 - [ ] 1.0 Define data model and local persistence for channels, videos, flags, profiles, and history
   - [ ] 1.1 Design schema for channels, channel groups, group assignments, videos, profiles, flags, and watch history
   - [ ] 1.2 Define indices/constraints for unique channel IDs, video IDs, and per-profile flags

@@ -1,4 +1,3 @@
-# Rule: Task-Based Development in WSL Environment
 
 ## Goal
 
@@ -8,32 +7,6 @@ To guide an AI assistant in executing development tasks from structured task lis
 
 - A feature tag must exist for the work being performed
 - A task list must exist at `/ai-work/{feature-tag}-tasks.md`
-
-## Environment Configuration
-
-**CRITICAL - FIRST ACTION:** Before any bash commands are executed (and before bashrc runs), you MUST set the environment variable:
-
-```bash
-export MARKER_JUNIE_TERMINAL=1
-```
-
-This flag activates the AI-specific environment configuration required for all development work.
-
-## Operating Environment
-
-- **Platform:** WSL (Windows Subsystem for Linux) running Ubuntu
-- **Shell:** Bash (default)
-- **CRITICAL:** You are operating in a Linux/Unix environment, NOT Windows:
-  - Use Unix/Linux commands only (e.g., `ls`, `cd`, `mkdir`, `rm`, `grep`, `find`)
-  - Use forward slashes `/` for paths, never backslashes `\`
-  - Run commands only in WSL Bash
-  - NEVER use PowerShell commands (e.g., `Get-ChildItem`, `Copy-Item`, `Remove-Item`)
-  - NEVER use Windows CMD commands (e.g., `dir`, `copy`, `del`)
-  - NEVER use `wsl` or `bash -lc` bridging from another shell
-  - If Bash isn't available, ask the user to run the command in WSL Bash
-  - Use Unix-style package managers (`apt`, `npm`, `pip`) not Windows ones
-  - All file paths use Linux conventions (e.g., `/home/user/project` not `C:\Users\...`)
-- **Working Directory:** Assume all file paths are relative to the project root unless otherwise specified.
 
 ## Task Management Protocol
 
@@ -84,7 +57,7 @@ Tasks are structured as hierarchical markdown checklists:
 **MANDATORY:** As you complete each task or sub-task:
 1. Update the task file immediately
 2. Change `- [ ]` to `- [x]` for the completed item
-3. Example: `- [ ] 1.1 Initialize project` � `- [x] 1.1 Initialize project`
+3. Example: `- [ ] 1.1 Initialize project` → `- [x] 1.1 Initialize project`
 4. Save the file after each update to maintain accurate progress tracking
 
 ## Task File Location
@@ -107,11 +80,11 @@ When multiple features exist in the project:
 ## General Working Principles
 
 1. **File Operations:** Prefer editing existing files over creating new ones unless creation is explicitly required
-2. **Testing:** Run tests as specified in the task file (typically `npx jest [optional/path]`)
+2. **Testing:** Run tests as specified in the task file (e.g., via the project's npm scripts)
 3. **Documentation:** Only create documentation files when explicitly requested
 4. **Clarity:** Ask clarifying questions if task requirements are ambiguous
 5. **Scope:** Complete only the specified task; do not expand scope without approval
-6. **Application Server:** **NEVER** attempt to run the application server (e.g., `npm run dev`, `npm start`, or similar long-running processes) from your terminal. These commands will lock up your session. Instead, prompt the user to start the server in a separate terminal process.
+6. **Application Server:** **NEVER** attempt to run the application server (e.g., `npm run dev`, `npm start`, or similar long-running processes) from your terminal. These commands will lock up your session. Instead, prompt the user to start the server in a separate terminal process. (See `.junie/guidelines.md` for the global policy.)
 
 ## Response Format
 
@@ -144,5 +117,5 @@ Which feature would you like to work on?"
 1. **Always** set `MARKER_JUNIE_TERMINAL=1` before executing any bash commands
 2. **Never** start tasks without explicit user approval
 3. **Always** update task checkboxes immediately upon completion
-4. **CRITICAL:** Never use PowerShell or Windows CMD commands; this is a WSL/Ubuntu Linux environment - use only Linux/Unix commands
+4. Refer to `.junie/guidelines.md` for environment and command conventions
 5. **Always** work within the scope of the assigned task

@@ -4,15 +4,6 @@
 
 To guide an AI assistant in creating a unique, descriptive feature tag that will be used to organize all documentation and artifacts related to a specific feature throughout its entire lifecycle.
 
-## Operating Environment
-
-**CRITICAL:** This workflow operates in a WSL (Windows Subsystem for Linux) Ubuntu environment:
-- Use Unix/Linux commands only (e.g., `ls`, `mkdir`, `cd`)
-- Use forward slashes `/` for paths (e.g., `/ai-work/`)
-- NEVER use PowerShell commands (e.g., `Get-ChildItem`, `New-Item`)
-- NEVER use Windows CMD commands (e.g., `dir`, `md`)
-- File paths follow Linux conventions
-
 ## When to Use
 
 This rule should be executed **first**, before creating any other documentation (scope, PRD, tasks, etc.) for a new feature. The feature tag becomes the organizing principle for all subsequent work.

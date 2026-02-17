@@ -4,18 +4,6 @@
 
 To guide an AI assistant in working with the user to create a clear, high-level scope document that captures the essence of a feature or project before diving into detailed requirements. The scope serves as the foundation for PRD generation and ensures alignment on vision and boundaries.
 
-## Operating Environment
-
-**CRITICAL:** This workflow operates in a WSL (Windows Subsystem for Linux) Ubuntu environment:
-- Use Unix/Linux commands only (e.g., `ls`, `mkdir`, `touch`)
-- Use forward slashes `/` for paths (e.g., `/ai-work/`)
-- Run commands only in WSL Bash
-- NEVER use PowerShell commands (e.g., `New-Item`, `Set-Content`)
-- NEVER use Windows CMD commands (e.g., `dir`, `md`, `copy`)
-- NEVER use `wsl` or `bash -lc` bridging from another shell
-- If Bash isn't available, ask the user to run the command in WSL Bash
-- File paths follow Linux conventions
-
 ## Prerequisites
 
 - A feature tag must be created first using rule `0-create-feature-tag.md`

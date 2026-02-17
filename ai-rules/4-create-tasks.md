@@ -4,18 +4,6 @@
 
 To guide an AI assistant in creating a detailed, step-by-step task list in Markdown format based on user requirements, feature requests, or existing documentation. The task list should guide a developer through implementation.
 
-## Operating Environment
-
-**CRITICAL:** This workflow operates in a WSL (Windows Subsystem for Linux) Ubuntu environment:
-- Use Unix/Linux commands only (e.g., `ls`, `cat`, `grep`)
-- Use forward slashes `/` for paths (e.g., `/ai-work/`)
-- Run commands only in WSL Bash
-- NEVER use PowerShell commands (e.g., `Get-ChildItem`, `Select-String`)
-- NEVER use Windows CMD commands (e.g., `dir`, `find`, `findstr`)
-- NEVER use `wsl` or `bash -lc` bridging from another shell
-- If Bash isn't available, ask the user to run the command in WSL Bash
-- File paths follow Linux conventions
-
 ## Prerequisites
 
 - A feature tag must exist (created via rule `0-create-feature-tag.md`)
@@ -57,7 +45,7 @@ The generated task list _must_ follow this structure:
 ### Notes
 
 - Unit tests should typically be placed alongside the code files they are testing (e.g., `MyComponent.tsx` and `MyComponent.test.tsx` in the same directory).
-- Use `npx jest [optional/path/to/test/file]` to run tests. Running without a path executes all tests found by the Jest configuration.
+- Consult the techstack file for this feature for instructions on which testing framework you should use. This file will be under the folder `/ai-work/{feature-tag}-techstack.md`.
 
 ## Instructions for Completing Tasks
 
