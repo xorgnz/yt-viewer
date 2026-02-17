@@ -14,3 +14,8 @@
 - Long-running processes: Never start servers or other long-running processes in-session (e.g., `npm run dev`). Ask the user to run them in a separate terminal.
 - Repo tools first: Prefer the provided repo tools (search/open/patch/rename) over shell editors for file operations to keep changes consistent and traceable.
 - Paths: Windows-style paths that appear in outputs are informational only—do not copy them into commands; use forward slashes.
+
+### Software Conventions
+- Place each class into its own file. A class file may contain relevant interfaces and enums, but should not contain other classes.
+- Interfaces used by multiple classes should be defined in a separate file.
+- 
