@@ -24,4 +24,12 @@ export class ChannelGroupAssignment
             typeof value.group_id === 'number'
         );
     }
+
+    with(patch: Update<ChannelGroupAssignment>): ChannelGroupAssignment
+    {
+        return new ChannelGroupAssignment({
+            channel_id: (patch as any).channel_id ?? this.channel_id,
+            group_id: (patch as any).group_id ?? this.group_id
+        });
+    }
 }

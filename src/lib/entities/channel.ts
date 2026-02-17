@@ -40,4 +40,16 @@ export class Channel
             ((value as any).published_at === undefined || (value as any).published_at === null || typeof (value as any).published_at === 'number')
         );
     }
+
+    with(patch: Update<Channel>): Channel
+    {
+        return new Channel({
+            id: (patch as any).id ?? this.id,
+            youtube_id: (patch as any).youtube_id ?? this.youtube_id,
+            title: (patch as any).title ?? this.title,
+            description: (patch as any).description ?? this.description,
+            thumbnail_url: (patch as any).thumbnail_url ?? this.thumbnail_url,
+            published_at: (patch as any).published_at ?? this.published_at
+        });
+    }
 }

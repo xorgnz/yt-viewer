@@ -28,4 +28,13 @@ export class Profile
             typeof value.name === 'string'
         );
     }
+
+    with(patch: Update<Profile>): Profile
+    {
+        return new Profile({
+            id: (patch as any).id ?? this.id,
+            key: (patch as any).key ?? this.key,
+            name: (patch as any).name ?? this.name
+        });
+    }
 }

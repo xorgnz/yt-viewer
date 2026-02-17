@@ -1,0 +1,1 @@
+type Update<T> = Partial<{ [K in keyof T]: T[K] }>;

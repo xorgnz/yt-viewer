@@ -32,4 +32,14 @@ export class WatchHistory
             typeof (value as any).watched_at === 'number'
         );
     }
+
+    with(patch: Update<WatchHistory>): WatchHistory
+    {
+        return new WatchHistory({
+            id: (patch as any).id ?? this.id,
+            video_id: (patch as any).video_id ?? this.video_id,
+            profile_id: (patch as any).profile_id ?? this.profile_id,
+            watched_at: (patch as any).watched_at ?? this.watched_at
+        });
+    }
 }

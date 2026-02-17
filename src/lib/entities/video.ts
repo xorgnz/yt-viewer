@@ -48,4 +48,18 @@ export class Video
             ((value as any).thumbnail_url === undefined || (value as any).thumbnail_url === null || typeof (value as any).thumbnail_url === 'string')
         );
     }
+
+    with(patch: Update<Video>): Video
+    {
+        return new Video({
+            id: (patch as any).id ?? this.id,
+            youtube_id: (patch as any).youtube_id ?? this.youtube_id,
+            channel_id: (patch as any).channel_id ?? this.channel_id,
+            title: (patch as any).title ?? this.title,
+            description: (patch as any).description ?? this.description,
+            published_at: (patch as any).published_at ?? this.published_at,
+            duration_seconds: (patch as any).duration_seconds ?? this.duration_seconds,
+            thumbnail_url: (patch as any).thumbnail_url ?? this.thumbnail_url
+        });
+    }
 }

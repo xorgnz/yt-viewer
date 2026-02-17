@@ -40,4 +40,16 @@ export class VideoFlags
             typeof (value as any).updated_at === 'number'
         );
     }
+
+    with(patch: Update<VideoFlags>): VideoFlags
+    {
+        return new VideoFlags({
+            video_id: (patch as any).video_id ?? this.video_id,
+            profile_id: (patch as any).profile_id ?? this.profile_id,
+            ignored: (patch as any).ignored ?? this.ignored,
+            watched: (patch as any).watched ?? this.watched,
+            favorite: (patch as any).favorite ?? this.favorite,
+            updated_at: (patch as any).updated_at ?? this.updated_at
+        });
+    }
 }
