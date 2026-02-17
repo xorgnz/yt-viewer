@@ -50,9 +50,9 @@ Update the file after completing each sub-task, not just after completing an ent
   - [x] 0.3 Set up initial project files for Svelte and TypeScript
 - [ ] 1.0 Define data model and local persistence for channels, videos, flags, profiles, and history
   - [x] 1.1 Design schema for channels, channel groups, group assignments, videos, profiles, flags, and watch history
-  - [ ] 1.2 Define indices/constraints for unique channel IDs, video IDs, and per-profile flags
-  - [ ] 1.3 Implement SQLite client/connection helpers and migrations strategy
-  - [ ] 1.4 Add data access helpers for CRUD operations needed by admin and viewer flows
+  - [x] 1.2 Define indices/constraints for unique channel IDs, video IDs, and per-profile flags
+  - [x] 1.3 Implement SQLite client/connection helpers and migrations strategy
+  - [x] 1.4 Add data access helpers for CRUD operations needed by admin and viewer flows
 - [ ] 2.0 Build admin management for channels and channel groups (CRUD + assignment)
   - [ ] 2.1 Implement hard-coded admin password guard and admin navigation layout
   - [ ] 2.2 Build channel CRUD UI and server actions (add, edit, delete, list)

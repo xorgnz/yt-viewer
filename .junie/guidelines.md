@@ -18,4 +18,9 @@
 ### Software Conventions
 - Place each class into its own file. A class file may contain relevant interfaces and enums, but should not contain other classes.
 - Interfaces used by multiple classes should be defined in a separate file.
-- 
+
+### Code formatting
+- Use four spaces for indentation.
+- Put braces on the next line for type, interface, class, and method definitions.
+- Use camelCase for variable names.
+- Use PascalCase for class names.

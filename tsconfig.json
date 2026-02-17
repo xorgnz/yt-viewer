@@ -18,7 +18,11 @@
     "noUnusedParameters": true,
     "noImplicitReturns": true,
     "skipLibCheck": true,
-    "types": ["svelte"]
+    "types": ["svelte"],
+    "baseUrl": ".",
+    "paths": {
+      "$lib/*": ["src/lib/*"]
+    }
   },
   "include": [
     "src/**/*.d.ts",
