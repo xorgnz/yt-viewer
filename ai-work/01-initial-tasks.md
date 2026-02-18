@@ -1,7 +1,16 @@
 ## Relevant Files
 
-- `src/lib/db/schema.ts` - Database schema for channels, videos, groups, profiles, flags, and watch history.
-- `src/lib/db/client.ts` - SQLite connection and query helpers.
+- `src/lib/daos/_schema.ts` - Database schema DDL and schema version for channels, videos, groups, profiles, flags, and watch history.
+- `src/lib/daos/shared/DatabaseWrapper.ts` - Opens an existing SQLite database (no creation/migrations).
+- `src/lib/daos/shared/SqliteDAO.ts` - Base DAO utilities for SQLite access used by concrete DAOs.
+- `src/lib/daos/assignmentDAO.ts` - DAO for channel-to-group assignments.
+- `src/lib/daos/channelDAO.ts` - DAO for channels.
+- `src/lib/daos/channelGroupDAO.ts` - DAO for channel groups.
+- `src/lib/daos/flagsDAO.ts` - DAO for video/profile flags.
+- `src/lib/daos/historyDAO.ts` - DAO for watch history entries.
+- `src/lib/daos/profileDAO.ts` - DAO for profiles.
+- `src/lib/daos/videoDAO.ts` - DAO for videos.
+- `scripts/create_database.ts` - CLI to create and initialize a fresh database per mode (test/dev/live).
 - `src/lib/youtube/client.ts` - YouTube API client wrapper for channel/video import.
 - `src/lib/youtube/mapper.ts` - Mapping from API responses to local models.
 - `src/routes/admin/+layout.svelte` - Admin layout with protected navigation.
