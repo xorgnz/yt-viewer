@@ -74,7 +74,7 @@ Update the file after completing each sub-task, not just after completing an ent
   - [x] 3.4 Add manual “Refresh” action in admin UI and server handler
   - [x] 3.5 Handle basic API error states (invalid channel ID, quota, network)
 - [ ] 4.0 Build viewer experience (watch grid, filters, playback, flags, watched tracking)
-  - [ ] 4.1 Implement watch grid query filters (term, date range, watched status, channel/group)
+  - [x] 4.1 Implement watch grid query filters (term, date range, watched status, channel/group)
   - [ ] 4.2 Build viewer UI to render grid and filter controls
   - [ ] 4.3 Implement embedded playback view with selected video
   - [ ] 4.4 Add ignore/favorite flag toggles from viewer UI
