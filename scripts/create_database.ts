@@ -1,12 +1,12 @@
 #!/usr/bin/env node
-import { argv, exit } from 'node:process';
-import { fileURLToPath } from 'node:url';
+import {argv, exit} from 'node:process';
+import {fileURLToPath} from 'node:url';
 import path from 'node:path';
 import fs from 'node:fs';
 import Database from 'better-sqlite3';
-import { SchemaVersionDAO } from '../src/lib/daos/schemaVersionDAO';
-import {ALL_DDL, SCHEMA_VERSION} from '../src/lib/daos/_schema';
-import {DatabaseMode} from "../src/lib/daos/shared/DatabaseWrapper";
+import {SchemaVersionDAO} from '$lib/daos/schemaVersionDAO';
+import {ALL_DDL, SCHEMA_VERSION} from '$lib/daos/_schema';
+import {DatabaseMode} from "$lib/daos/shared/DatabaseWrapper";
 
 function parseArgs(): { mode: DatabaseMode }
 {
@@ -35,11 +35,11 @@ function parseArgs(): { mode: DatabaseMode }
     const normalized = String(modeStr).toLowerCase();
     let mode: DatabaseMode | null = null;
     switch (normalized) {
-        case DatabaseMode.Test:
+        case 'test':
             mode = DatabaseMode.Test; break;
-        case DatabaseMode.Dev:
+        case 'dev':
             mode = DatabaseMode.Dev; break;
-        case DatabaseMode.Live:
+        case 'live':
             mode = DatabaseMode.Live; break;
         default:
             usage(`Unknown mode: ${modeStr}`);
@@ -51,7 +51,7 @@ function parseArgs(): { mode: DatabaseMode }
 function usage(error?: string): never
 {
     const script = path.basename(fileURLToPath(import.meta.url));
-    const message = `\nUsage:\n  ${script} --mode <test|dev|live>\n  ${script} <test|dev|live>\n\nCreates a fresh SQLite database for the given mode.\n- Deletes any existing DB file for that mode.\n- Recreates it with WAL + NORMAL and applies the current schema.\n`;
+    const message = `\nUsage:\n  ${script} --mode <test|dev|live>\n  ${script} <test|dev|live>\n\nCreates a fresh SQLite database for the given mode.\n- Refuses to run if the target DB file already exists (won't overwrite).\n- Creates it with WAL + NORMAL and applies the current schema.\n`;
     if (error) console.error(`Error: ${error}\n`);
     console.log(message);
     exit(error ? 1 : 0);
@@ -63,7 +63,9 @@ async function main()
     const { dbPath } = resolveDbPath(mode);
 
     ensureDir(dbPath);
-    if (fs.existsSync(dbPath)) fs.unlinkSync(dbPath);
+    if (fs.existsSync(dbPath)) {
+        throw new Error(`Refusing to overwrite existing database at: ${dbPath}. Delete it first or choose a different mode/path.`);
+    }
 
     const db = new Database(dbPath);
     // Apply preferred pragmas for new databases
@@ -96,9 +98,9 @@ function resolveDbPath(mode: DatabaseMode): { dbPath: string }
 {
     const baseDir = process.env.YTCW_DB_DIR || '.data';
     const defaults = { test: 'test.db', dev: 'dev.db', live: process.env.YTCW_DB_FILE || 'app.db' } as const;
-    const file = mode === DatabaseMode.Test
+    const file = mode === 'test'
         ? defaults.test
-        : mode === DatabaseMode.Dev
+        : mode === 'dev'
             ? defaults.dev
             : defaults.live;
     const dbPath = path.resolve(process.cwd(), baseDir, file);
