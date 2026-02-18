@@ -81,5 +81,5 @@ Update the file after completing each sub-task, not just after completing an ent
   - [x] 4.5 Implement watch completion detection and update watched flag + history
 - [ ] 5.0 Add history log view and profile-specific UI preferences
   - [x] 5.1 Implement watch history query with filters (profile/channel/date)
-  - [ ] 5.2 Build history list UI with filters
+  - [x] 5.2 Build history list UI with filters
   - [ ] 5.3 Add profile selector and apply profile-specific preferences
