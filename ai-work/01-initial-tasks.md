@@ -70,7 +70,7 @@ Update the file after completing each sub-task, not just after completing an ent
 - [ ] 3.0 Implement YouTube import + manual refresh workflow
   - [x] 3.1 Implement YouTube API client configuration and request helpers
   - [x] 3.2 Fetch channel metadata and full video list (with pagination)
-  - [ ] 3.3 Map API responses into local video records and upsert into DB
+  - [x] 3.3 Map API responses into local video records and upsert into DB
   - [ ] 3.4 Add manual “Refresh” action in admin UI and server handler
   - [ ] 3.5 Handle basic API error states (invalid channel ID, quota, network)
 - [ ] 4.0 Build viewer experience (watch grid, filters, playback, flags, watched tracking)
