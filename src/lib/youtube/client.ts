@@ -1,8 +1,6 @@
 // YouTube Data API v3 client configuration and request helpers
 // Scope: Server-side use from SvelteKit endpoints/actions.
 
-type Json = Record<string, unknown> | Array<unknown> | null;
-
 export interface YouTubeClientOptions
 {
     apiKey?: string;
@@ -37,7 +35,8 @@ export class YouTubeClient
     }
 
     // Generic GET helper for YouTube Data API v3 endpoints
-    async get<T extends Json>(path: string, params: Record<string, string | number | boolean | undefined>): Promise<T>
+    // Relaxed generic so callers can specify concrete response interfaces
+    async get<T = any>(path: string, params: Record<string, string | number | boolean | undefined>): Promise<T>
     {
         const q = new URLSearchParams();
         for (const [k, v] of Object.entries(params)) {
@@ -81,6 +80,14 @@ export class YouTubeClient
                 throw e;
             }
         }
+    }
+
+    // Decide whether we should retry an error
+    protected shouldRetry(e: YouTubeApiError): boolean
+    {
+        if (isRateLimitError(e)) return true;
+        if (e.status >= 500) return true;
+        return false;
     }
 
     private headers(): Record<string, string>
@@ -172,14 +179,6 @@ function isRateLimitError(e: YouTubeApiError): boolean
     const reasons = e.errors?.map(x => x.reason || '').join(',') || '';
     return /rateLimitExceeded|quotaExceeded/i.test(`${e.code}:${reasons}:${e.message}`);
 }
-
-// Decide whether we should retry an error
-YouTubeClient.prototype.shouldRetry = function shouldRetry(this: YouTubeClient, e: YouTubeApiError): boolean
-{
-    if (isRateLimitError(e)) return true;
-    if (e.status >= 500) return true;
-    return false;
-} as any;
 
 // Minimal types for responses we care about
 export interface ChannelsListResponse
