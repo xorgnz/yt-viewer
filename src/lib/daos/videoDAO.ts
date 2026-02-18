@@ -77,6 +77,7 @@ export class VideoDAO extends SqliteDAO
         dateFrom?: number | null;
         dateTo?: number | null;
         watched?: 'all' | 'watched' | 'unwatched';
+        ignored?: 'hide' | 'show';
         channelId?: number | null;
         groupId?: number | null;
         limit?: number;
@@ -130,6 +131,11 @@ export class VideoDAO extends SqliteDAO
             where.push('COALESCE(vf.watched, 0) = 1');
         } else if (watchedFilter === 'unwatched') {
             where.push('COALESCE(vf.watched, 0) = 0');
+        }
+
+        // Ignored filter (default hide)
+        if ((filters.ignored || 'hide') !== 'show') {
+            where.push('COALESCE(vf.ignored, 0) = 0');
         }
 
         const whereSql = where.length ? `WHERE ${where.join(' AND ')}` : '';

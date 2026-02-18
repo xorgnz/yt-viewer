@@ -3,6 +3,7 @@
         filters: {
             term?: string;
             watched: 'all' | 'watched' | 'unwatched';
+            ignored: 'hide' | 'show';
             dateFrom: number | null;
             dateTo: number | null;
             channelId: number | null;
@@ -82,6 +83,12 @@
                 {/each}
             </select>
         </label>
+        <label>Ignored
+            <select name="ignored" bind:value={f.ignored}>
+                <option value="hide">Hide ignored</option>
+                <option value="show">Show ignored</option>
+            </select>
+        </label>
         <label>Per page
             <input type="number" name="limit" min="1" max="1000" value={f.limit} />
         </label>
@@ -96,6 +103,7 @@
         <a rel="prev" href={`?${new URLSearchParams({
             term: f.term || '',
             watched: f.watched,
+            ignored: f.ignored,
             dateFrom: f.dateFrom != null ? String(f.dateFrom) : '',
             dateTo: f.dateTo != null ? String(f.dateTo) : '',
             channelId: f.channelId != null ? String(f.channelId) : '',
@@ -106,6 +114,7 @@
         <a rel="next" href={`?${new URLSearchParams({
             term: f.term || '',
             watched: f.watched,
+            ignored: f.ignored,
             dateFrom: f.dateFrom != null ? String(f.dateFrom) : '',
             dateTo: f.dateTo != null ? String(f.dateTo) : '',
             channelId: f.channelId != null ? String(f.channelId) : '',
@@ -148,6 +157,24 @@
                     <div class="pub">{fmtDate(v.published_at)}</div>
                 </div>
             </a>
+            <div class="actions">
+                <form method="POST" action="?/toggleFlag">
+                    <input type="hidden" name="videoId" value={v.id} />
+                    <input type="hidden" name="kind" value="favorite" />
+                    <input type="hidden" name="value" value={v.favorite ? 0 : 1} />
+                    <button type="submit" class:active={!!v.favorite} aria-pressed={!!v.favorite} title={v.favorite ? 'Unfavorite' : 'Mark favorite'}>
+                        {v.favorite ? '★ Favorited' : '☆ Favorite'}
+                    </button>
+                </form>
+                <form method="POST" action="?/toggleFlag">
+                    <input type="hidden" name="videoId" value={v.id} />
+                    <input type="hidden" name="kind" value="ignored" />
+                    <input type="hidden" name="value" value={v.ignored ? 0 : 1} />
+                    <button type="submit" class="ignored" class:active={!!v.ignored} aria-pressed={!!v.ignored} title={v.ignored ? 'Unignore' : 'Ignore video'}>
+                        {v.ignored ? '✓ Ignored' : 'Ignore'}
+                    </button>
+                </form>
+            </div>
         {/each}
     </div>
 {/if}
@@ -168,6 +195,29 @@
         gap: .75rem;
     }
     .card { display: block; border: 1px solid #ddd; border-radius: 4px; overflow: hidden; color: inherit; text-decoration: none; background: #fff; }
+    .actions { display: flex; gap: .5rem; align-items: center; padding: .35rem .25rem .75rem; }
+    .actions form { display: inline; }
+    .actions button {
+        font-size: .8rem;
+        padding: .25rem .5rem;
+        border: 1px solid #333;
+        background: #444;
+        color: #fff;
+        border-radius: 4px;
+        cursor: pointer;
+    }
+    .actions button:hover { background: #3a3a3a; }
+    .actions button.active {
+        background: #b07d00; /* darker gold for active state */
+        border-color: #7a5a00;
+        color: #fff;
+    }
+    /* Override: when the Ignored button is active, make it red */
+    .actions button.ignored.active {
+        background: #b00020; /* red for selected ignored */
+        border-color: #7a0015;
+        color: #fff;
+    }
     .thumb { position: relative; aspect-ratio: 16/9; background: #f2f2f2; }
     .thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
     .thumb .placeholder { width: 100%; height: 100%; background: repeating-linear-gradient(45deg, #eee, #eee 10px, #f6f6f6 10px, #f6f6f6 20px); }

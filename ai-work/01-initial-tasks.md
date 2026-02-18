@@ -77,7 +77,7 @@ Update the file after completing each sub-task, not just after completing an ent
   - [x] 4.1 Implement watch grid query filters (term, date range, watched status, channel/group)
   - [x] 4.2 Build viewer UI to render grid and filter controls
   - [x] 4.3 Implement embedded playback view with selected video
-  - [ ] 4.4 Add ignore/favorite flag toggles from viewer UI
+  - [x] 4.4 Add ignore/favorite flag toggles from viewer UI
   - [ ] 4.5 Implement watch completion detection and update watched flag + history
 - [ ] 5.0 Add history log view and profile-specific UI preferences
   - [ ] 5.1 Implement watch history query with filters (profile/channel/date)
