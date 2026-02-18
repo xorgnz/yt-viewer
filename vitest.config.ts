@@ -1,7 +1,9 @@
 import { defineConfig } from 'vitest/config';
+import { sveltekit } from '@sveltejs/kit/vite';
 
-// Basic Vitest configuration for this project
+// Vitest configuration with SvelteKit plugin so aliases like $lib resolve in tests
 export default defineConfig({
+    plugins: [sveltekit()],
     test: {
         // Run tests in a Node-like environment by default
         environment: 'node',
