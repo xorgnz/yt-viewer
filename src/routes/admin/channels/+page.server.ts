@@ -2,6 +2,8 @@ import type { Actions, PageServerLoad } from './$types';
 import { DatabaseWrapper, DatabaseMode } from '$lib/daos/shared/DatabaseWrapper';
 import { ChannelDAO } from '$lib/daos/channelDAO';
 import { redirect, fail } from '@sveltejs/kit';
+import { YouTubeClient } from '$lib/youtube/client';
+import { importChannelFromYouTube } from '$lib/youtube/importer';
 
 function getMode(): DatabaseMode
 {
@@ -94,6 +96,40 @@ export const actions: Actions = {
         } finally {
             dbw.close();
         }
+        throw redirect(303, '/admin/channels');
+    },
+
+    refresh: async ({ request }) => {
+        const form = await request.formData();
+        const id = Number(form.get('id'));
+        if (!id) return fail(400, { message: 'id is required.' });
+
+        const dbw = new DatabaseWrapper(getMode());
+        const db = dbw.open();
+        try {
+            const dao = new ChannelDAO(db);
+            const existing = dao.get(id);
+            if (!existing) return fail(404, { message: 'Channel not found.' });
+
+            // Instantiate YouTube client (requires YOUTUBE_API_KEY in env)
+            let yt: YouTubeClient;
+            try {
+                yt = new YouTubeClient();
+            } catch (e: any) {
+                return fail(500, { message: e?.message || 'YouTube API key not configured.' });
+            }
+
+            try {
+                await importChannelFromYouTube(db, yt, existing.youtube_id);
+            } catch (e: any) {
+                // Surface a concise error to the UI; details are in server logs
+                console.error('Refresh failed for channel', existing.youtube_id, e);
+                return fail(502, { message: 'Failed to refresh from YouTube. Please try again later.' });
+            }
+        } finally {
+            dbw.close();
+        }
+
         throw redirect(303, '/admin/channels');
     }
 };

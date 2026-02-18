@@ -70,6 +70,10 @@
                                 <input type="hidden" name="id" value={ch.id} />
                                 <button type="submit">Save</button>
                             </form>
+                            <form method="post" action="?/refresh" style="display:inline; margin-left: .25rem;">
+                                <input type="hidden" name="id" value={ch.id} />
+                                <button type="submit">Refresh</button>
+                            </form>
                             <form method="post" action="?/delete" style="display:inline">
                                 <input type="hidden" name="id" value={ch.id} />
                                 <button type="submit">Delete</button>
