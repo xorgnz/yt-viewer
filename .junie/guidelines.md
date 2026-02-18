@@ -24,3 +24,13 @@
 - Put braces on the next line for type, interface, class, and method definitions.
 - Use camelCase for variable names.
 - Use PascalCase for class names.
+
+### Testing Conventions
+- Place production code under `src/` and tests under `tests/`.
+- Name test files with the `.test.ts` suffix and mirror the source file/topic. Examples:
+  - `src/math.ts` → `tests/math.test.ts`
+  - `src/lib/api/fetchUser.ts` → `tests/api/fetchUser.test.ts`
+- Vitest is configured to discover tests in `tests/**/*.test.ts`.
+- Run tests:
+  - `npm run test` (once)
+  - `npm run test:watch` (watch mode)

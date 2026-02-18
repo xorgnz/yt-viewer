@@ -18,13 +18,17 @@
     "noUnusedParameters": true,
     "noImplicitReturns": true,
     "skipLibCheck": true,
-    "types": ["svelte"],
+    "types": [
+      "svelte",
+      "vitest/globals"
+    ],
   },
   "include": [
     "src/**/*.d.ts",
     "src/**/*.ts",
     "src/**/*.svelte",
     "scripts/**/*.ts",
-    "vite.config.ts"
+    "vite.config.ts",
+    "tests/**/*.ts"
   ]
 }
