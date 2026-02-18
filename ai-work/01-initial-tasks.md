@@ -67,12 +67,12 @@ Update the file after completing each sub-task, not just after completing an ent
   - [x] 2.2 Build channel CRUD UI and server actions (add, edit, delete, list)
   - [x] 2.3 Build channel group CRUD UI and server actions
   - [x] 2.4 Build channel-to-group assignment UI and server actions
-- [ ] 3.0 Implement YouTube import + manual refresh workflow
+- [x] 3.0 Implement YouTube import + manual refresh workflow
   - [x] 3.1 Implement YouTube API client configuration and request helpers
   - [x] 3.2 Fetch channel metadata and full video list (with pagination)
   - [x] 3.3 Map API responses into local video records and upsert into DB
   - [x] 3.4 Add manual “Refresh” action in admin UI and server handler
-  - [ ] 3.5 Handle basic API error states (invalid channel ID, quota, network)
+  - [x] 3.5 Handle basic API error states (invalid channel ID, quota, network)
 - [ ] 4.0 Build viewer experience (watch grid, filters, playback, flags, watched tracking)
   - [ ] 4.1 Implement watch grid query filters (term, date range, watched status, channel/group)
   - [ ] 4.2 Build viewer UI to render grid and filter controls

@@ -2,7 +2,7 @@ import type { Actions, PageServerLoad } from './$types';
 import { DatabaseWrapper, DatabaseMode } from '$lib/daos/shared/DatabaseWrapper';
 import { ChannelDAO } from '$lib/daos/channelDAO';
 import { redirect, fail } from '@sveltejs/kit';
-import { YouTubeClient } from '$lib/youtube/client';
+import { YouTubeClient, YouTubeApiError } from '$lib/youtube/client';
 import { importChannelFromYouTube } from '$lib/youtube/importer';
 
 function getMode(): DatabaseMode
@@ -120,11 +120,38 @@ export const actions: Actions = {
             }
 
             try {
-                await importChannelFromYouTube(db, yt, existing.youtube_id);
+                const result = await importChannelFromYouTube(db, yt, existing.youtube_id);
+                // If the external channel ID was invalid or not found, importer returns channelId = null
+                if (result.channelId === null) {
+                    return fail(400, { message: 'Invalid or unknown YouTube channel ID. Please verify the ID starts with "UC" and is correct.' });
+                }
             } catch (e: any) {
                 // Surface a concise error to the UI; details are in server logs
                 console.error('Refresh failed for channel', existing.youtube_id, e);
-                return fail(502, { message: 'Failed to refresh from YouTube. Please try again later.' });
+
+                if (e instanceof YouTubeApiError) {
+                    const reasons = (e.errors || []).map(x => x.reason || '').join(',');
+                    const blob = `${e.code}:${reasons}:${e.message}`;
+                    const isQuota = /rateLimitExceeded|quotaExceeded/i.test(blob) || e.status === 429;
+                    if (isQuota) {
+                        return fail(429, { message: 'YouTube quota exceeded or rate limited. Please try again later.' });
+                    }
+                    if (e.status === 400 || e.status === 404) {
+                        return fail(400, { message: 'Invalid request to YouTube. Please verify the channel ID and try again.' });
+                    }
+                    if (e.status >= 500) {
+                        return fail(502, { message: 'YouTube service is temporarily unavailable. Please try again later.' });
+                    }
+                    // Fallback for other API errors
+                    return fail(502, { message: e.message || 'Failed to refresh from YouTube.' });
+                }
+
+                // Network/unknown errors
+                const name = (e && e.name) || '';
+                if (name === 'AbortError') {
+                    return fail(504, { message: 'Timed out contacting YouTube. Please try again.' });
+                }
+                return fail(502, { message: 'Network error contacting YouTube. Please try again later.' });
             }
         } finally {
             dbw.close();
