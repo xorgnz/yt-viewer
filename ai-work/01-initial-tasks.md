@@ -62,11 +62,11 @@ Update the file after completing each sub-task, not just after completing an ent
   - [x] 1.2 Define indices/constraints for unique channel IDs, video IDs, and per-profile flags
   - [x] 1.3 Implement SQLite client/connection helpers and migrations strategy
   - [x] 1.4 Add data access helpers for CRUD operations needed by admin and viewer flows
-- [ ] 2.0 Build admin management for channels and channel groups (CRUD + assignment)
-  - [ ] 2.1 Implement hard-coded admin password guard and admin navigation layout
-  - [ ] 2.2 Build channel CRUD UI and server actions (add, edit, delete, list)
-  - [ ] 2.3 Build channel group CRUD UI and server actions
-  - [ ] 2.4 Build channel-to-group assignment UI and server actions
+- [x] 2.0 Build admin management for channels and channel groups (CRUD + assignment)
+  - [x] 2.1 Implement hard-coded admin password guard and admin navigation layout
+  - [x] 2.2 Build channel CRUD UI and server actions (add, edit, delete, list)
+  - [x] 2.3 Build channel group CRUD UI and server actions
+  - [x] 2.4 Build channel-to-group assignment UI and server actions
 - [ ] 3.0 Implement YouTube import + manual refresh workflow
   - [ ] 3.1 Implement YouTube API client configuration and request helpers
   - [ ] 3.2 Fetch channel metadata and full video list (with pagination)
