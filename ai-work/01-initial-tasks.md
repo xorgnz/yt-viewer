@@ -57,7 +57,7 @@ Update the file after completing each sub-task, not just after completing an ent
   - [x] 0.1 Create and checkout a new branch for this feature (e.g., `git checkout -b feature/01-initial`)
   - [x] 0.2 Create node project and import required modules
   - [x] 0.3 Set up initial project files for Svelte and TypeScript
-- [ ] 1.0 Define data model and local persistence for channels, videos, flags, profiles, and history
+- [x] 1.0 Define data model and local persistence for channels, videos, flags, profiles, and history
   - [x] 1.1 Design schema for channels, channel groups, group assignments, videos, profiles, flags, and watch history
   - [x] 1.2 Define indices/constraints for unique channel IDs, video IDs, and per-profile flags
   - [x] 1.3 Implement SQLite client/connection helpers and migrations strategy
