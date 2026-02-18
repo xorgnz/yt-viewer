@@ -19,6 +19,39 @@ export class VideoDAO extends SqliteDAO
         stmt.run(video as any);
     }
 
+    getForViewerByYoutubeId(youtubeId: string, profileId: number): {
+        id: number;
+        youtube_id: string;
+        channel_id: number;
+        title: string;
+        description: string;
+        published_at: number | null;
+        duration_seconds: number | null;
+        thumbnail_url: string | null;
+        channel_title: string;
+        channel_youtube_id: string;
+        watched: number;
+        favorite: number;
+        ignored: number;
+    } | undefined
+    {
+        const sql = `
+            SELECT
+                v.id, v.youtube_id, v.channel_id, v.title, v.description, v.published_at, v.duration_seconds, v.thumbnail_url,
+                c.title AS channel_title,
+                c.youtube_id AS channel_youtube_id,
+                COALESCE(vf.watched, 0) AS watched,
+                COALESCE(vf.favorite, 0) AS favorite,
+                COALESCE(vf.ignored, 0) AS ignored
+            FROM videos v
+            JOIN channels c ON c.id = v.channel_id
+            LEFT JOIN video_flags vf ON (vf.video_id = v.id AND vf.profile_id = :profileId)
+            WHERE v.youtube_id = :youtubeId
+            LIMIT 1
+        `;
+        return this.db.prepare(sql).get({ youtubeId, profileId }) as any | undefined;
+    }
+
     get(id: number): Video | undefined
     {
         return this.db.prepare(`SELECT id, youtube_id, channel_id, title, description, published_at, duration_seconds, thumbnail_url FROM videos WHERE id = ?`).get(id) as Video | undefined;
