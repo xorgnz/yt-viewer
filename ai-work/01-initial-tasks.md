@@ -69,7 +69,7 @@ Update the file after completing each sub-task, not just after completing an ent
   - [x] 2.4 Build channel-to-group assignment UI and server actions
 - [ ] 3.0 Implement YouTube import + manual refresh workflow
   - [x] 3.1 Implement YouTube API client configuration and request helpers
-  - [ ] 3.2 Fetch channel metadata and full video list (with pagination)
+  - [x] 3.2 Fetch channel metadata and full video list (with pagination)
   - [ ] 3.3 Map API responses into local video records and upsert into DB
   - [ ] 3.4 Add manual “Refresh” action in admin UI and server handler
   - [ ] 3.5 Handle basic API error states (invalid channel ID, quota, network)
