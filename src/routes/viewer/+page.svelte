@@ -227,7 +227,7 @@
     .badge.ignored { background: #999; }
     .badge.watched { background: #2e7d32; }
     .meta { padding: .5rem; }
-    .title { font-weight: 600; font-size: .95rem; margin-bottom: .25rem; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+    .title { font-weight: 600; font-size: .95rem; margin-bottom: .25rem; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; }
     .chan { color: #555; font-size: .85rem; }
     .pub { color: #777; font-size: .8rem; }
 </style>
