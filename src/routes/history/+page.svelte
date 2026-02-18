@@ -126,8 +126,8 @@
                     <td class="col-title">{it.title}</td>
                     <td class="col-chan">{it.channel_title}</td>
                     <td class="col-actions">
-                        <a class="btn" href={`/viewer/watch/${it.youtube_id}`} title="Open in viewer">Open</a>
-                        <a class="btn" href={`/viewer?channelId=${it.channel_id}`} title="More from channel">Channel</a>
+                        <a class="btn" href={`/viewer/watch/${it.youtube_id}?profile=${encodeURIComponent(f.profileKey)}`} title="Open in viewer">Open</a>
+                        <a class="btn" href={`/viewer?channelId=${it.channel_id}&profile=${encodeURIComponent(f.profileKey)}`} title="More from channel">Channel</a>
                         <a class="btn" target="_blank" rel="noopener" href={`https://www.youtube.com/watch?v=${it.youtube_id}`} title="Open on YouTube">YouTube</a>
                     </td>
                 </tr>

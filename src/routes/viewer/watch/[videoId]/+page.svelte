@@ -17,6 +17,7 @@
             ignored: number;
         };
         profileId: number;
+        profileKey: string;
     };
 
     let consideredWatched = !!data.video.watched;
@@ -119,7 +120,7 @@
     });
 </script>
 
-<a class="back" href="/viewer">← Back to viewer</a>
+<a class="back" href={`/viewer?profile=${encodeURIComponent(data.profileKey)}`}>← Back to viewer</a>
 
 <h1 class="title">{data.video.title}</h1>
 <div class="meta">
@@ -140,7 +141,7 @@
         {/if}
     </span>
     <span class="dot">•</span>
-    <a class="channel-link" href={`/viewer?channelId=${data.video.channel_id}`}>More from this channel</a>
+    <a class="channel-link" href={`/viewer?channelId=${data.video.channel_id}&profile=${encodeURIComponent(data.profileKey)}`}>More from this channel</a>
     <span class="dot">•</span>
     <a class="yt-link" target="_blank" rel="noopener" href={`https://www.youtube.com/watch?v=${data.video.youtube_id}`}>Open on YouTube</a>
     
@@ -152,7 +153,7 @@
     </div>
 
 <div class="actions">
-    <form id="watchForm" method="POST" action="?/markWatched">
+    <form id="watchForm" method="POST" action={`?/markWatched&profile=${encodeURIComponent(data.profileKey)}`}>
         <input type="hidden" name="intent" value={(consideredWatched || data.video.watched) ? 'unwatch' : 'watch'} />
         <button type="submit" aria-pressed={consideredWatched || !!data.video.watched}>
             {#if consideredWatched || data.video.watched}

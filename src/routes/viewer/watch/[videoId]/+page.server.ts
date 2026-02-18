@@ -13,18 +13,20 @@ function getMode(): DatabaseMode
     return DatabaseMode.Dev;
 }
 
-export const load = async ({ params }: { params: { videoId: string } }) =>
+export const load = async ({ params, url }: { params: { videoId: string }, url: URL }) =>
 {
     const videoId = String(params.videoId || '').trim();
     if (!videoId) throw error(400, 'Missing videoId');
+    const profileKey = (url.searchParams.get('profile') || 'default').trim();
 
     const dbw = new DatabaseWrapper(getMode());
     const db = dbw.open();
     try {
-        // Ensure default profile exists
+        // Ensure profiles exist and resolve by key
         const profiles = new ProfileDAO(db);
         profiles.upsertByKey('default', 'Default');
-        const profile = profiles.getByKey('default');
+        profiles.upsertByKey('child', 'Child');
+        const profile = profiles.getByKey(profileKey) || profiles.getByKey('default');
         if (!profile) throw error(500, 'Failed to resolve default profile');
 
         // Load the selected video with channel + flags
@@ -32,27 +34,29 @@ export const load = async ({ params }: { params: { videoId: string } }) =>
         const video = vdao.getForViewerByYoutubeId(videoId, profile.id);
         if (!video) throw error(404, 'Video not found');
 
-        return { video, profileId: profile.id };
+        return { video, profileId: profile.id, profileKey };
     } finally {
         dbw.close();
     }
 };
 
 export const actions = {
-    async markWatched({ request, params }: { request: Request; params: { videoId: string } })
+    async markWatched({ request, params, url }: { request: Request; params: { videoId: string }, url: URL })
     {
         const videoYoutubeId = String(params.videoId || '').trim();
         if (!videoYoutubeId) return fail(400, { message: 'Missing videoId' });
 
         const form = await request.formData();
         const intent = String(form.get('intent') || 'watch'); // 'watch' | 'unwatch'
+        const profileKey = (url.searchParams.get('profile') || 'default').trim();
 
         const dbw = new DatabaseWrapper(getMode());
         const db = dbw.open();
         try {
             const profiles = new ProfileDAO(db);
             profiles.upsertByKey('default', 'Default');
-            const profile = profiles.getByKey('default');
+            profiles.upsertByKey('child', 'Child');
+            const profile = profiles.getByKey(profileKey) || profiles.getByKey('default');
             if (!profile) return fail(500, { message: 'Failed to resolve profile' });
 
             const vdao = new VideoDAO(db);
@@ -78,6 +82,8 @@ export const actions = {
             dbw.close();
         }
 
-        throw redirect(303, `/viewer/watch/${videoYoutubeId}`);
+        const qs = url.searchParams.toString();
+        const suffix = qs ? `?${qs}` : '';
+        throw redirect(303, `/viewer/watch/${videoYoutubeId}${suffix}`);
     }
 };

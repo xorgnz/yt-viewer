@@ -29,6 +29,7 @@
         channels: Array<{ id: number; youtube_id: string; title: string }>;
         groups: Array<{ id: number; name: string }>;
         profileId: number;
+        profileKey: string;
     };
 
     const f = data.filters;
@@ -49,6 +50,12 @@
 
 <form method="GET" class="filters">
     <div class="row">
+        <label>Profile
+            <select name="profile" bind:value={data.profileKey}>
+                <option value="default">Default</option>
+                <option value="child">Child</option>
+            </select>
+        </label>
         <label>Search
             <input name="term" value={f.term || ''} placeholder="title/description" />
         </label>
@@ -104,6 +111,7 @@
             term: f.term || '',
             watched: f.watched,
             ignored: f.ignored,
+            profile: data.profileKey,
             dateFrom: f.dateFrom != null ? String(f.dateFrom) : '',
             dateTo: f.dateTo != null ? String(f.dateTo) : '',
             channelId: f.channelId != null ? String(f.channelId) : '',
@@ -115,6 +123,7 @@
             term: f.term || '',
             watched: f.watched,
             ignored: f.ignored,
+            profile: data.profileKey,
             dateFrom: f.dateFrom != null ? String(f.dateFrom) : '',
             dateTo: f.dateTo != null ? String(f.dateTo) : '',
             channelId: f.channelId != null ? String(f.channelId) : '',
@@ -132,7 +141,7 @@
 {:else}
     <div class="grid">
         {#each data.videos as v}
-            <a class="card" href={`/viewer/watch/${v.youtube_id}`} title={v.title}>
+            <a class="card" href={`/viewer/watch/${v.youtube_id}?profile=${encodeURIComponent(data.profileKey)}`} title={v.title}>
                 <div class="thumb">
                     {#if v.thumbnail_url}
                         <img src={v.thumbnail_url} alt={v.title} loading="lazy" />
@@ -158,7 +167,18 @@
                 </div>
             </a>
             <div class="actions">
-                <form method="POST" action="?/toggleFlag">
+                <form method="POST" action={`?/toggleFlag&${new URLSearchParams({
+                    term: f.term || '',
+                    watched: f.watched,
+                    ignored: f.ignored,
+                    profile: data.profileKey,
+                    dateFrom: f.dateFrom != null ? String(f.dateFrom) : '',
+                    dateTo: f.dateTo != null ? String(f.dateTo) : '',
+                    channelId: f.channelId != null ? String(f.channelId) : '',
+                    groupId: f.groupId != null ? String(f.groupId) : '',
+                    limit: String(f.limit),
+                    offset: String(f.offset)
+                }).toString()}`}>
                     <input type="hidden" name="videoId" value={v.id} />
                     <input type="hidden" name="kind" value="favorite" />
                     <input type="hidden" name="value" value={v.favorite ? 0 : 1} />
@@ -166,7 +186,18 @@
                         {v.favorite ? '★ Favorited' : '☆ Favorite'}
                     </button>
                 </form>
-                <form method="POST" action="?/toggleFlag">
+                <form method="POST" action={`?/toggleFlag&${new URLSearchParams({
+                    term: f.term || '',
+                    watched: f.watched,
+                    ignored: f.ignored,
+                    profile: data.profileKey,
+                    dateFrom: f.dateFrom != null ? String(f.dateFrom) : '',
+                    dateTo: f.dateTo != null ? String(f.dateTo) : '',
+                    channelId: f.channelId != null ? String(f.channelId) : '',
+                    groupId: f.groupId != null ? String(f.groupId) : '',
+                    limit: String(f.limit),
+                    offset: String(f.offset)
+                }).toString()}`}>
                     <input type="hidden" name="videoId" value={v.id} />
                     <input type="hidden" name="kind" value="ignored" />
                     <input type="hidden" name="value" value={v.ignored ? 0 : 1} />

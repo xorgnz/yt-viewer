@@ -17,7 +17,9 @@ function getMode(): DatabaseMode
 export const load = async ({ url }: { url: URL }) =>
 {
     const term = url.searchParams.get('term') || undefined;
-    const watchedParam = url.searchParams.get('watched') || 'all';
+    const profileKey = (url.searchParams.get('profile') || 'default').trim();
+    const watchedParamRaw = url.searchParams.get('watched');
+    const watchedParam = watchedParamRaw ?? (profileKey === 'child' ? 'unwatched' : 'all');
     const watched = (watchedParam === 'watched' || watchedParam === 'unwatched') ? watchedParam : 'all';
     const ignoredParam = url.searchParams.get('ignored') || 'hide';
     const ignored = (ignoredParam === 'show') ? 'show' : 'hide';
@@ -43,10 +45,11 @@ export const load = async ({ url }: { url: URL }) =>
     const dbw = new DatabaseWrapper(getMode());
     const db = dbw.open();
     try {
-        // Ensure a default profile exists for viewer features
+        // Ensure profiles exist for viewer features and resolve active profile by key
         const pDao = new ProfileDAO(db);
         pDao.upsertByKey('default', 'Default');
-        const profile = pDao.getByKey('default');
+        pDao.upsertByKey('child', 'Child');
+        const profile = pDao.getByKey(profileKey) || pDao.getByKey('default');
         const profileId = profile!.id;
 
         const vDao = new VideoDAO(db);
@@ -64,7 +67,8 @@ export const load = async ({ url }: { url: URL }) =>
             videos,
             channels,
             groups,
-            profileId
+            profileId,
+            profileKey
         };
     } finally {
         dbw.close();
@@ -78,6 +82,7 @@ export const actions = {
         const videoIdStr = String(form.get('videoId') || '').trim();
         const kind = String(form.get('kind') || '').trim(); // 'favorite' | 'ignored'
         const valueStr = String(form.get('value') || '').trim(); // '0' | '1'
+        const profileKey = (url.searchParams.get('profile') || 'default').trim();
 
         const videoId = Number(videoIdStr);
         const value = valueStr === '1' ? 1 : (valueStr === '0' ? 0 : NaN);
@@ -91,7 +96,8 @@ export const actions = {
         try {
             const pDao = new ProfileDAO(db);
             pDao.upsertByKey('default', 'Default');
-            const profile = pDao.getByKey('default');
+            pDao.upsertByKey('child', 'Child');
+            const profile = pDao.getByKey(profileKey) || pDao.getByKey('default');
             const profileId = profile!.id;
 
             const flags = new FlagsDAO(db);

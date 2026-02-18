@@ -79,7 +79,7 @@ Update the file after completing each sub-task, not just after completing an ent
   - [x] 4.3 Implement embedded playback view with selected video
   - [x] 4.4 Add ignore/favorite flag toggles from viewer UI
   - [x] 4.5 Implement watch completion detection and update watched flag + history
-- [ ] 5.0 Add history log view and profile-specific UI preferences
+- [x] 5.0 Add history log view and profile-specific UI preferences
   - [x] 5.1 Implement watch history query with filters (profile/channel/date)
   - [x] 5.2 Build history list UI with filters
-  - [ ] 5.3 Add profile selector and apply profile-specific preferences
+  - [x] 5.3 Add profile selector and apply profile-specific preferences
