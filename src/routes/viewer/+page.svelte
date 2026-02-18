@@ -225,7 +225,16 @@
         grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
         gap: .75rem;
     }
-    .card { display: block; border: 1px solid #ddd; border-radius: 4px; overflow: hidden; color: inherit; text-decoration: none; background: #fff; }
+    /* Dark theme for video cards */
+    .card {
+        display: block;
+        border: 1px solid #333;
+        border-radius: 4px;
+        overflow: hidden;
+        color: #fff;
+        text-decoration: none;
+        background: #1e1e1e;
+    }
     .actions { display: flex; gap: .5rem; align-items: center; padding: .35rem .25rem .75rem; }
     .actions form { display: inline; }
     .actions button {
@@ -249,9 +258,9 @@
         border-color: #7a0015;
         color: #fff;
     }
-    .thumb { position: relative; aspect-ratio: 16/9; background: #f2f2f2; }
+    .thumb { position: relative; aspect-ratio: 16/9; background: #111; }
     .thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
-    .thumb .placeholder { width: 100%; height: 100%; background: repeating-linear-gradient(45deg, #eee, #eee 10px, #f6f6f6 10px, #f6f6f6 20px); }
+    .thumb .placeholder { width: 100%; height: 100%; background: repeating-linear-gradient(45deg, #2a2a2a, #2a2a2a 10px, #242424 10px, #242424 20px); }
     .badges { position: absolute; top: 4px; left: 4px; display: flex; gap: 4px; }
     .badge { padding: 2px 6px; font-size: .7rem; border-radius: 3px; background: rgba(0,0,0,.65); color: #fff; }
     .badge.favorite { background: #e3b341; color: #161616; }
@@ -259,6 +268,6 @@
     .badge.watched { background: #2e7d32; }
     .meta { padding: .5rem; }
     .title { font-weight: 600; font-size: .95rem; margin-bottom: .25rem; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; }
-    .chan { color: #555; font-size: .85rem; }
-    .pub { color: #777; font-size: .8rem; }
+    .chan { color: #bbb; font-size: .85rem; }
+    .pub { color: #999; font-size: .8rem; }
 </style>

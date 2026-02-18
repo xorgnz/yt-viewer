@@ -144,15 +144,30 @@
     input, select { min-width: 12ch; }
     .toolbar { display: flex; align-items: center; gap: 1rem; margin: .5rem 0; }
     .toolbar .pager { display: flex; gap: .75rem; }
-    .toolbar .hint { color: #666; font-size: .85rem; }
+    .toolbar .hint { color: #bbb; font-size: .85rem; }
     .toolbar .spacer { flex: 1; }
 
-    table.history { width: 100%; border-collapse: collapse; background: #fff; border: 1px solid #ddd; }
-    table.history th, table.history td { padding: .5rem .5rem; border-bottom: 1px solid #eee; text-align: left; }
-    table.history thead th { background: #f7f7f7; font-weight: 600; font-size: .9rem; }
-    .col-time { white-space: nowrap; color: #555; font-size: .9rem; }
+    /* Dark theme for history table */
+    table.history {
+        width: 100%;
+        border-collapse: collapse;
+        background: #1e1e1e;
+        border: 1px solid #333;
+        color: #fff;
+    }
+    table.history th, table.history td {
+        padding: .5rem .5rem;
+        border-bottom: 1px solid #2a2a2a;
+        text-align: left;
+    }
+    table.history thead th {
+        background: #2a2a2a;
+        font-weight: 600;
+        font-size: .9rem;
+    }
+    .col-time { white-space: nowrap; color: #bbb; font-size: .9rem; }
     .col-title { font-weight: 500; }
-    .col-chan { color: #555; font-size: .9rem; }
+    .col-chan { color: #bbb; font-size: .9rem; }
     .col-actions { white-space: nowrap; }
 
     a.btn {
@@ -167,4 +182,23 @@
         text-decoration: none;
     }
     a.btn:hover { background: #3a3a3a; }
+
+    /* Dark styling for filter controls and Apply button */
+    form.filters input,
+    form.filters select {
+        background: #222;
+        color: #fff;
+        border: 1px solid #444;
+        padding: .25rem .35rem;
+        border-radius: 4px;
+    }
+    form.filters button {
+        border: 1px solid #333;
+        background: #444;
+        color: #fff;
+        border-radius: 4px;
+        padding: .25rem .6rem;
+        cursor: pointer;
+    }
+    form.filters button:hover { background: #3a3a3a; }
 </style>
