@@ -2,6 +2,48 @@
     export let data: {
         channels: Array<{ id: number; youtube_id: string; title: string; description: string; thumbnail_url: string | null; published_at: number | null }>
     };
+
+    let creating = false;
+    let lookupStatus: string = '';
+
+    async function fetchFromYouTube(ev: Event)
+    {
+        ev.preventDefault();
+        lookupStatus = '';
+        const formEl = (ev.currentTarget as HTMLButtonElement)?.closest('form') as HTMLFormElement | null;
+        if (!formEl) return;
+        const ytInput = formEl.querySelector('input[name="youtube_id"]') as HTMLInputElement | null;
+        if (!ytInput) return;
+        const youtubeId = (ytInput.value || '').trim();
+        if (!youtubeId) {
+            lookupStatus = 'Enter a YouTube channel ID first (starts with UC...)';
+            return;
+        }
+        try {
+            creating = true;
+            const res = await fetch(`/admin/channels/lookup?youtube_id=${encodeURIComponent(youtubeId)}`);
+            const body = await res.json().catch(() => ({ ok: false, error: 'Invalid server response' }));
+            if (!res.ok || !body?.ok) {
+                lookupStatus = body?.error || `Lookup failed (${res.status})`;
+                return;
+            }
+            const data = body.data as { title?: string; description?: string; thumbnail_url?: string | null; published_at?: number | null };
+            // Fill inputs if empty or always overwrite? Prefer overwrite for convenience; user can edit.
+            const titleEl = formEl.querySelector('input[name="title"]') as HTMLInputElement | null;
+            const descEl = formEl.querySelector('input[name="description"]') as HTMLInputElement | null;
+            const thumbEl = formEl.querySelector('input[name="thumbnail_url"]') as HTMLInputElement | null;
+            const pubEl = formEl.querySelector('input[name="published_at"]') as HTMLInputElement | null;
+            if (titleEl) titleEl.value = data.title || '';
+            if (descEl) descEl.value = data.description || '';
+            if (thumbEl) thumbEl.value = data.thumbnail_url || '';
+            if (pubEl) pubEl.value = data.published_at != null ? String(data.published_at) : '';
+            lookupStatus = 'Filled from YouTube ✓';
+        } catch (e: any) {
+            lookupStatus = 'Network error during lookup';
+        } finally {
+            creating = false;
+        }
+    }
 </script>
 
 <h1>Channels</h1>
@@ -16,6 +58,12 @@
             <label>Title
                 <input name="title" required />
             </label>
+        </div>
+        <div class="row">
+            <button type="button" on:click={fetchFromYouTube} disabled={creating}>Fetch from YouTube</button>
+            {#if lookupStatus}
+                <span class="status">{lookupStatus}</span>
+            {/if}
         </div>
         <div class="row">
             <label>Description
@@ -96,5 +144,6 @@
     th, td { border: 1px solid #ddd; padding: 0.5rem; vertical-align: top; }
     td.actions { white-space: nowrap; }
     input { min-width: 10ch; }
+    .status { margin-left: .5rem; font-size: .9rem; color: #555; }
     code { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
 </style>

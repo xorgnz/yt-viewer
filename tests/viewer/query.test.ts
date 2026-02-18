@@ -14,6 +14,7 @@ describe('VideoDAO.listForViewer filters (task 4.1)', () => {
     let ch1Id: number;
     let ch2Id: number;
     let gNewsId: number;
+    let baseNow: number;
 
     beforeEach(() => {
         db = new Database(':memory:');
@@ -36,10 +37,10 @@ describe('VideoDAO.listForViewer filters (task 4.1)', () => {
 
         const vDao = new VideoDAO(db);
         // Seed videos across channels with varying titles/descriptions and dates
-        const now = Date.now();
-        vDao.upsert({ youtube_id: 'V1', channel_id: ch1Id, title: 'Breaking News: Cats', description: 'fluffy update', published_at: now - 3 * 86400000, duration_seconds: 100, thumbnail_url: null } as any);
-        vDao.upsert({ youtube_id: 'V2', channel_id: ch1Id, title: 'Tech Talk', description: 'AI and more', published_at: now - 2 * 86400000, duration_seconds: 200, thumbnail_url: null } as any);
-        vDao.upsert({ youtube_id: 'V3', channel_id: ch2Id, title: 'Daily News Recap', description: 'world events', published_at: now - 1 * 86400000, duration_seconds: 300, thumbnail_url: null } as any);
+        baseNow = Date.now();
+        vDao.upsert({ youtube_id: 'V1', channel_id: ch1Id, title: 'Breaking News: Cats', description: 'fluffy update', published_at: baseNow - 3 * 86400000, duration_seconds: 100, thumbnail_url: null } as any);
+        vDao.upsert({ youtube_id: 'V2', channel_id: ch1Id, title: 'Tech Talk', description: 'AI and more', published_at: baseNow - 2 * 86400000, duration_seconds: 200, thumbnail_url: null } as any);
+        vDao.upsert({ youtube_id: 'V3', channel_id: ch2Id, title: 'Daily News Recap', description: 'world events', published_at: baseNow - 1 * 86400000, duration_seconds: 300, thumbnail_url: null } as any);
         vDao.upsert({ youtube_id: 'V4', channel_id: ch2Id, title: 'Music Hour', description: 'jazz', published_at: null, duration_seconds: null, thumbnail_url: null } as any);
 
         // Mark one as watched for the profile
@@ -59,8 +60,7 @@ describe('VideoDAO.listForViewer filters (task 4.1)', () => {
 
     it('filters by date range (published_at)', () => {
         const vDao = new VideoDAO(db);
-        const now = Date.now();
-        const twoDaysAgo = now - 2 * 86400000 - 1; // include V2 and V3, exclude V1
+        const twoDaysAgo = baseNow - 2 * 86400000 - 1; // include V2 and V3, exclude V1
         const out = vDao.listForViewer({ dateFrom: twoDaysAgo }, profileId);
         const ids = out.map(v => v.youtube_id);
         expect(ids).toContain('V2');

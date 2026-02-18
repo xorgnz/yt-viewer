@@ -1,7 +1,7 @@
 import Database from 'better-sqlite3';
 import { ChannelDAO } from '../daos/channelDAO';
 import { VideoDAO } from '../daos/videoDAO';
-import type { YouTubeClient } from './client';
+import type { YouTubeClient } from './youTubeClient';
 import { fetchChannelWithUploads } from './fetch';
 import { mapChannelItemToUpsert, mapPlaylistItemToVideoUpsert } from './mapper';
 

@@ -1,4 +1,4 @@
-import type { ChannelsListResponse, PlaylistItemsListResponse } from './client';
+import type { ChannelsListResponse, PlaylistItemsListResponse } from './youTubeClient';
 
 // Helpers to pick best thumbnail URL from a thumbnails object
 function bestThumb(thumbnails?: Record<string, { url: string }>): string | null

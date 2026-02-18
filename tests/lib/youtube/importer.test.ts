@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import Database from 'better-sqlite3';
 import { ALL_DDL } from '../../../src/lib/daos/_schema';
 import { importChannelFromYouTube } from '../../../src/lib/youtube/importer';
-import type { YouTubeClient } from '../../../src/lib/youtube/client';
+import type { YouTubeClient } from '$lib/youtube/youTubeClient';
 import { ChannelDAO } from '../../../src/lib/daos/channelDAO';
 import { VideoDAO } from '../../../src/lib/daos/videoDAO';
 

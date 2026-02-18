@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { YouTubeClient } from '../../../src/lib/youtube/client';
+import { YouTubeClient } from '$lib/youtube/youTubeClient';
 
 // Helpers to generate fetch Responses
 const okJson = (body: unknown) =>

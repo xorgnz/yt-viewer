@@ -1,5 +1,5 @@
-import { YouTubeClient } from './client';
-import type { ChannelsListResponse, PlaylistItemsListResponse } from './client';
+import { YouTubeClient } from './youTubeClient';
+import type { ChannelsListResponse, PlaylistItemsListResponse } from './youTubeClient';
 
 export interface ChannelWithUploads
 {

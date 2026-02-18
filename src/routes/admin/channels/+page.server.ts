@@ -2,14 +2,14 @@ import type { Actions, PageServerLoad } from './$types';
 import { DatabaseWrapper, DatabaseMode } from '$lib/daos/shared/DatabaseWrapper';
 import { ChannelDAO } from '$lib/daos/channelDAO';
 import { redirect, fail } from '@sveltejs/kit';
-import { YouTubeClient, YouTubeApiError } from '$lib/youtube/client';
+import { YouTubeClient, YouTubeApiError } from '$lib/youtube/youTubeClient';
 import { importChannelFromYouTube } from '$lib/youtube/importer';
+import { env } from '$env/dynamic/private';
 
 function getMode(): DatabaseMode
 {
-    const env = process.env.NODE_ENV || 'development';
-    if (env === 'test') return DatabaseMode.Test;
-    if (env === 'production') return DatabaseMode.Live;
+    if (env.NODE_ENV === 'test') return DatabaseMode.Test;
+    if (env.NODE_ENV === 'production') return DatabaseMode.Live;
     return DatabaseMode.Dev;
 }
 

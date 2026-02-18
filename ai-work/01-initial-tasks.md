@@ -11,7 +11,7 @@
 - `src/lib/daos/profileDAO.ts` - DAO for profiles.
 - `src/lib/daos/videoDAO.ts` - DAO for videos.
 - `scripts/create_database.ts` - CLI to create and initialize a fresh database per mode (test/dev/live).
-- `src/lib/youtube/client.ts` - YouTube API client wrapper for channel/video import.
+- `src/lib/youtube/youTubeClient.ts` - YouTube API client wrapper for channel/video import.
 - `src/lib/youtube/mapper.ts` - Mapping from API responses to local models.
 - `src/routes/admin/+layout.svelte` - Admin layout with protected navigation.
 - `src/routes/admin/+page.svelte` - Admin landing view.

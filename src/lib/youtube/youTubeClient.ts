@@ -1,5 +1,6 @@
 // YouTube Data API v3 client configuration and request helpers
 // Scope: Server-side use from SvelteKit endpoints/actions.
+import { env } from '$env/dynamic/private';
 
 export interface YouTubeClientOptions
 {
@@ -22,7 +23,7 @@ export class YouTubeClient
 
     constructor(options?: YouTubeClientOptions)
     {
-        const envKey = process.env.YOUTUBE_API_KEY || '';
+        const envKey = env.YOUTUBE_API_KEY || '';
         this.apiKey = String(options?.apiKey || envKey).trim();
         if (!this.apiKey) {
             throw new Error('YouTubeClient requires an API key. Set YOUTUBE_API_KEY.');

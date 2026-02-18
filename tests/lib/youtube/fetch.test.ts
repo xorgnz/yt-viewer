@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { YouTubeClient } from '../../../src/lib/youtube/client';
+import { YouTubeClient } from '$lib/youtube/youTubeClient';
 import { fetchChannelMetadata, fetchChannelWithUploads } from '../../../src/lib/youtube/fetch';
 
 const okJson = (body: unknown) => new Response(JSON.stringify(body), { status: 200, headers: { 'content-type': 'application/json' } });
