@@ -75,7 +75,7 @@
         </label>
     </div>
     <div class="row">
-        <label>Channel
+        <label>Source Channel
             <select name="channelId" value={f.channelId ?? ''}>
                 <option value="">Any</option>
                 {#each data.channels as ch}
@@ -83,7 +83,7 @@
                 {/each}
             </select>
         </label>
-        <label>Group
+        <label>Virtual Channel
             <select name="groupId" value={f.groupId ?? ''}>
                 <option value="">Any</option>
                 {#each data.groups as g}

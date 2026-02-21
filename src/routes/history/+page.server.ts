@@ -1,6 +1,6 @@
 import { DatabaseWrapper, DatabaseMode } from '$lib/daos/shared/DatabaseWrapper';
 import { ProfileDAO } from '$lib/daos/profileDAO';
-import { ChannelDAO } from '$lib/daos/channelDAO';
+import { SourceChannelDAO } from '$lib/daos/sourceChannelDAO';
 import { HistoryDAO } from '$lib/daos/historyDAO';
 
 function getMode(): DatabaseMode
@@ -42,7 +42,7 @@ export const load = async ({ url }: { url: URL }) =>
         const profileId = profile!.id;
 
         const hDao = new HistoryDAO(db);
-        const cDao = new ChannelDAO(db);
+        const cDao = new SourceChannelDAO(db);
 
         const items = hDao.listWithFilters({
             profileId,

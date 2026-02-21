@@ -77,7 +77,7 @@ export class HistoryDAO extends SqliteDAO
                 c.title AS channel_title
             FROM watch_history h
             JOIN videos v ON v.id = h.video_id
-            JOIN channels c ON c.id = v.channel_id
+            JOIN source_channels c ON c.id = v.channel_id
             ${whereSql}
             ORDER BY h.watched_at DESC
             LIMIT :limit OFFSET :offset

@@ -3,7 +3,8 @@ export type ChannelGroupFields = {
     name: string;
 };
 
-export class ChannelGroup {
+export class VirtualChannel
+{
     readonly id: number;
     readonly name: string;
 
@@ -12,8 +13,8 @@ export class ChannelGroup {
         this.name = data.name;
     }
 
-    static validate(value: any): value is ChannelGroup {
-        if (value instanceof ChannelGroup) return true;
+    static validate(value: any): value is VirtualChannel {
+        if (value instanceof VirtualChannel) return true;
         return (
             value &&
             typeof value === 'object' &&
@@ -22,8 +23,8 @@ export class ChannelGroup {
         );
     }
 
-    with(patch: Update<ChannelGroup>): ChannelGroup {
-        return new ChannelGroup({
+    with(patch: Update<VirtualChannel>): VirtualChannel {
+        return new VirtualChannel({
                 id: patch.id ?? this.id,
                 name: patch.name ?? this.name,
             }

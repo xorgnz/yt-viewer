@@ -7,7 +7,7 @@ export type ChannelFields = {
     published_at?: number | null;
 };
 
-export class Channel
+export class SourceChannel
 {
     readonly id: number; // internal DB id
     readonly youtube_id: string; // YouTube channel ID
@@ -26,9 +26,9 @@ export class Channel
         this.published_at = data.published_at;
     }
 
-    static validate(value: any): value is Channel
+    static validate(value: any): value is SourceChannel
     {
-        if (value instanceof Channel) return true;
+        if (value instanceof SourceChannel) return true;
         return (
             value !== null &&
             typeof value === 'object' &&
@@ -41,9 +41,9 @@ export class Channel
         );
     }
 
-    with(patch: Update<Channel>): Channel
+    with(patch: Update<SourceChannel>): SourceChannel
     {
-        return new Channel({
+        return new SourceChannel({
             id: (patch as any).id ?? this.id,
             youtube_id: (patch as any).youtube_id ?? this.youtube_id,
             title: (patch as any).title ?? this.title,

@@ -6,7 +6,7 @@ describe('youtube mapper (task 3.3)', () => {
         const item: any = {
             id: 'UC_123',
             snippet: {
-                title: 'Channel Title',
+                title: 'SourceChannel Title',
                 description: 'About this channel',
                 publishedAt: '2020-01-02T03:04:05Z',
                 thumbnails: {
@@ -19,7 +19,7 @@ describe('youtube mapper (task 3.3)', () => {
         const up = mapChannelItemToUpsert(item);
         expect(up).toMatchObject({
             youtube_id: 'UC_123',
-            title: 'Channel Title',
+            title: 'SourceChannel Title',
             description: 'About this channel',
             thumbnail_url: 'http://t.hi'
         });

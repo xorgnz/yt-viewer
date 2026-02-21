@@ -1,7 +1,7 @@
 import { DatabaseWrapper, DatabaseMode } from '$lib/daos/shared/DatabaseWrapper';
 import { VideoDAO } from '$lib/daos/videoDAO';
-import { ChannelDAO } from '$lib/daos/channelDAO';
-import { ChannelGroupDAO } from '$lib/daos/channelGroupDAO';
+import { SourceChannelDAO } from '$lib/daos/sourceChannelDAO';
+import { VirtualChannelDAO } from '$lib/daos/virtualChannelDAO';
 import { ProfileDAO } from '$lib/daos/profileDAO';
 import { FlagsDAO } from '$lib/daos/flagsDAO';
 import { fail, redirect } from '@sveltejs/kit';
@@ -53,8 +53,8 @@ export const load = async ({ url }: { url: URL }) =>
         const profileId = profile!.id;
 
         const vDao = new VideoDAO(db);
-        const cDao = new ChannelDAO(db);
-        const gDao = new ChannelGroupDAO(db);
+        const cDao = new SourceChannelDAO(db);
+        const gDao = new VirtualChannelDAO(db);
 
         const [videos, channels, groups] = [
             vDao.listForViewer(filters as any, profileId),

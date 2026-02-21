@@ -1,11 +1,11 @@
 import Database from 'better-sqlite3';
 import { describe, it, expect, beforeEach } from 'vitest';
 import { ALL_DDL } from '$lib/daos/_schema';
-import { ChannelDAO } from '$lib/daos/channelDAO';
+import { SourceChannelDAO } from '$lib/daos/sourceChannelDAO';
 import { VideoDAO } from '$lib/daos/videoDAO';
 import { ProfileDAO } from '$lib/daos/profileDAO';
 import { FlagsDAO } from '$lib/daos/flagsDAO';
-import { ChannelGroupDAO } from '$lib/daos/channelGroupDAO';
+import { VirtualChannelDAO } from '$lib/daos/virtualChannelDAO';
 import { AssignmentDAO } from '$lib/daos/assignmentDAO';
 
 describe('VideoDAO.listForViewer filters (task 4.1)', () => {
@@ -24,13 +24,13 @@ describe('VideoDAO.listForViewer filters (task 4.1)', () => {
         profiles.upsertByKey('default', 'Default');
         profileId = profiles.getByKey('default')!.id;
 
-        const chDao = new ChannelDAO(db);
-        chDao.upsert({ youtube_id: 'UC_CH1', title: 'Channel One', description: '', thumbnail_url: null, published_at: null } as any);
-        chDao.upsert({ youtube_id: 'UC_CH2', title: 'Channel Two', description: '', thumbnail_url: null, published_at: null } as any);
+        const chDao = new SourceChannelDAO(db);
+        chDao.upsert({ youtube_id: 'UC_CH1', title: 'SourceChannel One', description: '', thumbnail_url: null, published_at: null } as any);
+        chDao.upsert({ youtube_id: 'UC_CH2', title: 'SourceChannel Two', description: '', thumbnail_url: null, published_at: null } as any);
         ch1Id = chDao.getByExternalId('UC_CH1')!.id;
         ch2Id = chDao.getByExternalId('UC_CH2')!.id;
 
-        const cgDao = new ChannelGroupDAO(db);
+        const cgDao = new VirtualChannelDAO(db);
         gNewsId = cgDao.create('News').id;
         const asg = new AssignmentDAO(db);
         asg.add(ch2Id, gNewsId); // put channel 2 into News group

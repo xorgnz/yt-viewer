@@ -44,7 +44,7 @@ export class VideoDAO extends SqliteDAO
                 COALESCE(vf.favorite, 0) AS favorite,
                 COALESCE(vf.ignored, 0) AS ignored
             FROM videos v
-            JOIN channels c ON c.id = v.channel_id
+            JOIN source_channels c ON c.id = v.channel_id
             LEFT JOIN video_flags vf ON (vf.video_id = v.id AND vf.profile_id = :profileId)
             WHERE v.youtube_id = :youtubeId
             LIMIT 1
@@ -121,7 +121,7 @@ export class VideoDAO extends SqliteDAO
             params.channelId = filters.channelId;
         }
         if (filters.groupId != null) {
-            groupJoin = 'JOIN channel_group_assignments ga ON ga.channel_id = v.channel_id AND ga.group_id = :groupId';
+            groupJoin = 'JOIN virtual_channel_assignments ga ON ga.channel_id = v.channel_id AND ga.group_id = :groupId';
             params.groupId = filters.groupId;
         }
 
@@ -153,7 +153,7 @@ export class VideoDAO extends SqliteDAO
                 COALESCE(vf.favorite, 0) AS favorite,
                 COALESCE(vf.ignored, 0) AS ignored
             FROM videos v
-            JOIN channels c ON c.id = v.channel_id
+            JOIN source_channels c ON c.id = v.channel_id
             LEFT JOIN video_flags vf ON (vf.video_id = v.id AND vf.profile_id = :profileId)
             ${groupJoin}
             ${whereSql}

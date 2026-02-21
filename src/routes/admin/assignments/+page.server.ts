@@ -1,7 +1,7 @@
 import type { Actions, PageServerLoad } from './$types';
 import { DatabaseMode, DatabaseWrapper } from '$lib/daos/shared/DatabaseWrapper';
-import { ChannelDAO } from '$lib/daos/channelDAO';
-import { ChannelGroupDAO } from '$lib/daos/channelGroupDAO';
+import { SourceChannelDAO } from '$lib/daos/sourceChannelDAO';
+import { VirtualChannelDAO } from '$lib/daos/virtualChannelDAO';
 import { AssignmentDAO } from '$lib/daos/assignmentDAO';
 
 function getModeFromEnv(): DatabaseMode
@@ -17,8 +17,8 @@ export const load: PageServerLoad = async () =>
     const wrapper = new DatabaseWrapper(getModeFromEnv());
     const db = wrapper.open();
     try {
-        const channelDAO = new ChannelDAO(db);
-        const groupDAO = new ChannelGroupDAO(db);
+        const channelDAO = new SourceChannelDAO(db);
+        const groupDAO = new VirtualChannelDAO(db);
         const assignDAO = new AssignmentDAO(db);
 
         const channels = channelDAO.list();
@@ -28,7 +28,7 @@ export const load: PageServerLoad = async () =>
         const assignments: { channel_id: number; group_id: number }[] = [];
         for (const ch of channels) {
             const rows = assignDAO.listForChannel(ch.id);
-            for (const r of rows) assignments.push({ channel_id: r.channel_id, group_id: r.group_id });
+            for (const r of rows) assignments.push({ channel_id: r.source_channel_id, group_id: r.virtual_channel_id });
         }
 
         return { channels, groups, assignments };

@@ -117,7 +117,7 @@ export class YouTubeClient
         const trimmed = String(id || '').trim();
         if (!trimmed) {
             // Surface a clear early error rather than a vague 400 from the API
-            throw new YouTubeApiError('Channel ID is required.', 400, 'invalidParameter');
+            throw new YouTubeApiError('SourceChannel ID is required.', 400, 'invalidParameter');
         }
         const cleanParts = Array.from(new Set((parts || []).map((p) => String(p).trim()).filter(Boolean)));
         if (cleanParts.length === 0) {

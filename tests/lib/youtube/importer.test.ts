@@ -3,7 +3,7 @@ import Database from 'better-sqlite3';
 import { ALL_DDL } from '../../../src/lib/daos/_schema';
 import { importChannelFromYouTube } from '../../../src/lib/youtube/importer';
 import type { YouTubeClient } from '$lib/youtube/youTubeClient';
-import { ChannelDAO } from '../../../src/lib/daos/channelDAO';
+import { SourceChannelDAO } from '$lib/daos/sourceChannelDAO';
 import { VideoDAO } from '../../../src/lib/daos/videoDAO';
 
 describe('youtube importer (task 3.3)', () => {
@@ -53,7 +53,7 @@ describe('youtube importer (task 3.3)', () => {
                         {
                             id,
                             snippet: {
-                                title: 'Demo Channel',
+                                title: 'Demo SourceChannel',
                                 description: 'About',
                                 publishedAt: '2020-05-06T07:08:09Z',
                                 thumbnails: { high: { url: 'http://thumb/ch' } }
@@ -77,10 +77,10 @@ describe('youtube importer (task 3.3)', () => {
         expect(res1.channelId).toBeGreaterThan(0);
         expect(res1.videosUpserted).toBe(2);
 
-        const chDao = new ChannelDAO(db);
+        const chDao = new SourceChannelDAO(db);
         const vDao = new VideoDAO(db);
         const ch = chDao.getByExternalId('UC_DEMO');
-        expect(ch?.title).toBe('Demo Channel');
+        expect(ch?.title).toBe('Demo SourceChannel');
         const vids = vDao.listByChannel(ch!.id);
         expect(vids.map(v => v.youtube_id).sort()).toEqual(['V1','V2']);
 

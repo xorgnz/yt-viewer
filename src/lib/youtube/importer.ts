@@ -1,5 +1,5 @@
 import Database from 'better-sqlite3';
-import { ChannelDAO } from '../daos/channelDAO';
+import { SourceChannelDAO } from '../daos/sourceChannelDAO';
 import { VideoDAO } from '../daos/videoDAO';
 import type { YouTubeClient } from './youTubeClient';
 import { fetchChannelWithUploads } from './fetch';
@@ -25,7 +25,7 @@ export function importChannelFromYouTube(db: Database.Database, yt: YouTubeClien
             return { channelId: null, videosUpserted: 0 };
         }
 
-        const chDao = new ChannelDAO(db);
+        const chDao = new SourceChannelDAO(db);
         const vDao = new VideoDAO(db);
 
         // Run inside a transaction for consistency
