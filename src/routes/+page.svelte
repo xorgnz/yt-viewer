@@ -8,6 +8,7 @@
   <section>
     <h2>Navigation</h2>
     <ul>
+      <li><a href="/viewer/groups">Choose a Channel Group</a></li>
       <li><a href="/viewer">Video List</a></li>
       <li><a href="/history">History</a></li>
       <li><a href="/admin">Admin Home</a> (requires login)</li>
