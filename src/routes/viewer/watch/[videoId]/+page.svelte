@@ -120,7 +120,7 @@
     });
 </script>
 
-<a class="back" href={`/viewer?profile=${encodeURIComponent(data.profileKey)}`}>← Back to viewer</a>
+<a class="back" href={`/viewer?profile=${encodeURIComponent(data.profileKey)}`}>← Back to video list</a>
 
 <h1 class="title">{data.video.title}</h1>
 <div class="meta">

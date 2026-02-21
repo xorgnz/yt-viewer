@@ -10,7 +10,7 @@
     <form method="POST" action="/admin/logout" style="margin-left:auto;">
         <button type="submit">Logout</button>
     </form>
-    <a href="/">Viewer</a>
+    <a href="/viewer">Video List</a>
   </nav>
 
 <slot />
