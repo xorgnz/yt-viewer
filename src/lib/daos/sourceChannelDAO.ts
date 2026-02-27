@@ -19,21 +19,26 @@ export class SourceChannelDAO extends SqliteDAO
 
     get(id: number): SourceChannel | undefined
     {
-        return this.db.prepare(`SELECT id, youtube_id, title, description, thumbnail_url, published_at FROM source_channels WHERE id = ?`).get(id) as SourceChannel | undefined;
+        return this.db.prepare(`SELECT id, youtube_id, title, description, thumbnail_url, published_at, last_refreshed_at FROM source_channels WHERE id = ?`).get(id) as SourceChannel | undefined;
     }
 
     getByExternalId(external_id: string): SourceChannel | undefined
     {
-        return this.db.prepare(`SELECT id, youtube_id, title, description, thumbnail_url, published_at FROM source_channels WHERE youtube_id = ?`).get(external_id) as SourceChannel | undefined;
+        return this.db.prepare(`SELECT id, youtube_id, title, description, thumbnail_url, published_at, last_refreshed_at FROM source_channels WHERE youtube_id = ?`).get(external_id) as SourceChannel | undefined;
     }
 
     list(): SourceChannel[]
     {
-        return this.db.prepare(`SELECT id, youtube_id, title, description, thumbnail_url, published_at FROM source_channels ORDER BY title`).all() as SourceChannel[];
+        return this.db.prepare(`SELECT id, youtube_id, title, description, thumbnail_url, published_at, last_refreshed_at FROM source_channels ORDER BY title`).all() as SourceChannel[];
     }
 
     remove(id: number)
     {
         this.db.prepare(`DELETE FROM source_channels WHERE id = ?`).run(id);
+    }
+
+    markRefreshed(id: number, ts: number = Date.now())
+    {
+        this.db.prepare(`UPDATE source_channels SET last_refreshed_at = ? WHERE id = ?`).run(ts, id);
     }
 }

@@ -2,7 +2,7 @@
 // Note: This file intentionally contains only schema DDL, not database creation/connection code.
 
 // Schema version
-export const SCHEMA_VERSION = 2;
+export const SCHEMA_VERSION = 3;
 
 
 export const CREATE_TABLE_SOURCE_CHANNELS = `
@@ -12,7 +12,8 @@ CREATE TABLE IF NOT EXISTS source_channels (
     title TEXT NOT NULL,
     description TEXT DEFAULT '',
     thumbnail_url TEXT DEFAULT NULL,
-    published_at INTEGER DEFAULT NULL
+    published_at INTEGER DEFAULT NULL,
+    last_refreshed_at INTEGER DEFAULT NULL
 );`;
 
 export const CREATE_TABLE_VIRTUAL_CHANNELS = `

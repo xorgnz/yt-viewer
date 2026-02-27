@@ -15,7 +15,8 @@
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
-    "create_database": "tsx scripts/create_database.ts"
+    "create_database": "tsx scripts/create_database.ts",
+    "migrate_database": "tsx scripts/migrate_database.ts"
   },
   "dependencies": {
     "better-sqlite3": "latest",

@@ -5,6 +5,7 @@ export type ChannelFields = {
     description?: string;
     thumbnail_url?: string | null;
     published_at?: number | null;
+    last_refreshed_at?: number | null;
 };
 
 export class SourceChannel
@@ -15,6 +16,7 @@ export class SourceChannel
     readonly description?: string;
     readonly thumbnail_url?: string | null;
     readonly published_at?: number | null; // unix epoch ms
+    readonly last_refreshed_at?: number | null; // unix epoch ms
 
     constructor(data: ChannelFields)
     {
@@ -24,6 +26,7 @@ export class SourceChannel
         this.description = data.description;
         this.thumbnail_url = data.thumbnail_url;
         this.published_at = data.published_at;
+        this.last_refreshed_at = data.last_refreshed_at;
     }
 
     static validate(value: any): value is SourceChannel
@@ -37,7 +40,8 @@ export class SourceChannel
             typeof (value as any).title === 'string' &&
             ((value as any).description === undefined || typeof (value as any).description === 'string') &&
             ((value as any).thumbnail_url === undefined || (value as any).thumbnail_url === null || typeof (value as any).thumbnail_url === 'string') &&
-            ((value as any).published_at === undefined || (value as any).published_at === null || typeof (value as any).published_at === 'number')
+            ((value as any).published_at === undefined || (value as any).published_at === null || typeof (value as any).published_at === 'number') &&
+            ((value as any).last_refreshed_at === undefined || (value as any).last_refreshed_at === null || typeof (value as any).last_refreshed_at === 'number')
         );
     }
 
@@ -49,7 +53,8 @@ export class SourceChannel
             title: (patch as any).title ?? this.title,
             description: (patch as any).description ?? this.description,
             thumbnail_url: (patch as any).thumbnail_url ?? this.thumbnail_url,
-            published_at: (patch as any).published_at ?? this.published_at
+            published_at: (patch as any).published_at ?? this.published_at,
+            last_refreshed_at: (patch as any).last_refreshed_at ?? this.last_refreshed_at
         });
     }
 }

@@ -1,0 +1,426 @@
+[File: \\wsl.localhost\Ubuntu-22.04\home\xorgnz\workspaces\yt-viewer\.svelte-kit\types\src\routes\admin\assignments\proxy+page.server.ts (77 lines total)]
+1:// @ts-nocheck
+2:import type { Actions, PageServerLoad } from './$types';
+3:import { DatabaseMode, DatabaseWrapper } from '$lib/daos/shared/DatabaseWrapper';
+4:import { SourceChannelDAO } from '$lib/daos/sourceChannelDAO';
+5:import { VirtualChannelDAO } from '$lib/daos/virtualChannelDAO';
+6:import { AssignmentDAO } from '$lib/daos/assignmentDAO';
+7:
+8:function getModeFromEnv(): DatabaseMode
+9:{
+10:    const env = (process.env.NODE_ENV || 'development').toLowerCase();
+11:    if (env === 'test') return DatabaseMode.Test;
+12:    if (env === 'production') return DatabaseMode.Live;
+13:    return DatabaseMode.Dev;
+14:}
+15:
+16:export const load = async () =>
+17:{
+18:    const wrapper = new DatabaseWrapper(getModeFromEnv());
+19:    const db = wrapper.open();
+20:    try {
+21:        const channelDAO = new SourceChannelDAO(db);
+22:        const groupDAO = new VirtualChannelDAO(db);
+23:        const assignDAO = new AssignmentDAO(db);
+24:
+25:        const channels = channelDAO.list();
+26:        const groups = groupDAO.list();
+27:
+(50 more lines below)
+
+
+-------------------------------------------------
+
+[File: \\wsl.localhost\Ubuntu-22.04\home\xorgnz\workspaces\yt-viewer\.svelte-kit\types\src\routes\admin\assignments\proxy+page.server.ts (77 lines total)]
+1:// @ts-nocheck
+2:import type { Actions, PageServerLoad } from './$types';
+3:import { DatabaseMode, DatabaseWrapper } from '$lib/daos/shared/DatabaseWrapper';
+4:import { SourceChannelDAO } from '$lib/daos/sourceChannelDAO';
+5:import { VirtualChannelDAO } from '$lib/daos/virtualChannelDAO';
+6:import { AssignmentDAO } from '$lib/daos/assignmentDAO';
+(71 more lines below)
+
+
+-------------------------------------------------
+
+[File: \\wsl.localhost\Ubuntu-22.04\home\xorgnz\workspaces\yt-viewer\.svelte-kit\types\src\routes\admin\channel-groups\proxy+page.server.ts (74 lines total)]
+1:// @ts-nocheck
+2:import type { Actions, PageServerLoad } from './$types';
+3:import { DatabaseWrapper, DatabaseMode } from '$lib/daos/shared/DatabaseWrapper';
+4:import { VirtualChannelDAO } from '$lib/daos/virtualChannelDAO';
+5:import { redirect, fail } from '@sveltejs/kit';
+6:
+7:function envToMode(): DatabaseMode
+8:{
+9:    const env = process.env.NODE_ENV;
+10:    if (env === 'test') return DatabaseMode.Test;
+11:    if (env === 'production') return DatabaseMode.Live;
+12:    return DatabaseMode.Dev;
+13:}
+14:
+15:export const load = async () =>
+16:{
+17:    const wrapper = new DatabaseWrapper(envToMode());
+18:    const db = wrapper.open();
+19:    const dao = new VirtualChannelDAO(db);
+20:    const groups = dao.list();
+21:    return { groups };
+22:};
+23:
+24:export const actions = {
+25:    create: async ({ request }: import('./$types').RequestEvent) => {
+26:        const form = await request.formData();
+27:        const name = String(form.get('name') || '').trim();
+28:        if (!name) return fail(400, { message: 'Name is required' });
+29:
+30:        const wrapper = new DatabaseWrapper(envToMode());
+31:        const db = wrapper.open();
+32:        const dao = new VirtualChannelDAO(db);
+33:        try {
+34:            dao.create(name);
+35:        } catch (e: any) {
+36:            return fail(400, { message: e?.message || 'Failed to create group' });
+37:        }
+38:        throw redirect(303, '/admin/channel-groups');
+39:    },
+40:
+41:    rename: async ({ request }: import('./$types').RequestEvent) => {
+42:        const form = await request.formData();
+43:        const id = Number(form.get('id'));
+44:        const name = String(form.get('name') || '').trim();
+45:        if (!id || !name) return fail(400, { message: 'Invalid input' });
+46:
+47:        const wrapper = new DatabaseWrapper(envToMode());
+48:        const db = wrapper.open();
+49:        const dao = new VirtualChannelDAO(db);
+50:        try {
+51:            dao.rename(id, name);
+52:        } catch (e: any) {
+53:            return fail(400, { message: e?.message || 'Failed to rename group' });
+54:        }
+55:        throw redirect(303, '/admin/channel-groups');
+56:    },
+57:
+58:    delete: async ({ request }: import('./$types').RequestEvent) => {
+59:        const form = await request.formData();
+60:        const id = Number(form.get('id'));
+61:        if (!id) return fail(400, { message: 'Invalid id' });
+62:
+63:        const wrapper = new DatabaseWrapper(envToMode());
+64:        const db = wrapper.open();
+65:        const dao = new VirtualChannelDAO(db);
+66:        try {
+67:            dao.remove(id);
+68:        } catch (e: any) {
+69:            return fail(400, { message: e?.message || 'Failed to delete group' });
+70:        }
+(4 more lines below)
+
+
+-------------------------------------------------
+
+[File: \\wsl.localhost\Ubuntu-22.04\home\xorgnz\workspaces\yt-viewer\.svelte-kit\types\src\routes\admin\channel-groups\proxy+page.server.ts (74 lines total)]
+1:// @ts-nocheck
+2:import type { Actions, PageServerLoad } from './$types';
+3:import { DatabaseWrapper, DatabaseMode } from '$lib/daos/shared/DatabaseWrapper';
+4:import { VirtualChannelDAO } from '$lib/daos/virtualChannelDAO';
+5:import { redirect, fail } from '@sveltejs/kit';
+6:
+(68 more lines below)
+
+
+-------------------------------------------------
+
+[File: \\wsl.localhost\Ubuntu-22.04\home\xorgnz\workspaces\yt-viewer\.svelte-kit\types\src\routes\viewer\groups\proxy+page.server.ts (39 lines total)]
+1:// @ts-nocheck
+2:import type { PageServerLoad } from './$types';
+3:import { DatabaseWrapper, DatabaseMode } from '$lib/daos/shared/DatabaseWrapper';
+4:import { VirtualChannelDAO } from '$lib/daos/virtualChannelDAO';
+5:import { ProfileDAO } from '$lib/daos/profileDAO';
+6:
+7:function envToMode(): DatabaseMode
+8:{
+9:    const env = process.env.NODE_ENV;
+10:    if (env === 'test') return DatabaseMode.Test;
+11:    if (env === 'production') return DatabaseMode.Live;
+12:    return DatabaseMode.Dev;
+13:}
+14:
+15:export const load = async ({ url }: Parameters<PageServerLoad>[0]) =>
+16:{
+17:    const profileKey = (url.searchParams.get('profile') || 'default').trim();
+18:
+19:    const dbw = new DatabaseWrapper(envToMode());
+20:    const db = dbw.open();
+21:    try {
+22:        // Ensure profiles exist and resolve passed profile key
+23:        const pDao = new ProfileDAO(db);
+24:        pDao.upsertByKey('default', 'Default');
+25:        pDao.upsertByKey('child', 'Child');
+26:        const profile = pDao.getByKey(profileKey) || pDao.getByKey('default');
+27:
+28:        const gDao = new VirtualChannelDAO(db);
+29:        const groups = gDao.list();
+30:
+31:        return {
+32:            groups,
+33:            profileKey: profile!.key
+(6 more lines below)
+
+
+-------------------------------------------------
+
+[File: \\wsl.localhost\Ubuntu-22.04\home\xorgnz\workspaces\yt-viewer\.svelte-kit\types\src\routes\viewer\groups\proxy+page.server.ts (39 lines total)]
+1:// @ts-nocheck
+2:import type { PageServerLoad } from './$types';
+3:import { DatabaseWrapper, DatabaseMode } from '$lib/daos/shared/DatabaseWrapper';
+4:import { VirtualChannelDAO } from '$lib/daos/virtualChannelDAO';
+5:import { ProfileDAO } from '$lib/daos/profileDAO';
+6:
+(33 more lines below)
+
+
+-------------------------------------------------
+
+[File: \\wsl.localhost\Ubuntu-22.04\home\xorgnz\workspaces\yt-viewer\src\lib\daos\virtualChannelDAO.ts (27 lines total)]
+1:import { SqliteDAO } from '$lib/daos/shared/SqliteDAO';
+2:import { ChannelGroup } from '$lib/entities/channelGroup';
+3:
+4:export class VirtualChannelDAO extends SqliteDAO
+5:{
+6:    create(name: string): ChannelGroup
+7:    {
+8:        const info = this.db.prepare(`INSERT INTO channel_groups(name) VALUES(?)`).run(name);
+9:        return new ChannelGroup({ id: Number(info.lastInsertRowid), name });
+(18 more lines below)
+
+
+-------------------------------------------------
+
+[File: \\wsl.localhost\Ubuntu-22.04\home\xorgnz\workspaces\yt-viewer\src\routes\admin\assignments\+page.server.ts (76 lines total)]
+1:import type { Actions, PageServerLoad } from './$types';
+2:import { DatabaseMode, DatabaseWrapper } from '$lib/daos/shared/DatabaseWrapper';
+3:import { SourceChannelDAO } from '$lib/daos/sourceChannelDAO';
+4:import { VirtualChannelDAO } from '$lib/daos/virtualChannelDAO';
+5:import { AssignmentDAO } from '$lib/daos/assignmentDAO';
+6:
+7:function getModeFromEnv(): DatabaseMode
+8:{
+9:    const env = (process.env.NODE_ENV || 'development').toLowerCase();
+10:    if (env === 'test') return DatabaseMode.Test;
+11:    if (env === 'production') return DatabaseMode.Live;
+12:    return DatabaseMode.Dev;
+13:}
+14:
+15:export const load: PageServerLoad = async () =>
+16:{
+17:    const wrapper = new DatabaseWrapper(getModeFromEnv());
+18:    const db = wrapper.open();
+19:    try {
+20:        const channelDAO = new SourceChannelDAO(db);
+21:        const groupDAO = new VirtualChannelDAO(db);
+22:        const assignDAO = new AssignmentDAO(db);
+23:
+24:        const channels = channelDAO.list();
+25:        const groups = groupDAO.list();
+26:
+(50 more lines below)
+
+
+-------------------------------------------------
+
+[File: \\wsl.localhost\Ubuntu-22.04\home\xorgnz\workspaces\yt-viewer\src\routes\admin\channel-groups\+page.server.ts (73 lines total)]
+1:import type { Actions, PageServerLoad } from './$types';
+2:import { DatabaseWrapper, DatabaseMode } from '$lib/daos/shared/DatabaseWrapper';
+3:import { VirtualChannelDAO } from '$lib/daos/virtualChannelDAO';
+4:import { redirect, fail } from '@sveltejs/kit';
+5:
+6:function envToMode(): DatabaseMode
+7:{
+8:    const env = process.env.NODE_ENV;
+9:    if (env === 'test') return DatabaseMode.Test;
+10:    if (env === 'production') return DatabaseMode.Live;
+11:    return DatabaseMode.Dev;
+12:}
+13:
+14:export const load: PageServerLoad = async () =>
+15:{
+16:    const wrapper = new DatabaseWrapper(envToMode());
+17:    const db = wrapper.open();
+18:    const dao = new VirtualChannelDAO(db);
+19:    const groups = dao.list();
+20:    return { groups };
+21:};
+22:
+23:export const actions: Actions = {
+24:    create: async ({ request }) => {
+25:        const form = await request.formData();
+26:        const name = String(form.get('name') || '').trim();
+27:        if (!name) return fail(400, { message: 'Name is required' });
+28:
+29:        const wrapper = new DatabaseWrapper(envToMode());
+30:        const db = wrapper.open();
+31:        const dao = new VirtualChannelDAO(db);
+32:        try {
+33:            dao.create(name);
+34:        } catch (e: any) {
+35:            return fail(400, { message: e?.message || 'Failed to create group' });
+36:        }
+37:        throw redirect(303, '/admin/channel-groups');
+38:    },
+39:
+40:    rename: async ({ request }) => {
+41:        const form = await request.formData();
+42:        const id = Number(form.get('id'));
+43:        const name = String(form.get('name') || '').trim();
+44:        if (!id || !name) return fail(400, { message: 'Invalid input' });
+45:
+46:        const wrapper = new DatabaseWrapper(envToMode());
+47:        const db = wrapper.open();
+48:        const dao = new VirtualChannelDAO(db);
+49:        try {
+50:            dao.rename(id, name);
+51:        } catch (e: any) {
+52:            return fail(400, { message: e?.message || 'Failed to rename group' });
+53:        }
+54:        throw redirect(303, '/admin/channel-groups');
+55:    },
+56:
+57:    delete: async ({ request }) => {
+58:        const form = await request.formData();
+59:        const id = Number(form.get('id'));
+60:        if (!id) return fail(400, { message: 'Invalid id' });
+61:
+62:        const wrapper = new DatabaseWrapper(envToMode());
+63:        const db = wrapper.open();
+64:        const dao = new VirtualChannelDAO(db);
+65:        try {
+66:            dao.remove(id);
+67:        } catch (e: any) {
+68:            return fail(400, { message: e?.message || 'Failed to delete group' });
+69:        }
+(4 more lines below)
+
+
+-------------------------------------------------
+
+[File: \\wsl.localhost\Ubuntu-22.04\home\xorgnz\workspaces\yt-viewer\src\routes\viewer\+page.server.ts (117 lines total)]
+1:import { DatabaseWrapper, DatabaseMode } from '$lib/daos/shared/DatabaseWrapper';
+2:import { VideoDAO } from '$lib/daos/videoDAO';
+3:import { SourceChannelDAO } from '$lib/daos/sourceChannelDAO';
+4:import { VirtualChannelDAO } from '$lib/daos/virtualChannelDAO';
+5:import { ProfileDAO } from '$lib/daos/profileDAO';
+6:import { FlagsDAO } from '$lib/daos/flagsDAO';
+7:import { fail, redirect } from '@sveltejs/kit';
+8:
+9:function getMode(): DatabaseMode
+10:{
+11:    const env = process.env.NODE_ENV || 'development';
+12:    if (env === 'test') return DatabaseMode.Test;
+13:    if (env === 'production') return DatabaseMode.Live;
+14:    return DatabaseMode.Dev;
+
+...
+
+47:    try {
+48:        // Ensure profiles exist for viewer features and resolve active profile by key
+49:        const pDao = new ProfileDAO(db);
+50:        pDao.upsertByKey('default', 'Default');
+51:        pDao.upsertByKey('child', 'Child');
+52:        const profile = pDao.getByKey(profileKey) || pDao.getByKey('default');
+53:        const profileId = profile!.id;
+54:
+55:        const vDao = new VideoDAO(db);
+56:        const cDao = new SourceChannelDAO(db);
+57:        const gDao = new VirtualChannelDAO(db);
+58:
+59:        const [videos, channels, groups] = [
+60:            vDao.listForViewer(filters as any, profileId),
+61:            cDao.list(),
+62:            gDao.list()
+(55 more lines below)
+
+
+-------------------------------------------------
+
+[File: \\wsl.localhost\Ubuntu-22.04\home\xorgnz\workspaces\yt-viewer\src\routes\viewer\groups\+page.server.ts (38 lines total)]
+1:import type { PageServerLoad } from './$types';
+2:import { DatabaseWrapper, DatabaseMode } from '$lib/daos/shared/DatabaseWrapper';
+3:import { VirtualChannelDAO } from '$lib/daos/virtualChannelDAO';
+4:import { ProfileDAO } from '$lib/daos/profileDAO';
+5:
+6:function envToMode(): DatabaseMode
+7:{
+8:    const env = process.env.NODE_ENV;
+9:    if (env === 'test') return DatabaseMode.Test;
+10:    if (env === 'production') return DatabaseMode.Live;
+11:    return DatabaseMode.Dev;
+12:}
+13:
+14:export const load: PageServerLoad = async ({ url }) =>
+15:{
+16:    const profileKey = (url.searchParams.get('profile') || 'default').trim();
+17:
+18:    const dbw = new DatabaseWrapper(envToMode());
+19:    const db = dbw.open();
+20:    try {
+21:        // Ensure profiles exist and resolve passed profile key
+22:        const pDao = new ProfileDAO(db);
+23:        pDao.upsertByKey('default', 'Default');
+24:        pDao.upsertByKey('child', 'Child');
+25:        const profile = pDao.getByKey(profileKey) || pDao.getByKey('default');
+26:
+27:        const gDao = new VirtualChannelDAO(db);
+28:        const groups = gDao.list();
+29:
+30:        return {
+31:            groups,
+32:            profileKey: profile!.key
+(6 more lines below)
+
+
+-------------------------------------------------
+
+[File: \\wsl.localhost\Ubuntu-22.04\home\xorgnz\workspaces\yt-viewer\tests\viewer\query.test.ts (99 lines total)]
+(2 more lines above)
+3:import { ALL_DDL } from '$lib/daos/_schema';
+4:import { SourceChannelDAO } from '$lib/daos/sourceChannelDAO';
+5:import { VideoDAO } from '$lib/daos/videoDAO';
+6:import { ProfileDAO } from '$lib/daos/profileDAO';
+7:import { FlagsDAO } from '$lib/daos/flagsDAO';
+8:import { VirtualChannelDAO } from '$lib/daos/virtualChannelDAO';
+9:import { AssignmentDAO } from '$lib/daos/assignmentDAO';
+10:
+11:describe('VideoDAO.listForViewer filters (task 4.1)', () => {
+12:    let db: Database.Database;
+13:    let profileId: number;
+14:    let ch1Id: number;
+15:    let ch2Id: number;
+16:    let gNewsId: number;
+17:    let baseNow: number;
+18:
+19:    beforeEach(() => {
+20:        db = new Database(':memory:');
+21:        for (const ddl of ALL_DDL) db.exec(ddl);
+22:
+23:        const profiles = new ProfileDAO(db);
+24:        profiles.upsertByKey('default', 'Default');
+25:        profileId = profiles.getByKey('default')!.id;
+26:
+27:        const chDao = new SourceChannelDAO(db);
+28:        chDao.upsert({ youtube_id: 'UC_CH1', title: 'Channel One', description: '', thumbnail_url: null, published_at: null } as any);
+29:        chDao.upsert({ youtube_id: 'UC_CH2', title: 'Channel Two', description: '', thumbnail_url: null, published_at: null } as any);
+30:        ch1Id = chDao.getByExternalId('UC_CH1')!.id;
+31:        ch2Id = chDao.getByExternalId('UC_CH2')!.id;
+32:
+33:        const cgDao = new VirtualChannelDAO(db);
+34:        gNewsId = cgDao.create('News').id;
+35:        const asg = new AssignmentDAO(db);
+36:        asg.add(ch2Id, gNewsId); // put channel 2 into News group
+37:
+38:        const vDao = new VideoDAO(db);
+(61 more lines below)
+
+
+-------------------------------------------------
+
