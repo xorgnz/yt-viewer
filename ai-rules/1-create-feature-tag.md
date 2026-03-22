@@ -1,3 +1,7 @@
+---
+version: 1.0.0
+timestamp: 2026-02-27 15:40
+---
 # Rule: Creating a Feature Tag
 
 ## Goal
@@ -55,7 +59,6 @@ Once created, the feature tag is used to name all related files:
 
 - `{feature-tag}-scope.md` - High-level scope document
 - `{feature-tag}-prd.md` - Product requirements document
-- `{feature-tag}-techstack.md` - Technology stack decisions
 - `{feature-tag}-tasks.md` - Task breakdown and tracking
 
 ## Example Interaction
@@ -70,7 +73,6 @@ I propose the feature tag: 03-user-auth
 This will be used for all files:
 - 03-user-auth-scope.md
 - 03-user-auth-prd.md
-- 03-user-auth-techstack.md
 - 03-user-auth-tasks.md
 
 Does this work for you, or would you prefer a different identifier?"
@@ -109,4 +111,4 @@ AI: "Great! Feature tag '03-user-auth' is confirmed. Let's proceed to create the
 2. Feature tag must be unique within the project
 3. Once confirmed, use this tag consistently for ALL related files
 4. The tag should be memorable enough that the user can reference it easily (e.g., "Let's work on feature 03")
-5. After confirming the tag, proceed immediately to creating the scope document using rule `1-create-scope.md`
+5. Do not proceed creating the scope document. I will instruct you to do this explicitly.

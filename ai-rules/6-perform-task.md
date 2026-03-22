@@ -1,3 +1,7 @@
+---
+version: 1.0.0
+timestamp: 2026-02-27 15:40
+---
 
 ## Goal
 
@@ -13,7 +17,8 @@ To guide an AI assistant in executing development tasks from structured task lis
 ### Feature Identification
 
 1. **With Feature Tag:** When given a specific feature tag (e.g., "Work on feature 01-user-auth"), use the task file at `/ai-work/01-user-auth-tasks.md`
-2. **Without Feature Tag:** If no feature is specified but multiple features exist:
+2. **With Direct File Reference:** If the user points directly to a task file, including through UI `@` notation, use that file as the source of truth for the requested work.
+3. **Without Feature Tag:** If no feature is specified but multiple features exist:
    - List available feature task files in the `/ai-work` directory
    - Ask the user which feature to work on
    - Example: "I found multiple features: 01-user-auth, 02-payment-gateway. Which feature should I work on?"
@@ -42,8 +47,6 @@ Tasks are structured as hierarchical markdown checklists:
 ```markdown
 ## Tasks
 
-- [ ] 0.0 Create feature branch
-  - [ ] 0.1 Create and checkout a new branch for this feature
 - [ ] 1.0 Parent Task Title
   - [ ] 1.1 Sub-task description
   - [ ] 1.2 Sub-task description
@@ -72,10 +75,10 @@ Tasks are structured as hierarchical markdown checklists:
 ## Multiple Features
 
 When multiple features exist in the project:
-- Each feature has its own set of files: `{feature-tag}-scope.md`, `{feature-tag}-prd.md`, `{feature-tag}-techstack.md`, `{feature-tag}-tasks.md`
+- Each feature typically has its own set of files: `{feature-tag}-scope.md`, `{feature-tag}-prd.md`, and `{feature-tag}-tasks.md`
+- Shared technology decisions should be read from `/ai-work/00-master-techstack.md`
 - Always confirm which feature you're working on before starting
 - Keep task tracking separate per feature
-- Branch names should include the feature tag (e.g., `feature/01-user-auth`)
 
 ## General Working Principles
 
@@ -84,7 +87,8 @@ When multiple features exist in the project:
 3. **Documentation:** Only create documentation files when explicitly requested
 4. **Clarity:** Ask clarifying questions if task requirements are ambiguous
 5. **Scope:** Complete only the specified task; do not expand scope without approval
-6. **Application Server:** **NEVER** attempt to run the application server (e.g., `npm run dev`, `npm start`, or similar long-running processes) from your terminal. These commands will lock up your session. Instead, prompt the user to start the server in a separate terminal process. (See `.junie/guidelines.md` for the global policy.)
+6. **Application Server:** **NEVER** attempt to run the application server (e.g., `npm run dev`, `npm start`, or similar long-running processes) from your terminal unless the user explicitly asks. Prefer asking the user to start long-running processes in a separate terminal.
+7. **Environment:** Follow the repository guidance in `AGENTS.md` for command, style, and workflow conventions.
 
 ## Response Format
 
@@ -98,12 +102,15 @@ When presenting information:
 
 ```
 User: "Work on task 1.1 for feature 01-user-auth"
-Agent: [Sets MARKER_JUNIE_TERMINAL=1, then proceeds to work on task 1.1 in /ai-work/01-user-auth-tasks.md]
+Agent: [Proceeds to work on task 1.1 in /ai-work/01-user-auth-tasks.md]
 
 User: "Start working on 01-user-auth"
 Agent: "I've reviewed the task list for feature 01-user-auth. The next uncompleted task is 2.3.1 'Define reference Lat/Long for scene origin'. Shall I proceed with this task?"
 User: "Yes"
 Agent: [Begins work on task 2.3.1 and updates /ai-work/01-user-auth-tasks.md]
+
+User: "Rule: @ai-rules/6-perform-task.md Feature: @ai-work/01-user-auth-tasks.md Task: 2.3.1"
+Agent: [Uses the referenced task file directly and performs only task 2.3.1 after confirming approval if needed]
 
 User: "What features are available?"
 Agent: "I found these features in /ai-work:
@@ -114,8 +121,7 @@ Which feature would you like to work on?"
 
 ## Final Instructions
 
-1. **Always** set `MARKER_JUNIE_TERMINAL=1` before executing any bash commands
-2. **Never** start tasks without explicit user approval
-3. **Always** update task checkboxes immediately upon completion
-4. Refer to `.junie/guidelines.md` for environment and command conventions
-5. **Always** work within the scope of the assigned task
+1. **Never** start tasks without explicit user approval
+2. **Always** update task checkboxes immediately upon completion
+3. Refer to `AGENTS.md` for environment and command conventions
+4. **Always** work within the scope of the assigned task

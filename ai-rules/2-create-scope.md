@@ -1,21 +1,25 @@
+---
+version: 1.0.0
+timestamp: 2026-02-27 15:40
+---
 # Rule: Creating a High-Level Project Scope
 
 ## Goal
 
-To guide an AI assistant in working with the user to create a clear, high-level scope document that captures the essence of a feature or project before diving into detailed requirements. The scope serves as the foundation for PRD generation and ensures alignment on vision and boundaries.
+To guide an AI assistant in working with the user to create a concise, high-level scope document that captures why a feature exists and where its boundaries are before diving into detailed requirements.
 
 ## Prerequisites
 
-- A feature tag must be created first using rule `0-create-feature-tag.md`
+- A feature tag must be created first using rule `1-create-feature-tag.md`
 - The feature tag format is `{NN}-{identifier}` (e.g., `01-user-auth`)
 
 ## Process
 
 1.  **Receive Initial Request:** The user provides a brief idea, feature request, or project concept.
-2.  **Create or Confirm Feature Tag:** If not already created, generate a feature tag following rule `0-create-feature-tag.md`. If a tag exists, confirm which feature you're working on.
+2.  **Create or Confirm Feature Tag:** If not already created, generate a feature tag following rule `1-create-feature-tag.md`. If a tag exists, confirm which feature you're working on.
 3.  **Ask Discovery Questions:** Guide the user through a structured set of discovery questions to understand the vision, constraints, and boundaries. Use the question framework below.
 4.  **Summarize Understanding:** After receiving answers, provide a concise summary of what you understand and ask for confirmation or corrections.
-5.  **Generate Scope Document:** Create a high-level scope document using the template structure below.
+5.  **Generate Scope Document:** Create a short, high-level scope document using the template structure below.
 6.  **Save Scope Document:** Save the document as `{feature-tag}-scope.md` in the `/ai-work` directory.
 
 ## Discovery Questions Framework
@@ -103,7 +107,7 @@ Ask 5-7 questions maximum, focusing on these key areas:
 2. [Secondary objective]
 3. [Tertiary objective]
 
-## Key Features (High-Level)
+## In Scope
 
 - [Feature 1]
 - [Feature 2]
@@ -116,33 +120,10 @@ Ask 5-7 questions maximum, focusing on these key areas:
 - [What will NOT be included]
 - [What will NOT be included]
 
-## Success Criteria
+## Assumptions and Constraints
 
-[How success will be measured]
-
-## Technical Context
-
-[Any relevant technical constraints, integrations, or considerations]
-
-## Timeline
-
-[Rough timeline or urgency level]
-
-## Discovery Q&A
-
-### Questions Asked:
-
-1. [Question 1]
-2. [Question 2]
-3. [Question 3]
-...
-
-### Answers Received:
-
-1. [Answer 1]
-2. [Answer 2]
-3. [Answer 3]
-...
+- [Important assumption or boundary]
+- [Important assumption or boundary]
 
 ## Next Steps
 
@@ -170,6 +151,5 @@ Ask 5-7 questions maximum, focusing on these key areas:
 1. Keep the scope high-level - avoid diving into implementation details
 2. Focus on "what" and "why", not "how"
 3. Help the user think through boundaries and constraints
-4. Make sure to document both questions and answers in the final scope file
+4. Do not turn the scope file into a detailed notes log or requirements document
 5. Do NOT proceed to create a PRD unless explicitly asked
-6. After creating the scope, suggest: "Would you like me to create a detailed PRD based on this scope?"

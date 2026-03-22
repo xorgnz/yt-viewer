@@ -1,23 +1,28 @@
+---
+version: 1.0.0
+timestamp: 2026-02-27 15:40
+---
 # Rule: Technology Stack Selection and Documentation
 
 ## Goal
 
-To guide an AI assistant in evaluating technical requirements from the PRD, proposing appropriate technology options, facilitating user decision-making, and documenting the chosen technology stack.
+To guide an AI assistant in evaluating technical requirements from the PRD, proposing appropriate technology options, facilitating user decision-making, and documenting technology choices with minimal duplication across features.
 
 ## When to Use
 
-This rule should be executed **after** creating the PRD (step 2) and **before** creating the task list (step 4). It serves as step 3 in the development workflow.
+This rule should be executed **after** creating the PRD (step 3) and **before** creating the task list (step 5). It serves as step 4 in the development workflow.
 
 ## Prerequisites
 
-- A feature tag must exist (created via rule `0-create-feature-tag.md`)
+- A feature tag must exist (created via rule `1-create-feature-tag.md`)
 - A completed PRD document exists in `/ai-work/{feature-tag}-prd.md`
+- The master technology stack should be treated as the primary application-wide source of truth at `/ai-work/00-master-techstack.md` if it exists
 
 ## Output
 
 - **Format:** Markdown (`.md`)
 - **Location:** `/ai-work/`
-- **Filename:** `{feature-tag}-techstack.md` (e.g., `01-user-auth-techstack.md`)
+- **Filename:** `00-master-techstack.md`
 
 ## Process
 
@@ -31,6 +36,10 @@ Review the PRD to identify:
 - Testing and deployment needs
 - Development environment constraints
 - Security and compliance requirements
+
+Also compare the feature requirements against `/ai-work/00-master-techstack.md` if it exists:
+- Identify which needs are already covered by the shared application stack
+- Identify only genuinely new technologies, dependencies, or architectural layers required by this feature
 
 ### 2. Identify Technology Decision Points
 
@@ -91,19 +100,24 @@ Format the proposal as a clear, scannable document:
   - Specify their own preferences not listed
 - **Wait for user confirmation** before proceeding to documentation
 
-### 6. Document Final Choices
+### 6. Document Final Choices With Minimal Duplication
 
-Once the user has made all decisions, create or update `/ai-work/{feature-tag}-techstack.md` with:
+Once the user has made all decisions:
+
+- If the feature introduces a new application-wide technology, dependency, or architectural layer, update `/ai-work/00-master-techstack.md`
+- For each master stack entry, record which feature first required it using a field such as `First Required By`
+
+### 6A. Master Tech Stack Structure
 
 ```markdown
-# Technology Stack: [Project/Feature Name]
+# Master Technology Stack: [Project Name]
 
 **Created:** [Date]
-**Status:** Approved
+**Status:** Approved baseline
 
 ## Overview
 
-Brief description of the project and its technical requirements.
+Brief description of the shared application stack.
 
 ## Technology Decisions
 
@@ -111,11 +125,13 @@ Brief description of the project and its technical requirements.
 - **Choice:** [Selected Technology]
 - **Rationale:** [Why this was chosen]
 - **Version:** [If applicable]
+- **First Required By:** [Feature tag]
 
 ### [Category 2]
 - **Choice:** [Selected Technology]
 - **Rationale:** [Why this was chosen]
 - **Version:** [If applicable]
+- **First Required By:** [Feature tag]
 
 [Continue for all categories...]
 
@@ -154,22 +170,23 @@ Brief description of the project and its technical requirements.
 
 ### 7. Save and Confirm
 
-- Save the completed `{feature-tag}-techstack.md` file to `/ai-work/`
-- Confirm with the user that the technology stack is documented and approved
-- Note that this document should be referenced during task implementation
+- Save the updated `00-master-techstack.md` if any shared technology decisions changed
+- Confirm with the user whether the feature added anything new to the master stack
+- Note that implementation should use the master stack as the source of truth
 
 ## Interaction Model
 
 1. **Analysis Phase:** AI reviews PRD silently
 2. **Proposal Phase:** AI presents technology options with recommendations
 3. **Decision Phase:** User reviews and makes choices (may be iterative with discussion)
-4. **Documentation Phase:** AI documents final decisions in standard format
+4. **Documentation Phase:** AI updates the master stack if needed
 5. **Confirmation:** AI confirms completion and readiness to proceed to task implementation
 
 ## Important Notes
 
 - **Don't overwhelm:** Only propose decisions for technologies actually needed by the project
 - **Be pragmatic:** Consider existing project setup if this is adding to an existing codebase
+- **Avoid duplication:** Reuse the master stack whenever possible and only document deltas at the feature level
 - **Stay current:** Recommend stable, well-supported technologies unless cutting-edge features are required
 - **Document constraints:** If certain choices are constrained by existing decisions, note this clearly
 - **Version awareness:** Specify version ranges when important for compatibility
@@ -185,15 +202,10 @@ AI: [Presents formatted document with options and recommendations]
 
 User: "I'll go with your recommendations for everything except the database - use PostgreSQL instead of SQLite."
 
-AI: [Updates 01-user-auth-techstack.md with user's choices]
-AI: "Technology stack documented in /ai-work/01-user-auth-techstack.md. Key choices:
-- Frontend: React 18
-- Backend: Express.js
-- Database: PostgreSQL (per your preference)
-- Testing: Jest
-- Styling: Tailwind CSS
+AI: [Updates 00-master-techstack.md with any new shared decisions]
+AI: "Technology stack documented. The master stack was updated with PostgreSQL as first required by 01-user-auth.
 
-Ready to proceed to task creation (step 4)?"
+Ready to proceed to task creation (step 5)?"
 ```
 
 ## Target Audience
