@@ -20,6 +20,7 @@
 
 - Do not start long-running processes in-session, including dev servers, watchers, or persistent background jobs, unless the user explicitly asks.
 - If a command may be slow, state the purpose briefly before running it.
+- If reproducing an issue depends on a local dev server or another environment-sensitive command that is easier for the user to run directly, prefer asking the user to run it and share the output rather than spending time fighting local shell or process-capture limitations.
 - Follow higher-priority system, developer, and tool instructions when they conflict with repository guidance.
 
 ## Editing Expectations
