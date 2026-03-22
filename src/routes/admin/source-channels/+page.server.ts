@@ -4,6 +4,7 @@ import { SourceChannelDAO } from '$lib/daos/sourceChannelDAO';
 import { redirect, fail } from '@sveltejs/kit';
 import { YouTubeClient, YouTubeApiError } from '$lib/youtube/youTubeClient';
 import { importChannelFromYouTube } from '$lib/youtube/importer';
+import { resolveChannelReference } from '$lib/youtube/fetch';
 import { env } from '$env/dynamic/private';
 
 function getMode(): DatabaseMode
@@ -29,22 +30,40 @@ export const load: PageServerLoad = async () =>
 export const actions: Actions = {
     create: async ({ request }) => {
         const form = await request.formData();
-        const youtube_id = String(form.get('youtube_id') || '').trim();
+        const youtubeInput = String(form.get('youtube_id') || '').trim();
         const title = String(form.get('title') || '').trim();
         const description = String(form.get('description') || '');
         const thumbnail_url = String(form.get('thumbnail_url') || '') || null;
         const published_at_str = String(form.get('published_at') || '').trim();
         const published_at = published_at_str ? Number(published_at_str) : null;
 
-        if (!youtube_id || !title) {
+        if (!youtubeInput || !title) {
             return fail(400, { message: 'youtube_id and title are required.' });
+        }
+
+        let yt: YouTubeClient;
+        try {
+            yt = new YouTubeClient();
+        } catch (e: any) {
+            return fail(500, { message: e?.message || 'YouTube API key not configured.' });
+        }
+
+        const resolved = await resolveChannelReference(yt, youtubeInput);
+        if (!resolved.channelId) {
+            return fail(400, { message: 'Enter a valid YouTube channel ID, handle, or channel URL.' });
         }
 
         const dbw = new DatabaseWrapper(getMode());
         const db = dbw.open();
         try {
             const dao = new SourceChannelDAO(db);
-            dao.upsert({ youtube_id, title, description, thumbnail_url, published_at } as any);
+            dao.upsert({
+                youtube_id: resolved.channelId,
+                title,
+                description,
+                thumbnail_url,
+                published_at
+            } as any);
         } finally {
             dbw.close();
         }
@@ -111,7 +130,6 @@ export const actions: Actions = {
             const existing = dao.get(id);
             if (!existing) return fail(404, { message: 'SourceChannel not found.' });
 
-            // Instantiate YouTube client (requires YOUTUBE_API_KEY in env)
             let yt: YouTubeClient;
             try {
                 yt = new YouTubeClient();
@@ -124,7 +142,6 @@ export const actions: Actions = {
                 if (result.channelId === null) {
                     return fail(400, { message: 'Invalid or unknown YouTube channel ID. Please verify the ID starts with "UC" and is correct.' });
                 }
-                // Mark refresh time on success
                 dao.markRefreshed(id, Date.now());
             } catch (e: any) {
                 console.error('Refresh failed for channel', existing.youtube_id, e);

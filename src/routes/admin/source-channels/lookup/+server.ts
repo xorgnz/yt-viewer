@@ -1,6 +1,6 @@
 import type { RequestHandler } from './$types';
 import { YouTubeClient, YouTubeApiError } from '$lib/youtube/youTubeClient';
-import { fetchChannelMetadata } from '$lib/youtube/fetch';
+import { fetchChannelMetadata, resolveChannelReference } from '$lib/youtube/fetch';
 
 export const GET: RequestHandler = async ({ url }) =>
 {
@@ -17,10 +17,14 @@ export const GET: RequestHandler = async ({ url }) =>
     }
 
     try {
-        const item = await fetchChannelMetadata(yt, youtubeId);
-        console.log(item);
+        const resolved = await resolveChannelReference(yt, youtubeId);
+        if (!resolved.channelId) {
+            return new Response(JSON.stringify({ ok: false, error: 'SourceChannel not found for the provided ID, handle, or URL.' }), { status: 404 });
+        }
+
+        const item = await fetchChannelMetadata(yt, resolved.channelId);
         if (!item) {
-            return new Response(JSON.stringify({ ok: false, error: 'SourceChannel not found for the provided ID.' }), { status: 404 });
+            return new Response(JSON.stringify({ ok: false, error: 'SourceChannel not found for the provided ID, handle, or URL.' }), { status: 404 });
         }
 
         const snippet = item.snippet || {};
