@@ -35,12 +35,38 @@ The AI must not commit automatically when using this rule. It should:
 feat: <feature-tag>-<task id> - <description>
 ```
 
+Ad hoc feature commits are also allowed when the user wants to make a focused feature addition without treating it as the main task-completion commit.
+
+Ad hoc feature format:
+
+```text
+feat: <feature-tag>-<task id>+ - <description>
+```
+
+## Follow-Up Commit Prefixes
+
+The following explicit follow-up prefixes are also allowed when the user is preparing a commit that builds on the most recently completed task rather than representing the main task-completion commit:
+
+- `tidy`
+- `style`
+- `fix`
+- `docs`
+- `mgmt`
+- `feat`
+
+Follow-up format:
+
+```text
+<prefix>: <feature-tag>-<task id>+ - <description>
+```
+
 ## Process
 
 1. **Identify the Active Feature and Task**
    - Read `/ai-work/00-feature-status.md`
    - Use the active feature and branch as the default and expected source of truth
    - If the user does not provide a task ID, infer it from the active feature task list by finding the most recently completed task that aligns with the current diff
+   - If the user explicitly invokes one of the allowed follow-up prefixes, including ad hoc `feat`, use the most recently completed task in the active feature as the default task context unless the user provides a different task ID
    - If the task is ambiguous, stop and ask the user to clarify before proposing a commit
 
 2. **Review Task Context**
@@ -63,6 +89,7 @@ feat: <feature-tag>-<task id> - <description>
 
 - If the user says only `run 8`, assume the active feature
 - Use the current diff plus the active feature task list to infer the most recently completed task
+- If the user says `run 8 tidy`, `run 8 style`, `run 8 fix`, `run 8 docs`, `run 8 mgmt`, or `run 8 feat`, assume the active feature and use the most recently completed task as the `+` context for the commit message
 - If there are no changes, do not propose a commit
 - If the diff appears to span multiple tasks or unrelated work, surface that clearly and ask the user how to scope the commit
 
@@ -77,5 +104,7 @@ feat: <feature-tag>-<task id> - <description>
 2. Always inspect the active feature and current Git branch first
 3. Use the active feature by default unless the user is only clarifying scope
 4. Prefer a narrow, task-aligned commit over a broad convenience commit
-5. Use the exact prefix format `feat: <feature-tag>-<task id> - <description>`
-6. Surface unrelated changes clearly instead of silently bundling them
+5. Use the exact main-task format `feat: <feature-tag>-<task id> - <description>` for main task-completion commits
+6. Use the exact ad hoc feature format `feat: <feature-tag>-<task id>+ - <description>` when the user explicitly requests ad hoc `feat`
+7. Use the exact follow-up format `<prefix>: <feature-tag>-<task id>+ - <description>` for `tidy`, `style`, `fix`, `docs`, and `mgmt`
+8. Surface unrelated changes clearly instead of silently bundling them
