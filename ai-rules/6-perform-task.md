@@ -38,6 +38,8 @@ To guide an AI assistant in executing development tasks from structured task lis
 
 ## Task Selection Process
 
+Use the active feature from `/ai-work/00-feature-status.md` as the default and expected implementation target.
+
 1. **With Task Number**
    - When given a specific task number, begin work on that task for the active feature after confirming the request is explicit
 
@@ -46,6 +48,11 @@ To guide an AI assistant in executing development tasks from structured task lis
    - Identify the next unchecked task
    - Present it to the user
    - Wait for explicit approval before proceeding
+
+3. **If the User Also Names a Feature**
+   - Treat the active feature as the source of truth
+   - If the named feature matches the active feature, proceed normally
+   - If the named feature does not match the active feature, do not proceed and tell the user to switch features first by using the feature-change workflow
 
 ## Task Execution Rules
 
@@ -74,6 +81,7 @@ As each task or sub-task is completed:
 
 1. Never start tasks without explicit user approval
 2. Always use the active feature in `/ai-work/00-feature-status.md`
-3. Treat paused features as inactive until switched back in
-4. Refuse routine edits to completed features
-5. Always update task checkboxes immediately upon completion
+3. A feature argument is optional and must not override the active feature
+4. Treat paused features as inactive until switched back in
+5. Refuse routine edits to completed features
+6. Always update task checkboxes immediately upon completion

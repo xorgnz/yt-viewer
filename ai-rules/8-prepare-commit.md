@@ -39,8 +39,9 @@ feat: <feature-tag>-<task id> - <description>
 
 1. **Identify the Active Feature and Task**
    - Read `/ai-work/00-feature-status.md`
-   - Use the active feature and branch as the default source of truth
-   - Confirm the task ID
+   - Use the active feature and branch as the default and expected source of truth
+   - If the user does not provide a task ID, infer it from the active feature task list by finding the most recently completed task that aligns with the current diff
+   - If the task is ambiguous, stop and ask the user to clarify before proposing a commit
 
 2. **Review Task Context**
    - Read `/ai-work/{feature-tag}-tasks.md`
@@ -58,6 +59,13 @@ feat: <feature-tag>-<task id> - <description>
    - Present the proposed message and file list
    - Wait for explicit user approval
 
+## Default Behavior
+
+- If the user says only `run 8`, assume the active feature
+- Use the current diff plus the active feature task list to infer the most recently completed task
+- If there are no changes, do not propose a commit
+- If the diff appears to span multiple tasks or unrelated work, surface that clearly and ask the user how to scope the commit
+
 ## Non-Active and Completed Feature Behavior
 
 - Do not prepare commits for a paused feature until it has been switched back to active
@@ -67,6 +75,7 @@ feat: <feature-tag>-<task id> - <description>
 
 1. Do not create the commit until the user explicitly approves the message and scope
 2. Always inspect the active feature and current Git branch first
-3. Prefer a narrow, task-aligned commit over a broad convenience commit
-4. Use the exact prefix format `feat: <feature-tag>-<task id> - <description>`
-5. Surface unrelated changes clearly instead of silently bundling them
+3. Use the active feature by default unless the user is only clarifying scope
+4. Prefer a narrow, task-aligned commit over a broad convenience commit
+5. Use the exact prefix format `feat: <feature-tag>-<task id> - <description>`
+6. Surface unrelated changes clearly instead of silently bundling them
