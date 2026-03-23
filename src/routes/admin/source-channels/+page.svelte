@@ -82,107 +82,110 @@
     }
 </script>
 
-<h1>Source Channels</h1>
+<div class="page stack">
+    <section class="panel">
+        <h1>Source Channels</h1>
+        <h2>Add Source Channel</h2>
+        <form method="post" action="?/create" class="stack">
+            <div class="fields">
+                <label>YouTube Channel
+                    <input
+                        name="youtube_id"
+                        required
+                        placeholder="UC..., @Numberblocks, or https://www.youtube.com/@Numberblocks"
+                    />
+                </label>
+                <label>Title
+                    <input name="title" required />
+                </label>
+            </div>
+            <div class="inline-actions">
+                <button type="button" on:click={fetchFromYouTube} disabled={creating}>Fetch from YouTube</button>
+                {#if lookupStatus}
+                    <span class="status">{lookupStatus}</span>
+                {/if}
+            </div>
+            <div class="fields">
+                <label>Description
+                    <input name="description" />
+                </label>
+                <label>Thumbnail URL
+                    <input name="thumbnail_url" />
+                </label>
+                <label>Published (ms)
+                    <input name="published_at" type="number" />
+                </label>
+            </div>
+            <div class="inline-actions">
+                <button type="submit">Add</button>
+            </div>
+        </form>
+    </section>
 
-<section class="create">
-    <h2>Add Source Channel</h2>
-    <form method="post" action="?/create">
-        <div class="row">
-            <label>YouTube Channel
-                <input
-                    name="youtube_id"
-                    required
-                    placeholder="UC..., @Numberblocks, or https://www.youtube.com/@Numberblocks"
-                />
-            </label>
-            <label>Title
-                <input name="title" required />
-            </label>
-        </div>
-        <div class="row">
-            <button type="button" on:click={fetchFromYouTube} disabled={creating}>Fetch from YouTube</button>
-            {#if lookupStatus}
-                <span class="status">{lookupStatus}</span>
-            {/if}
-        </div>
-        <div class="row">
-            <label>Description
-                <input name="description" />
-            </label>
-            <label>Thumbnail URL
-                <input name="thumbnail_url" />
-            </label>
-            <label>Published (ms)
-                <input name="published_at" type="number" />
-            </label>
-        </div>
-        <button type="submit">Add</button>
-    </form>
-    <hr />
-</section>
-
-<section class="list">
-    <h2>Existing Source Channels</h2>
-    {#if data.channels.length === 0}
-        <p>No source channels yet.</p>
-    {:else}
-        <table>
-            <thead>
-                <tr>
-                    <th>Title</th>
-                    <th>YouTube ID</th>
-                    <th>Description</th>
-                    <th>Thumb</th>
-                    <th>Published</th>
-                    <th>Last Refreshed</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                {#each data.channels as ch}
-                    <tr>
-                        <td>{ch.title}</td>
-                        <td><code>{ch.youtube_id}</code></td>
-                        <td class="desc">{ch.description}</td>
-                        <td>
-                            {#if ch.thumbnail_url}
-                                <img src={ch.thumbnail_url} alt={`${ch.title} thumbnail`} class="thumb-preview" />
-                            {:else}
-                                <span class="muted">No image</span>
-                            {/if}
-                        </td>
-                        <td>{fmtDate(ch.published_at)}</td>
-                        <td>{fmtDateTime(ch.last_refreshed_at)}</td>
-                        <td class="actions">
-                            <form method="post" action="?/refresh" style="display:inline; margin-left: .25rem;">
-                                <input type="hidden" name="id" value={ch.id} />
-                                <button type="submit">Refresh</button>
-                            </form>
-                            <form method="post" action="?/delete" style="display:inline">
-                                <input type="hidden" name="id" value={ch.id} />
-                                <button type="submit">Delete</button>
-                            </form>
-                        </td>
-                    </tr>
-                {/each}
-            </tbody>
-        </table>
-    {/if}
-</section>
+    <section class="panel">
+        <h2>Existing Source Channels</h2>
+        {#if data.channels.length === 0}
+            <p class="muted">No source channels yet.</p>
+        {:else}
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Title</th>
+                            <th>YouTube ID</th>
+                            <th>Description</th>
+                            <th>Thumb</th>
+                            <th>Published</th>
+                            <th>Last Refreshed</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {#each data.channels as ch}
+                            <tr>
+                                <td>{ch.title}</td>
+                                <td><code>{ch.youtube_id}</code></td>
+                                <td class="desc">{ch.description}</td>
+                                <td>
+                                    {#if ch.thumbnail_url}
+                                        <img src={ch.thumbnail_url} alt={`${ch.title} thumbnail`} class="thumb-preview" />
+                                    {:else}
+                                        <span class="muted">No image</span>
+                                    {/if}
+                                </td>
+                                <td>{fmtDate(ch.published_at)}</td>
+                                <td>{fmtDateTime(ch.last_refreshed_at)}</td>
+                                <td>
+                                    <div class="inline-actions">
+                                        <form method="post" action="?/refresh" class="inline-form">
+                                            <input type="hidden" name="id" value={ch.id} />
+                                            <button type="submit">Refresh</button>
+                                        </form>
+                                        <form method="post" action="?/delete" class="inline-form">
+                                            <input type="hidden" name="id" value={ch.id} />
+                                            <button type="submit" class="btn-danger">Delete</button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                        {/each}
+                    </tbody>
+                </table>
+            </div>
+        {/if}
+    </section>
+</div>
 
 <style>
-    h1 { margin: 0 0 1rem 0; }
-    section.create { margin: 1rem 0 2rem; }
-    form { margin: 0.25rem 0; }
-    .row { display: flex; gap: 1rem; margin: 0.25rem 0; flex-wrap: wrap; }
-    label { display: flex; flex-direction: column; font-size: 0.9rem; }
-    table { width: 100%; border-collapse: collapse; }
-    th, td { border: 1px solid #ddd; padding: 0.5rem; vertical-align: top; }
-    td.actions { white-space: nowrap; }
-    input { min-width: 10ch; }
-    .status { margin-left: 0.5rem; font-size: 0.9rem; color: #555; }
-    code { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
-    .thumb-preview { width: 120px; height: auto; display: block; border: 1px solid #ccc; border-radius: 3px; }
-    .muted { color: #777; font-style: italic; }
-    td.desc { max-width: 40ch; }
+    .thumb-preview {
+        width: 120px;
+        height: auto;
+        display: block;
+        border: 1px solid var(--border);
+        border-radius: var(--radius-sm);
+    }
+
+    .desc {
+        max-width: 40ch;
+    }
 </style>

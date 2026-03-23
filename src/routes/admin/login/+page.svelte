@@ -2,14 +2,20 @@
     export let form: any;
 </script>
 
-<h1>Admin Login</h1>
-<form method="POST">
-    <label>
-        Password
-        <input name="password" type="password" required />
-    </label>
-    <button type="submit">Login</button>
-    {#if form?.error}
-        <p style="color:red;">{form.error}</p>
-    {/if}
-</form>
+<div class="page stack">
+    <section class="panel" style="max-width: 28rem;">
+        <h1>Admin Login</h1>
+        <form method="POST" class="stack">
+            <label>
+                Password
+                <input name="password" type="password" required />
+            </label>
+            <div class="inline-actions">
+                <button type="submit">Login</button>
+            </div>
+            {#if form?.error}
+                <p class="error-text">{form.error}</p>
+            {/if}
+        </form>
+    </section>
+</div>

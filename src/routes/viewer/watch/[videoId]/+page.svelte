@@ -45,14 +45,11 @@
                 let duration: number = Number(typeof player.getDuration === 'function' ? player.getDuration() : (data.video.duration_seconds || 0));
                 if (!duration || !Number.isFinite(duration) || duration <= 0) return;
 
-                // PRD rule (line 36): automatically mark watched when reaching last 30s,
-                // or last 25% if the video is under 2 minutes (< 120s).
                 const thresholdTime = duration < 120 ? duration * 0.75 : Math.max(0, duration - 30);
 
                 if (!consideredWatched && current >= thresholdTime)
                 {
-                    consideredWatched = true; // immediately update UI state
-                    // Auto-submit only if not already persisted as watched
+                    consideredWatched = true;
                     if (!data.video.watched)
                     {
                         const form = document.getElementById('watchForm') as HTMLFormElement | null;
@@ -69,7 +66,6 @@
     }
 
     onMount(() => {
-        // Load YouTube IFrame API and create player to observe progress
         function createPlayer()
         {
             if ((window as any).YT && (window as any).YT.Player)
@@ -85,7 +81,6 @@
                     events: {
                         onReady: () => { startPolling(); },
                         onStateChange: (e: any) => {
-                            // Only poll during playback/buffering; otherwise still OK to keep polling timer
                             const YT = (window as any).YT;
                             if (e && YT && typeof YT.PlayerState !== 'undefined') {
                                 if (e.data === YT.PlayerState.PLAYING) startPolling();
@@ -120,93 +115,150 @@
     });
 </script>
 
-<a class="back" href={`/viewer?profile=${encodeURIComponent(data.profileKey)}`}>← Back to video list</a>
+<div class="page stack">
+    <section class="panel">
+        <a class="back" href={`/viewer?profile=${encodeURIComponent(data.profileKey)}`}>Back to video list</a>
 
-<h1 class="title">{data.video.title}</h1>
-<div class="meta">
-    <span class="channel">{data.video.channel_title}</span>
-    {#if data.video.published_at}
-        <span class="dot">•</span>
-        <span class="date">{formatDate(data.video.published_at)}</span>
-    {/if}
-    <span class="badges">
-        {#if data.video.favorite}
-            <span class="badge favorite">★ Favorite</span>
-        {/if}
-        {#if data.video.watched}
-            <span class="badge watched">Watched</span>
-        {/if}
-        {#if data.video.ignored}
-            <span class="badge ignored">Ignored</span>
-        {/if}
-    </span>
-    <span class="dot">•</span>
-    <a class="channel-link" href={`/viewer?channelId=${data.video.channel_id}&profile=${encodeURIComponent(data.profileKey)}`}>More from this channel</a>
-    <span class="dot">•</span>
-    <a class="yt-link" target="_blank" rel="noopener" href={`https://www.youtube.com/watch?v=${data.video.youtube_id}`}>Open on YouTube</a>
-    
-</div>
-
-<div class="player-wrap">
-    <div id="player" class="player" title={data.video.title}></div>
-    <!-- The YT IFrame API will inject an iframe into #player -->
-    </div>
-
-<div class="actions">
-    <form id="watchForm" method="POST" action={`?/markWatched&profile=${encodeURIComponent(data.profileKey)}`}>
-        <input type="hidden" name="intent" value={(consideredWatched || data.video.watched) ? 'unwatch' : 'watch'} />
-        <button type="submit" aria-pressed={consideredWatched || !!data.video.watched}>
-            {#if consideredWatched || data.video.watched}
-                Clear watch status
-            {:else}
-                Mark as Watched
+        <h1 class="title">{data.video.title}</h1>
+        <div class="meta">
+            <span class="channel">{data.video.channel_title}</span>
+            {#if data.video.published_at}
+                <span class="dot">•</span>
+                <span class="date">{formatDate(data.video.published_at)}</span>
             {/if}
-        </button>
-    </form>
-    {#if consideredWatched || data.video.watched}
-        <span class="badge watched watch-indicator" aria-live="polite">✓ Watched</span>
-    {/if}
-    {#if data.video.favorite}
-        <span class="hint">This video is in your Favorites.</span>
-    {/if}
-</div>
+            <span class="badges">
+                {#if data.video.favorite}
+                    <span class="badge favorite">Favorite</span>
+                {/if}
+                {#if data.video.watched}
+                    <span class="badge watched">Watched</span>
+                {/if}
+                {#if data.video.ignored}
+                    <span class="badge ignored">Ignored</span>
+                {/if}
+            </span>
+            <span class="dot">•</span>
+            <a class="channel-link" href={`/viewer?channelId=${data.video.channel_id}&profile=${encodeURIComponent(data.profileKey)}`}>More from this channel</a>
+            <span class="dot">•</span>
+            <a class="yt-link" target="_blank" rel="noopener" href={`https://www.youtube.com/watch?v=${data.video.youtube_id}`}>Open on YouTube</a>
+        </div>
 
-{#if data.video.description}
-<details class="desc">
-    <summary>Description</summary>
-    <pre>{data.video.description}</pre>
-    </details>
-{/if}
+        <div class="player-wrap">
+            <div id="player" class="player" title={data.video.title}></div>
+        </div>
+
+        <div class="inline-actions action-bar">
+            <form id="watchForm" method="POST" action={`?/markWatched&profile=${encodeURIComponent(data.profileKey)}`} class="inline-form">
+                <input type="hidden" name="intent" value={(consideredWatched || data.video.watched) ? 'unwatch' : 'watch'} />
+                <button type="submit" aria-pressed={consideredWatched || !!data.video.watched}>
+                    {#if consideredWatched || data.video.watched}
+                        Clear watch status
+                    {:else}
+                        Mark as Watched
+                    {/if}
+                </button>
+            </form>
+            {#if consideredWatched || data.video.watched}
+                <span class="badge watched watch-indicator" aria-live="polite">Watched</span>
+            {/if}
+            {#if data.video.favorite}
+                <span class="hint">This video is in your Favorites.</span>
+            {/if}
+        </div>
+
+        {#if data.video.description}
+            <details class="desc">
+                <summary>Description</summary>
+                <pre>{data.video.description}</pre>
+            </details>
+        {/if}
+    </section>
+</div>
 
 <style>
-    .back { display: inline-block; margin: .5rem 0 1rem; text-decoration: none; }
-    .title { margin: 0.25rem 0 0.5rem; font-size: 1.25rem; }
-    .meta { color: #555; font-size: 0.9rem; display: flex; align-items: center; flex-wrap: wrap; gap: .25rem .5rem; }
-    .dot { opacity: .5; }
-    .badge { border-radius: 3px; padding: 0 .25rem; font-size: .8rem; border: 1px solid #ddd; }
-    .badge.favorite { color: #c37a00; border-color: #ffd27a; background: #fff7e0; }
-    .badge.watched { color: #0a7a00; border-color: #9ce19c; background: #eefaea; }
-    .badge.ignored { color: #666; border-color: #ccc; background: #f4f4f4; }
-    .player-wrap { position: relative; width: 100%; max-width: 960px; aspect-ratio: 16 / 9; margin: 1rem 0; }
-    .player { width: 100%; height: 100%; border: none; border-radius: 8px; box-shadow: 0 1px 6px rgba(0,0,0,.12); }
-    .desc summary { cursor: pointer; }
-    .desc pre { white-space: pre-wrap; font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, sans-serif; font-size: .95rem; }
-    .actions { display: flex; align-items: center; gap: .5rem; margin: .25rem 0 1rem; }
-    .actions form { display: inline; }
-    .actions button {
-        font-size: .9rem;
-        padding: .35rem .65rem;
-        border: 1px solid #333;
-        background: #444;
-        color: #fff;
-        border-radius: 4px;
+    .back {
+        display: inline-block;
+        margin-bottom: 1rem;
+    }
+
+    .title {
+        margin-bottom: 0.5rem;
+        font-size: 1.5rem;
+    }
+
+    .meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.25rem 0.5rem;
+        color: var(--text-muted);
+        font-size: 0.95rem;
+    }
+
+    .dot {
+        opacity: 0.6;
+    }
+
+    .badges {
+        display: inline-flex;
+        flex-wrap: wrap;
+        gap: 0.35rem;
+        margin-left: 0.25rem;
+    }
+
+    .badge {
+        border-radius: 999px;
+        padding: 0.1rem 0.5rem;
+        font-size: 0.8rem;
+        border: 1px solid var(--border);
+        background: var(--bg-soft);
+        color: var(--text);
+    }
+
+    .badge.favorite {
+        background: rgba(210, 153, 34, 0.16);
+        border-color: rgba(210, 153, 34, 0.4);
+        color: #f3ca78;
+    }
+
+    .badge.watched {
+        background: rgba(47, 158, 68, 0.16);
+        border-color: rgba(47, 158, 68, 0.4);
+        color: #8dd89f;
+    }
+
+    .badge.ignored {
+        background: rgba(255, 255, 255, 0.06);
+        color: var(--text-muted);
+    }
+
+    .player-wrap {
+        position: relative;
+        width: 100%;
+        max-width: 960px;
+        aspect-ratio: 16 / 9;
+        margin: 1rem 0;
+    }
+
+    .player {
+        width: 100%;
+        height: 100%;
+        border: 0;
+        border-radius: var(--radius);
+        box-shadow: var(--shadow-md);
+    }
+
+    .action-bar {
+        margin-bottom: 1rem;
+    }
+
+    .desc summary {
         cursor: pointer;
     }
-    .actions button:hover { background: #3a3a3a; }
-    .actions button:disabled {
-        opacity: .8;
-        cursor: default;
+
+    .desc pre {
+        white-space: pre-wrap;
+        font-family: var(--font-body);
+        font-size: 0.95rem;
+        color: var(--text-muted);
     }
-    .watch-indicator { margin-left: .25rem; }
-    .actions .hint { color: #666; font-size: .85rem; }
 </style>

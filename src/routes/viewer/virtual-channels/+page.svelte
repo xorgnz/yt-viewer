@@ -7,40 +7,53 @@
     const profileKey = data.profileKey || 'default';
 </script>
 
-<h1>Choose a Virtual Channel</h1>
-
-{#if data.groups.length === 0}
-    <p>No virtual channels yet. Ask an admin to create some in Admin → Virtual Channels.</p>
-{:else}
-    <div class="grid">
-        {#each data.groups as g}
-            <a class="group" href={`/viewer?${new URLSearchParams({ groupId: String(g.id), profile: profileKey }).toString()}`}>
-                <div class="name">{g.name}</div>
-                <div class="hint">View videos from this virtual channel</div>
-            </a>
-        {/each}
-    </div>
-{/if}
+<div class="page stack">
+    <section class="panel">
+        <h1>Choose a Virtual Channel</h1>
+        {#if data.groups.length === 0}
+            <p class="muted">No virtual channels yet. Ask an admin to create some in Admin -> Virtual Channels.</p>
+        {:else}
+            <div class="grid">
+                {#each data.groups as g}
+                    <a class="group" href={`/viewer?${new URLSearchParams({ groupId: String(g.id), profile: profileKey }).toString()}`}>
+                        <div class="name">{g.name}</div>
+                        <div class="hint">View videos from this virtual channel</div>
+                    </a>
+                {/each}
+            </div>
+        {/if}
+    </section>
+</div>
 
 <style>
-    h1 { margin: 0 0 1rem 0; }
     .grid {
         display: grid;
         grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-        gap: .9rem;
+        gap: 0.9rem;
     }
+
     .group {
         display: flex;
         flex-direction: column;
-        border: 1px solid #333;
-        border-radius: 6px;
-        padding: .9rem;
-        color: #fff;
-        text-decoration: none;
-        background: #1e1e1e;
-        transition: transform .1s ease, background .15s ease, border-color .15s ease;
+        gap: 0.25rem;
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 0.9rem;
+        color: var(--text);
+        background: var(--bg-panel);
+        box-shadow: var(--shadow-sm);
+        transition: transform 0.1s ease, background 0.15s ease, border-color 0.15s ease;
     }
-    .group:hover { transform: translateY(-1px); background: #222; border-color: #444; }
-    .name { font-weight: 600; font-size: 1.05rem; margin-bottom: .25rem; }
-    .hint { color: #aaa; font-size: .9rem; }
-    </style>
+
+    .group:hover {
+        transform: translateY(-1px);
+        background: var(--bg-elevated);
+        border-color: var(--border-strong);
+        color: var(--text);
+    }
+
+    .name {
+        font-weight: 600;
+        font-size: 1.05rem;
+    }
+</style>

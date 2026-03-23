@@ -51,154 +51,117 @@
     function prevOffset(): number { return Math.max(0, f.offset - f.limit); }
 </script>
 
-<h1>History</h1>
+<div class="page stack">
+    <section class="panel">
+        <h1>History</h1>
+        <form method="GET" class="fields">
+            <label>Profile
+                <select name="profile" bind:value={f.profileKey}>
+                    <option value="default">Default</option>
+                    <option value="child">Child</option>
+                </select>
+            </label>
+            <label>Channel
+                <select name="channelId" value={f.channelId ?? ''}>
+                    <option value="">Any</option>
+                    {#each data.channels as ch}
+                        <option value={ch.id} selected={f.channelId === ch.id}>{ch.title}</option>
+                    {/each}
+                </select>
+            </label>
+            <label>Date from (ms)
+                <input type="number" name="dateFrom" value={f.dateFrom ?? ''} />
+            </label>
+            <label>Date to (ms)
+                <input type="number" name="dateTo" value={f.dateTo ?? ''} />
+            </label>
+            <label>Per page
+                <input type="number" name="limit" min="1" max="1000" value={f.limit} />
+            </label>
+            <input type="hidden" name="offset" value={f.offset} />
+            <div class="inline-actions">
+                <button type="submit">Apply</button>
+            </div>
+        </form>
+    </section>
 
-<form method="GET" class="filters">
-    <div class="row">
-        <label>Profile
-            <select name="profile" bind:value={f.profileKey}>
-                <option value="default">Default</option>
-                <option value="child">Child</option>
-            </select>
-        </label>
-        <label>Channel
-            <select name="channelId" value={f.channelId ?? ''}>
-                <option value="">Any</option>
-                {#each data.channels as ch}
-                    <option value={ch.id} selected={f.channelId === ch.id}>{ch.title}</option>
-                {/each}
-            </select>
-        </label>
-        <label>Date from (ms)
-            <input type="number" name="dateFrom" value={f.dateFrom ?? ''} />
-        </label>
-        <label>Date to (ms)
-            <input type="number" name="dateTo" value={f.dateTo ?? ''} />
-        </label>
-        <label>Per page
-            <input type="number" name="limit" min="1" max="1000" value={f.limit} />
-        </label>
-        <input type="hidden" name="offset" value={f.offset} />
-        <button type="submit">Apply</button>
-    </div>
-</form>
+    <section class="stack">
+        <div class="toolbar">
+            <div>{data.items.length} items</div>
+            <div class="pager">
+                <a class="btn btn-secondary" rel="prev" href={`?${new URLSearchParams({
+                    profile: f.profileKey,
+                    channelId: f.channelId != null ? String(f.channelId) : '',
+                    dateFrom: f.dateFrom != null ? String(f.dateFrom) : '',
+                    dateTo: f.dateTo != null ? String(f.dateTo) : '',
+                    limit: String(f.limit),
+                    offset: String(prevOffset())
+                }).toString()}`}>Prev</a>
+                <a class="btn btn-secondary" rel="next" href={`?${new URLSearchParams({
+                    profile: f.profileKey,
+                    channelId: f.channelId != null ? String(f.channelId) : '',
+                    dateFrom: f.dateFrom != null ? String(f.dateFrom) : '',
+                    dateTo: f.dateTo != null ? String(f.dateTo) : '',
+                    limit: String(f.limit),
+                    offset: String(nextOffset())
+                }).toString()}`}>Next</a>
+            </div>
+            <div class="hint">Date filter: {humanDate(f.dateFrom)} - {humanDate(f.dateTo)}</div>
+            <div class="spacer"></div>
+        </div>
 
-<div class="toolbar">
-    <div>{data.items.length} items</div>
-    <div class="pager">
-        <a rel="prev" href={`?${new URLSearchParams({
-            profile: f.profileKey,
-            channelId: f.channelId != null ? String(f.channelId) : '',
-            dateFrom: f.dateFrom != null ? String(f.dateFrom) : '',
-            dateTo: f.dateTo != null ? String(f.dateTo) : '',
-            limit: String(f.limit),
-            offset: String(prevOffset())
-        }).toString()}`}>Prev</a>
-        <a rel="next" href={`?${new URLSearchParams({
-            profile: f.profileKey,
-            channelId: f.channelId != null ? String(f.channelId) : '',
-            dateFrom: f.dateFrom != null ? String(f.dateFrom) : '',
-            dateTo: f.dateTo != null ? String(f.dateTo) : '',
-            limit: String(f.limit),
-            offset: String(nextOffset())
-        }).toString()}`}>Next</a>
-    </div>
-    <div class="hint">Date filter: {humanDate(f.dateFrom)} — {humanDate(f.dateTo)}</div>
-    <div class="spacer"></div>
+        {#if data.items.length === 0}
+            <p class="muted">No history items match these filters.</p>
+        {:else}
+            <div class="table-wrap">
+                <table class="history">
+                    <thead>
+                        <tr>
+                            <th class="col-time">Watched</th>
+                            <th class="col-title">Title</th>
+                            <th class="col-chan">Channel</th>
+                            <th class="col-actions">Links</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {#each data.items as it}
+                            <tr>
+                                <td class="col-time">{fmtDate(it.watched_at)}</td>
+                                <td class="col-title">{it.title}</td>
+                                <td class="col-chan">{it.channel_title}</td>
+                                <td class="col-actions">
+                                    <div class="inline-actions">
+                                        <a class="btn btn-secondary" href={`/viewer/watch/${it.youtube_id}?profile=${encodeURIComponent(f.profileKey)}`} title="Open watch page">Watch</a>
+                                        <a class="btn btn-secondary" href={`/viewer?channelId=${it.channel_id}&profile=${encodeURIComponent(f.profileKey)}`} title="More from channel">Channel</a>
+                                        <a class="btn btn-secondary" target="_blank" rel="noopener" href={`https://www.youtube.com/watch?v=${it.youtube_id}`} title="Open on YouTube">YouTube</a>
+                                    </div>
+                                </td>
+                            </tr>
+                        {/each}
+                    </tbody>
+                </table>
+            </div>
+        {/if}
+    </section>
 </div>
 
-{#if data.items.length === 0}
-    <p>No history items match these filters.</p>
-{:else}
-    <table class="history">
-        <thead>
-            <tr>
-                <th class="col-time">Watched</th>
-                <th class="col-title">Title</th>
-                <th class="col-chan">Channel</th>
-                <th class="col-actions">Links</th>
-            </tr>
-        </thead>
-        <tbody>
-            {#each data.items as it}
-                <tr>
-                    <td class="col-time">{fmtDate(it.watched_at)}</td>
-                    <td class="col-title">{it.title}</td>
-                    <td class="col-chan">{it.channel_title}</td>
-                    <td class="col-actions">
-                        <a class="btn" href={`/viewer/watch/${it.youtube_id}?profile=${encodeURIComponent(f.profileKey)}`} title="Open watch page">Watch</a>
-                        <a class="btn" href={`/viewer?channelId=${it.channel_id}&profile=${encodeURIComponent(f.profileKey)}`} title="More from channel">Channel</a>
-                        <a class="btn" target="_blank" rel="noopener" href={`https://www.youtube.com/watch?v=${it.youtube_id}`} title="Open on YouTube">YouTube</a>
-                    </td>
-                </tr>
-            {/each}
-        </tbody>
-    </table>
-{/if}
-
 <style>
-    h1 { margin: 0 0 1rem 0; }
-    form.filters { margin: .5rem 0 1rem; }
-    .row { display: flex; flex-wrap: wrap; gap: .75rem; align-items: flex-end; }
-    label { display: flex; flex-direction: column; font-size: .9rem; }
-    input, select { min-width: 12ch; }
-    .toolbar { display: flex; align-items: center; gap: 1rem; margin: .5rem 0; }
-    .toolbar .pager { display: flex; gap: .75rem; }
-    .toolbar .hint { color: #bbb; font-size: .85rem; }
-    .toolbar .spacer { flex: 1; }
+    .col-time {
+        white-space: nowrap;
+        color: var(--text-muted);
+        font-size: 0.9rem;
+    }
 
-    /* Dark theme for history table */
-    table.history {
-        width: 100%;
-        border-collapse: collapse;
-        background: #1e1e1e;
-        border: 1px solid #333;
-        color: #fff;
+    .col-title {
+        font-weight: 500;
     }
-    table.history th, table.history td {
-        padding: .5rem .5rem;
-        border-bottom: 1px solid #2a2a2a;
-        text-align: left;
-    }
-    table.history thead th {
-        background: #2a2a2a;
-        font-weight: 600;
-        font-size: .9rem;
-    }
-    .col-time { white-space: nowrap; color: #bbb; font-size: .9rem; }
-    .col-title { font-weight: 500; }
-    .col-chan { color: #bbb; font-size: .9rem; }
-    .col-actions { white-space: nowrap; }
 
-    a.btn {
-        display: inline-block;
-        margin-right: .35rem;
-        font-size: .8rem;
-        padding: .2rem .5rem;
-        border: 1px solid #333;
-        background: #444;
-        color: #fff;
-        border-radius: 4px;
-        text-decoration: none;
+    .col-chan {
+        color: var(--text-muted);
+        font-size: 0.9rem;
     }
-    a.btn:hover { background: #3a3a3a; }
 
-    /* Dark styling for filter controls and Apply button */
-    form.filters input,
-    form.filters select {
-        background: #222;
-        color: #fff;
-        border: 1px solid #444;
-        padding: .25rem .35rem;
-        border-radius: 4px;
+    .col-actions {
+        white-space: nowrap;
     }
-    form.filters button {
-        border: 1px solid #333;
-        background: #444;
-        color: #fff;
-        border-radius: 4px;
-        padding: .25rem .6rem;
-        cursor: pointer;
-    }
-    form.filters button:hover { background: #3a3a3a; }
 </style>
