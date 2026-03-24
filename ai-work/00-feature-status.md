@@ -1,8 +1,8 @@
 # Feature Status
 
-**Current Feature:** `01-initial`
-**Current Branch:** `feature/01-initial`
-**Last Updated:** `2026-03-22`
+**Current Feature:** `02-vchannel-mgmt`
+**Current Branch:** `feature/02-vchannel-mgmt`
+**Last Updated:** `2026-03-23`
 
 ## Status Values
 
@@ -15,5 +15,5 @@
 
 | Tag | Branch | Status | Created | Completed | Notes |
 | --- | --- | --- | --- | --- | --- |
-| `01-initial` | `feature/01-initial` | `active` | `2026-02-17` |  | Initial YouTube viewer and tracker feature |
-| `02-vchannel-mgmt` | `feature/02-vchannel-mgmt` | `planned` | `2026-03-23` |  | Advanced admin UI for virtual channel source associations and video selection |
+| `01-initial` | `feature/01-initial` | `completed` | `2026-02-17` | `2026-03-23` | Initial YouTube viewer and tracker feature |
+| `02-vchannel-mgmt` | `feature/02-vchannel-mgmt` | `active` | `2026-03-23` |  | Advanced admin UI for virtual channel source associations and video selection |
