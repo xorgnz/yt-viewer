@@ -40,7 +40,7 @@
 - [ ] 1.0 Replace the data model to support virtual-channel source associations with per-association mode and review state
   - [x] 1.1 Redesign the schema for virtual-channel/source-channel associations to store per-association mode, timestamps, and uniqueness constraints
   - [x] 1.2 Add storage for per-association selected-only video review state with `included`, `ignored`, and `not yet reviewed`
-  - [ ] 1.3 Update entity and DAO types to represent association modes, review states, and long/short/unknown video classification
+  - [x] 1.3 Update entity and DAO types to represent association modes, review states, and long/short/unknown video classification
   - [ ] 1.4 Update database creation/reset scripts to use the replacement schema without requiring migration compatibility
 - [ ] 2.0 Add admin routes and server actions for managing a single virtual channel's source-channel associations
   - [ ] 2.1 Add a dedicated admin route for managing an existing virtual channel by ID

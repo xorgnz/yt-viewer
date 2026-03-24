@@ -121,7 +121,7 @@ export class VideoDAO extends SqliteDAO
             params.channelId = filters.channelId;
         }
         if (filters.groupId != null) {
-            groupJoin = 'JOIN virtual_channel_assignments ga ON ga.channel_id = v.channel_id AND ga.group_id = :groupId';
+            groupJoin = 'JOIN virtual_channel_assignments ga ON ga.source_channel_id = v.channel_id AND ga.virtual_channel_id = :groupId';
             params.groupId = filters.groupId;
         }
 

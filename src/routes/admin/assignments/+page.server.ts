@@ -30,8 +30,8 @@ export const load: PageServerLoad = async () =>
             const rows = assignDAO.listForChannel(ch.id);
             for (const r of rows) {
                 assignments.push({
-                    channel_id: (r as any).channel_id,
-                    group_id: (r as any).group_id
+                    channel_id: (r as any).source_channel_id,
+                    group_id: (r as any).virtual_channel_id
                 });
             }
         }

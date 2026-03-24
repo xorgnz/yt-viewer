@@ -1,3 +1,5 @@
+export type VideoLengthClassification = 'long' | 'short' | 'unknown';
+
 export type VideoFields = {
     id: number;
     youtube_id: string;
@@ -7,6 +9,7 @@ export type VideoFields = {
     published_at?: number | null;
     duration_seconds?: number | null;
     thumbnail_url?: string | null;
+    length_classification?: VideoLengthClassification | null;
 };
 
 export class Video
@@ -19,6 +22,7 @@ export class Video
     readonly published_at?: number | null; // unix epoch ms
     readonly duration_seconds?: number | null;
     readonly thumbnail_url?: string | null;
+    readonly length_classification?: VideoLengthClassification | null;
 
     constructor(data: VideoFields)
     {
@@ -30,6 +34,7 @@ export class Video
         this.published_at = data.published_at;
         this.duration_seconds = data.duration_seconds;
         this.thumbnail_url = data.thumbnail_url;
+        this.length_classification = data.length_classification;
     }
 
     static validate(value: any): value is Video
@@ -45,7 +50,14 @@ export class Video
             ((value as any).description === undefined || typeof (value as any).description === 'string') &&
             ((value as any).published_at === undefined || (value as any).published_at === null || typeof (value as any).published_at === 'number') &&
             ((value as any).duration_seconds === undefined || (value as any).duration_seconds === null || typeof (value as any).duration_seconds === 'number') &&
-            ((value as any).thumbnail_url === undefined || (value as any).thumbnail_url === null || typeof (value as any).thumbnail_url === 'string')
+            ((value as any).thumbnail_url === undefined || (value as any).thumbnail_url === null || typeof (value as any).thumbnail_url === 'string') &&
+            (
+                (value as any).length_classification === undefined ||
+                (value as any).length_classification === null ||
+                (value as any).length_classification === 'long' ||
+                (value as any).length_classification === 'short' ||
+                (value as any).length_classification === 'unknown'
+            )
         );
     }
 
@@ -59,7 +71,8 @@ export class Video
             description: (patch as any).description ?? this.description,
             published_at: (patch as any).published_at ?? this.published_at,
             duration_seconds: (patch as any).duration_seconds ?? this.duration_seconds,
-            thumbnail_url: (patch as any).thumbnail_url ?? this.thumbnail_url
+            thumbnail_url: (patch as any).thumbnail_url ?? this.thumbnail_url,
+            length_classification: (patch as any).length_classification ?? this.length_classification
         });
     }
 }

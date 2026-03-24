@@ -1,22 +1,56 @@
 import { SqliteDAO } from '$lib/daos/shared/SqliteDAO';
-import type { VirtualChannelAssignment } from '$lib/entities/virtualChannelAssignment';
+import type { VirtualChannelAssignment, VirtualChannelAssignmentMode } from '$lib/entities/virtualChannelAssignment';
 
 export class AssignmentDAO extends SqliteDAO
 {
-    add(channel_id: number, group_id: number)
+    add(source_channel_id: number, virtual_channel_id: number, mode: VirtualChannelAssignmentMode = 'all')
     {
-        this.db.prepare(`INSERT OR IGNORE INTO virtual_channel_assignments(channel_id, group_id) VALUES(?,?)`).run(channel_id, group_id);
+        this.db.prepare(`
+            INSERT INTO virtual_channel_assignments(source_channel_id, virtual_channel_id, mode)
+            VALUES(?,?,?)
+            ON CONFLICT(source_channel_id, virtual_channel_id) DO UPDATE SET
+                mode=excluded.mode,
+                updated_at=(strftime('%s','now')*1000)
+        `).run(source_channel_id, virtual_channel_id, mode);
     }
 
-    remove(channel_id: number, group_id: number)
+    remove(source_channel_id: number, virtual_channel_id: number)
     {
-        this.db.prepare(`DELETE FROM virtual_channel_assignments WHERE channel_id = ? AND group_id = ?`).run(channel_id, group_id);
+        this.db.prepare(`DELETE FROM virtual_channel_assignments WHERE source_channel_id = ? AND virtual_channel_id = ?`).run(source_channel_id, virtual_channel_id);
     }
 
-    listForChannel(channel_id: number): VirtualChannelAssignment[]
+    updateMode(id: number, mode: VirtualChannelAssignmentMode)
+    {
+        this.db.prepare(`
+            UPDATE virtual_channel_assignments
+            SET mode = ?, updated_at = (strftime('%s','now')*1000)
+            WHERE id = ?
+        `).run(mode, id);
+    }
+
+    get(id: number): VirtualChannelAssignment | undefined
     {
         return this.db
-            .prepare(`SELECT * FROM virtual_channel_assignments WHERE channel_id = ?`)
-            .all(channel_id) as VirtualChannelAssignment[];
+            .prepare(`SELECT * FROM virtual_channel_assignments WHERE id = ?`)
+            .get(id) as VirtualChannelAssignment | undefined;
+    }
+
+    listForSourceChannel(source_channel_id: number): VirtualChannelAssignment[]
+    {
+        return this.db
+            .prepare(`SELECT * FROM virtual_channel_assignments WHERE source_channel_id = ? ORDER BY virtual_channel_id, id`)
+            .all(source_channel_id) as VirtualChannelAssignment[];
+    }
+
+    listForChannel(source_channel_id: number): VirtualChannelAssignment[]
+    {
+        return this.listForSourceChannel(source_channel_id);
+    }
+
+    listForVirtualChannel(virtual_channel_id: number): VirtualChannelAssignment[]
+    {
+        return this.db
+            .prepare(`SELECT * FROM virtual_channel_assignments WHERE virtual_channel_id = ? ORDER BY source_channel_id, id`)
+            .all(virtual_channel_id) as VirtualChannelAssignment[];
     }
 }
