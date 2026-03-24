@@ -2,7 +2,7 @@
 // Note: This file intentionally contains only schema DDL, not database creation/connection code.
 
 // Schema version
-export const SCHEMA_VERSION = 4;
+export const SCHEMA_VERSION = 5;
 
 
 export const CREATE_TABLE_SOURCE_CHANNELS = `
@@ -49,6 +49,20 @@ CREATE TABLE IF NOT EXISTS videos (
     FOREIGN KEY (channel_id) REFERENCES source_channels(id) ON DELETE CASCADE
 );`;
 
+export const CREATE_TABLE_VIRTUAL_CHANNEL_ASSIGNMENT_VIDEO_SELECTIONS = `
+CREATE TABLE IF NOT EXISTS virtual_channel_assignment_video_selections (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    assignment_id INTEGER NOT NULL,
+    video_id INTEGER NOT NULL,
+    review_state TEXT NOT NULL DEFAULT 'not_yet_reviewed',
+    created_at INTEGER NOT NULL DEFAULT (strftime('%s','now')*1000),
+    updated_at INTEGER NOT NULL DEFAULT (strftime('%s','now')*1000),
+    CHECK (review_state IN ('included', 'ignored', 'not_yet_reviewed')),
+    FOREIGN KEY (assignment_id) REFERENCES virtual_channel_assignments(id) ON DELETE CASCADE,
+    FOREIGN KEY (video_id) REFERENCES videos(id) ON DELETE CASCADE,
+    UNIQUE (assignment_id, video_id)
+);`;
+
 export const CREATE_TABLE_PROFILES = `
 CREATE TABLE IF NOT EXISTS profiles (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -87,8 +101,12 @@ CREATE UNIQUE INDEX IF NOT EXISTS uq_profiles_key ON profiles(key);
 CREATE UNIQUE INDEX IF NOT EXISTS uq_virtual_channels_name ON virtual_channels(name);
 CREATE UNIQUE INDEX IF NOT EXISTS uq_video_flags_pk ON video_flags(video_id, profile_id);
 CREATE UNIQUE INDEX IF NOT EXISTS uq_virtual_channel_assignment_pair ON virtual_channel_assignments(source_channel_id, virtual_channel_id);
+CREATE UNIQUE INDEX IF NOT EXISTS uq_virtual_channel_assignment_video_selection_pair ON virtual_channel_assignment_video_selections(assignment_id, video_id);
 CREATE INDEX IF NOT EXISTS idx_virtual_channel_assignments_virtual_channel ON virtual_channel_assignments(virtual_channel_id);
 CREATE INDEX IF NOT EXISTS idx_virtual_channel_assignments_source_channel ON virtual_channel_assignments(source_channel_id);
+CREATE INDEX IF NOT EXISTS idx_virtual_channel_assignment_video_selections_assignment ON virtual_channel_assignment_video_selections(assignment_id);
+CREATE INDEX IF NOT EXISTS idx_virtual_channel_assignment_video_selections_video ON virtual_channel_assignment_video_selections(video_id);
+CREATE INDEX IF NOT EXISTS idx_virtual_channel_assignment_video_selections_state ON virtual_channel_assignment_video_selections(review_state);
 CREATE INDEX IF NOT EXISTS idx_videos_channel ON videos(channel_id);
 CREATE INDEX IF NOT EXISTS idx_history_profile_time ON watch_history(profile_id, watched_at DESC);
 CREATE INDEX IF NOT EXISTS idx_history_video_time ON watch_history(video_id, watched_at DESC);
@@ -99,6 +117,7 @@ export const ALL_DDL = [
     CREATE_TABLE_VIRTUAL_CHANNELS,
     CREATE_TABLE_VIRTUAL_CHANNEL_ASSIGNMENTS,
     CREATE_TABLE_VIDEOS,
+    CREATE_TABLE_VIRTUAL_CHANNEL_ASSIGNMENT_VIDEO_SELECTIONS,
     CREATE_TABLE_PROFILES,
     CREATE_TABLE_VIDEO_FLAGS,
     CREATE_TABLE_WATCH_HISTORY,
