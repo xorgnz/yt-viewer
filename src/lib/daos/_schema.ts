@@ -2,7 +2,7 @@
 // Note: This file intentionally contains only schema DDL, not database creation/connection code.
 
 // Schema version
-export const SCHEMA_VERSION = 5;
+export const SCHEMA_VERSION = 6;
 
 
 export const CREATE_TABLE_SOURCE_CHANNELS = `
@@ -46,6 +46,8 @@ CREATE TABLE IF NOT EXISTS videos (
     published_at INTEGER DEFAULT NULL,
     duration_seconds INTEGER DEFAULT NULL,
     thumbnail_url TEXT DEFAULT NULL,
+    length_classification TEXT DEFAULT 'unknown',
+    CHECK (length_classification IN ('long', 'short', 'unknown')),
     FOREIGN KEY (channel_id) REFERENCES source_channels(id) ON DELETE CASCADE
 );`;
 

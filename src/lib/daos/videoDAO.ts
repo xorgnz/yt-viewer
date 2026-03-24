@@ -6,17 +6,21 @@ export class VideoDAO extends SqliteDAO
     upsert(video: Omit<Video, 'id'> | Partial<Video> & { youtube_id: string; channel_id: number; title: string })
     {
         const stmt = this.db.prepare(`
-            INSERT INTO videos(youtube_id, channel_id, title, description, published_at, duration_seconds, thumbnail_url)
-            VALUES(@youtube_id,@channel_id,@title,@description,@published_at,@duration_seconds,@thumbnail_url)
+            INSERT INTO videos(youtube_id, channel_id, title, description, published_at, duration_seconds, thumbnail_url, length_classification)
+            VALUES(@youtube_id,@channel_id,@title,@description,@published_at,@duration_seconds,@thumbnail_url,@length_classification)
             ON CONFLICT(youtube_id) DO UPDATE SET
                 channel_id=excluded.channel_id,
                 title=excluded.title,
                 description=excluded.description,
                 published_at=excluded.published_at,
                 duration_seconds=excluded.duration_seconds,
-                thumbnail_url=excluded.thumbnail_url
+                thumbnail_url=excluded.thumbnail_url,
+                length_classification=excluded.length_classification
         `);
-        stmt.run(video as any);
+        stmt.run({
+            length_classification: 'unknown',
+            ...(video as any)
+        });
     }
 
     getForViewerByYoutubeId(youtubeId: string, profileId: number): {
@@ -28,6 +32,7 @@ export class VideoDAO extends SqliteDAO
         published_at: number | null;
         duration_seconds: number | null;
         thumbnail_url: string | null;
+        length_classification: 'long' | 'short' | 'unknown' | null;
         channel_title: string;
         channel_youtube_id: string;
         watched: number;
@@ -37,7 +42,7 @@ export class VideoDAO extends SqliteDAO
     {
         const sql = `
             SELECT
-                v.id, v.youtube_id, v.channel_id, v.title, v.description, v.published_at, v.duration_seconds, v.thumbnail_url,
+                v.id, v.youtube_id, v.channel_id, v.title, v.description, v.published_at, v.duration_seconds, v.thumbnail_url, v.length_classification,
                 c.title AS channel_title,
                 c.youtube_id AS channel_youtube_id,
                 COALESCE(vf.watched, 0) AS watched,
@@ -54,17 +59,17 @@ export class VideoDAO extends SqliteDAO
 
     get(id: number): Video | undefined
     {
-        return this.db.prepare(`SELECT id, youtube_id, channel_id, title, description, published_at, duration_seconds, thumbnail_url FROM videos WHERE id = ?`).get(id) as Video | undefined;
+        return this.db.prepare(`SELECT id, youtube_id, channel_id, title, description, published_at, duration_seconds, thumbnail_url, length_classification FROM videos WHERE id = ?`).get(id) as Video | undefined;
     }
 
     getByExternalId(external_id: string): Video | undefined
     {
-        return this.db.prepare(`SELECT id, youtube_id, channel_id, title, description, published_at, duration_seconds, thumbnail_url FROM videos WHERE youtube_id = ?`).get(external_id) as Video | undefined;
+        return this.db.prepare(`SELECT id, youtube_id, channel_id, title, description, published_at, duration_seconds, thumbnail_url, length_classification FROM videos WHERE youtube_id = ?`).get(external_id) as Video | undefined;
     }
 
     listByChannel(channel_id: number): Video[]
     {
-        return this.db.prepare(`SELECT id, youtube_id, channel_id, title, description, published_at, duration_seconds, thumbnail_url FROM videos WHERE channel_id = ? ORDER BY published_at DESC NULLS LAST, id DESC`).all(channel_id) as Video[];
+        return this.db.prepare(`SELECT id, youtube_id, channel_id, title, description, published_at, duration_seconds, thumbnail_url, length_classification FROM videos WHERE channel_id = ? ORDER BY published_at DESC NULLS LAST, id DESC`).all(channel_id) as Video[];
     }
 
     remove(id: number)
@@ -91,6 +96,7 @@ export class VideoDAO extends SqliteDAO
         published_at: number | null;
         duration_seconds: number | null;
         thumbnail_url: string | null;
+        length_classification: 'long' | 'short' | 'unknown' | null;
         channel_title: string;
         channel_youtube_id: string;
         watched: number; // 0/1
@@ -146,7 +152,7 @@ export class VideoDAO extends SqliteDAO
 
         const sql = `
             SELECT
-                v.id, v.youtube_id, v.channel_id, v.title, v.description, v.published_at, v.duration_seconds, v.thumbnail_url,
+                v.id, v.youtube_id, v.channel_id, v.title, v.description, v.published_at, v.duration_seconds, v.thumbnail_url, v.length_classification,
                 c.title AS channel_title,
                 c.youtube_id AS channel_youtube_id,
                 COALESCE(vf.watched, 0) AS watched,

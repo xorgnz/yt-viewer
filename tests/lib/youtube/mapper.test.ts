@@ -46,7 +46,8 @@ describe('youtube mapper (task 3.3)', () => {
             channel_id: 42,
             title: 'Video A',
             description: 'Desc',
-            thumbnail_url: 'http://v.med'
+            thumbnail_url: 'http://v.med',
+            length_classification: 'unknown'
         });
         expect(typeof up.published_at === 'number' || up.published_at === null).toBe(true);
         expect(up.duration_seconds).toBeNull();

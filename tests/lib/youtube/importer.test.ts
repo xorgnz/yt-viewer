@@ -83,6 +83,7 @@ describe('youtube importer (task 3.3)', () => {
         expect(ch?.title).toBe('Demo SourceChannel');
         const vids = vDao.listByChannel(ch!.id);
         expect(vids.map(v => v.youtube_id).sort()).toEqual(['V1','V2']);
+        expect(vids.every(v => v.length_classification === 'unknown')).toBe(true);
 
         // Run again; upserts should not duplicate
         const res2 = await importChannelFromYouTube(db, yt, 'UC_DEMO');

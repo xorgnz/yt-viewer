@@ -43,6 +43,7 @@ export function mapPlaylistItemToVideoUpsert(
         description: snippet.description || '',
         published_at: Number.isFinite(publishedAt as any) ? (publishedAt as number) : null,
         duration_seconds: null as number | null, // Not available from playlistItems; could be populated via Videos API later
-        thumbnail_url: bestThumb(snippet.thumbnails as any)
+        thumbnail_url: bestThumb(snippet.thumbnails as any),
+        length_classification: 'unknown' as const
     } as const;
 }
