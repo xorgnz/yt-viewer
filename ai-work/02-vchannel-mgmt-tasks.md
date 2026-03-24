@@ -44,7 +44,7 @@
   - [x] 1.4 Update database creation/reset scripts to use the replacement schema without requiring migration compatibility
 - [ ] 2.0 Add admin routes and server actions for managing a single virtual channel's source-channel associations
   - [x] 2.1 Add a dedicated admin route for managing an existing virtual channel by ID
-  - [ ] 2.2 Load the virtual channel, existing source associations, and available imported source channels for the manage page
+  - [x] 2.2 Load the virtual channel, existing source associations, and available imported source channels for the manage page
   - [ ] 2.3 Implement server actions to add a source-channel association to a virtual channel
   - [ ] 2.4 Implement server actions to update an association mode and remove an association from a virtual channel
   - [ ] 2.5 Implement server actions to persist per-video selected-only review changes and bulk updates for the current filtered result set
