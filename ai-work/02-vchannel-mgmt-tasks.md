@@ -46,7 +46,7 @@
   - [x] 2.1 Add a dedicated admin route for managing an existing virtual channel by ID
   - [x] 2.2 Load the virtual channel, existing source associations, and available imported source channels for the manage page
   - [x] 2.3 Implement server actions to add a source-channel association to a virtual channel
-  - [ ] 2.4 Implement server actions to update an association mode and remove an association from a virtual channel
+  - [x] 2.4 Implement server actions to update an association mode and remove an association from a virtual channel
   - [ ] 2.5 Implement server actions to persist per-video selected-only review changes and bulk updates for the current filtered result set
 - [ ] 3.0 Build the manage-virtual-channel UI for association lists, expandable video panels, and ternary selection state
   - [ ] 3.1 Add manage links from the virtual channel admin list into the dedicated manage page

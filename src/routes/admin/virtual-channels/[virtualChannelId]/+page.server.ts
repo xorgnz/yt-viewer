@@ -107,5 +107,72 @@ export const actions: Actions = {
         }
 
         throw redirect(303, `/admin/virtual-channels/${virtualChannelId}`);
+    },
+
+    updateAssociationMode: async ({ params, request }) => {
+        // Validate the assignment before changing its mode.
+        const virtualChannelId = parseVirtualChannelId(params.virtualChannelId);
+        if (!virtualChannelId) {
+            throw error(404, 'Virtual channel not found');
+        }
+
+        const form = await request.formData();
+        const assignmentId = Number(form.get('assignment_id'));
+        const mode = parseAssignmentMode(form.get('mode'));
+
+        if (!Number.isInteger(assignmentId) || assignmentId <= 0) {
+            return fail(400, { message: 'A valid assignment is required.' });
+        }
+
+        const wrapper = new DatabaseWrapper(envToMode());
+        const db = wrapper.open();
+
+        try {
+            const assignmentDAO = new AssignmentDAO(db);
+            const assignment = assignmentDAO.get(assignmentId);
+
+            if (!assignment || assignment.virtual_channel_id !== virtualChannelId) {
+                return fail(404, { message: 'Assignment not found.' });
+            }
+
+            assignmentDAO.updateMode(assignmentId, mode);
+        } finally {
+            wrapper.close();
+        }
+
+        throw redirect(303, `/admin/virtual-channels/${virtualChannelId}`);
+    },
+
+    removeAssociation: async ({ params, request }) => {
+        // Remove only assignments that belong to the requested virtual channel.
+        const virtualChannelId = parseVirtualChannelId(params.virtualChannelId);
+        if (!virtualChannelId) {
+            throw error(404, 'Virtual channel not found');
+        }
+
+        const form = await request.formData();
+        const assignmentId = Number(form.get('assignment_id'));
+
+        if (!Number.isInteger(assignmentId) || assignmentId <= 0) {
+            return fail(400, { message: 'A valid assignment is required.' });
+        }
+
+        const wrapper = new DatabaseWrapper(envToMode());
+        const db = wrapper.open();
+
+        try {
+            const assignmentDAO = new AssignmentDAO(db);
+            const assignment = assignmentDAO.get(assignmentId);
+
+            if (!assignment || assignment.virtual_channel_id !== virtualChannelId) {
+                return fail(404, { message: 'Assignment not found.' });
+            }
+
+            assignmentDAO.remove(assignment.source_channel_id, assignment.virtual_channel_id);
+        } finally {
+            wrapper.close();
+        }
+
+        throw redirect(303, `/admin/virtual-channels/${virtualChannelId}`);
     }
 };
