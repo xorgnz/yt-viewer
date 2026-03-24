@@ -22,12 +22,12 @@ Use this rule when the user says they have completed implementation for a task a
 
 ## Core Principle
 
-The AI must not commit automatically when using this rule. It should:
+The AI must not commit automatically when using this rule unless the user explicitly includes approval in the same request. It should:
 
 - inspect the current changes
 - determine which files belong to the completed task
 - propose a commit message in the required format
-- ask the user to approve the commit message and scope
+- ask the user to approve the commit message and scope unless approval was already included in the command
 
 ## Required Commit Message Format
 
@@ -83,15 +83,28 @@ Follow-up format:
 
 5. **Propose the Commit**
    - Present the proposed message and file list
-   - Wait for explicit user approval
+   - Wait for explicit user approval unless the user already provided preapproval in the same command
+
+6. **Create the Commit When Preapproved**
+   - If the user's rule invocation already includes `approve` or `approved`, treat that as approval for the proposed task-aligned commit
+   - Still inspect the active feature, task context, and changed files first
+   - If the diff is clearly scoped to one task, create the commit after preparing the message and file scope without asking a second approval question
+   - If the diff is ambiguous, spans multiple tasks, or includes unrelated work, stop and ask for clarification instead of using preapproval blindly
 
 ## Default Behavior
 
 - If the user says only `run 8`, assume the active feature
+- If the user says `run 8 approve`, `run rule 8 approve`, `run 8 approved`, or equivalent, treat that as preapproval for a clean task-aligned commit
 - Use the current diff plus the active feature task list to infer the most recently completed task
 - If the user says `run 8 tidy`, `run 8 style`, `run 8 fix`, `run 8 docs`, `run 8 mgmt`, or `run 8 feat`, assume the active feature and use the most recently completed task as the `+` context for the commit message
 - If there are no changes, do not propose a commit
 - If the diff appears to span multiple tasks or unrelated work, surface that clearly and ask the user how to scope the commit
+
+## PowerShell Command Guidance
+
+- In this repository, commit preparation commands must be PowerShell-compatible
+- Do not chain `git add` and `git commit` with `&&`
+- Run staging, commit creation, and post-commit verification as separate commands when using the shell
 
 ## Non-Active and Completed Feature Behavior
 
@@ -100,7 +113,7 @@ Follow-up format:
 
 ## Final Instructions
 
-1. Do not create the commit until the user explicitly approves the message and scope
+1. Do not create the commit until the user explicitly approves the message and scope, unless the same command already included `approve` or `approved`
 2. Always inspect the active feature and current Git branch first
 3. Use the active feature by default unless the user is only clarifying scope
 4. Prefer a narrow, task-aligned commit over a broad convenience commit
