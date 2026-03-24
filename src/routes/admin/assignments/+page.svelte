@@ -11,22 +11,22 @@
 
 <div class="page stack">
     <section class="panel">
-        <h1>Source ↔ Virtual Channel Assignments</h1>
+        <h1>Channel ↔ Group Assignments</h1>
         <h2>Add Assignment</h2>
         <form method="post" action="?/add" class="fields">
             <label>
-                Source
+                Channel
                 <select name="channel_id" required>
-                    <option value="" disabled selected>Select a source channel</option>
+                    <option value="" disabled selected>Select a channel</option>
                     {#each data.channels as c}
                         <option value={c.id}>{c.title}</option>
                     {/each}
                 </select>
             </label>
             <label>
-                Virtual Channel
+                Group
                 <select name="group_id" required>
-                    <option value="" disabled selected>Select a virtual channel</option>
+                    <option value="" disabled selected>Select a group</option>
                     {#each data.groups as g}
                         <option value={g.id}>{g.name}</option>
                     {/each}
@@ -47,8 +47,8 @@
                 <table>
                     <thead>
                         <tr>
-                            <th>Source</th>
-                            <th>Virtual Channel</th>
+                            <th>Channel</th>
+                            <th>Group</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
