@@ -16,7 +16,7 @@
 - Use commands that work in the current Windows shell environment unless the user explicitly asks for an alternative.
 - Use Windows paths when executing local commands. Forward-slash paths are fine in documentation and code when the underlying tool supports them.
 - Keep commands non-interactive when feasible.
-- In PowerShell, do not chain command steps with `&&`; run sequential commands as separate shell invocations instead.
+- In PowerShell, do not chain command steps with `&&`; run sequential commands as separate shell invocations instead. Make sure you consider the consequences of running commands in parallel before attempting to do so.
 
 ## Execution Constraints
 

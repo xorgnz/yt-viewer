@@ -104,6 +104,7 @@ Follow-up format:
 
 - In this repository, commit preparation commands must be PowerShell-compatible
 - Do not chain `git add` and `git commit` with `&&`
+- Do not issue staging and commit commands simultaneously through parallel tool calls
 - Run staging, commit creation, and post-commit verification as separate commands when using the shell
 
 ## Non-Active and Completed Feature Behavior
