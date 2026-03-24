@@ -8,6 +8,7 @@
 - Prefer repo-aware tools and minimal, traceable edits over broad rewrites.
 - You may refer to repository files directly with `@` file references when the UI supports them.
 - For rule-driven work, prefer short requests such as `Rule: @ai-rules/5-create-tasks.md` and `Feature: 01-some-feature`.
+- Any time the user asks you to execute a rule, look through the relevant instructions in `ai-rules` before proceeding.
 
 ## Environment
 
