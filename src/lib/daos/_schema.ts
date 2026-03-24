@@ -2,7 +2,7 @@
 // Note: This file intentionally contains only schema DDL, not database creation/connection code.
 
 // Schema version
-export const SCHEMA_VERSION = 3;
+export const SCHEMA_VERSION = 4;
 
 
 export const CREATE_TABLE_SOURCE_CHANNELS = `
@@ -24,11 +24,16 @@ CREATE TABLE IF NOT EXISTS virtual_channels (
 
 export const CREATE_TABLE_VIRTUAL_CHANNEL_ASSIGNMENTS = `
 CREATE TABLE IF NOT EXISTS virtual_channel_assignments (
-    channel_id INTEGER NOT NULL,
-    group_id INTEGER NOT NULL,
-    PRIMARY KEY (channel_id, group_id),
-    FOREIGN KEY (channel_id) REFERENCES source_channels(id) ON DELETE CASCADE,
-    FOREIGN KEY (group_id) REFERENCES virtual_channels(id) ON DELETE CASCADE
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    source_channel_id INTEGER NOT NULL,
+    virtual_channel_id INTEGER NOT NULL,
+    mode TEXT NOT NULL DEFAULT 'all',
+    created_at INTEGER NOT NULL DEFAULT (strftime('%s','now')*1000),
+    updated_at INTEGER NOT NULL DEFAULT (strftime('%s','now')*1000),
+    CHECK (mode IN ('all', 'long_only', 'selected_only')),
+    FOREIGN KEY (source_channel_id) REFERENCES source_channels(id) ON DELETE CASCADE,
+    FOREIGN KEY (virtual_channel_id) REFERENCES virtual_channels(id) ON DELETE CASCADE,
+    UNIQUE (source_channel_id, virtual_channel_id)
 );`;
 
 export const CREATE_TABLE_VIDEOS = `
@@ -81,7 +86,9 @@ CREATE UNIQUE INDEX IF NOT EXISTS uq_videos_youtube_id ON videos(youtube_id);
 CREATE UNIQUE INDEX IF NOT EXISTS uq_profiles_key ON profiles(key);
 CREATE UNIQUE INDEX IF NOT EXISTS uq_virtual_channels_name ON virtual_channels(name);
 CREATE UNIQUE INDEX IF NOT EXISTS uq_video_flags_pk ON video_flags(video_id, profile_id);
-CREATE UNIQUE INDEX IF NOT EXISTS uq_virtual_channel_assignment_pk ON virtual_channel_assignments(channel_id, group_id);
+CREATE UNIQUE INDEX IF NOT EXISTS uq_virtual_channel_assignment_pair ON virtual_channel_assignments(source_channel_id, virtual_channel_id);
+CREATE INDEX IF NOT EXISTS idx_virtual_channel_assignments_virtual_channel ON virtual_channel_assignments(virtual_channel_id);
+CREATE INDEX IF NOT EXISTS idx_virtual_channel_assignments_source_channel ON virtual_channel_assignments(source_channel_id);
 CREATE INDEX IF NOT EXISTS idx_videos_channel ON videos(channel_id);
 CREATE INDEX IF NOT EXISTS idx_history_profile_time ON watch_history(profile_id, watched_at DESC);
 CREATE INDEX IF NOT EXISTS idx_history_video_time ON watch_history(video_id, watched_at DESC);
