@@ -5,6 +5,9 @@ import { VirtualChannelDAO } from '$lib/daos/virtualChannelDAO';
 import { AssignmentDAO } from '$lib/daos/assignmentDAO';
 import { SourceChannelDAO } from '$lib/daos/sourceChannelDAO';
 import type { VirtualChannelAssignmentMode } from '$lib/entities/virtualChannelAssignment';
+import type { VirtualChannelAssignmentVideoReviewState } from '$lib/entities/virtualChannelAssignmentVideoSelection';
+import { VirtualChannelAssignmentVideoSelectionDAO } from '$lib/daos/virtualChannelAssignmentVideoSelectionDAO';
+import { VideoDAO } from '$lib/daos/videoDAO';
 
 function envToMode(): DatabaseMode
 {
@@ -66,6 +69,27 @@ function parseVirtualChannelId(value: string): number | null
 function parseAssignmentMode(value: FormDataEntryValue | null): VirtualChannelAssignmentMode
 {
     return value === 'long_only' || value === 'selected_only' ? value : 'all';
+}
+
+function parseReviewState(value: FormDataEntryValue | null): VirtualChannelAssignmentVideoReviewState
+{
+    return value === 'included' || value === 'ignored' ? value : 'not_yet_reviewed';
+}
+
+function parseVideoIds(form: FormData): number[]
+{
+    const repeatedValues = form.getAll('video_id');
+    const csvValue = String(form.get('video_ids') || '');
+    const rawValues = [
+        ...repeatedValues.map((value) => String(value)),
+        ...csvValue.split(',').map((value) => value.trim()).filter(Boolean)
+    ];
+
+    const ids = rawValues
+        .map((value) => Number(value))
+        .filter((value, index, array) => Number.isInteger(value) && value > 0 && array.indexOf(value) === index);
+
+    return ids;
 }
 
 export const actions: Actions = {
@@ -169,6 +193,106 @@ export const actions: Actions = {
             }
 
             assignmentDAO.remove(assignment.source_channel_id, assignment.virtual_channel_id);
+        } finally {
+            wrapper.close();
+        }
+
+        throw redirect(303, `/admin/virtual-channels/${virtualChannelId}`);
+    },
+
+    setVideoReviewState: async ({ params, request }) => {
+        // Persist a single selected-only review-state update.
+        const virtualChannelId = parseVirtualChannelId(params.virtualChannelId);
+        if (!virtualChannelId) {
+            throw error(404, 'Virtual channel not found');
+        }
+
+        const form = await request.formData();
+        const assignmentId = Number(form.get('assignment_id'));
+        const videoId = Number(form.get('video_id'));
+        const reviewState = parseReviewState(form.get('review_state'));
+
+        if (!Number.isInteger(assignmentId) || assignmentId <= 0 || !Number.isInteger(videoId) || videoId <= 0) {
+            return fail(400, { message: 'A valid assignment and video are required.' });
+        }
+
+        const wrapper = new DatabaseWrapper(envToMode());
+        const db = wrapper.open();
+
+        try {
+            const assignmentDAO = new AssignmentDAO(db);
+            const selectionDAO = new VirtualChannelAssignmentVideoSelectionDAO(db);
+            const videoDAO = new VideoDAO(db);
+            const assignment = assignmentDAO.get(assignmentId);
+            const video = videoDAO.get(videoId);
+
+            if (!assignment || assignment.virtual_channel_id !== virtualChannelId) {
+                return fail(404, { message: 'Assignment not found.' });
+            }
+
+            if (assignment.mode !== 'selected_only') {
+                return fail(400, { message: 'Video review state is only valid for selected-only assignments.' });
+            }
+
+            if (!video || video.channel_id !== assignment.source_channel_id) {
+                return fail(404, { message: 'Video not found for this assignment.' });
+            }
+
+            selectionDAO.setReviewState(assignmentId, videoId, reviewState);
+        } finally {
+            wrapper.close();
+        }
+
+        throw redirect(303, `/admin/virtual-channels/${virtualChannelId}`);
+    },
+
+    bulkUpdateVideoReviewState: async ({ params, request }) => {
+        // Persist a bulk selected-only review-state update for the submitted filtered set.
+        const virtualChannelId = parseVirtualChannelId(params.virtualChannelId);
+        if (!virtualChannelId) {
+            throw error(404, 'Virtual channel not found');
+        }
+
+        const form = await request.formData();
+        const assignmentId = Number(form.get('assignment_id'));
+        const reviewState = parseReviewState(form.get('review_state'));
+        const videoIds = parseVideoIds(form);
+
+        if (!Number.isInteger(assignmentId) || assignmentId <= 0) {
+            return fail(400, { message: 'A valid assignment is required.' });
+        }
+
+        if (videoIds.length === 0) {
+            return fail(400, { message: 'At least one video is required for bulk update.' });
+        }
+
+        const wrapper = new DatabaseWrapper(envToMode());
+        const db = wrapper.open();
+
+        try {
+            const assignmentDAO = new AssignmentDAO(db);
+            const selectionDAO = new VirtualChannelAssignmentVideoSelectionDAO(db);
+            const videoDAO = new VideoDAO(db);
+            const assignment = assignmentDAO.get(assignmentId);
+
+            if (!assignment || assignment.virtual_channel_id !== virtualChannelId) {
+                return fail(404, { message: 'Assignment not found.' });
+            }
+
+            if (assignment.mode !== 'selected_only') {
+                return fail(400, { message: 'Bulk review updates are only valid for selected-only assignments.' });
+            }
+
+            for (const videoId of videoIds) {
+                const video = videoDAO.get(videoId);
+                if (!video || video.channel_id !== assignment.source_channel_id) {
+                    return fail(404, { message: `Video ${videoId} is not available for this assignment.` });
+                }
+            }
+
+            for (const videoId of videoIds) {
+                selectionDAO.setReviewState(assignmentId, videoId, reviewState);
+            }
         } finally {
             wrapper.close();
         }
