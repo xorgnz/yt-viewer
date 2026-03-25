@@ -39,6 +39,7 @@
                                 </td>
                                 <td>
                                     <div class="inline-actions">
+                                        <a href={`/admin/virtual-channels/${g.id}`} class="btn btn-secondary">Manage</a>
                                         <form method="post" action="?/rename" id={`rename-${g.id}`} class="inline-form">
                                             <input type="hidden" name="id" value={g.id} />
                                             <button type="submit">Save</button>
