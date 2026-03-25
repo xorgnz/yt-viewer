@@ -1,6 +1,6 @@
 ---
-version: 1.3.2
-timestamp: 2026-03-25 15:34
+version: 1.3.3
+timestamp: 2026-03-25 16:08
 ---
 # Rule: Prepare a Task Commit for Approval
 
@@ -110,7 +110,8 @@ Follow-up format:
 - In this repository, commit preparation commands must be PowerShell-compatible
 - Do not chain `git add` and `git commit` with `&&`
 - Do not issue staging and commit commands simultaneously through parallel tool calls
-- Run staging, commit creation, and post-commit verification as separate commands when using the shell
+- Run `git add`, `git commit`, and post-commit `git status` as separate sequential shell commands
+- Do not bundle `git add`, `git commit`, and `git status` into the same shell invocation
 
 ## Non-Active and Completed Feature Behavior
 
