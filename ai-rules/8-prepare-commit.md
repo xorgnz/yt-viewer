@@ -1,6 +1,6 @@
 ---
-version: 1.2.0
-timestamp: 2026-03-22 14:03
+version: 1.3.2
+timestamp: 2026-03-25 15:34
 ---
 # Rule: Prepare a Task Commit for Approval
 
@@ -53,6 +53,7 @@ The following explicit follow-up prefixes are also allowed when the user is prep
 - `docs`
 - `mgmt`
 - `feat`
+- `tweak`
 
 Follow-up format:
 
@@ -77,9 +78,12 @@ Follow-up format:
    - Review the current Git status
    - Identify only the files related to the completed task
    - Exclude unrelated or unfinished work
+   - For follow-up prefixes and ad hoc `feat`, treat the candidate commit message as a summary of the full scoped diff since `HEAD`, not just the most recent user request in the conversation
+   - If multiple related changes have accumulated since the last commit, make the description reflect the combined result at the chosen scope
 
 4. **Draft the Commit Description**
    - Keep it concise and specific
+   - For follow-up prefixes and ad hoc `feat`, summarize all known in-scope changes since the last commit that will be included in the proposed commit
 
 5. **Propose the Commit**
    - Present the proposed message and file list
@@ -96,7 +100,8 @@ Follow-up format:
 - If the user says only `run 8`, assume the active feature
 - If the user says `run 8 approve`, `run rule 8 approve`, `run 8 approved`, or equivalent, treat that as preapproval for a clean task-aligned commit
 - Use the current diff plus the active feature task list to infer the most recently completed task
-- If the user says `run 8 tidy`, `run 8 style`, `run 8 fix`, `run 8 docs`, `run 8 mgmt`, or `run 8 feat`, assume the active feature and use the most recently completed task as the `+` context for the commit message
+- If the user says `run 8 tidy`, `run 8 style`, `run 8 fix`, `run 8 docs`, `run 8 mgmt`, `run 8 feat`, or `run 8 tweak`, assume the active feature and use the most recently completed task as the `+` context for the commit message
+- For `run 8 tidy`, `run 8 style`, `run 8 fix`, `run 8 docs`, `run 8 mgmt`, `run 8 feat`, and `run 8 tweak`, write the description to match the full scoped set of uncommitted changes since the last commit
 - If there are no changes, do not propose a commit
 - If the diff appears to span multiple tasks or unrelated work, surface that clearly and ask the user how to scope the commit
 
@@ -120,5 +125,6 @@ Follow-up format:
 4. Prefer a narrow, task-aligned commit over a broad convenience commit
 5. Use the exact main-task format `feat: <feature-tag>-<task id> - <description>` for main task-completion commits
 6. Use the exact ad hoc feature format `feat: <feature-tag>-<task id>+ - <description>` when the user explicitly requests ad hoc `feat`
-7. Use the exact follow-up format `<prefix>: <feature-tag>-<task id>+ - <description>` for `tidy`, `style`, `fix`, `docs`, and `mgmt`
+7. Use the exact follow-up format `<prefix>: <feature-tag>-<task id>+ - <description>` for `tidy`, `style`, `fix`, `docs`, `mgmt`, `feat`, and `tweak`
 8. Surface unrelated changes clearly instead of silently bundling them
+9. For follow-up prefixes and ad hoc `feat`, including `tweak`, ensure the description summarizes all known in-scope changes included since `HEAD`, not only the latest tweak discussed
