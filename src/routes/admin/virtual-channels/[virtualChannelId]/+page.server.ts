@@ -17,7 +17,7 @@ function envToMode(): DatabaseMode
     return DatabaseMode.Dev;
 }
 
-export const load: PageServerLoad = async ({ params }) =>
+export const load: PageServerLoad = async ({ params, url }) =>
 {
     // Validate the requested virtual channel id.
     const virtualChannelId = Number(params.virtualChannelId);
@@ -69,12 +69,24 @@ export const load: PageServerLoad = async ({ params }) =>
                     ...video,
                     review_state: selectionByVideoId.get(video.id)?.review_state ?? 'not_yet_reviewed'
                 }));
+            const selectedOnlyCounts = assignment.mode !== 'selected_only'
+                ? null
+                : {
+                    included: selectedOnlyVideos.filter((video) => video.review_state === 'included').length,
+                    ignored: selectedOnlyVideos.filter((video) => video.review_state === 'ignored').length,
+                    not_yet_reviewed: selectedOnlyVideos.filter((video) => video.review_state === 'not_yet_reviewed').length
+                };
+            const reviewStateFilter = url.searchParams.get(`reviewStateFilter-${assignment.id}`) === 'not_yet_reviewed'
+                ? 'not_yet_reviewed'
+                : 'all';
 
             return {
                 assignment,
                 sourceChannel: sourceChannelsById.get(assignment.source_channel_id) ?? null,
                 automaticVideos,
-                selectedOnlyVideos
+                selectedOnlyVideos,
+                selectedOnlyCounts,
+                reviewStateFilter
             };
         });
 

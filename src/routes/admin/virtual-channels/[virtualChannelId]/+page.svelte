@@ -45,6 +45,12 @@
                 length_classification?: 'long' | 'short' | 'unknown' | null;
                 review_state: 'included' | 'ignored' | 'not_yet_reviewed';
             }>;
+            selectedOnlyCounts: {
+                included: number;
+                ignored: number;
+                not_yet_reviewed: number;
+            } | null;
+            reviewStateFilter: 'all' | 'not_yet_reviewed';
         }>;
         availableSourceChannels: Array<{
             id: number;
@@ -83,6 +89,29 @@
         const minutes = Math.floor(durationSeconds / 60);
         const seconds = durationSeconds % 60;
         return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+    }
+
+    function filteredSelectedOnlyVideos(
+        videos: Array<{
+            id: number;
+            youtube_id: string;
+            channel_id: number;
+            title: string;
+            description?: string;
+            published_at?: number | null;
+            duration_seconds?: number | null;
+            thumbnail_url?: string | null;
+            length_classification?: 'long' | 'short' | 'unknown' | null;
+            review_state: 'included' | 'ignored' | 'not_yet_reviewed';
+        }>,
+        filter: 'all' | 'not_yet_reviewed'
+    )
+    {
+        if (filter === 'not_yet_reviewed') {
+            return videos.filter((video) => video.review_state === 'not_yet_reviewed');
+        }
+
+        return videos;
     }
 </script>
 
@@ -251,6 +280,27 @@
                                             {#if item.selectedOnlyVideos.length === 0}
                                                 <p class="muted">No source videos are available for review yet.</p>
                                             {:else}
+                                                <div class="inline-actions">
+                                                    <a href={`?reviewStateFilter-${item.assignment.id}=all`} class="btn btn-secondary">Show all</a>
+                                                    <a
+                                                        href={`?reviewStateFilter-${item.assignment.id}=not_yet_reviewed`}
+                                                        class="btn btn-secondary"
+                                                    >
+                                                        Not yet reviewed
+                                                        {#if item.selectedOnlyCounts}
+                                                            ({item.selectedOnlyCounts.not_yet_reviewed})
+                                                        {/if}
+                                                    </a>
+                                                </div>
+
+                                                {@const visibleSelectedOnlyVideos = filteredSelectedOnlyVideos(
+                                                    item.selectedOnlyVideos,
+                                                    item.reviewStateFilter
+                                                )}
+
+                                                {#if visibleSelectedOnlyVideos.length === 0}
+                                                    <p class="muted">No videos match the current review-state filter.</p>
+                                                {:else}
                                                 <div class="table-wrap">
                                                     <table>
                                                         <thead>
@@ -261,7 +311,7 @@
                                                             </tr>
                                                         </thead>
                                                         <tbody>
-                                                            {#each item.selectedOnlyVideos as video}
+                                                            {#each visibleSelectedOnlyVideos as video}
                                                                 <tr>
                                                                     <td>
                                                                         <div class="inline-actions">
@@ -318,6 +368,7 @@
                                                         </tbody>
                                                     </table>
                                                 </div>
+                                                {/if}
                                             {/if}
                                         </details>
                                     </td>

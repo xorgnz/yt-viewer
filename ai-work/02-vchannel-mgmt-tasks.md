@@ -56,7 +56,7 @@
   - [x] 3.5 Build the `selected only` panel with dense long-list presentation, small thumbnails, and clear row metadata
   - [x] 3.6 Add row-level ternary controls for setting video state to included, ignored, or not yet reviewed
 - [ ] 4.0 Implement filtering and temporary bulk-selection tools for selected-only video review
-  - [ ] 4.1 Add a review-state filter that can isolate not-yet-reviewed videos
+  - [x] 4.1 Add a review-state filter that can isolate not-yet-reviewed videos
   - [ ] 4.2 Add regex filtering against video title and description within the selected-only list
   - [ ] 4.3 Add video-type filtering for long, short, and unknown classification where available
   - [ ] 4.4 Add temporary bulk actions for the currently shown rows, including select-all-shown and select-none-shown behavior
