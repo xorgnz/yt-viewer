@@ -1,6 +1,6 @@
 ---
-version: 1.3.3
-timestamp: 2026-03-25 16:08
+version: 1.3.4
+timestamp: 2026-04-04 10:00
 ---
 # Rule: Prepare a Task Commit for Approval
 
@@ -52,7 +52,6 @@ The following explicit follow-up prefixes are also allowed when the user is prep
 - `fix`
 - `docs`
 - `mgmt`
-- `feat`
 - `tweak`
 
 Follow-up format:
@@ -67,7 +66,8 @@ Follow-up format:
    - Read `/ai-work/00-feature-status.md`
    - Use the active feature and branch as the default and expected source of truth
    - If the user does not provide a task ID, infer it from the active feature task list by finding the most recently completed task that aligns with the current diff
-   - If the user explicitly invokes one of the allowed follow-up prefixes, including ad hoc `feat`, use the most recently completed task in the active feature as the default task context unless the user provides a different task ID
+   - If the user explicitly invokes one of the allowed follow-up prefixes, use the most recently completed task in the active feature as the default task context unless the user provides a different task ID
+   - If the user explicitly invokes ad hoc `feat`, treat that as the dedicated ad hoc feature mode rather than as a generic follow-up prefix
    - If the task is ambiguous, stop and ask the user to clarify before proposing a commit
 
 2. **Review Task Context**
@@ -100,7 +100,8 @@ Follow-up format:
 - If the user says only `run 8`, assume the active feature
 - If the user says `run 8 approve`, `run rule 8 approve`, `run 8 approved`, or equivalent, treat that as preapproval for a clean task-aligned commit
 - Use the current diff plus the active feature task list to infer the most recently completed task
-- If the user says `run 8 tidy`, `run 8 style`, `run 8 fix`, `run 8 docs`, `run 8 mgmt`, `run 8 feat`, or `run 8 tweak`, assume the active feature and use the most recently completed task as the `+` context for the commit message
+- If the user says `run 8 tidy`, `run 8 style`, `run 8 fix`, `run 8 docs`, `run 8 mgmt`, or `run 8 tweak`, assume the active feature and use the most recently completed task as the `+` context for the commit message
+- If the user says `run 8 feat`, treat that as the dedicated ad hoc feature mode and use the active feature plus the most recently completed task as the default `+` context unless the user provides a task ID
 - For `run 8 tidy`, `run 8 style`, `run 8 fix`, `run 8 docs`, `run 8 mgmt`, `run 8 feat`, and `run 8 tweak`, write the description to match the full scoped set of uncommitted changes since the last commit
 - If there are no changes, do not propose a commit
 - If the diff appears to span multiple tasks or unrelated work, surface that clearly and ask the user how to scope the commit
@@ -126,6 +127,6 @@ Follow-up format:
 4. Prefer a narrow, task-aligned commit over a broad convenience commit
 5. Use the exact main-task format `feat: <feature-tag>-<task id> - <description>` for main task-completion commits
 6. Use the exact ad hoc feature format `feat: <feature-tag>-<task id>+ - <description>` when the user explicitly requests ad hoc `feat`
-7. Use the exact follow-up format `<prefix>: <feature-tag>-<task id>+ - <description>` for `tidy`, `style`, `fix`, `docs`, `mgmt`, `feat`, and `tweak`
+7. Use the exact follow-up format `<prefix>: <feature-tag>-<task id>+ - <description>` for `tidy`, `style`, `fix`, `docs`, `mgmt`, and `tweak`
 8. Surface unrelated changes clearly instead of silently bundling them
 9. For follow-up prefixes and ad hoc `feat`, including `tweak`, ensure the description summarizes all known in-scope changes included since `HEAD`, not only the latest tweak discussed

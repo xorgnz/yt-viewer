@@ -1,6 +1,6 @@
 ---
-version: 1.2.0
-timestamp: 2026-03-22 14:05
+version: 1.2.1
+timestamp: 2026-04-04 10:00
 ---
 # Rule: Creating a High-Level Project Scope
 
@@ -19,7 +19,9 @@ To guide an AI assistant in working with the user to create a concise, high-leve
 1. **Confirm the Feature**
    - Read `/ai-work/00-feature-status.md`
    - Use the active feature by default
-   - If the user names a different feature, only proceed if they explicitly switch through the feature-change workflow
+   - If the user names a different feature and it is `planned`, scope creation may proceed without activating that feature
+   - If the user names a different feature and it is `paused` or `completed`, only proceed if they explicitly ask for an exception
+   - Only require the feature-change workflow when the user wants a different feature to become the active working feature
 
 2. **Ask Discovery Questions**
    - Guide the user through a focused set of questions about vision, boundaries, and constraints

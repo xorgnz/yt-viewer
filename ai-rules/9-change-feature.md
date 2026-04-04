@@ -1,6 +1,6 @@
 ---
-version: 1.2.0
-timestamp: 2026-03-22 14:03
+version: 1.2.1
+timestamp: 2026-04-04 10:00
 ---
 # Rule: Switch, Activate, Pause, or Close a Feature
 
@@ -76,9 +76,9 @@ Use this when the user explicitly asks to pause work without activating a differ
 
 1. Read `/ai-work/00-feature-status.md`
 2. Confirm which feature is currently active
-3. Mark that feature as `paused`
-4. Clear the current active feature fields if no other feature is being activated in the same flow
-5. If appropriate, switch Git to a non-feature branch such as `main` after user approval
+3. Switch Git to a non-feature branch such as `main` before updating feature status
+4. Mark that feature as `paused`
+5. Clear the current active feature fields if no other feature is being activated in the same flow
 
 ## Process for Create and Activate
 
@@ -94,15 +94,15 @@ Use this when the user explicitly asks to close the feature or branch.
 
 1. Read `/ai-work/00-feature-status.md`
 2. Confirm which feature is being closed
-3. Mark the feature as `completed`
-4. Record the completion date
-5. Clear it as the active feature if it was active
-6. If appropriate, switch Git to a non-feature branch such as `main` after user approval
+3. Switch Git to a non-feature branch such as `main` before updating feature status if the feature being closed is currently active
+4. Mark the feature as `completed`
+5. Record the completion date
+6. Clear it as the active feature if it was active
 
 ## Branch Safety
 
 - Do not discard local changes silently
-- If switching branches is blocked by local modifications, stop and tell the user what must be resolved
+- If switching branches is blocked by local modifications, stop and tell the user what must be resolved before feature status can be changed
 - Do not delete branches unless the user explicitly requests deletion
 
 ## Output Expectations
@@ -131,6 +131,7 @@ AI: "Feature `01-initial` is now paused. Active feature is now `02-history` on b
 User: "Pause the current feature"
 
 AI: [Reads 00-feature-status.md]
+AI: [Checks out main]
 AI: [Marks the current feature paused]
 AI: "Feature `01-initial` is now paused. No feature is currently active."
 ```
@@ -148,6 +149,7 @@ AI: "Active feature is now `03-user-auth` on branch `feature/03-user-auth`."
 User: "Close feature 01-initial"
 
 AI: [Reads 00-feature-status.md]
+AI: [Checks out main]
 AI: [Marks 01-initial completed]
 AI: "Feature `01-initial` is now marked completed. No feature is currently active."
 ```

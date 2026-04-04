@@ -1,6 +1,6 @@
 ---
-version: 1.2.0
-timestamp: 2026-03-22 14:03
+version: 1.2.1
+timestamp: 2026-04-04 10:00
 ---
 # Rule: Creating a Feature Tag
 
@@ -98,7 +98,7 @@ The branch for the feature should be:
 
 ## Final Instructions
 
-1. Always prompt the user and offer to create a feature tag before creating scope, PRD, or tasks
+1. Offer feature-tag creation only when no valid target feature already exists for the requested scope, PRD, or task work
 2. Only one feature may be active at a time
 3. Use `/ai-work/00-feature-status.md` as the source of truth for feature state
 4. Do not activate the feature branch from this rule; use the feature-change rule for that
