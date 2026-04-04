@@ -51,6 +51,7 @@
                 not_yet_reviewed: number;
             } | null;
             reviewStateFilter: 'all' | 'not_yet_reviewed';
+            regexFilter: string;
         }>;
         availableSourceChannels: Array<{
             id: number;
@@ -104,14 +105,33 @@
             length_classification?: 'long' | 'short' | 'unknown' | null;
             review_state: 'included' | 'ignored' | 'not_yet_reviewed';
         }>,
-        filter: 'all' | 'not_yet_reviewed'
+        reviewStateFilter: 'all' | 'not_yet_reviewed',
+        regexFilter: string
     )
     {
-        if (filter === 'not_yet_reviewed') {
-            return videos.filter((video) => video.review_state === 'not_yet_reviewed');
+        // Apply the review-state filter first so later bulk tools can target the shown rows.
+        let filteredVideos = reviewStateFilter === 'not_yet_reviewed'
+            ? videos.filter((video) => video.review_state === 'not_yet_reviewed')
+            : videos;
+
+        // Apply the title/description regex filter when provided.
+        if (!regexFilter) {
+            return { videos: filteredVideos, hasInvalidRegex: false };
         }
 
-        return videos;
+        try {
+            const pattern = new RegExp(regexFilter, 'i');
+
+            filteredVideos = filteredVideos.filter((video) => {
+                const title = video.title || '';
+                const description = video.description || '';
+                return pattern.test(title) || pattern.test(description);
+            });
+
+            return { videos: filteredVideos, hasInvalidRegex: false };
+        } catch {
+            return { videos: filteredVideos, hasInvalidRegex: true };
+        }
     }
 </script>
 
@@ -281,25 +301,80 @@
                                                 <p class="muted">No source videos are available for review yet.</p>
                                             {:else}
                                                 <div class="inline-actions">
-                                                    <a href={`?reviewStateFilter-${item.assignment.id}=all`} class="btn btn-secondary">Show all</a>
-                                                    <a
-                                                        href={`?reviewStateFilter-${item.assignment.id}=not_yet_reviewed`}
-                                                        class="btn btn-secondary"
-                                                    >
-                                                        Not yet reviewed
-                                                        {#if item.selectedOnlyCounts}
-                                                            ({item.selectedOnlyCounts.not_yet_reviewed})
-                                                        {/if}
-                                                    </a>
+                                                    <form method="get" class="inline-form">
+                                                        <input
+                                                            type="hidden"
+                                                            name={`reviewStateFilter-${item.assignment.id}`}
+                                                            value="all"
+                                                        />
+                                                        <input
+                                                            type="hidden"
+                                                            name={`regexFilter-${item.assignment.id}`}
+                                                            value={item.regexFilter}
+                                                        />
+                                                        <button type="submit" class="btn btn-secondary">Show all</button>
+                                                    </form>
+                                                    <form method="get" class="inline-form">
+                                                        <input
+                                                            type="hidden"
+                                                            name={`reviewStateFilter-${item.assignment.id}`}
+                                                            value="not_yet_reviewed"
+                                                        />
+                                                        <input
+                                                            type="hidden"
+                                                            name={`regexFilter-${item.assignment.id}`}
+                                                            value={item.regexFilter}
+                                                        />
+                                                        <button type="submit" class="btn btn-secondary">
+                                                            Not yet reviewed
+                                                            {#if item.selectedOnlyCounts}
+                                                                ({item.selectedOnlyCounts.not_yet_reviewed})
+                                                            {/if}
+                                                        </button>
+                                                    </form>
                                                 </div>
 
-                                                {@const visibleSelectedOnlyVideos = filteredSelectedOnlyVideos(
+                                                <form method="get" class="fields">
+                                                    <input
+                                                        type="hidden"
+                                                        name={`reviewStateFilter-${item.assignment.id}`}
+                                                        value={item.reviewStateFilter}
+                                                    />
+                                                    <label>
+                                                        Regex filter
+                                                        <input
+                                                            type="text"
+                                                            name={`regexFilter-${item.assignment.id}`}
+                                                            value={item.regexFilter}
+                                                            placeholder="title|description pattern"
+                                                        />
+                                                    </label>
+                                                    <div class="inline-actions">
+                                                        <button type="submit">Apply Filter</button>
+                                                        <a
+                                                            href={`?reviewStateFilter-${item.assignment.id}=${item.reviewStateFilter}`}
+                                                            class="btn btn-secondary"
+                                                        >
+                                                            Clear Regex
+                                                        </a>
+                                                    </div>
+                                                    <p class="muted">Matches video title and description using a case-insensitive regular expression.</p>
+                                                </form>
+
+                                                {@const filteredResult = filteredSelectedOnlyVideos(
                                                     item.selectedOnlyVideos,
-                                                    item.reviewStateFilter
+                                                    item.reviewStateFilter,
+                                                    item.regexFilter
                                                 )}
 
+                                                {#if filteredResult.hasInvalidRegex}
+                                                    <p class="muted">The current regex is invalid. Showing the review-state filtered rows only.</p>
+                                                {/if}
+
+                                                {@const visibleSelectedOnlyVideos = filteredResult.videos}
+
                                                 {#if visibleSelectedOnlyVideos.length === 0}
-                                                    <p class="muted">No videos match the current review-state filter.</p>
+                                                    <p class="muted">No videos match the current filters.</p>
                                                 {:else}
                                                 <div class="table-wrap">
                                                     <table>

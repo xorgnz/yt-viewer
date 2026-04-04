@@ -49,6 +49,7 @@ export const load: PageServerLoad = async ({ params, url }) =>
         const selectionDAO = new VirtualChannelAssignmentVideoSelectionDAO(db);
 
         const associatedSourceChannels = assignments.map((assignment) => {
+            const regexFilter = url.searchParams.get(`regexFilter-${assignment.id}`)?.trim() ?? '';
             const sourceVideos = videoDAO.listByChannel(assignment.source_channel_id);
             const selectionRows = assignment.mode === 'selected_only'
                 ? selectionDAO.listForAssignment(assignment.id)
@@ -86,7 +87,8 @@ export const load: PageServerLoad = async ({ params, url }) =>
                 automaticVideos,
                 selectedOnlyVideos,
                 selectedOnlyCounts,
-                reviewStateFilter
+                reviewStateFilter,
+                regexFilter
             };
         });
 
