@@ -22,6 +22,17 @@
                 published_at?: number | null;
                 last_refreshed_at?: number | null;
             } | null;
+            automaticVideos: Array<{
+                id: number;
+                youtube_id: string;
+                channel_id: number;
+                title: string;
+                description?: string;
+                published_at?: number | null;
+                duration_seconds?: number | null;
+                thumbnail_url?: string | null;
+                length_classification?: 'long' | 'short' | 'unknown' | null;
+            }>;
         }>;
         availableSourceChannels: Array<{
             id: number;
@@ -159,6 +170,43 @@
                                     </form>
                                 </td>
                             </tr>
+                            {#if item.assignment.mode === 'all' || item.assignment.mode === 'long_only'}
+                                <tr>
+                                    <td colspan="4">
+                                        <details>
+                                            <summary>
+                                                Included videos
+                                                <span class="muted">({item.automaticVideos.length})</span>
+                                            </summary>
+
+                                            {#if item.automaticVideos.length === 0}
+                                                <p class="muted">No videos are currently auto-included for this association.</p>
+                                            {:else}
+                                                <div class="table-wrap">
+                                                    <table>
+                                                        <thead>
+                                                            <tr>
+                                                                <th>Title</th>
+                                                                <th>Length</th>
+                                                                <th>Published</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            {#each item.automaticVideos as video}
+                                                                <tr>
+                                                                    <td>{video.title}</td>
+                                                                    <td><code>{video.length_classification ?? 'unknown'}</code></td>
+                                                                    <td>{video.published_at ?? 'Unknown'}</td>
+                                                                </tr>
+                                                            {/each}
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                            {/if}
+                                        </details>
+                                    </td>
+                                </tr>
+                            {/if}
                         {/each}
                     </tbody>
                 </table>

@@ -52,7 +52,7 @@
   - [x] 3.1 Add manage links from the virtual channel admin list into the dedicated manage page
   - [x] 3.2 Build the manage page layout showing virtual channel details, associated source channels, and add-source controls
   - [x] 3.3 Add per-association mode selectors and row-level actions for removing associations
-  - [ ] 3.4 Build expandable panels for `all` and `long only` associations that display automatically included videos
+  - [x] 3.4 Build expandable panels for `all` and `long only` associations that display automatically included videos
   - [ ] 3.5 Build the `selected only` panel with dense long-list presentation, small thumbnails, and clear row metadata
   - [ ] 3.6 Add row-level ternary controls for setting video state to included, ignored, or not yet reviewed
 - [ ] 4.0 Implement filtering and temporary bulk-selection tools for selected-only video review

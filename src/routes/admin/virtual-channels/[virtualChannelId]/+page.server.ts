@@ -45,10 +45,27 @@ export const load: PageServerLoad = async ({ params }) =>
         const sourceChannelsById = new Map(availableSourceChannels.map((channel) => [channel.id, channel]));
         const assignments = assignmentDAO.listForVirtualChannel(virtualChannelId);
 
-        const associatedSourceChannels = assignments.map((assignment) => ({
-            assignment,
-            sourceChannel: sourceChannelsById.get(assignment.source_channel_id) ?? null
-        }));
+        const videoDAO = new VideoDAO(db);
+
+        const associatedSourceChannels = assignments.map((assignment) => {
+            // Load the automatically included videos for non-selected modes so the page can render expandable panels.
+            const sourceVideos = videoDAO.listByChannel(assignment.source_channel_id);
+            const automaticVideos = assignment.mode === 'selected_only'
+                ? []
+                : sourceVideos.filter((video) => {
+                    if (assignment.mode === 'all') {
+                        return true;
+                    }
+
+                    return video.length_classification === 'long';
+                });
+
+            return {
+                assignment,
+                sourceChannel: sourceChannelsById.get(assignment.source_channel_id) ?? null,
+                automaticVideos
+            };
+        });
 
         return {
             virtualChannel,
