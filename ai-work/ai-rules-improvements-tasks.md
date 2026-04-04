@@ -44,3 +44,9 @@
   - [ ] 3.4 Add a short shorthand-command glossary in the chosen location if still needed after the rule edits
   - [ ] 3.5 Update `__suggested_improvements.md` to record the adopted decisions and implemented fixes
   - [ ] 3.6 Review the Phase 3 wording so the examples and glossary match the final rule behavior exactly
+- [ ] 4.0 Refine feature-state rules so inactive state is limited and main is not implied as a working branch
+  - [ ] 4.1 Update rule 9 so standalone `pause` is no longer a primary user-facing workflow action
+  - [ ] 4.2 Update the shared feature-state contract so `no active feature` is allowed only before the first feature is activated or after closing an active feature with no replacement selected
+  - [ ] 4.3 Update rule 9 so closing a feature does not automatically require checkout to `main`, and instead reports any resulting inactive branch state clearly
+  - [ ] 4.4 Review rules 6 and 8 so implementation and commit work are rejected whenever no feature is active, even if the repository is still on an old feature branch
+  - [ ] 4.5 Update rule 9 examples so switching leaves the old feature `paused`, closing can leave no active feature selected, and no example implies working directly on `main`
