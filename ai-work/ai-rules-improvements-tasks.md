@@ -6,6 +6,7 @@
 - `ai-rules/5-create-tasks.md` - Phase 1 update for parent-task draft persistence behavior.
 - `ai-rules/8-prepare-commit.md` - Phase 1, Phase 2, and Phase 3 updates for `feat` handling, ambiguity policy, commit-task association, and examples.
 - `ai-rules/9-change-feature.md` - Phase 1, Phase 2, and Phase 3 updates for branch/state alignment, shared workflow structure, and exceptional-case examples.
+- `ai-rules/00-command-glossary.md` - Phase 3 glossary for shorthand workflow commands.
 - `ai-rules/__suggested_improvements.md` - Phase 3 update to reflect adopted decisions and implementation status.
 - `ai-work/00-feature-status.md` - Possible Phase 2 location for a shared feature-state contract if no separate contract document is introduced.
 - `ai-work/ai-rules-improvements-plan.md` - Phase planning reference for this effort.
@@ -37,13 +38,13 @@
   - [x] 2.5 Add a shared feature-state contract in the chosen document location
   - [x] 2.6 Update rule 8 to prioritize explicit task ID, then best diff match, then most recently completed task as fallback
   - [x] 2.7 Review the edited Phase 2 files for cross-rule consistency with the Phase 1 decisions
-- [ ] 3.0 Execute Phase 3 and improve usability with examples and glossary support
-  - [ ] 3.1 Add planned-feature and completed-feature exception examples where the rules now allow or restrict those cases
-  - [ ] 3.2 Add commit-preparation examples for ambiguous multi-task diffs and the adopted `run 8 feat` behavior
-  - [ ] 3.3 Add feature pause or close examples that show behavior when checkout is blocked by local changes
-  - [ ] 3.4 Add a short shorthand-command glossary in the chosen location if still needed after the rule edits
-  - [ ] 3.5 Update `__suggested_improvements.md` to record the adopted decisions and implemented fixes
-  - [ ] 3.6 Review the Phase 3 wording so the examples and glossary match the final rule behavior exactly
+- [x] 3.0 Execute Phase 3 and improve usability with examples and glossary support
+  - [x] 3.1 Add planned-feature and completed-feature exception examples where the rules now allow or restrict those cases
+  - [x] 3.2 Add commit-preparation examples for ambiguous multi-task diffs and the adopted `run 8 feat` behavior
+  - [x] 3.3 Add feature pause or close examples that show behavior when checkout is blocked by local changes
+  - [x] 3.4 Add a short shorthand-command glossary in the chosen location if still needed after the rule edits
+  - [x] 3.5 Update `__suggested_improvements.md` to record the adopted decisions and implemented fixes
+  - [x] 3.6 Review the Phase 3 wording so the examples and glossary match the final rule behavior exactly
 - [ ] 4.0 Refine feature-state rules so inactive state is limited and main is not implied as a working branch
   - [ ] 4.1 Update rule 9 so standalone `pause` is no longer a primary user-facing workflow action
   - [ ] 4.2 Update the shared feature-state contract so `no active feature` is allowed only before the first feature is activated or after closing an active feature with no replacement selected

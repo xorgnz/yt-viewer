@@ -1,6 +1,6 @@
 ---
-version: 1.3.0
-timestamp: 2026-04-04 10:30
+version: 1.4.0
+timestamp: 2026-04-04 11:15
 ---
 # Rule: Switch, Activate, Pause, or Close a Feature
 
@@ -169,6 +169,23 @@ AI: [Reads 00-feature-status.md]
 AI: [Checks out main]
 AI: [Marks 01-initial completed]
 AI: "Feature `01-initial` is now marked completed. No feature is currently active."
+```
+
+```text
+User: "Pause the current feature"
+
+AI: [Reads 00-feature-status.md]
+AI: [Attempts to switch branches]
+AI: "Branch checkout is blocked by local changes in `src/routes/admin/+page.svelte`. Resolve or stash those changes before I can change feature status."
+```
+
+```text
+User: "Close feature 02-vchannel-mgmt"
+
+AI: [Reads 00-feature-status.md]
+AI: [Checks out main]
+AI: [Marks 02-vchannel-mgmt completed]
+AI: "Feature `02-vchannel-mgmt` is now completed. No feature is currently active until you activate or switch to another feature."
 ```
 
 ## Final Instructions

@@ -1,6 +1,6 @@
 ---
-version: 1.3.0
-timestamp: 2026-04-04 10:30
+version: 1.3.1
+timestamp: 2026-04-04 11:15
 ---
 # Rule: Creating a High-Level Project Scope
 
@@ -103,6 +103,19 @@ Ask 5-7 questions maximum, focusing on:
 - [ ] Create detailed PRD based on this scope
 - [ ] Review and approve scope
 - [ ] Generate task breakdown
+```
+
+## Example Interaction Flow
+
+```text
+User: "Create scope for planned feature 03-user-auth"
+
+AI: [Reads 00-feature-status.md]
+AI: [Confirms 03-user-auth exists and is planned]
+AI: [Asks discovery questions]
+AI: [Summarizes the scope]
+AI: [Shows a draft for approval]
+AI: "Feature `03-user-auth` remains planned. I can write the approved scope without activating it."
 ```
 
 ## Final Instructions

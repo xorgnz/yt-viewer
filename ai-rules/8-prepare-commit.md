@@ -1,6 +1,6 @@
 ---
-version: 1.4.0
-timestamp: 2026-04-04 10:30
+version: 1.5.0
+timestamp: 2026-04-04 11:15
 ---
 # Rule: Prepare a Task Commit for Approval
 
@@ -119,6 +119,53 @@ Follow-up format:
 - For `run 8 tidy`, `run 8 style`, `run 8 fix`, `run 8 docs`, `run 8 mgmt`, `run 8 feat`, and `run 8 tweak`, write the description to match the full scoped set of uncommitted changes since the last commit
 - If there are no changes, do not propose a commit
 - If the diff appears to span multiple tasks or unrelated work, surface that clearly and ask the user how to scope the commit
+
+## Example Interaction Flow
+
+```text
+User: "run 8 feat"
+
+AI: [Reads 00-feature-status.md and the active task list]
+AI: [Reviews the diff]
+AI: [Matches the diff to the best task, falling back to the most recently completed task only if needed]
+AI: [Summarizes the ad hoc feature work from the uncommitted changes]
+AI: "Proposed commit: `feat: 02-vchannel-mgmt-2.5+ - add focused admin review tooling`"
+```
+
+```text
+User: "run 8 feat for a small admin filter improvement"
+
+AI: [Reads 00-feature-status.md and the active task list]
+AI: [Reviews the diff]
+AI: [Treats `feat` as ad hoc feature mode]
+AI: [Uses the user's wording to steer the proposed description]
+AI: "Proposed commit: `feat: 02-vchannel-mgmt-4.2+ - add admin filter refinement`"
+```
+
+```text
+User: "run 8 mgmt"
+
+AI: [Reads 00-feature-status.md and the active task list]
+AI: [Reviews the diff]
+AI: [Treats `mgmt` as a follow-up prefix]
+AI: [Uses the best task match for the current changes]
+AI: "Proposed commit: `mgmt: 02-vchannel-mgmt-2.7+ - update workflow planning tasks`"
+```
+
+```text
+User: "run 8 approve"
+
+AI: [Reads the active task list]
+AI: [Reviews the diff]
+AI: "The diff plausibly maps to task `3.4` and task `4.1`. I won't infer the task. Which one should this commit use?"
+```
+
+```text
+User: "run 8"
+
+AI: [Reads 00-feature-status.md]
+AI: "Feature `01-initial` is completed. I won't prepare a new implementation commit for a completed feature unless you explicitly ask for an exception."
+```
 
 ## PowerShell Command Guidance
 
