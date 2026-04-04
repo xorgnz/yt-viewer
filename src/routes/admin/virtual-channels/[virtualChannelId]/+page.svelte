@@ -119,14 +119,45 @@
                             <th>Source Channel</th>
                             <th>Mode</th>
                             <th>YouTube ID</th>
+                            <th>Actions</th>
                         </tr>
                     </thead>
                     <tbody>
                         {#each data.associatedSourceChannels as item}
                             <tr>
                                 <td>{item.sourceChannel?.title || 'Unknown source channel'}</td>
-                                <td><code>{item.assignment.mode}</code></td>
+                                <td>
+                                    <form
+                                        method="post"
+                                        action="?/updateAssociationMode"
+                                        class="inline-actions"
+                                    >
+                                        <input type="hidden" name="assignment_id" value={item.assignment.id} />
+                                        <select name="mode" value={item.assignment.mode}>
+                                            <option value="all">All videos</option>
+                                            <option value="long_only">Long videos only</option>
+                                            <option value="selected_only">Selected only</option>
+                                        </select>
+                                        <button type="submit">Update Mode</button>
+                                    </form>
+                                </td>
                                 <td><code>{item.sourceChannel?.youtube_id || 'missing'}</code></td>
+                                <td>
+                                    <form method="post" action="?/removeAssociation" class="inline-form">
+                                        <input type="hidden" name="assignment_id" value={item.assignment.id} />
+                                        <button
+                                            type="submit"
+                                            class="btn-danger"
+                                            on:click={(event) => {
+                                                if (!confirm('Remove this source channel from the virtual channel?')) {
+                                                    event.preventDefault();
+                                                }
+                                            }}
+                                        >
+                                            Remove
+                                        </button>
+                                    </form>
+                                </td>
                             </tr>
                         {/each}
                     </tbody>
