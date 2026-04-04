@@ -49,8 +49,8 @@
   - [x] 2.4 Implement server actions to update an association mode and remove an association from a virtual channel
   - [x] 2.5 Implement server actions to persist per-video selected-only review changes and bulk updates for the current filtered result set
 - [ ] 3.0 Build the manage-virtual-channel UI for association lists, expandable video panels, and ternary selection state
-  - [ ] 3.1 Add manage links from the virtual channel admin list into the dedicated manage page
-  - [ ] 3.2 Build the manage page layout showing virtual channel details, associated source channels, and add-source controls
+  - [x] 3.1 Add manage links from the virtual channel admin list into the dedicated manage page
+  - [x] 3.2 Build the manage page layout showing virtual channel details, associated source channels, and add-source controls
   - [ ] 3.3 Add per-association mode selectors and row-level actions for removing associations
   - [ ] 3.4 Build expandable panels for `all` and `long only` associations that display automatically included videos
   - [ ] 3.5 Build the `selected only` panel with dense long-list presentation, small thumbnails, and clear row metadata

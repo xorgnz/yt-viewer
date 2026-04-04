@@ -33,30 +33,80 @@
             last_refreshed_at?: number | null;
         }>;
     };
+
+    const associatedSourceChannelIds = new Set(
+        data.associatedSourceChannels.map((item) => item.assignment.source_channel_id)
+    );
+
+    const availableForAssociation = data.availableSourceChannels.filter(
+        (channel) => !associatedSourceChannelIds.has(channel.id)
+    );
 </script>
 
 <div class="page stack">
     <section class="panel">
         <a href="/admin/virtual-channels" class="text-link">Back to Virtual Channels</a>
         <h1>Manage Virtual Channel</h1>
-        <p class="muted">This page is the dedicated management route for an existing virtual channel.</p>
+        <p class="muted">Use this page to review the current setup and attach imported source channels to this virtual channel.</p>
+    </section>
+
+    <section class="panel stack">
+        <div class="row">
+            <div>
+                <h2>{data.virtualChannel.name}</h2>
+                <p class="muted">Virtual channel ID: {data.virtualChannel.id}</p>
+            </div>
+            <div>
+                <h3>Current Setup</h3>
+                <p class="muted">{data.associatedSourceChannels.length} source channel(s) currently associated.</p>
+            </div>
+            <div>
+                <h3>Available Imports</h3>
+                <p class="muted">{availableForAssociation.length} imported source channel(s) ready to attach.</p>
+            </div>
+        </div>
     </section>
 
     <section class="panel stack">
         <div>
-            <h2>{data.virtualChannel.name}</h2>
-            <p class="muted">Virtual channel ID: {data.virtualChannel.id}</p>
+            <h2>Add Source Channel</h2>
+            <p class="muted">Choose one imported source channel and the initial association mode.</p>
         </div>
 
-        <p class="muted">
-            This page now loads the current source-channel associations and the available imported source channels.
-        </p>
+        {#if availableForAssociation.length === 0}
+            <p class="muted">All imported source channels are already associated with this virtual channel.</p>
+        {:else}
+            <form method="post" action="?/addAssociation" class="fields">
+                <label>
+                    Source channel
+                    <select name="source_channel_id" required>
+                        <option value="" disabled selected>Select a source channel</option>
+                        {#each availableForAssociation as channel}
+                            <option value={channel.id}>{channel.title} ({channel.youtube_id})</option>
+                        {/each}
+                    </select>
+                </label>
+
+                <label>
+                    Initial mode
+                    <select name="mode">
+                        <option value="all">All videos</option>
+                        <option value="long_only">Long videos only</option>
+                        <option value="selected_only">Selected only</option>
+                    </select>
+                </label>
+
+                <div class="inline-actions">
+                    <button type="submit">Add Source Channel</button>
+                </div>
+            </form>
+        {/if}
     </section>
 
     <section class="panel stack">
         <div>
             <h2>Associated Source Channels</h2>
-            <p class="muted">{data.associatedSourceChannels.length} association(s) currently attached.</p>
+            <p class="muted">Review the source channels currently attached to this virtual channel.</p>
         </div>
 
         {#if data.associatedSourceChannels.length === 0}
@@ -88,7 +138,7 @@
     <section class="panel stack">
         <div>
             <h2>Available Imported Source Channels</h2>
-            <p class="muted">{data.availableSourceChannels.length} imported source channel(s) available.</p>
+            <p class="muted">These imported source channels can be attached here once they are not already associated.</p>
         </div>
 
         {#if data.availableSourceChannels.length === 0}
