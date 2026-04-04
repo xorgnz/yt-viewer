@@ -29,14 +29,14 @@
   - [x] 1.4 Update rule 8 so ad hoc `feat` is a dedicated mode and not also treated as a generic follow-up prefix
   - [x] 1.5 Update rule 9 to require strict branch and feature-state alignment for pause and close flows
   - [x] 1.6 Review the edited Phase 1 files for remaining contradictions in examples, defaults, and final instructions
-- [ ] 2.0 Execute Phase 2 and add shared workflow standards
-  - [ ] 2.1 Add approval gates to scope creation so clarification or draft approval happens before file writes
-  - [ ] 2.2 Add approval gates to PRD creation so clarification or draft approval happens before file writes
-  - [ ] 2.3 Add a shared ambiguity-handling standard to the rules that currently rely on inference
-  - [ ] 2.4 Standardize the affected rules around inspect, propose, approval, execute, and report phases
-  - [ ] 2.5 Add a shared feature-state contract in the chosen document location
-  - [ ] 2.6 Update rule 8 to prioritize explicit task ID, then best diff match, then most recently completed task as fallback
-  - [ ] 2.7 Review the edited Phase 2 files for cross-rule consistency with the Phase 1 decisions
+- [x] 2.0 Execute Phase 2 and add shared workflow standards
+  - [x] 2.1 Add approval gates to scope creation so clarification or draft approval happens before file writes
+  - [x] 2.2 Add approval gates to PRD creation so clarification or draft approval happens before file writes
+  - [x] 2.3 Add a shared ambiguity-handling standard to the rules that currently rely on inference
+  - [x] 2.4 Standardize the affected rules around inspect, propose, approval, execute, and report phases
+  - [x] 2.5 Add a shared feature-state contract in the chosen document location
+  - [x] 2.6 Update rule 8 to prioritize explicit task ID, then best diff match, then most recently completed task as fallback
+  - [x] 2.7 Review the edited Phase 2 files for cross-rule consistency with the Phase 1 decisions
 - [ ] 3.0 Execute Phase 3 and improve usability with examples and glossary support
   - [ ] 3.1 Add planned-feature and completed-feature exception examples where the rules now allow or restrict those cases
   - [ ] 3.2 Add commit-preparation examples for ambiguous multi-task diffs and the adopted `run 8 feat` behavior

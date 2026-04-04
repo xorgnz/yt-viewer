@@ -1,6 +1,6 @@
 ---
-version: 1.3.4
-timestamp: 2026-04-04 10:00
+version: 1.4.0
+timestamp: 2026-04-04 10:30
 ---
 # Rule: Prepare a Task Commit for Approval
 
@@ -19,6 +19,7 @@ Use this rule when the user says they have completed implementation for a task a
 - The current branch must match the active feature branch
 - A task list should exist at `/ai-work/{feature-tag}-tasks.md`
 - The relevant task should already be implemented
+- Follow the shared feature-state contract in `/ai-work/00-feature-status.md`
 
 ## Core Principle
 
@@ -62,13 +63,18 @@ Follow-up format:
 
 ## Process
 
+### Inspect
+
 1. **Identify the Active Feature and Task**
    - Read `/ai-work/00-feature-status.md`
    - Use the active feature and branch as the default and expected source of truth
-   - If the user does not provide a task ID, infer it from the active feature task list by finding the most recently completed task that aligns with the current diff
-   - If the user explicitly invokes one of the allowed follow-up prefixes, use the most recently completed task in the active feature as the default task context unless the user provides a different task ID
+   - If the user provides a task ID, use it as the first-choice task context
+   - If the user does not provide a task ID, identify the task that best matches the current diff before considering recency
+   - If no clear diff match exists, use the most recently completed task in the active feature as the fallback context
+   - If the user explicitly invokes one of the allowed follow-up prefixes, use the same priority order unless the user provides a different task ID
    - If the user explicitly invokes ad hoc `feat`, treat that as the dedicated ad hoc feature mode rather than as a generic follow-up prefix
-   - If the task is ambiguous, stop and ask the user to clarify before proposing a commit
+   - If two or more plausible task mappings remain, do not infer
+   - Present the strongest candidate tasks briefly and ask the user to choose before proposing a commit
 
 2. **Review Task Context**
    - Read `/ai-work/{feature-tag}-tasks.md`
@@ -81,6 +87,8 @@ Follow-up format:
    - For follow-up prefixes and ad hoc `feat`, treat the candidate commit message as a summary of the full scoped diff since `HEAD`, not just the most recent user request in the conversation
    - If multiple related changes have accumulated since the last commit, make the description reflect the combined result at the chosen scope
 
+### Propose
+
 4. **Draft the Commit Description**
    - Keep it concise and specific
    - For follow-up prefixes and ad hoc `feat`, summarize all known in-scope changes since the last commit that will be included in the proposed commit
@@ -89,19 +97,25 @@ Follow-up format:
    - Present the proposed message and file list
    - Wait for explicit user approval unless the user already provided preapproval in the same command
 
+### Execute and Report
+
 6. **Create the Commit When Preapproved**
    - If the user's rule invocation already includes `approve` or `approved`, treat that as approval for the proposed task-aligned commit
    - Still inspect the active feature, task context, and changed files first
    - If the diff is clearly scoped to one task, create the commit after preparing the message and file scope without asking a second approval question
    - If the diff is ambiguous, spans multiple tasks, or includes unrelated work, stop and ask for clarification instead of using preapproval blindly
+   - After committing, report the commit message and resulting repository state
 
 ## Default Behavior
 
 - If the user says only `run 8`, assume the active feature
 - If the user says `run 8 approve`, `run rule 8 approve`, `run 8 approved`, or equivalent, treat that as preapproval for a clean task-aligned commit
-- Use the current diff plus the active feature task list to infer the most recently completed task
-- If the user says `run 8 tidy`, `run 8 style`, `run 8 fix`, `run 8 docs`, `run 8 mgmt`, or `run 8 tweak`, assume the active feature and use the most recently completed task as the `+` context for the commit message
-- If the user says `run 8 feat`, treat that as the dedicated ad hoc feature mode and use the active feature plus the most recently completed task as the default `+` context unless the user provides a task ID
+- Use this task-selection order:
+  1. explicit task ID from the user
+  2. task that best matches the actual diff
+  3. most recently completed task only as a fallback
+- If the user says `run 8 tidy`, `run 8 style`, `run 8 fix`, `run 8 docs`, `run 8 mgmt`, or `run 8 tweak`, assume the active feature and apply the same task-selection order before choosing the `+` context for the commit message
+- If the user says `run 8 feat`, treat that as the dedicated ad hoc feature mode and apply the same task-selection order before choosing the default `+` context unless the user provides a task ID
 - For `run 8 tidy`, `run 8 style`, `run 8 fix`, `run 8 docs`, `run 8 mgmt`, `run 8 feat`, and `run 8 tweak`, write the description to match the full scoped set of uncommitted changes since the last commit
 - If there are no changes, do not propose a commit
 - If the diff appears to span multiple tasks or unrelated work, surface that clearly and ask the user how to scope the commit

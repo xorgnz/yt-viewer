@@ -1,6 +1,6 @@
 ---
-version: 1.2.1
-timestamp: 2026-04-04 10:00
+version: 1.3.0
+timestamp: 2026-04-04 10:30
 ---
 # Rule: Creating a High-Level Project Scope
 
@@ -13,8 +13,11 @@ To guide an AI assistant in working with the user to create a concise, high-leve
 - A feature tag must already exist
 - `/ai-work/00-feature-status.md` must identify the feature as the current active feature or an explicitly selected planned feature
 - The feature must not be marked `paused` or `completed` unless the user explicitly asks for an exception
+- Follow the shared feature-state contract in `/ai-work/00-feature-status.md`
 
 ## Process
+
+### Inspect
 
 1. **Confirm the Feature**
    - Read `/ai-work/00-feature-status.md`
@@ -25,15 +28,29 @@ To guide an AI assistant in working with the user to create a concise, high-leve
 
 2. **Ask Discovery Questions**
    - Guide the user through a focused set of questions about vision, boundaries, and constraints
+   - Ask 5-7 questions maximum
+
+### Propose
 
 3. **Summarize Understanding**
    - Reflect the intended scope back to the user and confirm the understanding
+   - If two or more plausible interpretations remain, do not infer
+   - Present the top candidate interpretations briefly and ask the user to choose
 
-4. **Generate the Scope Document**
+4. **Generate the Scope Draft**
    - Create a short, high-level scope document using the template below
+   - Present the draft or summary for approval before writing the file
 
-5. **Save the Scope Document**
+### Approval Gate
+
+5. **Wait for Explicit Approval**
+   - Do not write `/ai-work/{feature-tag}-scope.md` until the user explicitly approves the summary or draft
+
+### Execute and Report
+
+6. **Save the Scope Document**
    - Save it to `/ai-work/{feature-tag}-scope.md`
+   - Report that the scope was written and identify the target file
 
 ## Discovery Questions Framework
 
@@ -93,4 +110,5 @@ Ask 5-7 questions maximum, focusing on:
 1. Keep the scope high-level
 2. Focus on what and why, not how
 3. Do not create or update scope files for paused or completed features unless the user explicitly asks to make an exception
-4. Do not proceed to create a PRD unless explicitly asked
+4. Require explicit approval before writing the scope file
+5. Do not proceed to create a PRD unless explicitly asked

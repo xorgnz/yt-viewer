@@ -1,6 +1,6 @@
 ---
-version: 1.2.1
-timestamp: 2026-04-04 10:00
+version: 1.3.0
+timestamp: 2026-04-04 10:30
 ---
 # Rule: Switch, Activate, Pause, or Close a Feature
 
@@ -33,6 +33,8 @@ Allowed status values:
 - `paused`
 - `completed`
 
+Also follow the shared feature-state contract in `/ai-work/00-feature-status.md`.
+
 ## Scope of This Rule
 
 This rule does **not** independently create new features.
@@ -52,7 +54,11 @@ This rule does **not** independently create new features.
 5. Completed features are read-only by default
 6. Closing a feature should mark it `completed` and clear it as the active feature
 
-## Process for Switching to an Existing Feature
+## Process
+
+### Inspect
+
+#### Process for Switching to an Existing Feature
 
 1. Read `/ai-work/00-feature-status.md`
 2. Identify the requested feature and its branch
@@ -61,7 +67,7 @@ This rule does **not** independently create new features.
 5. Switch Git to the requested branch
 6. Update `/ai-work/00-feature-status.md` so the selected feature is the only active one
 
-## Process for Activating a Planned Feature
+#### Process for Activating a Planned Feature
 
 1. Read `/ai-work/00-feature-status.md`
 2. Confirm the feature exists and is marked `planned`
@@ -70,7 +76,7 @@ This rule does **not** independently create new features.
 5. Mark the feature as `active`
 6. Ensure no other feature remains `active`
 
-## Process for Pausing the Current Feature
+#### Process for Pausing the Current Feature
 
 Use this when the user explicitly asks to pause work without activating a different feature immediately.
 
@@ -80,7 +86,7 @@ Use this when the user explicitly asks to pause work without activating a differ
 4. Mark that feature as `paused`
 5. Clear the current active feature fields if no other feature is being activated in the same flow
 
-## Process for Create and Activate
+#### Process for Create and Activate
 
 Use this only when the user explicitly asks for both actions together.
 
@@ -88,7 +94,7 @@ Use this only when the user explicitly asks for both actions together.
 2. Confirm the new feature now exists in `/ai-work/00-feature-status.md` as `planned`
 3. Continue with the activation flow in this rule
 
-## Process for Closing a Feature
+#### Process for Closing a Feature
 
 Use this when the user explicitly asks to close the feature or branch.
 
@@ -98,6 +104,17 @@ Use this when the user explicitly asks to close the feature or branch.
 4. Mark the feature as `completed`
 5. Record the completion date
 6. Clear it as the active feature if it was active
+
+### Propose
+
+1. If the user's request could reasonably mean more than one state change, do not infer
+2. Present the valid options briefly and ask the user to choose before changing branch or feature state
+3. Explain the expected branch and feature-state result before executing when the flow is not obvious from the request
+
+### Execute and Report
+
+1. Apply the selected branch and feature-state changes in the required order
+2. Report the previous active feature, the new active feature if any, the branch switched to or created, and whether any feature was paused or completed
 
 ## Branch Safety
 
@@ -162,3 +179,4 @@ AI: "Feature `01-initial` is now marked completed. No feature is currently activ
 4. Treat paused features as resumable but inactive
 5. Treat completed features as read-only by default
 6. Only pause or close a feature when the user explicitly asks, or when pause is part of a switch
+7. If the request is ambiguous across multiple valid feature-state transitions, ask instead of inferring
