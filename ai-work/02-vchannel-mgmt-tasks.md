@@ -53,8 +53,8 @@
   - [x] 3.2 Build the manage page layout showing virtual channel details, associated source channels, and add-source controls
   - [x] 3.3 Add per-association mode selectors and row-level actions for removing associations
   - [x] 3.4 Build expandable panels for `all` and `long only` associations that display automatically included videos
-  - [ ] 3.5 Build the `selected only` panel with dense long-list presentation, small thumbnails, and clear row metadata
-  - [ ] 3.6 Add row-level ternary controls for setting video state to included, ignored, or not yet reviewed
+  - [x] 3.5 Build the `selected only` panel with dense long-list presentation, small thumbnails, and clear row metadata
+  - [x] 3.6 Add row-level ternary controls for setting video state to included, ignored, or not yet reviewed
 - [ ] 4.0 Implement filtering and temporary bulk-selection tools for selected-only video review
   - [ ] 4.1 Add a review-state filter that can isolate not-yet-reviewed videos
   - [ ] 4.2 Add regex filtering against video title and description within the selected-only list

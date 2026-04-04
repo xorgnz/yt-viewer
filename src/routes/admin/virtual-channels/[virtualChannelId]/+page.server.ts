@@ -46,10 +46,14 @@ export const load: PageServerLoad = async ({ params }) =>
         const assignments = assignmentDAO.listForVirtualChannel(virtualChannelId);
 
         const videoDAO = new VideoDAO(db);
+        const selectionDAO = new VirtualChannelAssignmentVideoSelectionDAO(db);
 
         const associatedSourceChannels = assignments.map((assignment) => {
-            // Load the automatically included videos for non-selected modes so the page can render expandable panels.
             const sourceVideos = videoDAO.listByChannel(assignment.source_channel_id);
+            const selectionRows = assignment.mode === 'selected_only'
+                ? selectionDAO.listForAssignment(assignment.id)
+                : [];
+            const selectionByVideoId = new Map(selectionRows.map((row) => [row.video_id, row]));
             const automaticVideos = assignment.mode === 'selected_only'
                 ? []
                 : sourceVideos.filter((video) => {
@@ -59,11 +63,18 @@ export const load: PageServerLoad = async ({ params }) =>
 
                     return video.length_classification === 'long';
                 });
+            const selectedOnlyVideos = assignment.mode !== 'selected_only'
+                ? []
+                : sourceVideos.map((video) => ({
+                    ...video,
+                    review_state: selectionByVideoId.get(video.id)?.review_state ?? 'not_yet_reviewed'
+                }));
 
             return {
                 assignment,
                 sourceChannel: sourceChannelsById.get(assignment.source_channel_id) ?? null,
-                automaticVideos
+                automaticVideos,
+                selectedOnlyVideos
             };
         });
 

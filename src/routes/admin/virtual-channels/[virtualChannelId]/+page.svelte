@@ -33,6 +33,18 @@
                 thumbnail_url?: string | null;
                 length_classification?: 'long' | 'short' | 'unknown' | null;
             }>;
+            selectedOnlyVideos: Array<{
+                id: number;
+                youtube_id: string;
+                channel_id: number;
+                title: string;
+                description?: string;
+                published_at?: number | null;
+                duration_seconds?: number | null;
+                thumbnail_url?: string | null;
+                length_classification?: 'long' | 'short' | 'unknown' | null;
+                review_state: 'included' | 'ignored' | 'not_yet_reviewed';
+            }>;
         }>;
         availableSourceChannels: Array<{
             id: number;
@@ -52,6 +64,26 @@
     const availableForAssociation = data.availableSourceChannels.filter(
         (channel) => !associatedSourceChannelIds.has(channel.id)
     );
+
+    function formatTimestamp(timestamp?: number | null): string
+    {
+        if (!timestamp) {
+            return 'Unknown';
+        }
+
+        return new Date(timestamp).toLocaleDateString();
+    }
+
+    function formatDuration(durationSeconds?: number | null): string
+    {
+        if (!durationSeconds || durationSeconds <= 0) {
+            return 'Unknown';
+        }
+
+        const minutes = Math.floor(durationSeconds / 60);
+        const seconds = durationSeconds % 60;
+        return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+    }
 </script>
 
 <div class="page stack">
@@ -197,6 +229,90 @@
                                                                     <td>{video.title}</td>
                                                                     <td><code>{video.length_classification ?? 'unknown'}</code></td>
                                                                     <td>{video.published_at ?? 'Unknown'}</td>
+                                                                </tr>
+                                                            {/each}
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                            {/if}
+                                        </details>
+                                    </td>
+                                </tr>
+                            {/if}
+                            {#if item.assignment.mode === 'selected_only'}
+                                <tr>
+                                    <td colspan="4">
+                                        <details>
+                                            <summary>
+                                                Review videos
+                                                <span class="muted">({item.selectedOnlyVideos.length})</span>
+                                            </summary>
+
+                                            {#if item.selectedOnlyVideos.length === 0}
+                                                <p class="muted">No source videos are available for review yet.</p>
+                                            {:else}
+                                                <div class="table-wrap">
+                                                    <table>
+                                                        <thead>
+                                                            <tr>
+                                                                <th>Video</th>
+                                                                <th>Metadata</th>
+                                                                <th>Review State</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            {#each item.selectedOnlyVideos as video}
+                                                                <tr>
+                                                                    <td>
+                                                                        <div class="inline-actions">
+                                                                            {#if video.thumbnail_url}
+                                                                                <img
+                                                                                    src={video.thumbnail_url}
+                                                                                    alt=""
+                                                                                    width="96"
+                                                                                    height="54"
+                                                                                />
+                                                                            {/if}
+                                                                            <div>
+                                                                                <div>{video.title}</div>
+                                                                                <div class="muted">
+                                                                                    {video.description || 'No description available.'}
+                                                                                </div>
+                                                                            </div>
+                                                                        </div>
+                                                                    </td>
+                                                                    <td>
+                                                                        <div class="muted">Published: {formatTimestamp(video.published_at)}</div>
+                                                                        <div class="muted">Length: {formatDuration(video.duration_seconds)}</div>
+                                                                        <div class="muted">
+                                                                            Type: <code>{video.length_classification ?? 'unknown'}</code>
+                                                                        </div>
+                                                                    </td>
+                                                                    <td>
+                                                                        <div class="stack">
+                                                                            <div><code>{video.review_state}</code></div>
+                                                                            <div class="inline-actions">
+                                                                                <form method="post" action="?/setVideoReviewState" class="inline-form">
+                                                                                    <input type="hidden" name="assignment_id" value={item.assignment.id} />
+                                                                                    <input type="hidden" name="video_id" value={video.id} />
+                                                                                    <input type="hidden" name="review_state" value="included" />
+                                                                                    <button type="submit">Include</button>
+                                                                                </form>
+                                                                                <form method="post" action="?/setVideoReviewState" class="inline-form">
+                                                                                    <input type="hidden" name="assignment_id" value={item.assignment.id} />
+                                                                                    <input type="hidden" name="video_id" value={video.id} />
+                                                                                    <input type="hidden" name="review_state" value="ignored" />
+                                                                                    <button type="submit" class="btn-secondary">Ignore</button>
+                                                                                </form>
+                                                                                <form method="post" action="?/setVideoReviewState" class="inline-form">
+                                                                                    <input type="hidden" name="assignment_id" value={item.assignment.id} />
+                                                                                    <input type="hidden" name="video_id" value={video.id} />
+                                                                                    <input type="hidden" name="review_state" value="not_yet_reviewed" />
+                                                                                    <button type="submit" class="btn-secondary">Reset</button>
+                                                                                </form>
+                                                                            </div>
+                                                                        </div>
+                                                                    </td>
                                                                 </tr>
                                                             {/each}
                                                         </tbody>
