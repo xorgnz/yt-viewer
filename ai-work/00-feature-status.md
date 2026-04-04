@@ -32,19 +32,20 @@ Additional guidance:
 
 - `planned` may remain non-active while still being used for planning documents when a rule explicitly allows that.
 - `completed` features are read-only by default unless the user explicitly asks for an exception.
-- `no active feature` is allowed after pausing or closing a feature when no replacement feature is activated in the same flow.
+- `no active feature` is allowed only before the first feature is activated, or after closing the active feature when no replacement feature is activated in the same flow.
+- `paused` is the status left behind when an unfinished active feature is replaced by a different active feature.
 
 ### Branch Alignment
 
 - Exactly one feature may be `active` at a time.
 - The active feature must match the currently checked out branch.
-- If no feature is active, the repository should not remain on a feature branch for a paused or closed feature.
+- If no feature is active, the repository may still be checked out on the previously active feature branch, but that branch should be treated as inactive until another feature is activated or switched in.
 - Feature status must not be updated if branch switching is blocked by local changes.
 
 ### Completion Metadata
 
 - A completed feature should include a completion date in the `Completed` column.
-- The `Current Feature` and `Current Branch` fields should be cleared or updated to match the new active state after completion or pause flows.
+- The `Current Feature` and `Current Branch` fields should be cleared or updated to match the new active state after completion or switch flows.
 
 ## Status Values
 

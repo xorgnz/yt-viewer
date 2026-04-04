@@ -1,6 +1,6 @@
 ---
-version: 1.4.0
-timestamp: 2026-04-04 11:15
+version: 1.5.0
+timestamp: 2026-04-04 12:05
 ---
 # Rule: Switch, Activate, Pause, or Close a Feature
 
@@ -14,7 +14,6 @@ Use this rule when the user wants to:
 
 - switch to another existing feature
 - activate a planned feature
-- pause the current feature explicitly
 - close a feature after it has been merged or otherwise completed
 - use a convenience command to create and activate a feature in one flow
 
@@ -40,7 +39,7 @@ Also follow the shared feature-state contract in `/ai-work/00-feature-status.md`
 This rule does **not** independently create new features.
 
 - Feature creation belongs to rule `1-create-feature-tag.md`
-- This rule handles working-state changes: `switch`, `activate`, `pause`, and `close`
+- This rule handles working-state changes: `switch`, `activate`, and `close`
 - If the user says `create and activate`, treat that as a convenience flow:
   1. invoke rule 1 to create the feature tag and feature entry
   2. then continue with activation under this rule
@@ -76,16 +75,6 @@ This rule does **not** independently create new features.
 5. Mark the feature as `active`
 6. Ensure no other feature remains `active`
 
-#### Process for Pausing the Current Feature
-
-Use this when the user explicitly asks to pause work without activating a different feature immediately.
-
-1. Read `/ai-work/00-feature-status.md`
-2. Confirm which feature is currently active
-3. Switch Git to a non-feature branch such as `main` before updating feature status
-4. Mark that feature as `paused`
-5. Clear the current active feature fields if no other feature is being activated in the same flow
-
 #### Process for Create and Activate
 
 Use this only when the user explicitly asks for both actions together.
@@ -100,10 +89,10 @@ Use this when the user explicitly asks to close the feature or branch.
 
 1. Read `/ai-work/00-feature-status.md`
 2. Confirm which feature is being closed
-3. Switch Git to a non-feature branch such as `main` before updating feature status if the feature being closed is currently active
-4. Mark the feature as `completed`
-5. Record the completion date
-6. Clear it as the active feature if it was active
+3. Mark the feature as `completed`
+4. Record the completion date
+5. Clear it as the active feature if it was active
+6. If the repository remains on the closed feature branch, report that branch state clearly and treat it as inactive until another feature is activated or switched in
 
 ### Propose
 
@@ -114,7 +103,7 @@ Use this when the user explicitly asks to close the feature or branch.
 ### Execute and Report
 
 1. Apply the selected branch and feature-state changes in the required order
-2. Report the previous active feature, the new active feature if any, the branch switched to or created, and whether any feature was paused or completed
+2. Report the previous active feature, the new active feature if any, the branch switched to or created if one changed, and whether any feature was paused or completed
 
 ## Branch Safety
 
@@ -145,15 +134,6 @@ AI: "Feature `01-initial` is now paused. Active feature is now `02-history` on b
 ```
 
 ```text
-User: "Pause the current feature"
-
-AI: [Reads 00-feature-status.md]
-AI: [Checks out main]
-AI: [Marks the current feature paused]
-AI: "Feature `01-initial` is now paused. No feature is currently active."
-```
-
-```text
 User: "Create and activate feature 03-user-auth"
 
 AI: [Invokes rule 1 to create the feature]
@@ -166,24 +146,14 @@ AI: "Active feature is now `03-user-auth` on branch `feature/03-user-auth`."
 User: "Close feature 01-initial"
 
 AI: [Reads 00-feature-status.md]
-AI: [Checks out main]
 AI: [Marks 01-initial completed]
-AI: "Feature `01-initial` is now marked completed. No feature is currently active."
-```
-
-```text
-User: "Pause the current feature"
-
-AI: [Reads 00-feature-status.md]
-AI: [Attempts to switch branches]
-AI: "Branch checkout is blocked by local changes in `src/routes/admin/+page.svelte`. Resolve or stash those changes before I can change feature status."
+AI: "Feature `01-initial` is now marked completed. No feature is currently active. The repository is still on `feature/01-initial` until you switch or activate another feature."
 ```
 
 ```text
 User: "Close feature 02-vchannel-mgmt"
 
 AI: [Reads 00-feature-status.md]
-AI: [Checks out main]
 AI: [Marks 02-vchannel-mgmt completed]
 AI: "Feature `02-vchannel-mgmt` is now completed. No feature is currently active until you activate or switch to another feature."
 ```
@@ -192,8 +162,8 @@ AI: "Feature `02-vchannel-mgmt` is now completed. No feature is currently active
 
 1. `/ai-work/00-feature-status.md` is the feature-state source of truth
 2. Only one feature may be active at a time
-3. Always align branch state and feature state
+3. Always align active feature state and branch state when a feature is active
 4. Treat paused features as resumable but inactive
 5. Treat completed features as read-only by default
-6. Only pause or close a feature when the user explicitly asks, or when pause is part of a switch
+6. Do not offer standalone `pause` as a primary workflow action; use `switch` to leave a feature paused, or `close` to end active work without selecting a replacement
 7. If the request is ambiguous across multiple valid feature-state transitions, ask instead of inferring

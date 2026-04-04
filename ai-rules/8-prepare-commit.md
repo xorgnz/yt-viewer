@@ -1,6 +1,6 @@
 ---
-version: 1.5.0
-timestamp: 2026-04-04 11:15
+version: 1.5.1
+timestamp: 2026-04-04 12:05
 ---
 # Rule: Prepare a Task Commit for Approval
 
@@ -177,6 +177,7 @@ AI: "Feature `01-initial` is completed. I won't prepare a new implementation com
 
 ## Non-Active and Completed Feature Behavior
 
+- Do not prepare implementation commits when no feature is active, even if the repository is still checked out on an old feature branch
 - Do not prepare commits for a paused feature until it has been switched back to active
 - Do not prepare new implementation commits for completed features unless the user explicitly asks for an exception
 
@@ -184,7 +185,7 @@ AI: "Feature `01-initial` is completed. I won't prepare a new implementation com
 
 1. Do not create the commit until the user explicitly approves the message and scope, unless the same command already included `approve` or `approved`
 2. Always inspect the active feature and current Git branch first
-3. Use the active feature by default unless the user is only clarifying scope
+3. If no feature is active, refuse implementation commit preparation until the user activates or switches to a feature
 4. Prefer a narrow, task-aligned commit over a broad convenience commit
 5. Use the exact main-task format `feat: <feature-tag>-<task id> - <description>` for main task-completion commits
 6. Use the exact ad hoc feature format `feat: <feature-tag>-<task id>+ - <description>` when the user explicitly requests ad hoc `feat`
