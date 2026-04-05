@@ -15,7 +15,7 @@ describe('youtube importer (task 3.3)', () => {
     });
 
     function fakeClient(): YouTubeClient {
-        // Provide only the methods used by fetchChannelWithUploads
+        // Provide only the methods used by fetchChannelWithUploads and metadata lookup.
         const page1 = {
             items: [
                 {
@@ -66,6 +66,21 @@ describe('youtube importer (task 3.3)', () => {
             async listPlaylistItems(params: any) {
                 if (!params.pageToken) return page1;
                 return page2;
+            },
+            async listVideos(params: any) {
+                return {
+                    items: params.id.split(',').map((id: string) => ({
+                        id,
+                        snippet: {
+                            title: `${id} canonical`,
+                            description: `${id} metadata`,
+                            thumbnails: { high: { url: `http://thumb/${id}/hi` } }
+                        },
+                        contentDetails: {
+                            duration: id === 'V1' ? 'PT59S' : 'PT10M'
+                        }
+                    }))
+                } as any;
             }
         };
         return client as YouTubeClient;
@@ -83,7 +98,10 @@ describe('youtube importer (task 3.3)', () => {
         expect(ch?.title).toBe('Demo SourceChannel');
         const vids = vDao.listByChannel(ch!.id);
         expect(vids.map(v => v.youtube_id).sort()).toEqual(['V1','V2']);
-        expect(vids.every(v => v.length_classification === 'unknown')).toBe(true);
+        expect(vids.find(v => v.youtube_id === 'V1')?.length_classification).toBe('short');
+        expect(vids.find(v => v.youtube_id === 'V2')?.length_classification).toBe('long');
+        expect(vids.find(v => v.youtube_id === 'V1')?.duration_seconds).toBe(59);
+        expect(vids.find(v => v.youtube_id === 'V2')?.duration_seconds).toBe(600);
 
         // Run again; upserts should not duplicate
         const res2 = await importChannelFromYouTube(db, yt, 'UC_DEMO');
