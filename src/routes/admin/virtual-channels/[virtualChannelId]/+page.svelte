@@ -93,6 +93,19 @@
         return `${minutes}:${seconds.toString().padStart(2, '0')}`;
     }
 
+    function formatLengthClassification(lengthClassification?: 'long' | 'short' | 'unknown' | null): string
+    {
+        if (lengthClassification === 'long') {
+            return 'Long';
+        }
+
+        if (lengthClassification === 'short') {
+            return 'Short';
+        }
+
+        return 'Unknown - review manually';
+    }
+
     function selectedOnlyQueryString(item: {
         assignment: { id: number };
         reviewStateFilter: 'all' | 'not_yet_reviewed';
@@ -307,13 +320,17 @@
                                                             {#each item.automaticVideos as video}
                                                                 <tr>
                                                                     <td>{video.title}</td>
-                                                                    <td><code>{video.length_classification ?? 'unknown'}</code></td>
+                                                                    <td><code>{formatLengthClassification(video.length_classification)}</code></td>
                                                                     <td>{video.published_at ?? 'Unknown'}</td>
                                                                 </tr>
                                                             {/each}
                                                         </tbody>
                                                     </table>
                                                 </div>
+                                            {/if}
+
+                                            {#if item.assignment.mode === 'long_only'}
+                                                <p class="muted">Videos with unknown type are excluded here until you review them manually in selected-only mode.</p>
                                             {/if}
                                         </details>
                                     </td>
@@ -424,7 +441,7 @@
                                                             <option value="all" selected={item.videoTypeFilter === 'all'}>All types</option>
                                                             <option value="long" selected={item.videoTypeFilter === 'long'}>Long</option>
                                                             <option value="short" selected={item.videoTypeFilter === 'short'}>Short</option>
-                                                            <option value="unknown" selected={item.videoTypeFilter === 'unknown'}>Unknown</option>
+                                                            <option value="unknown" selected={item.videoTypeFilter === 'unknown'}>Unknown / needs review</option>
                                                         </select>
                                                     </label>
                                                     <div class="inline-actions">
@@ -551,7 +568,7 @@
                                                                         <div class="muted">Published: {formatTimestamp(video.published_at)}</div>
                                                                         <div class="muted">Length: {formatDuration(video.duration_seconds)}</div>
                                                                         <div class="muted">
-                                                                            Type: <code>{video.length_classification ?? 'unknown'}</code>
+                                                                            Type: <code>{formatLengthClassification(video.length_classification)}</code>
                                                                         </div>
                                                                     </td>
                                                                     <td>

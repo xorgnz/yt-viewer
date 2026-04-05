@@ -66,7 +66,7 @@
   - [x] 5.2 Update mapping and import logic to persist long/short/unknown classification on videos
   - [x] 5.3 Update included-video queries so `all`, `long only`, and `selected only` associations return the correct effective video set
   - [x] 5.4 Ensure newly imported videos in selected-only associations default to not yet reviewed and remain excluded until reviewed
-  - [ ] 5.5 Surface unknown video-type classification clearly in admin query results and page rendering
+  - [x] 5.5 Surface unknown video-type classification clearly in admin query results and page rendering
 - [ ] 6.0 Validate the new admin management flow with targeted automated tests
   - [ ] 6.1 Add DAO tests for association creation, mode changes, uniqueness, and selected-only review persistence
   - [ ] 6.2 Add DAO or query tests for effective inclusion behavior across `all`, `long only`, `selected only`, and unknown classification cases
