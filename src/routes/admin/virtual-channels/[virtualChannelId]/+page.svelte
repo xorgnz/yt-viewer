@@ -93,6 +93,27 @@
         return `${minutes}:${seconds.toString().padStart(2, '0')}`;
     }
 
+    function selectedOnlyQueryString(item: {
+        assignment: { id: number };
+        reviewStateFilter: 'all' | 'not_yet_reviewed';
+        regexFilter: string;
+        videoTypeFilter: 'all' | 'long' | 'short' | 'unknown';
+    }): string
+    {
+        const params = new URLSearchParams();
+        params.set(`reviewStateFilter-${item.assignment.id}`, item.reviewStateFilter);
+
+        if (item.regexFilter) {
+            params.set(`regexFilter-${item.assignment.id}`, item.regexFilter);
+        }
+
+        if (item.videoTypeFilter !== 'all') {
+            params.set(`videoTypeFilter-${item.assignment.id}`, item.videoTypeFilter);
+        }
+
+        return params.toString();
+    }
+
     function filteredSelectedOnlyVideos(
         videos: Array<{
             id: number;
@@ -433,6 +454,39 @@
                                                 {#if visibleSelectedOnlyVideos.length === 0}
                                                     <p class="muted">No videos match the current filters.</p>
                                                 {:else}
+                                                <div class="inline-actions">
+                                                    <form method="post" action="?/bulkUpdateVideoReviewState" class="inline-form">
+                                                        <input type="hidden" name="assignment_id" value={item.assignment.id} />
+                                                        <input type="hidden" name="review_state" value="included" />
+                                                        <input
+                                                            type="hidden"
+                                                            name="video_ids"
+                                                            value={visibleSelectedOnlyVideos.map((video) => video.id).join(',')}
+                                                        />
+                                                        <input
+                                                            type="hidden"
+                                                            name="return_query"
+                                                            value={selectedOnlyQueryString(item)}
+                                                        />
+                                                        <button type="submit">Select All Shown</button>
+                                                    </form>
+                                                    <form method="post" action="?/bulkUpdateVideoReviewState" class="inline-form">
+                                                        <input type="hidden" name="assignment_id" value={item.assignment.id} />
+                                                        <input type="hidden" name="review_state" value="not_yet_reviewed" />
+                                                        <input
+                                                            type="hidden"
+                                                            name="video_ids"
+                                                            value={visibleSelectedOnlyVideos.map((video) => video.id).join(',')}
+                                                        />
+                                                        <input
+                                                            type="hidden"
+                                                            name="return_query"
+                                                            value={selectedOnlyQueryString(item)}
+                                                        />
+                                                        <button type="submit" class="btn-secondary">Select None Shown</button>
+                                                    </form>
+                                                </div>
+
                                                 <div class="table-wrap">
                                                     <table>
                                                         <thead>

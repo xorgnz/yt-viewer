@@ -139,6 +139,12 @@ function parseVideoIds(form: FormData): number[]
     return ids;
 }
 
+function parseReturnQuery(form: FormData): string
+{
+    const value = String(form.get('return_query') || '').trim().replace(/^\?+/, '');
+    return value;
+}
+
 export const actions: Actions = {
     addAssociation: async ({ params, request }) => {
         // Validate the route and submitted source channel reference.
@@ -304,6 +310,7 @@ export const actions: Actions = {
         const assignmentId = Number(form.get('assignment_id'));
         const reviewState = parseReviewState(form.get('review_state'));
         const videoIds = parseVideoIds(form);
+        const returnQuery = parseReturnQuery(form);
 
         if (!Number.isInteger(assignmentId) || assignmentId <= 0) {
             return fail(400, { message: 'A valid assignment is required.' });
@@ -344,6 +351,6 @@ export const actions: Actions = {
             wrapper.close();
         }
 
-        throw redirect(303, `/admin/virtual-channels/${virtualChannelId}`);
+        throw redirect(303, `/admin/virtual-channels/${virtualChannelId}${returnQuery ? `?${returnQuery}` : ''}`);
     }
 };
