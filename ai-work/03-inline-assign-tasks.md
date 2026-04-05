@@ -32,11 +32,11 @@
   - [x] 2.2 Add an inline add-association control for each virtual channel using a dropdown of remaining available source channels
   - [x] 2.3 Add inline remove buttons for each associated source channel with confirmation
   - [x] 2.4 Preserve the existing `Manage` link while integrating the new inline assignment UI cleanly
-- [ ] 3.0 Implement inline add/remove behavior that updates in place without a full page reload
-  - [ ] 3.1 Add server actions on the virtual-channels page for inline add-association requests
-  - [ ] 3.2 Add server actions on the virtual-channels page for inline remove-association requests
-  - [ ] 3.3 Enhance the inline add/remove forms so successful actions update the local page state without a full page reload
-  - [ ] 3.4 Surface inline add/remove failures clearly enough for the admin to recover
+- [x] 3.0 Implement inline add/remove behavior that updates in place without a full page reload
+  - [x] 3.1 Add server actions on the virtual-channels page for inline add-association requests
+  - [x] 3.2 Add server actions on the virtual-channels page for inline remove-association requests
+  - [x] 3.3 Enhance the inline add/remove forms so successful actions update the local page state without a full page reload
+  - [x] 3.4 Surface inline add/remove failures clearly enough for the admin to recover
 - [ ] 4.0 Validate the inline assignment workflow with targeted automated tests and checks
   - [ ] 4.1 Add route or server-action tests for inline add/remove assignment behavior on the virtual-channels page
   - [ ] 4.2 Add or extend DAO-level tests if the inline workflow exposes assignment edge cases not already covered

@@ -1,4 +1,6 @@
 <script lang="ts">
+    import { enhance } from '$app/forms';
+
     export let data: {
         groups: Array<{
             id: number;
@@ -33,7 +35,84 @@
             }>;
         }>;
     };
+
+    type VirtualChannelGroup = (typeof data.groups)[number];
+
+    let groups = data.groups;
     let newName = '';
+    let inlineStatusByGroupId: Record<number, { type: 'success' | 'error'; text: string }> = {};
+
+    function updateInlineGroup(nextGroup: VirtualChannelGroup)
+    {
+        // Replace only the affected row so inline actions do not trigger a full reload.
+        groups = groups.map((group) => (group.id === nextGroup.id ? nextGroup : group));
+    }
+
+    function setInlineStatus(groupId: number | null | undefined, type: 'success' | 'error', text: string)
+    {
+        if (!groupId) {
+            return;
+        }
+
+        inlineStatusByGroupId = {
+            ...inlineStatusByGroupId,
+            [groupId]: { type, text }
+        };
+    }
+
+    function clearInlineStatus(groupId: number)
+    {
+        const nextStatus = { ...inlineStatusByGroupId };
+        delete nextStatus[groupId];
+        inlineStatusByGroupId = nextStatus;
+    }
+
+    function enhanceInlineAdd(groupId: number)
+    {
+        return ({ formElement }: { formElement: HTMLFormElement }) => {
+            clearInlineStatus(groupId);
+
+            return async ({ result }: { result: { type: string; data?: Record<string, any> } }) => {
+                if (result.type === 'success' && result.data?.group) {
+                    updateInlineGroup(result.data.group as VirtualChannelGroup);
+                    setInlineStatus(groupId, 'success', String(result.data.message || 'Source channel added.'));
+                    formElement.reset();
+                    return;
+                }
+
+                if (result.type === 'failure') {
+                    setInlineStatus(
+                        Number(result.data?.virtualChannelId ?? groupId),
+                        'error',
+                        String(result.data?.message || 'Failed to add source channel.')
+                    );
+                }
+            };
+        };
+    }
+
+    function enhanceInlineRemove(groupId: number)
+    {
+        return () => {
+            clearInlineStatus(groupId);
+
+            return async ({ result }: { result: { type: string; data?: Record<string, any> } }) => {
+                if (result.type === 'success' && result.data?.group) {
+                    updateInlineGroup(result.data.group as VirtualChannelGroup);
+                    setInlineStatus(groupId, 'success', String(result.data.message || 'Source channel removed.'));
+                    return;
+                }
+
+                if (result.type === 'failure') {
+                    setInlineStatus(
+                        Number(result.data?.virtualChannelId ?? groupId),
+                        'error',
+                        String(result.data?.message || 'Failed to remove source channel.')
+                    );
+                }
+            };
+        };
+    }
 </script>
 
 <div class="page stack">
@@ -53,7 +132,7 @@
 
     <section class="panel">
         <h2>Existing Virtual Channels</h2>
-        {#if data.groups.length === 0}
+        {#if groups.length === 0}
             <p class="muted">No virtual channels yet.</p>
         {:else}
             <div class="table-wrap">
@@ -66,7 +145,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        {#each data.groups as g}
+                        {#each groups as g}
                             <tr>
                                 <td>
                                     <input name="name" form={`rename-${g.id}`} value={g.name} />
@@ -88,7 +167,12 @@
                                                                     <span class="muted">({item.sourceChannel.youtube_id})</span>
                                                                 {/if}
                                                             </span>
-                                                            <form method="post" action="?/removeAssociationInline" class="inline-form">
+                                                            <form
+                                                                method="post"
+                                                                action="?/removeAssociationInline"
+                                                                class="inline-form"
+                                                                use:enhance={enhanceInlineRemove(g.id)}
+                                                            >
                                                                 <input type="hidden" name="virtual_channel_id" value={g.id} />
                                                                 <input type="hidden" name="source_channel_id" value={item.assignment.source_channel_id} />
                                                                 <button
@@ -115,7 +199,12 @@
                                             {#if g.availableSourceChannels.length === 0}
                                                 <p class="muted">No imported source channels remaining.</p>
                                             {:else}
-                                                <form method="post" action="?/addAssociationInline" class="inline-actions">
+                                                <form
+                                                    method="post"
+                                                    action="?/addAssociationInline"
+                                                    class="inline-actions"
+                                                    use:enhance={enhanceInlineAdd(g.id)}
+                                                >
                                                     <input type="hidden" name="virtual_channel_id" value={g.id} />
                                                     <select name="source_channel_id" required>
                                                         <option value="" selected disabled>Select source channel</option>
@@ -127,6 +216,12 @@
                                                 </form>
                                             {/if}
                                         </div>
+
+                                        {#if inlineStatusByGroupId[g.id]}
+                                            <p class={inlineStatusByGroupId[g.id].type === 'error' ? 'error-text' : 'status'}>
+                                                {inlineStatusByGroupId[g.id].text}
+                                            </p>
+                                        {/if}
                                     </div>
                                 </td>
                                 <td>

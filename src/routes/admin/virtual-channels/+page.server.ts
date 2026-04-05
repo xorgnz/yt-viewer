@@ -19,6 +19,60 @@ type VirtualChannelRow = {
     availableSourceChannels: SourceChannel[];
 };
 
+function parsePositiveInteger(value: FormDataEntryValue | null): number | null
+{
+    const parsed = Number(value);
+    if (!Number.isInteger(parsed) || parsed <= 0) {
+        return null;
+    }
+
+    return parsed;
+}
+
+function buildVirtualChannelRow(
+    virtualChannel: { id: number; name: string },
+    allSourceChannels: SourceChannel[],
+    assignmentDAO: AssignmentDAO
+): VirtualChannelRow
+{
+    // Shape the current assignments and remaining inline add options for one row.
+    const sourceChannelsById = new Map(allSourceChannels.map((channel) => [channel.id, channel]));
+    const assignments = assignmentDAO.listForVirtualChannel(virtualChannel.id);
+    const associatedSourceChannels = assignments.map((assignment) => ({
+        assignment,
+        sourceChannel: sourceChannelsById.get(assignment.source_channel_id) ?? null
+    }));
+    const associatedSourceChannelIds = new Set(assignments.map((assignment) => assignment.source_channel_id));
+    const availableSourceChannels = allSourceChannels.filter((channel) => !associatedSourceChannelIds.has(channel.id));
+
+    return {
+        id: virtualChannel.id,
+        name: virtualChannel.name,
+        associatedSourceChannels,
+        availableSourceChannels
+    };
+}
+
+function loadVirtualChannelRows(db: ReturnType<DatabaseWrapper['open']>)
+{
+    // Load the imported source-channel catalog once and reuse it for every row.
+    const virtualChannelDAO = new VirtualChannelDAO(db);
+    const assignmentDAO = new AssignmentDAO(db);
+    const sourceChannelDAO = new SourceChannelDAO(db);
+    const allSourceChannels = sourceChannelDAO.list();
+    const groups = virtualChannelDAO
+        .list()
+        .map((group) => buildVirtualChannelRow(group, allSourceChannels, assignmentDAO));
+
+    return {
+        groups,
+        allSourceChannels,
+        virtualChannelDAO,
+        assignmentDAO,
+        sourceChannelDAO
+    };
+}
+
 function envToMode(): DatabaseMode
 {
     const env = process.env.NODE_ENV;
@@ -33,30 +87,7 @@ export const load: PageServerLoad = async () =>
     const db = wrapper.open();
 
     try {
-        // Load the full imported source-channel set once for row-level assignment shaping.
-        const virtualChannelDAO = new VirtualChannelDAO(db);
-        const assignmentDAO = new AssignmentDAO(db);
-        const sourceChannelDAO = new SourceChannelDAO(db);
-        const allSourceChannels = sourceChannelDAO.list();
-        const sourceChannelsById = new Map(allSourceChannels.map((channel) => [channel.id, channel]));
-
-        // Build each virtual-channel row with current associations and remaining inline add options.
-        const groups: VirtualChannelRow[] = virtualChannelDAO.list().map((group) => {
-            const assignments = assignmentDAO.listForVirtualChannel(group.id);
-            const associatedSourceChannels = assignments.map((assignment) => ({
-                assignment,
-                sourceChannel: sourceChannelsById.get(assignment.source_channel_id) ?? null
-            }));
-            const associatedSourceChannelIds = new Set(assignments.map((assignment) => assignment.source_channel_id));
-            const availableSourceChannels = allSourceChannels.filter((channel) => !associatedSourceChannelIds.has(channel.id));
-
-            return {
-                id: group.id,
-                name: group.name,
-                associatedSourceChannels,
-                availableSourceChannels
-            };
-        });
+        const { groups, allSourceChannels } = loadVirtualChannelRows(db);
 
         return {
             groups,
@@ -115,5 +146,95 @@ export const actions: Actions = {
             return fail(400, { message: e?.message || 'Failed to delete group' });
         }
         throw redirect(303, '/admin/virtual-channels');
+    },
+
+    addAssociationInline: async ({ request }) => {
+        const form = await request.formData();
+        const virtualChannelId = parsePositiveInteger(form.get('virtual_channel_id'));
+        const sourceChannelId = parsePositiveInteger(form.get('source_channel_id'));
+
+        if (!virtualChannelId) {
+            return fail(400, { message: 'A valid virtual channel is required.', virtualChannelId: null });
+        }
+
+        if (!sourceChannelId) {
+            return fail(400, { message: 'A valid source channel is required.', virtualChannelId });
+        }
+
+        const wrapper = new DatabaseWrapper(envToMode());
+        const db = wrapper.open();
+
+        try {
+            // Validate the association pair before writing and return the refreshed row state.
+            const { allSourceChannels, virtualChannelDAO, assignmentDAO, sourceChannelDAO } = loadVirtualChannelRows(db);
+            const virtualChannel = virtualChannelDAO.get(virtualChannelId);
+
+            if (!virtualChannel) {
+                return fail(404, { message: 'Virtual channel not found.', virtualChannelId });
+            }
+
+            if (!sourceChannelDAO.get(sourceChannelId)) {
+                return fail(404, { message: 'Source channel not found.', virtualChannelId });
+            }
+
+            assignmentDAO.add(sourceChannelId, virtualChannelId);
+
+            return {
+                group: buildVirtualChannelRow(virtualChannel, allSourceChannels, assignmentDAO),
+                message: 'Source channel added.',
+                virtualChannelId
+            };
+        } catch (e: any) {
+            return fail(400, { message: e?.message || 'Failed to add source channel.', virtualChannelId });
+        } finally {
+            wrapper.close();
+        }
+    },
+
+    removeAssociationInline: async ({ request }) => {
+        const form = await request.formData();
+        const virtualChannelId = parsePositiveInteger(form.get('virtual_channel_id'));
+        const sourceChannelId = parsePositiveInteger(form.get('source_channel_id'));
+
+        if (!virtualChannelId) {
+            return fail(400, { message: 'A valid virtual channel is required.', virtualChannelId: null });
+        }
+
+        if (!sourceChannelId) {
+            return fail(400, { message: 'A valid source channel is required.', virtualChannelId });
+        }
+
+        const wrapper = new DatabaseWrapper(envToMode());
+        const db = wrapper.open();
+
+        try {
+            // Remove only existing row-level assignments and send back the refreshed row state.
+            const { allSourceChannels, virtualChannelDAO, assignmentDAO } = loadVirtualChannelRows(db);
+            const virtualChannel = virtualChannelDAO.get(virtualChannelId);
+
+            if (!virtualChannel) {
+                return fail(404, { message: 'Virtual channel not found.', virtualChannelId });
+            }
+
+            const assignment = assignmentDAO
+                .listForVirtualChannel(virtualChannelId)
+                .find((candidate) => candidate.source_channel_id === sourceChannelId);
+
+            if (!assignment) {
+                return fail(404, { message: 'Assignment not found.', virtualChannelId });
+            }
+
+            assignmentDAO.remove(sourceChannelId, virtualChannelId);
+
+            return {
+                group: buildVirtualChannelRow(virtualChannel, allSourceChannels, assignmentDAO),
+                message: 'Source channel removed.',
+                virtualChannelId
+            };
+        } catch (e: any) {
+            return fail(400, { message: e?.message || 'Failed to remove source channel.', virtualChannelId });
+        } finally {
+            wrapper.close();
+        }
     }
 };
