@@ -89,8 +89,8 @@ describe('admin virtual channel manage route', () => {
             id: video.id,
             review_state: video.review_state
         }))).toEqual([
-            { id: 1, review_state: 'included' },
-            { id: 2, review_state: 'not_yet_reviewed' }
+            { id: 2, review_state: 'not_yet_reviewed' },
+            { id: 1, review_state: 'included' }
         ]);
     });
 
