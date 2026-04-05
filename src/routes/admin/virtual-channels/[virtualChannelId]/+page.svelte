@@ -485,6 +485,36 @@
                                                         />
                                                         <button type="submit" class="btn-secondary">Select None Shown</button>
                                                     </form>
+                                                    <form method="post" action="?/bulkUpdateVideoReviewState" class="inline-form">
+                                                        <input type="hidden" name="assignment_id" value={item.assignment.id} />
+                                                        <input type="hidden" name="review_state" value="ignored" />
+                                                        <input
+                                                            type="hidden"
+                                                            name="video_ids"
+                                                            value={visibleSelectedOnlyVideos.map((video) => video.id).join(',')}
+                                                        />
+                                                        <input
+                                                            type="hidden"
+                                                            name="return_query"
+                                                            value={selectedOnlyQueryString(item)}
+                                                        />
+                                                        <button type="submit" class="btn-secondary">Ignore Shown</button>
+                                                    </form>
+                                                    <form method="post" action="?/bulkUpdateVideoReviewState" class="inline-form">
+                                                        <input type="hidden" name="assignment_id" value={item.assignment.id} />
+                                                        <input type="hidden" name="review_state" value="not_yet_reviewed" />
+                                                        <input
+                                                            type="hidden"
+                                                            name="video_ids"
+                                                            value={visibleSelectedOnlyVideos.map((video) => video.id).join(',')}
+                                                        />
+                                                        <input
+                                                            type="hidden"
+                                                            name="return_query"
+                                                            value={selectedOnlyQueryString(item)}
+                                                        />
+                                                        <button type="submit" class="btn-secondary">Reset Shown</button>
+                                                    </form>
                                                 </div>
 
                                                 <div class="table-wrap">

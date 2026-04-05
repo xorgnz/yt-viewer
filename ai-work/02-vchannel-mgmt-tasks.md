@@ -60,7 +60,7 @@
   - [x] 4.2 Add regex filtering against video title and description within the selected-only list
   - [x] 4.3 Add video-type filtering for long, short, and unknown classification where available
   - [x] 4.4 Add temporary bulk actions for the currently shown rows, including select-all-shown and select-none-shown behavior
-  - [ ] 4.5 Add bulk actions for setting shown rows to ignored and for resetting shown rows back to not yet reviewed if supported by the final UI
+  - [x] 4.5 Add bulk actions for setting shown rows to ignored and for resetting shown rows back to not yet reviewed if supported by the final UI
 - [ ] 5.0 Extend import and query behavior so YouTube long/short classification and selected-only defaults are represented correctly
   - [ ] 5.1 Identify the best available YouTube metadata source in the current codebase for distinguishing long, short, and unknown video status
   - [ ] 5.2 Update mapping and import logic to persist long/short/unknown classification on videos
