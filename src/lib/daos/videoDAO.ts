@@ -109,6 +109,7 @@ export class VideoDAO extends SqliteDAO
 
         // Optional JOINs
         let groupJoin = '';
+        let selectionJoin = '';
 
         if (filters.term) {
             where.push('(v.title LIKE :term OR v.description LIKE :term)');
@@ -128,7 +129,15 @@ export class VideoDAO extends SqliteDAO
         }
         if (filters.groupId != null) {
             groupJoin = 'JOIN virtual_channel_assignments ga ON ga.source_channel_id = v.channel_id AND ga.virtual_channel_id = :groupId';
+            selectionJoin = 'LEFT JOIN virtual_channel_assignment_video_selections gavs ON (gavs.assignment_id = ga.id AND gavs.video_id = v.id)';
             params.groupId = filters.groupId;
+
+            // Apply the virtual-channel assignment mode rules to the effective viewer set.
+            where.push(`(
+                ga.mode = 'all'
+                OR (ga.mode = 'long_only' AND v.length_classification = 'long')
+                OR (ga.mode = 'selected_only' AND COALESCE(gavs.review_state, 'not_yet_reviewed') = 'included')
+            )`);
         }
 
         // Watched filter via left join flags
@@ -162,6 +171,7 @@ export class VideoDAO extends SqliteDAO
             JOIN source_channels c ON c.id = v.channel_id
             LEFT JOIN video_flags vf ON (vf.video_id = v.id AND vf.profile_id = :profileId)
             ${groupJoin}
+            ${selectionJoin}
             ${whereSql}
             ORDER BY v.published_at DESC NULLS LAST, v.id DESC
             LIMIT :limit OFFSET :offset
