@@ -73,7 +73,7 @@ describe('youtube importer (task 3.3)', () => {
             },
             async listVideos(params: any) {
                 return {
-                    items: params.id.split(',').map((id: string) => ({
+                    items: params.ids.map((id: string) => ({
                         id,
                         snippet: {
                             title: `${id} canonical`,
@@ -162,7 +162,7 @@ describe('youtube importer (task 3.3)', () => {
             },
             async listVideos(params: any) {
                 return {
-                    items: params.id.split(',').map((id: string) => ({
+                    items: params.ids.map((id: string) => ({
                         id,
                         snippet: {
                             title: id,
