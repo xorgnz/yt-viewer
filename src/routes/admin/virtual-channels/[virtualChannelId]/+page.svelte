@@ -52,6 +52,7 @@
             } | null;
             reviewStateFilter: 'all' | 'not_yet_reviewed';
             regexFilter: string;
+            videoTypeFilter: 'all' | 'long' | 'short' | 'unknown';
         }>;
         availableSourceChannels: Array<{
             id: number;
@@ -106,13 +107,22 @@
             review_state: 'included' | 'ignored' | 'not_yet_reviewed';
         }>,
         reviewStateFilter: 'all' | 'not_yet_reviewed',
-        regexFilter: string
+        regexFilter: string,
+        videoTypeFilter: 'all' | 'long' | 'short' | 'unknown'
     )
     {
         // Apply the review-state filter first so later bulk tools can target the shown rows.
         let filteredVideos = reviewStateFilter === 'not_yet_reviewed'
             ? videos.filter((video) => video.review_state === 'not_yet_reviewed')
             : videos;
+
+        // Apply the video classification filter before regex matching.
+        if (videoTypeFilter !== 'all') {
+            filteredVideos = filteredVideos.filter((video) => {
+                const classification = video.length_classification ?? 'unknown';
+                return classification === videoTypeFilter;
+            });
+        }
 
         // Apply the title/description regex filter when provided.
         if (!regexFilter) {
@@ -309,6 +319,11 @@
                                                         />
                                                         <input
                                                             type="hidden"
+                                                            name={`videoTypeFilter-${item.assignment.id}`}
+                                                            value={item.videoTypeFilter}
+                                                        />
+                                                        <input
+                                                            type="hidden"
                                                             name={`regexFilter-${item.assignment.id}`}
                                                             value={item.regexFilter}
                                                         />
@@ -319,6 +334,11 @@
                                                             type="hidden"
                                                             name={`reviewStateFilter-${item.assignment.id}`}
                                                             value="not_yet_reviewed"
+                                                        />
+                                                        <input
+                                                            type="hidden"
+                                                            name={`videoTypeFilter-${item.assignment.id}`}
+                                                            value={item.videoTypeFilter}
                                                         />
                                                         <input
                                                             type="hidden"
@@ -339,6 +359,11 @@
                                                         type="hidden"
                                                         name={`reviewStateFilter-${item.assignment.id}`}
                                                         value={item.reviewStateFilter}
+                                                    />
+                                                    <input
+                                                        type="hidden"
+                                                        name={`videoTypeFilter-${item.assignment.id}`}
+                                                        value={item.videoTypeFilter}
                                                     />
                                                     <label>
                                                         Regex filter
@@ -361,10 +386,42 @@
                                                     <p class="muted">Matches video title and description using a case-insensitive regular expression.</p>
                                                 </form>
 
+                                                <form method="get" class="fields">
+                                                    <input
+                                                        type="hidden"
+                                                        name={`reviewStateFilter-${item.assignment.id}`}
+                                                        value={item.reviewStateFilter}
+                                                    />
+                                                    <input
+                                                        type="hidden"
+                                                        name={`regexFilter-${item.assignment.id}`}
+                                                        value={item.regexFilter}
+                                                    />
+                                                    <label>
+                                                        Video type
+                                                        <select name={`videoTypeFilter-${item.assignment.id}`}>
+                                                            <option value="all" selected={item.videoTypeFilter === 'all'}>All types</option>
+                                                            <option value="long" selected={item.videoTypeFilter === 'long'}>Long</option>
+                                                            <option value="short" selected={item.videoTypeFilter === 'short'}>Short</option>
+                                                            <option value="unknown" selected={item.videoTypeFilter === 'unknown'}>Unknown</option>
+                                                        </select>
+                                                    </label>
+                                                    <div class="inline-actions">
+                                                        <button type="submit">Apply Type Filter</button>
+                                                        <a
+                                                            href={`?reviewStateFilter-${item.assignment.id}=${item.reviewStateFilter}&regexFilter-${item.assignment.id}=${encodeURIComponent(item.regexFilter)}`}
+                                                            class="btn btn-secondary"
+                                                        >
+                                                            Clear Type Filter
+                                                        </a>
+                                                    </div>
+                                                </form>
+
                                                 {@const filteredResult = filteredSelectedOnlyVideos(
                                                     item.selectedOnlyVideos,
                                                     item.reviewStateFilter,
-                                                    item.regexFilter
+                                                    item.regexFilter,
+                                                    item.videoTypeFilter
                                                 )}
 
                                                 {#if filteredResult.hasInvalidRegex}

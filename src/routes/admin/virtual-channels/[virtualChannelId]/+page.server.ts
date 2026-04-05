@@ -50,6 +50,10 @@ export const load: PageServerLoad = async ({ params, url }) =>
 
         const associatedSourceChannels = assignments.map((assignment) => {
             const regexFilter = url.searchParams.get(`regexFilter-${assignment.id}`)?.trim() ?? '';
+            const videoTypeFilter = (() => {
+                const value = url.searchParams.get(`videoTypeFilter-${assignment.id}`);
+                return value === 'long' || value === 'short' || value === 'unknown' ? value : 'all';
+            })();
             const sourceVideos = videoDAO.listByChannel(assignment.source_channel_id);
             const selectionRows = assignment.mode === 'selected_only'
                 ? selectionDAO.listForAssignment(assignment.id)
@@ -88,7 +92,8 @@ export const load: PageServerLoad = async ({ params, url }) =>
                 selectedOnlyVideos,
                 selectedOnlyCounts,
                 reviewStateFilter,
-                regexFilter
+                regexFilter,
+                videoTypeFilter
             };
         });
 
