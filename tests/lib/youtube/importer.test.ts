@@ -204,4 +204,56 @@ describe('youtube importer (task 3.3)', () => {
         const afterReview = videoDao.listForViewer({ groupId: virtualChannel.id, ignored: 'show' } as any, profile.id);
         expect(afterReview.map((video) => video.youtube_id)).toEqual(['V2']);
     });
+
+    it('stores unknown classification when video metadata is unavailable', async () => {
+        const client: any = {
+            async getChannelById(id: string) {
+                return {
+                    items: [
+                        {
+                            id,
+                            snippet: {
+                                title: 'Demo SourceChannel',
+                                description: 'About',
+                                publishedAt: '2020-05-06T07:08:09Z',
+                                thumbnails: { high: { url: 'http://thumb/ch' } }
+                            },
+                            contentDetails: { relatedPlaylists: { uploads: 'UU_uploads' } }
+                        }
+                    ]
+                } as any;
+            },
+            async listPlaylistItems() {
+                return {
+                    items: [
+                        {
+                            snippet: {
+                                title: 'No metadata video',
+                                description: 'Fallback description',
+                                publishedAt: '2022-01-03T00:00:00Z',
+                                resourceId: { videoId: 'V_NO_META' },
+                                thumbnails: { default: { url: 'http://thumb/v-no-meta' } }
+                            },
+                            contentDetails: { videoId: 'V_NO_META', videoPublishedAt: '2022-01-03T00:00:00Z' }
+                        }
+                    ]
+                } as any;
+            },
+            async listVideos() {
+                return { items: [] } as any;
+            }
+        };
+
+        await importChannelFromYouTube(db, client as YouTubeClient, 'UC_DEMO');
+
+        const sourceChannelDao = new SourceChannelDAO(db);
+        const videoDao = new VideoDAO(db);
+        const sourceChannel = sourceChannelDao.getByExternalId('UC_DEMO')!;
+        const videos = videoDao.listByChannel(sourceChannel.id);
+
+        expect(videos).toHaveLength(1);
+        expect(videos[0].youtube_id).toBe('V_NO_META');
+        expect(videos[0].length_classification).toBe('unknown');
+        expect(videos[0].duration_seconds).toBeNull();
+    });
 });

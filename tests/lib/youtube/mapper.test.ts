@@ -79,4 +79,31 @@ describe('youtube mapper (task 3.3)', () => {
         expect(classifyVideoLength(61)).toBe('long');
         expect(classifyVideoLength(null)).toBe('unknown');
     });
+
+    it('falls back to unknown classification when video metadata is missing', () => {
+        const item: any = {
+            snippet: {
+                title: 'Playlist fallback title',
+                description: 'Playlist fallback description',
+                publishedAt: '2021-02-03T04:05:06Z',
+                resourceId: { videoId: 'vid-missing-metadata' },
+                thumbnails: { medium: { url: 'http://v.med' } }
+            },
+            contentDetails: {
+                videoId: 'vid-missing-metadata',
+                videoPublishedAt: '2021-02-03T04:05:06Z'
+            }
+        };
+
+        const up = mapPlaylistItemToVideoUpsert(item, 7);
+        expect(up).toMatchObject({
+            youtube_id: 'vid-missing-metadata',
+            channel_id: 7,
+            title: 'Playlist fallback title',
+            description: 'Playlist fallback description',
+            thumbnail_url: 'http://v.med',
+            duration_seconds: null,
+            length_classification: 'unknown'
+        });
+    });
 });
