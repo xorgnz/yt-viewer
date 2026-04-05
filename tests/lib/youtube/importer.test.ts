@@ -1,10 +1,14 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import Database from 'better-sqlite3';
 import { ALL_DDL } from '../../../src/lib/daos/_schema';
+import { AssignmentDAO } from '../../../src/lib/daos/assignmentDAO';
 import { importChannelFromYouTube } from '../../../src/lib/youtube/importer';
 import type { YouTubeClient } from '$lib/youtube/youTubeClient';
+import { ProfileDAO } from '$lib/daos/profileDAO';
 import { SourceChannelDAO } from '$lib/daos/sourceChannelDAO';
 import { VideoDAO } from '../../../src/lib/daos/videoDAO';
+import { VirtualChannelAssignmentVideoSelectionDAO } from '../../../src/lib/daos/virtualChannelAssignmentVideoSelectionDAO';
+import { VirtualChannelDAO } from '../../../src/lib/daos/virtualChannelDAO';
 
 describe('youtube importer (task 3.3)', () => {
     let db: Database.Database;
@@ -108,5 +112,96 @@ describe('youtube importer (task 3.3)', () => {
         expect(res2.channelId).toBe(res1.channelId);
         const vids2 = vDao.listByChannel(ch!.id);
         expect(vids2.length).toBe(2);
+    });
+
+    it('keeps newly imported selected-only videos excluded until reviewed', async () => {
+        let importRun = 0;
+        const client: any = {
+            async getChannelById(id: string) {
+                return {
+                    items: [
+                        {
+                            id,
+                            snippet: {
+                                title: 'Demo SourceChannel',
+                                description: 'About',
+                                publishedAt: '2020-05-06T07:08:09Z',
+                                thumbnails: { high: { url: 'http://thumb/ch' } }
+                            },
+                            contentDetails: { relatedPlaylists: { uploads: 'UU_uploads' } }
+                        }
+                    ]
+                } as any;
+            },
+            async listPlaylistItems() {
+                importRun++;
+                return {
+                    items: [
+                        {
+                            snippet: {
+                                title: 'V1',
+                                description: 'First',
+                                publishedAt: '2022-01-01T00:00:00Z',
+                                resourceId: { videoId: 'V1' },
+                                thumbnails: { default: { url: 'http://thumb/v1' } }
+                            },
+                            contentDetails: { videoId: 'V1', videoPublishedAt: '2022-01-01T00:00:00Z' }
+                        },
+                        ...(importRun > 1 ? [{
+                            snippet: {
+                                title: 'V2',
+                                description: 'Second',
+                                publishedAt: '2022-01-02T00:00:00Z',
+                                resourceId: { videoId: 'V2' },
+                                thumbnails: { default: { url: 'http://thumb/v2' } }
+                            },
+                            contentDetails: { videoId: 'V2', videoPublishedAt: '2022-01-02T00:00:00Z' }
+                        }] : [])
+                    ]
+                } as any;
+            },
+            async listVideos(params: any) {
+                return {
+                    items: params.id.split(',').map((id: string) => ({
+                        id,
+                        snippet: {
+                            title: id,
+                            description: `${id} desc`,
+                            thumbnails: { high: { url: `http://thumb/${id}` } }
+                        },
+                        contentDetails: {
+                            duration: 'PT5M'
+                        }
+                    }))
+                } as any;
+            }
+        };
+
+        await importChannelFromYouTube(db, client as YouTubeClient, 'UC_DEMO');
+
+        const sourceChannelDao = new SourceChannelDAO(db);
+        const virtualChannelDao = new VirtualChannelDAO(db);
+        const assignmentDao = new AssignmentDAO(db);
+        const selectionDao = new VirtualChannelAssignmentVideoSelectionDAO(db);
+        const videoDao = new VideoDAO(db);
+        const profileDao = new ProfileDAO(db);
+
+        profileDao.upsertByKey('default', 'Default');
+        const profile = profileDao.getByKey('default')!;
+        const sourceChannel = sourceChannelDao.getByExternalId('UC_DEMO')!;
+        const virtualChannel = virtualChannelDao.create('Selected only channel');
+        assignmentDao.add(sourceChannel.id, virtualChannel.id, 'selected_only');
+
+        await importChannelFromYouTube(db, client as YouTubeClient, 'UC_DEMO');
+
+        const beforeReview = videoDao.listForViewer({ groupId: virtualChannel.id, ignored: 'show' } as any, profile.id);
+        expect(beforeReview).toEqual([]);
+
+        const assignment = assignmentDao.listForVirtualChannel(virtualChannel.id)[0];
+        const newVideo = videoDao.getByExternalId('V2')!;
+        selectionDao.setReviewState(assignment.id, newVideo.id, 'included');
+
+        const afterReview = videoDao.listForViewer({ groupId: virtualChannel.id, ignored: 'show' } as any, profile.id);
+        expect(afterReview.map((video) => video.youtube_id)).toEqual(['V2']);
     });
 });
