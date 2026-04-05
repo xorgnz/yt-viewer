@@ -23,15 +23,15 @@
 
 ## Tasks
 
-- [ ] 1.0 Extend the virtual-channels page data model to support inline assignment display and available-add options
-  - [ ] 1.1 Load current source-channel associations for each virtual channel on the virtual-channels admin page
-  - [ ] 1.2 Load the set of already imported source channels that can be attached inline
-  - [ ] 1.3 Shape the server data so each virtual channel has both associated source channels and remaining available add options
-- [ ] 2.0 Add inline assignment display and controls to the virtual-channels admin UI
-  - [ ] 2.1 Show associated source-channel names inline for each virtual channel row
-  - [ ] 2.2 Add an inline add-association control for each virtual channel using a dropdown of remaining available source channels
-  - [ ] 2.3 Add inline remove buttons for each associated source channel with confirmation
-  - [ ] 2.4 Preserve the existing `Manage` link while integrating the new inline assignment UI cleanly
+- [x] 1.0 Extend the virtual-channels page data model to support inline assignment display and available-add options
+  - [x] 1.1 Load current source-channel associations for each virtual channel on the virtual-channels admin page
+  - [x] 1.2 Load the set of already imported source channels that can be attached inline
+  - [x] 1.3 Shape the server data so each virtual channel has both associated source channels and remaining available add options
+- [x] 2.0 Add inline assignment display and controls to the virtual-channels admin UI
+  - [x] 2.1 Show associated source-channel names inline for each virtual channel row
+  - [x] 2.2 Add an inline add-association control for each virtual channel using a dropdown of remaining available source channels
+  - [x] 2.3 Add inline remove buttons for each associated source channel with confirmation
+  - [x] 2.4 Preserve the existing `Manage` link while integrating the new inline assignment UI cleanly
 - [ ] 3.0 Implement inline add/remove behavior that updates in place without a full page reload
   - [ ] 3.1 Add server actions on the virtual-channels page for inline add-association requests
   - [ ] 3.2 Add server actions on the virtual-channels page for inline remove-association requests

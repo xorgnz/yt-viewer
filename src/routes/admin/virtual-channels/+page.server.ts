@@ -1,7 +1,23 @@
 import type { Actions, PageServerLoad } from './$types';
 import { DatabaseWrapper, DatabaseMode } from '$lib/daos/shared/DatabaseWrapper';
 import { VirtualChannelDAO } from '$lib/daos/virtualChannelDAO';
+import { AssignmentDAO } from '$lib/daos/assignmentDAO';
+import { SourceChannelDAO } from '$lib/daos/sourceChannelDAO';
 import { redirect, fail } from '@sveltejs/kit';
+import type { SourceChannel } from '$lib/entities/sourceChannel';
+import type { VirtualChannelAssignment } from '$lib/entities/virtualChannelAssignment';
+
+type InlineAssociation = {
+    assignment: VirtualChannelAssignment;
+    sourceChannel: SourceChannel | null;
+};
+
+type VirtualChannelRow = {
+    id: number;
+    name: string;
+    associatedSourceChannels: InlineAssociation[];
+    availableSourceChannels: SourceChannel[];
+};
 
 function envToMode(): DatabaseMode
 {
@@ -15,9 +31,40 @@ export const load: PageServerLoad = async () =>
 {
     const wrapper = new DatabaseWrapper(envToMode());
     const db = wrapper.open();
-    const dao = new VirtualChannelDAO(db);
-    const groups = dao.list();
-    return { groups };
+
+    try {
+        // Load the full imported source-channel set once for row-level assignment shaping.
+        const virtualChannelDAO = new VirtualChannelDAO(db);
+        const assignmentDAO = new AssignmentDAO(db);
+        const sourceChannelDAO = new SourceChannelDAO(db);
+        const allSourceChannels = sourceChannelDAO.list();
+        const sourceChannelsById = new Map(allSourceChannels.map((channel) => [channel.id, channel]));
+
+        // Build each virtual-channel row with current associations and remaining inline add options.
+        const groups: VirtualChannelRow[] = virtualChannelDAO.list().map((group) => {
+            const assignments = assignmentDAO.listForVirtualChannel(group.id);
+            const associatedSourceChannels = assignments.map((assignment) => ({
+                assignment,
+                sourceChannel: sourceChannelsById.get(assignment.source_channel_id) ?? null
+            }));
+            const associatedSourceChannelIds = new Set(assignments.map((assignment) => assignment.source_channel_id));
+            const availableSourceChannels = allSourceChannels.filter((channel) => !associatedSourceChannelIds.has(channel.id));
+
+            return {
+                id: group.id,
+                name: group.name,
+                associatedSourceChannels,
+                availableSourceChannels
+            };
+        });
+
+        return {
+            groups,
+            availableSourceChannels: allSourceChannels
+        };
+    } finally {
+        wrapper.close();
+    }
 };
 
 export const actions: Actions = {
