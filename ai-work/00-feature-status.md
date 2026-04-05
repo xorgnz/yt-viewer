@@ -1,8 +1,8 @@
 # Feature Status
 
-**Current Feature:** `02-vchannel-mgmt`
-**Current Branch:** `feature/02-vchannel-mgmt`
-**Last Updated:** `2026-03-23`
+**Current Feature:** ``
+**Current Branch:** ``
+**Last Updated:** `2026-04-04`
 
 ## Shared Feature-State Contract
 
@@ -59,4 +59,5 @@ Additional guidance:
 | Tag | Branch | Status | Created | Completed | Notes |
 | --- | --- | --- | --- | --- | --- |
 | `01-initial` | `feature/01-initial` | `completed` | `2026-02-17` | `2026-03-23` | Initial YouTube viewer and tracker feature |
-| `02-vchannel-mgmt` | `feature/02-vchannel-mgmt` | `active` | `2026-03-23` |  | Advanced admin UI for virtual channel source associations and video selection |
+| `02-vchannel-mgmt` | `feature/02-vchannel-mgmt` | `completed` | `2026-03-23` | `2026-04-04` | Advanced admin UI for virtual channel source associations and video selection |
+| `03-inline-assign` | `feature/03-inline-assign` | `planned` | `2026-04-04` |  | Inline source-channel assignment controls on the virtual channels admin page |
