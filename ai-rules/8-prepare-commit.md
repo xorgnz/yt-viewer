@@ -1,6 +1,6 @@
 ---
-version: 1.2.0
-timestamp: 2026-03-22 14:03
+version: 1.5.1
+timestamp: 2026-04-04 12:05
 ---
 # Rule: Prepare a Task Commit for Approval
 
@@ -19,15 +19,16 @@ Use this rule when the user says they have completed implementation for a task a
 - The current branch must match the active feature branch
 - A task list should exist at `/ai-work/{feature-tag}-tasks.md`
 - The relevant task should already be implemented
+- Follow the shared feature-state contract in `/ai-work/00-feature-status.md`
 
 ## Core Principle
 
-The AI must not commit automatically when using this rule. It should:
+The AI must not commit automatically when using this rule unless the user explicitly includes approval in the same request. It should:
 
 - inspect the current changes
 - determine which files belong to the completed task
 - propose a commit message in the required format
-- ask the user to approve the commit message and scope
+- ask the user to approve the commit message and scope unless approval was already included in the command
 
 ## Required Commit Message Format
 
@@ -52,7 +53,7 @@ The following explicit follow-up prefixes are also allowed when the user is prep
 - `fix`
 - `docs`
 - `mgmt`
-- `feat`
+- `tweak`
 
 Follow-up format:
 
@@ -62,12 +63,18 @@ Follow-up format:
 
 ## Process
 
+### Inspect
+
 1. **Identify the Active Feature and Task**
    - Read `/ai-work/00-feature-status.md`
    - Use the active feature and branch as the default and expected source of truth
-   - If the user does not provide a task ID, infer it from the active feature task list by finding the most recently completed task that aligns with the current diff
-   - If the user explicitly invokes one of the allowed follow-up prefixes, including ad hoc `feat`, use the most recently completed task in the active feature as the default task context unless the user provides a different task ID
-   - If the task is ambiguous, stop and ask the user to clarify before proposing a commit
+   - If the user provides a task ID, use it as the first-choice task context
+   - If the user does not provide a task ID, identify the task that best matches the current diff before considering recency
+   - If no clear diff match exists, use the most recently completed task in the active feature as the fallback context
+   - If the user explicitly invokes one of the allowed follow-up prefixes, use the same priority order unless the user provides a different task ID
+   - If the user explicitly invokes ad hoc `feat`, treat that as the dedicated ad hoc feature mode rather than as a generic follow-up prefix
+   - If two or more plausible task mappings remain, do not infer
+   - Present the strongest candidate tasks briefly and ask the user to choose before proposing a commit
 
 2. **Review Task Context**
    - Read `/ai-work/{feature-tag}-tasks.md`
@@ -77,34 +84,111 @@ Follow-up format:
    - Review the current Git status
    - Identify only the files related to the completed task
    - Exclude unrelated or unfinished work
+   - For follow-up prefixes and ad hoc `feat`, treat the candidate commit message as a summary of the full scoped diff since `HEAD`, not just the most recent user request in the conversation
+   - If multiple related changes have accumulated since the last commit, make the description reflect the combined result at the chosen scope
+
+### Propose
 
 4. **Draft the Commit Description**
    - Keep it concise and specific
+   - For follow-up prefixes and ad hoc `feat`, summarize all known in-scope changes since the last commit that will be included in the proposed commit
 
 5. **Propose the Commit**
    - Present the proposed message and file list
-   - Wait for explicit user approval
+   - Wait for explicit user approval unless the user already provided preapproval in the same command
+
+### Execute and Report
+
+6. **Create the Commit When Preapproved**
+   - If the user's rule invocation already includes `approve` or `approved`, treat that as approval for the proposed task-aligned commit
+   - Still inspect the active feature, task context, and changed files first
+   - If the diff is clearly scoped to one task, create the commit after preparing the message and file scope without asking a second approval question
+   - If the diff is ambiguous, spans multiple tasks, or includes unrelated work, stop and ask for clarification instead of using preapproval blindly
+   - After committing, report the commit message and resulting repository state
 
 ## Default Behavior
 
 - If the user says only `run 8`, assume the active feature
-- Use the current diff plus the active feature task list to infer the most recently completed task
-- If the user says `run 8 tidy`, `run 8 style`, `run 8 fix`, `run 8 docs`, `run 8 mgmt`, or `run 8 feat`, assume the active feature and use the most recently completed task as the `+` context for the commit message
+- If the user says `run 8 approve`, `run rule 8 approve`, `run 8 approved`, or equivalent, treat that as preapproval for a clean task-aligned commit
+- Use this task-selection order:
+  1. explicit task ID from the user
+  2. task that best matches the actual diff
+  3. most recently completed task only as a fallback
+- If the user says `run 8 tidy`, `run 8 style`, `run 8 fix`, `run 8 docs`, `run 8 mgmt`, or `run 8 tweak`, assume the active feature and apply the same task-selection order before choosing the `+` context for the commit message
+- If the user says `run 8 feat`, treat that as the dedicated ad hoc feature mode and apply the same task-selection order before choosing the default `+` context unless the user provides a task ID
+- For `run 8 tidy`, `run 8 style`, `run 8 fix`, `run 8 docs`, `run 8 mgmt`, `run 8 feat`, and `run 8 tweak`, write the description to match the full scoped set of uncommitted changes since the last commit
 - If there are no changes, do not propose a commit
 - If the diff appears to span multiple tasks or unrelated work, surface that clearly and ask the user how to scope the commit
 
+## Example Interaction Flow
+
+```text
+User: "run 8 feat"
+
+AI: [Reads 00-feature-status.md and the active task list]
+AI: [Reviews the diff]
+AI: [Matches the diff to the best task, falling back to the most recently completed task only if needed]
+AI: [Summarizes the ad hoc feature work from the uncommitted changes]
+AI: "Proposed commit: `feat: 02-vchannel-mgmt-2.5+ - add focused admin review tooling`"
+```
+
+```text
+User: "run 8 feat for a small admin filter improvement"
+
+AI: [Reads 00-feature-status.md and the active task list]
+AI: [Reviews the diff]
+AI: [Treats `feat` as ad hoc feature mode]
+AI: [Uses the user's wording to steer the proposed description]
+AI: "Proposed commit: `feat: 02-vchannel-mgmt-4.2+ - add admin filter refinement`"
+```
+
+```text
+User: "run 8 mgmt"
+
+AI: [Reads 00-feature-status.md and the active task list]
+AI: [Reviews the diff]
+AI: [Treats `mgmt` as a follow-up prefix]
+AI: [Uses the best task match for the current changes]
+AI: "Proposed commit: `mgmt: 02-vchannel-mgmt-2.7+ - update workflow planning tasks`"
+```
+
+```text
+User: "run 8 approve"
+
+AI: [Reads the active task list]
+AI: [Reviews the diff]
+AI: "The diff plausibly maps to task `3.4` and task `4.1`. I won't infer the task. Which one should this commit use?"
+```
+
+```text
+User: "run 8"
+
+AI: [Reads 00-feature-status.md]
+AI: "Feature `01-initial` is completed. I won't prepare a new implementation commit for a completed feature unless you explicitly ask for an exception."
+```
+
+## PowerShell Command Guidance
+
+- In this repository, commit preparation commands must be PowerShell-compatible
+- Do not chain `git add` and `git commit` with `&&`
+- Do not issue staging and commit commands simultaneously through parallel tool calls
+- Run `git add`, `git commit`, and post-commit `git status` as separate sequential shell commands
+- Do not bundle `git add`, `git commit`, and `git status` into the same shell invocation
+
 ## Non-Active and Completed Feature Behavior
 
+- Do not prepare implementation commits when no feature is active, even if the repository is still checked out on an old feature branch
 - Do not prepare commits for a paused feature until it has been switched back to active
 - Do not prepare new implementation commits for completed features unless the user explicitly asks for an exception
 
 ## Final Instructions
 
-1. Do not create the commit until the user explicitly approves the message and scope
+1. Do not create the commit until the user explicitly approves the message and scope, unless the same command already included `approve` or `approved`
 2. Always inspect the active feature and current Git branch first
-3. Use the active feature by default unless the user is only clarifying scope
+3. If no feature is active, refuse implementation commit preparation until the user activates or switches to a feature
 4. Prefer a narrow, task-aligned commit over a broad convenience commit
 5. Use the exact main-task format `feat: <feature-tag>-<task id> - <description>` for main task-completion commits
 6. Use the exact ad hoc feature format `feat: <feature-tag>-<task id>+ - <description>` when the user explicitly requests ad hoc `feat`
-7. Use the exact follow-up format `<prefix>: <feature-tag>-<task id>+ - <description>` for `tidy`, `style`, `fix`, `docs`, and `mgmt`
+7. Use the exact follow-up format `<prefix>: <feature-tag>-<task id>+ - <description>` for `tidy`, `style`, `fix`, `docs`, `mgmt`, and `tweak`
 8. Surface unrelated changes clearly instead of silently bundling them
+9. For follow-up prefixes and ad hoc `feat`, including `tweak`, ensure the description summarizes all known in-scope changes included since `HEAD`, not only the latest tweak discussed

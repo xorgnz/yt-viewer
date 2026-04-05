@@ -2,7 +2,7 @@ import Database from 'better-sqlite3';
 import { SourceChannelDAO } from '../daos/sourceChannelDAO';
 import { VideoDAO } from '../daos/videoDAO';
 import type { YouTubeClient } from './youTubeClient';
-import { fetchChannelWithUploads } from './fetch';
+import { fetchChannelWithUploads, fetchVideosMetadata } from './fetch';
 import { mapChannelItemToUpsert, mapPlaylistItemToVideoUpsert } from './mapper';
 
 export interface ImportResult
@@ -25,6 +25,12 @@ export function importChannelFromYouTube(db: Database.Database, yt: YouTubeClien
             return { channelId: null, videosUpserted: 0 };
         }
 
+        const videoIds = videos
+            .map((item) => item.contentDetails?.videoId || item.snippet?.resourceId?.videoId || '')
+            .filter(Boolean);
+        const videoMetadataItems = await fetchVideosMetadata(yt, videoIds, ['snippet', 'contentDetails']);
+        const videoMetadataById = new Map(videoMetadataItems.map((item) => [item.id, item]));
+
         const chDao = new SourceChannelDAO(db);
         const vDao = new VideoDAO(db);
 
@@ -37,7 +43,8 @@ export function importChannelFromYouTube(db: Database.Database, yt: YouTubeClien
 
             let count = 0;
             for (const item of videos) {
-                const up = mapPlaylistItemToVideoUpsert(item, ch.id);
+                const videoId = item.contentDetails?.videoId || item.snippet?.resourceId?.videoId || '';
+                const up = mapPlaylistItemToVideoUpsert(item, ch.id, videoMetadataById.get(videoId));
                 if (!up.youtube_id) continue; // skip malformed entries
                 vDao.upsert(up as any);
                 count++;

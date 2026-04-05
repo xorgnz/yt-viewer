@@ -24,7 +24,7 @@ export const load: PageServerLoad = async () =>
         const channels = channelDAO.list();
         const groups = groupDAO.list();
 
-        // Build assignments list as array of { channel_id, group_id }
+        // Normalize assignment rows into the shape the page expects.
         const assignments: { channel_id: number; group_id: number }[] = [];
         for (const ch of channels) {
             const rows = assignDAO.listForChannel(ch.id);

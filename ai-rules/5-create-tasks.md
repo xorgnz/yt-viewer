@@ -1,6 +1,6 @@
 ---
-version: 1.2.0
-timestamp: 2026-03-22 14:05
+version: 1.2.1
+timestamp: 2026-04-04 10:00
 ---
 # Rule: Generating a Task List from User Requirements
 
@@ -27,10 +27,10 @@ To guide an AI assistant in creating a detailed, step-by-step task list in Markd
 1. Identify the active feature from `/ai-work/00-feature-status.md`
 2. Analyze the PRD and master tech stack
 3. Generate the high-level parent tasks first
-4. Wait for the user's explicit `Go`
-5. Generate sub-tasks
-6. Identify relevant files, including tests where applicable
-7. Save the final task list to `/ai-work/{feature-tag}-tasks.md`
+4. Save the parent-task draft to `/ai-work/{feature-tag}-tasks.md`
+5. Wait for the user's explicit `Go`
+6. Expand the same file with sub-tasks
+7. Identify relevant files, including tests where applicable, and finish the task list in the same file
 
 ## Output Format
 
@@ -46,5 +46,5 @@ Tasks must use markdown checkboxes and hierarchical numbering.
 ## Final Instructions
 
 1. All task tracking occurs inside `/ai-work/{feature-tag}-tasks.md`
-2. Pause after parent tasks and wait for the user's `Go`
+2. Save the parent-task draft first, then pause and wait for the user's `Go` before expanding it
 3. Do not generate or revise task lists for paused or completed features unless the user explicitly asks for an exception

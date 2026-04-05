@@ -1,5 +1,10 @@
 import { describe, it, expect } from 'vitest';
-import { mapChannelItemToUpsert, mapPlaylistItemToVideoUpsert } from '../../../src/lib/youtube/mapper';
+import {
+    classifyVideoLength,
+    mapChannelItemToUpsert,
+    mapPlaylistItemToVideoUpsert,
+    parseIso8601DurationSeconds
+} from '../../../src/lib/youtube/mapper';
 
 describe('youtube mapper (task 3.3)', () => {
     it('maps channel item to channel upsert payload', () => {
@@ -26,7 +31,7 @@ describe('youtube mapper (task 3.3)', () => {
         expect(typeof up.published_at === 'number' || up.published_at === null).toBe(true);
     });
 
-    it('maps playlistItems item to video upsert payload', () => {
+    it('maps playlistItems item to video upsert payload with video metadata classification', () => {
         const item: any = {
             snippet: {
                 title: 'Video A',
@@ -40,15 +45,65 @@ describe('youtube mapper (task 3.3)', () => {
                 videoPublishedAt: '2021-02-03T04:05:06Z'
             }
         };
-        const up = mapPlaylistItemToVideoUpsert(item, 42);
+        const videoMetadata: any = {
+            id: 'vid123',
+            snippet: {
+                title: 'Video A (canonical)',
+                description: 'Canonical desc',
+                thumbnails: { high: { url: 'http://v.hi' } }
+            },
+            contentDetails: {
+                duration: 'PT59S'
+            }
+        };
+        const up = mapPlaylistItemToVideoUpsert(item, 42, videoMetadata);
         expect(up).toMatchObject({
             youtube_id: 'vid123',
             channel_id: 42,
-            title: 'Video A',
-            description: 'Desc',
-            thumbnail_url: 'http://v.med'
+            title: 'Video A (canonical)',
+            description: 'Canonical desc',
+            thumbnail_url: 'http://v.hi',
+            length_classification: 'short'
         });
         expect(typeof up.published_at === 'number' || up.published_at === null).toBe(true);
-        expect(up.duration_seconds).toBeNull();
+        expect(up.duration_seconds).toBe(59);
+    });
+
+    it('parses ISO-8601 durations and classifies length', () => {
+        expect(parseIso8601DurationSeconds('PT59S')).toBe(59);
+        expect(parseIso8601DurationSeconds('PT1M1S')).toBe(61);
+        expect(parseIso8601DurationSeconds('PT2H3M4S')).toBe(7384);
+        expect(parseIso8601DurationSeconds('bad')).toBeNull();
+
+        expect(classifyVideoLength(59)).toBe('short');
+        expect(classifyVideoLength(61)).toBe('long');
+        expect(classifyVideoLength(null)).toBe('unknown');
+    });
+
+    it('falls back to unknown classification when video metadata is missing', () => {
+        const item: any = {
+            snippet: {
+                title: 'Playlist fallback title',
+                description: 'Playlist fallback description',
+                publishedAt: '2021-02-03T04:05:06Z',
+                resourceId: { videoId: 'vid-missing-metadata' },
+                thumbnails: { medium: { url: 'http://v.med' } }
+            },
+            contentDetails: {
+                videoId: 'vid-missing-metadata',
+                videoPublishedAt: '2021-02-03T04:05:06Z'
+            }
+        };
+
+        const up = mapPlaylistItemToVideoUpsert(item, 7);
+        expect(up).toMatchObject({
+            youtube_id: 'vid-missing-metadata',
+            channel_id: 7,
+            title: 'Playlist fallback title',
+            description: 'Playlist fallback description',
+            thumbnail_url: 'http://v.med',
+            duration_seconds: null,
+            length_classification: 'unknown'
+        });
     });
 });

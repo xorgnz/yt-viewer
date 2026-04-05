@@ -1,6 +1,6 @@
 ---
-version: 1.2.0
-timestamp: 2026-03-22 14:03
+version: 1.2.1
+timestamp: 2026-04-04 12:05
 ---
 # Rule: Performing a Task for the Active Feature
 
@@ -26,6 +26,7 @@ To guide an AI assistant in executing development tasks from structured task lis
 
 ### Non-Active Features
 
+- If no feature is currently active, do not perform implementation work and tell the user to activate or switch to a feature first
 - Treat `paused` features as resumable but not currently editable
 - Tell the user to switch features first by using the feature-change workflow if they want to resume a paused feature
 - Treat completed features as read-only by default
@@ -82,6 +83,7 @@ As each task or sub-task is completed:
 1. Never start tasks without explicit user approval
 2. Always use the active feature in `/ai-work/00-feature-status.md`
 3. A feature argument is optional and must not override the active feature
-4. Treat paused features as inactive until switched back in
-5. Refuse routine edits to completed features
-6. Always update task checkboxes immediately upon completion
+4. If no feature is active, refuse implementation work until the user activates or switches to a feature
+5. Treat paused features as inactive until switched back in
+6. Refuse routine edits to completed features
+7. Always update task checkboxes immediately upon completion

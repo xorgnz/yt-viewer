@@ -3,7 +3,6 @@
   "compilerOptions": {
     "module": "ESNext",
     "target": "ES2020",
-    "importsNotUsedAsValues": "error",
     "verbatimModuleSyntax": true,
     "useDefineForClassFields": true,
     "lib": ["ESNext", "DOM"],

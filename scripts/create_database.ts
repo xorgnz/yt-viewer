@@ -8,23 +8,24 @@ import {SchemaVersionDAO} from '$lib/daos/schemaVersionDAO';
 import {ALL_DDL, SCHEMA_VERSION} from '$lib/daos/_schema';
 import {DatabaseMode} from "$lib/daos/shared/DatabaseWrapper";
 
-function parseArgs(): { mode: DatabaseMode }
+function parseArgs(): { mode: DatabaseMode; reset: boolean }
 {
     // Supports: --mode=dev | --mode dev | dev (positional)
     const args = argv.slice(2);
     let modeStr: string | undefined;
+    let reset = false;
     for (let i = 0; i < args.length; i++) {
         const a = args[i];
         if (a.startsWith('--mode=')) {
             modeStr = a.split('=')[1];
-            break;
         } else if (a === '--mode' || a === '-m') {
             modeStr = args[i + 1];
-            break;
+            i += 1;
+        } else if (a === '--reset' || a === '--force') {
+            reset = true;
         } else if (!a.startsWith('-') && !modeStr) {
             // first positional used as mode
             modeStr = a;
-            break;
         }
     }
 
@@ -45,13 +46,13 @@ function parseArgs(): { mode: DatabaseMode }
             usage(`Unknown mode: ${modeStr}`);
     }
 
-    return { mode: mode! };
+    return { mode: mode!, reset };
 }
 
 function usage(error?: string): never
 {
     const script = path.basename(fileURLToPath(import.meta.url));
-    const message = `\nUsage:\n  ${script} --mode <test|dev|live>\n  ${script} <test|dev|live>\n\nCreates a fresh SQLite database for the given mode.\n- Refuses to run if the target DB file already exists (won't overwrite).\n- Creates it with WAL + NORMAL and applies the current schema.\n`;
+    const message = `\nUsage:\n  ${script} --mode <test|dev|live> [--reset]\n  ${script} <test|dev|live> [--reset]\n\nCreates a SQLite database for the given mode using the current schema (v${SCHEMA_VERSION}).\n- Refuses to run if the target DB file already exists unless --reset is supplied.\n- With --reset, deletes the existing DB file first and recreates it from scratch.\n- Creates it with WAL + NORMAL and applies the current schema.\n`;
     if (error) console.error(`Error: ${error}\n`);
     console.log(message);
     exit(error ? 1 : 0);
@@ -59,12 +60,15 @@ function usage(error?: string): never
 
 async function main()
 {
-    const { mode } = parseArgs();
+    const { mode, reset } = parseArgs();
     const { dbPath } = resolveDbPath(mode);
 
     ensureDir(dbPath);
     if (fs.existsSync(dbPath)) {
-        throw new Error(`Refusing to overwrite existing database at: ${dbPath}. Delete it first or choose a different mode/path.`);
+        if (!reset) {
+            throw new Error(`Refusing to overwrite existing database at: ${dbPath}. Re-run with --reset to replace it.`);
+        }
+        fs.unlinkSync(dbPath);
     }
 
     const db = new Database(dbPath);

@@ -1,5 +1,5 @@
 import { YouTubeClient } from './youTubeClient';
-import type { ChannelsListResponse, PlaylistItemsListResponse } from './youTubeClient';
+import type { ChannelsListResponse, PlaylistItemsListResponse, VideosListResponse } from './youTubeClient';
 
 export interface ChannelWithUploads
 {
@@ -66,6 +66,31 @@ export async function fetchAllPlaylistItems(
         if (page?.items?.length) all.push(...page.items);
         pageToken = page.nextPageToken;
     } while (pageToken);
+    return all;
+}
+
+/**
+ * Fetch detailed metadata for a set of video IDs.
+ * This is the best available source in the current codebase for duration-based
+ * long/short classification because playlistItems does not include duration.
+ */
+export async function fetchVideosMetadata(
+    yt: YouTubeClient,
+    videoIds: string[],
+    parts: string[] = ['snippet', 'contentDetails']
+): Promise<VideosListResponse['items']>
+{
+    const uniqueIds = Array.from(new Set(videoIds.map((id) => String(id).trim()).filter(Boolean)));
+    const all: VideosListResponse['items'] = [];
+
+    for (let i = 0; i < uniqueIds.length; i += 50) {
+        const batchIds = uniqueIds.slice(i, i + 50);
+        const page = await yt.listVideos({ ids: batchIds, parts });
+        if (page?.items?.length) {
+            all.push(...page.items);
+        }
+    }
+
     return all;
 }
 
