@@ -71,5 +71,5 @@
   - [x] 6.1 Add DAO tests for association creation, mode changes, uniqueness, and selected-only review persistence
   - [x] 6.2 Add DAO or query tests for effective inclusion behavior across `all`, `long only`, `selected only`, and unknown classification cases
   - [x] 6.3 Add mapper/import tests for persisted long/short/unknown metadata behavior
-  - [ ] 6.4 Add route or server-action tests for manage-page updates and bulk-review operations where practical
+  - [x] 6.4 Add route or server-action tests for manage-page updates and bulk-review operations where practical
   - [ ] 6.5 Run targeted validation for the new admin management flow without starting long-running processes
