@@ -16,7 +16,9 @@ describe('VideoDAO length classification persistence', () => {
 
         db.prepare(`
             INSERT INTO source_channels(youtube_id, title, description, thumbnail_url, published_at)
-            VALUES('UC_TEST', 'Test Channel', '', NULL, NULL)
+            VALUES
+                ('UC_TEST', 'Test Channel', '', NULL, NULL),
+                ('UC_TEST_2', 'Test Channel 2', '', NULL, NULL)
         `).run();
     });
 
@@ -116,5 +118,60 @@ describe('VideoDAO length classification persistence', () => {
         expect(allVideos.map((video) => video.youtube_id)).toEqual(['V_UNKNOWN', 'V_SHORT', 'V_LONG']);
         expect(longOnlyVideos.map((video) => video.youtube_id)).toEqual(['V_LONG']);
         expect(selectedOnlyVideos.map((video) => video.youtube_id)).toEqual(['V_SHORT']);
+    });
+
+    it('allows unknown videos through selected-only review while keeping long-only restricted', () => {
+        const dao = new VideoDAO(db);
+        const profileDao = new ProfileDAO(db);
+        const virtualChannelDao = new VirtualChannelDAO(db);
+        const assignmentDao = new AssignmentDAO(db);
+        const selectionDao = new VirtualChannelAssignmentVideoSelectionDAO(db);
+
+        dao.upsert({
+            youtube_id: 'V_SOURCE1_UNKNOWN',
+            channel_id: 1,
+            title: 'Unknown from source 1',
+            description: '',
+            published_at: 1000,
+            duration_seconds: null,
+            thumbnail_url: null,
+            length_classification: 'unknown'
+        } as any);
+        dao.upsert({
+            youtube_id: 'V_SOURCE2_LONG',
+            channel_id: 2,
+            title: 'Long from source 2',
+            description: '',
+            published_at: 2000,
+            duration_seconds: 600,
+            thumbnail_url: null,
+            length_classification: 'long'
+        } as any);
+        dao.upsert({
+            youtube_id: 'V_SOURCE2_UNKNOWN',
+            channel_id: 2,
+            title: 'Unknown from source 2',
+            description: '',
+            published_at: 3000,
+            duration_seconds: null,
+            thumbnail_url: null,
+            length_classification: 'unknown'
+        } as any);
+
+        profileDao.upsertByKey('default', 'Default');
+        const profile = profileDao.getByKey('default')!;
+        const mixedGroup = virtualChannelDao.create('Mixed assignment group');
+
+        assignmentDao.add(1, mixedGroup.id, 'selected_only');
+        assignmentDao.add(2, mixedGroup.id, 'long_only');
+
+        const selectedAssignment = assignmentDao.listForSourceChannel(1)[0];
+        const unknownFromSource1 = dao.getByExternalId('V_SOURCE1_UNKNOWN')!;
+        selectionDao.setReviewState(selectedAssignment.id, unknownFromSource1.id, 'included');
+
+        const groupVideos = dao.listForViewer({ groupId: mixedGroup.id, ignored: 'show' } as any, profile.id);
+
+        expect(groupVideos.map((video) => video.youtube_id)).toEqual(['V_SOURCE2_LONG', 'V_SOURCE1_UNKNOWN']);
+        expect(groupVideos.find((video) => video.youtube_id === 'V_SOURCE2_UNKNOWN')).toBeUndefined();
     });
 });
