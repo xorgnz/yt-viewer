@@ -145,6 +145,24 @@ export class YouTubeClient
             pageToken: params.pageToken
         });
     }
+
+    // https://developers.google.com/youtube/v3/docs/videos/list
+    async listVideos(params: {
+        ids: string[];
+        parts?: string[]; // default snippet,contentDetails
+    }): Promise<VideosListResponse>
+    {
+        const ids = Array.from(new Set((params.ids || []).map((id) => String(id).trim()).filter(Boolean)));
+        if (ids.length === 0) {
+            return { items: [] };
+        }
+
+        const parts = params.parts || ['snippet', 'contentDetails'];
+        return await this.get<VideosListResponse>('videos', {
+            part: parts.join(','),
+            id: ids.join(',')
+        });
+    }
 }
 
 // Basic error classification for YouTube API
@@ -241,6 +259,25 @@ export interface PlaylistItemsListResponse
         contentDetails?: {
             videoId?: string;
             videoPublishedAt?: string;
+        };
+    }>;
+}
+
+export interface VideosListResponse
+{
+    kind?: string;
+    etag?: string;
+    pageInfo?: { totalResults?: number; resultsPerPage?: number };
+    items: Array<{
+        id: string;
+        snippet?: {
+            title?: string;
+            description?: string;
+            publishedAt?: string;
+            thumbnails?: Record<string, { url: string }>;
+        };
+        contentDetails?: {
+            duration?: string;
         };
     }>;
 }

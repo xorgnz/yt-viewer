@@ -62,7 +62,7 @@
   - [x] 4.4 Add temporary bulk actions for the currently shown rows, including select-all-shown and select-none-shown behavior
   - [x] 4.5 Add bulk actions for setting shown rows to ignored and for resetting shown rows back to not yet reviewed if supported by the final UI
 - [ ] 5.0 Extend import and query behavior so YouTube long/short classification and selected-only defaults are represented correctly
-  - [ ] 5.1 Identify the best available YouTube metadata source in the current codebase for distinguishing long, short, and unknown video status
+  - [x] 5.1 Identify the best available YouTube metadata source in the current codebase for distinguishing long, short, and unknown video status
   - [ ] 5.2 Update mapping and import logic to persist long/short/unknown classification on videos
   - [ ] 5.3 Update included-video queries so `all`, `long only`, and `selected only` associations return the correct effective video set
   - [ ] 5.4 Ensure newly imported videos in selected-only associations default to not yet reviewed and remain excluded until reviewed
