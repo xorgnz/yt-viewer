@@ -51,6 +51,23 @@ describe('AssignmentDAO and selection persistence', () => {
         expect(bySourceChannel[0].virtual_channel_id).toBe(virtualChannel.id);
     });
 
+    it('removes only the targeted source-channel and virtual-channel pair', () => {
+        const virtualChannelDao = new VirtualChannelDAO(db);
+        const assignmentDao = new AssignmentDAO(db);
+        const firstVirtualChannel = virtualChannelDao.create('Inline Remove Target');
+        const secondVirtualChannel = virtualChannelDao.create('Inline Remove Keep');
+
+        assignmentDao.add(1, firstVirtualChannel.id, 'all');
+        assignmentDao.add(1, secondVirtualChannel.id, 'all');
+
+        assignmentDao.remove(1, firstVirtualChannel.id);
+
+        expect(assignmentDao.listForVirtualChannel(firstVirtualChannel.id)).toEqual([]);
+        expect(assignmentDao.listForVirtualChannel(secondVirtualChannel.id)).toHaveLength(1);
+        expect(assignmentDao.listForSourceChannel(1)).toHaveLength(1);
+        expect(assignmentDao.listForSourceChannel(1)[0].virtual_channel_id).toBe(secondVirtualChannel.id);
+    });
+
     it('persists selected-only review state per assignment and video', () => {
         const virtualChannelDao = new VirtualChannelDAO(db);
         const assignmentDao = new AssignmentDAO(db);

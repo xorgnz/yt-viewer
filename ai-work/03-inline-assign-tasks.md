@@ -37,7 +37,7 @@
   - [x] 3.2 Add server actions on the virtual-channels page for inline remove-association requests
   - [x] 3.3 Enhance the inline add/remove forms so successful actions update the local page state without a full page reload
   - [x] 3.4 Surface inline add/remove failures clearly enough for the admin to recover
-- [ ] 4.0 Validate the inline assignment workflow with targeted automated tests and checks
-  - [ ] 4.1 Add route or server-action tests for inline add/remove assignment behavior on the virtual-channels page
-  - [ ] 4.2 Add or extend DAO-level tests if the inline workflow exposes assignment edge cases not already covered
-  - [ ] 4.3 Run targeted validation for the new inline assignment flow without starting long-running processes
+- [x] 4.0 Validate the inline assignment workflow with targeted automated tests and checks
+  - [x] 4.1 Add route or server-action tests for inline add/remove assignment behavior on the virtual-channels page
+  - [x] 4.2 Add or extend DAO-level tests if the inline workflow exposes assignment edge cases not already covered
+  - [x] 4.3 Run targeted validation for the new inline assignment flow without starting long-running processes
