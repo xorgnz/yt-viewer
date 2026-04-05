@@ -68,7 +68,7 @@
   - [x] 5.4 Ensure newly imported videos in selected-only associations default to not yet reviewed and remain excluded until reviewed
   - [x] 5.5 Surface unknown video-type classification clearly in admin query results and page rendering
 - [ ] 6.0 Validate the new admin management flow with targeted automated tests
-  - [ ] 6.1 Add DAO tests for association creation, mode changes, uniqueness, and selected-only review persistence
+  - [x] 6.1 Add DAO tests for association creation, mode changes, uniqueness, and selected-only review persistence
   - [ ] 6.2 Add DAO or query tests for effective inclusion behavior across `all`, `long only`, `selected only`, and unknown classification cases
   - [ ] 6.3 Add mapper/import tests for persisted long/short/unknown metadata behavior
   - [ ] 6.4 Add route or server-action tests for manage-page updates and bulk-review operations where practical
