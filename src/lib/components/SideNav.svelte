@@ -6,6 +6,7 @@
     export let profiles: Array<{ id: number; key: string; name: string }> = [];
     export let activeProfileKey: string = 'default';
     export let activeProfileName: string = 'Adult';
+    export let isAdminLoggedIn: boolean = false;
 
     function profileTone(profileKey: string): 'adult' | 'child'
     {
@@ -21,11 +22,17 @@
         <a href="/viewer/virtual-channels">Channels</a>
         <a href="/history">History</a>
         <div class="sep" aria-hidden="true"></div>
-        <a href="/admin">Admin Home</a>
-        <a href="/admin/source-channels">Source Channels</a>
-        <a href="/admin/virtual-channels">Virtual Channels</a>
-        <a href="/admin/assignments">Assignments</a>
-        <a href="/admin/login">Admin Login</a>
+        {#if isAdminLoggedIn}
+            <a href="/admin">Admin Home</a>
+            <a href="/admin/source-channels">Source Channels</a>
+            <a href="/admin/virtual-channels">Virtual Channels</a>
+            <a href="/admin/assignments">Assignments</a>
+            <form method="POST" action="/admin/logout" class="nav-logout">
+                <button type="submit" class="btn btn-secondary">Logout</button>
+            </form>
+        {:else}
+            <a href="/admin/login">Admin</a>
+        {/if}
     </nav>
 
     <details class="profile-switcher" data-profile-tone={profileTone(activeProfileKey)}>

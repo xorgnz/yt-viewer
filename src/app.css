@@ -478,6 +478,15 @@ main {
     color: #fff5ec;
 }
 
+.nav-logout {
+    margin-top: var(--space-2);
+    padding: 0 0.35rem;
+}
+
+.nav-logout button {
+    width: 100%;
+}
+
 .side-nav .sep {
     height: 10px;
 }

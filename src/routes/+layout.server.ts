@@ -2,6 +2,7 @@ import type { LayoutServerLoad } from './$types';
 import { DatabaseMode, DatabaseWrapper } from '$lib/daos/shared/DatabaseWrapper';
 import { ProfileDAO } from '$lib/daos/profileDAO';
 import { ensureProfiles, getActiveProfileKey } from '$lib/profiles';
+import { hasAdminSession } from '$lib/auth/admin';
 
 function getMode(): DatabaseMode
 {
@@ -27,7 +28,8 @@ export const load: LayoutServerLoad = async ({ cookies }) =>
         return {
             profiles,
             activeProfileKey: activeProfile?.key || 'default',
-            activeProfileName: activeProfile?.name || 'Adult'
+            activeProfileName: activeProfile?.name || 'Adult',
+            isAdminLoggedIn: hasAdminSession(cookies)
         };
     } finally {
         wrapper.close();

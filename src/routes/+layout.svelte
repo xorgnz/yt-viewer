@@ -7,6 +7,7 @@
     profiles: Array<{ id: number; key: string; name: string }>;
     activeProfileKey: string;
     activeProfileName: string;
+    isAdminLoggedIn: boolean;
   };
 </script>
 
@@ -16,6 +17,7 @@
     profiles={data.profiles}
     activeProfileKey={data.activeProfileKey}
     activeProfileName={data.activeProfileName}
+    isAdminLoggedIn={data.isAdminLoggedIn}
   />
   <div class="app-content">
     <slot />
