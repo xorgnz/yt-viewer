@@ -34,6 +34,7 @@
     };
 
     const f = data.filters;
+    const activeVirtualChannel = data.groups.find((group) => group.id === f.groupId) ?? null;
 
     function fmtDate(ms: number | null): string {
         if (!ms) return '';
@@ -51,6 +52,9 @@
 <div class="page stack">
     <section class="panel">
         <h1>Video List</h1>
+        {#if activeVirtualChannel}
+            <p class="muted">Virtual channel: {activeVirtualChannel.name}</p>
+        {/if}
         <form method="GET" class="stack">
             <div class="fields">
                 <label>Search
@@ -79,14 +83,6 @@
                         {/each}
                     </select>
                 </label>
-                <label>Virtual Channel
-                    <select name="groupId" value={f.groupId ?? ''}>
-                        <option value="">Any</option>
-                        {#each data.groups as g}
-                            <option value={g.id} selected={f.groupId === g.id}>{g.name}</option>
-                        {/each}
-                    </select>
-                </label>
                 <label>Ignored
                     <select name="ignored" bind:value={f.ignored}>
                         <option value="hide">Hide ignored</option>
@@ -96,6 +92,9 @@
                 <label>Per page
                     <input type="number" name="limit" min="1" max="1000" value={f.limit} />
                 </label>
+                {#if f.groupId != null}
+                    <input type="hidden" name="groupId" value={f.groupId} />
+                {/if}
                 <input type="hidden" name="offset" value={f.offset} />
                 <div class="inline-actions">
                     <button type="submit">Apply</button>

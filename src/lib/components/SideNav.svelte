@@ -18,7 +18,7 @@
 
     <nav>
         <a href="/">Home</a>
-        <a href="/viewer">Video List</a>
+        <a href="/viewer/virtual-channels">Channels</a>
         <a href="/history">History</a>
         <div class="sep" aria-hidden="true"></div>
         <a href="/admin">Admin Home</a>
