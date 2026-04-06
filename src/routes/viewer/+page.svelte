@@ -6,6 +6,8 @@
             ignored: 'hide' | 'show';
             dateFrom: number | null;
             dateTo: number | null;
+            dateFromInput: string;
+            dateToInput: string;
             channelId: number | null;
             groupId: number | null;
             limit: number;
@@ -35,17 +37,11 @@
 
     const f = data.filters;
     const activeVirtualChannel = data.groups.find((group) => group.id === f.groupId) ?? null;
-
-    function fmtDate(ms: number | null): string {
-        if (!ms) return '';
-        try {
-            const d = new Date(ms);
-            return d.toISOString().slice(0, 10);
-        } catch { return ''; }
-    }
+    const today = new Date().toISOString().slice(0, 10);
 
     function nextOffset(): number { return f.offset + f.limit; }
     function prevOffset(): number { return Math.max(0, f.offset - f.limit); }
+    import DatePicker from '$lib/components/DatePicker.svelte';
     import VideoCard from '$lib/components/VideoCard.svelte';
 </script>
 
@@ -60,12 +56,12 @@
                 <label>Search
                     <input name="term" value={f.term || ''} placeholder="title/description" />
                 </label>
-                <label>Date from (ms)
-                    <input type="number" name="dateFrom" value={f.dateFrom ?? ''} />
-                </label>
-                <label>Date to (ms)
-                    <input type="number" name="dateTo" value={f.dateTo ?? ''} />
-                </label>
+                <div class="compact-date-field">
+                    <DatePicker label="From" name="dateFrom" value={f.dateFromInput} max={today} />
+                </div>
+                <div class="compact-date-field">
+                    <DatePicker label="To" name="dateTo" value={f.dateToInput} max={today} />
+                </div>
             </div>
             <div class="fields">
                 <label>Source Channel
@@ -106,8 +102,8 @@
                     term: f.term || '',
                     watched: f.watched,
                     ignored: f.ignored,
-                    dateFrom: f.dateFrom != null ? String(f.dateFrom) : '',
-                    dateTo: f.dateTo != null ? String(f.dateTo) : '',
+                    dateFrom: f.dateFromInput,
+                    dateTo: f.dateToInput,
                     channelId: f.channelId != null ? String(f.channelId) : '',
                     groupId: f.groupId != null ? String(f.groupId) : '',
                     limit: String(f.limit),
@@ -117,15 +113,15 @@
                     term: f.term || '',
                     watched: f.watched,
                     ignored: f.ignored,
-                    dateFrom: f.dateFrom != null ? String(f.dateFrom) : '',
-                    dateTo: f.dateTo != null ? String(f.dateTo) : '',
+                    dateFrom: f.dateFromInput,
+                    dateTo: f.dateToInput,
                     channelId: f.channelId != null ? String(f.channelId) : '',
                     groupId: f.groupId != null ? String(f.groupId) : '',
                     limit: String(f.limit),
                     offset: String(nextOffset())
                 }).toString()}`}>Next</a>
             </div>
-            <div class="hint">Dates: {fmtDate(f.dateFrom)} - {fmtDate(f.dateTo)}</div>
+            <div class="hint">Dates: {f.dateFromInput || 'Any'} - {f.dateToInput || 'Any'}</div>
             <div class="spacer"></div>
         </div>
 
@@ -154,6 +150,10 @@
 
     .compact-field input {
         min-width: 0;
+    }
+
+    .compact-date-field {
+        flex: 0 0 10.5rem;
     }
 
     .filter-toggle {

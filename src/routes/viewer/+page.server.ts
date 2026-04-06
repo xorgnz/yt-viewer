@@ -7,6 +7,28 @@ import { FlagsDAO } from '$lib/daos/flagsDAO';
 import { fail, redirect } from '@sveltejs/kit';
 import { ensureProfiles, getActiveProfileKey } from '$lib/profiles';
 
+function parseDateOnly(value: string | null, boundary: 'start' | 'end'): number | null
+{
+    if (!value) {
+        return null;
+    }
+
+    const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value.trim());
+    if (!match) {
+        return null;
+    }
+
+    const year = Number(match[1]);
+    const month = Number(match[2]) - 1;
+    const day = Number(match[3]);
+
+    if (boundary === 'start') {
+        return new Date(year, month, day, 0, 0, 0, 0).getTime();
+    }
+
+    return new Date(year, month, day, 23, 59, 59, 999).getTime();
+}
+
 function getMode(): DatabaseMode
 {
     const env = process.env.NODE_ENV || 'development';
@@ -28,8 +50,8 @@ export const load = async ({ url, cookies }: { url: URL; cookies: any }) =>
     const showIgnored = url.searchParams.get('showIgnored');
     const ignoredParam = showIgnored === '1' ? 'show' : (url.searchParams.get('ignored') || 'hide');
     const ignored = (ignoredParam === 'show') ? 'show' : 'hide';
-    const dateFrom = url.searchParams.get('dateFrom');
-    const dateTo = url.searchParams.get('dateTo');
+    const dateFromInput = url.searchParams.get('dateFrom')?.trim() || '';
+    const dateToInput = url.searchParams.get('dateTo')?.trim() || '';
     const channelId = url.searchParams.get('channelId');
     const groupId = url.searchParams.get('groupId');
     const limit = url.searchParams.get('limit');
@@ -39,8 +61,10 @@ export const load = async ({ url, cookies }: { url: URL; cookies: any }) =>
         term,
         watched: watched as 'all' | 'watched' | 'unwatched',
         ignored: ignored as 'hide' | 'show',
-        dateFrom: dateFrom ? Number(dateFrom) : null,
-        dateTo: dateTo ? Number(dateTo) : null,
+        dateFrom: parseDateOnly(dateFromInput, 'start'),
+        dateTo: parseDateOnly(dateToInput, 'end'),
+        dateFromInput,
+        dateToInput,
         channelId: channelId ? Number(channelId) : null,
         groupId: groupId ? Number(groupId) : null,
         limit: limit ? Number(limit) : 50,
