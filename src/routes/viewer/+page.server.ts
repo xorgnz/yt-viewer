@@ -67,7 +67,7 @@ export const load = async ({ url, cookies }: { url: URL; cookies: any }) =>
         dateToInput,
         channelId: channelId ? Number(channelId) : null,
         groupId: groupId ? Number(groupId) : null,
-        limit: limit ? Number(limit) : 50,
+        limit: limit ? Number(limit) : 200,
         offset: offset ? Number(offset) : 0
     } as const;
 
@@ -84,8 +84,9 @@ export const load = async ({ url, cookies }: { url: URL; cookies: any }) =>
         const cDao = new SourceChannelDAO(db);
         const gDao = new VirtualChannelDAO(db);
 
-        const [videos, channels, groups] = [
+        const [videos, totalCount, channels, groups] = [
             vDao.listForViewer(filters as any, profileId),
+            vDao.countForViewer(filters as any, profileId),
             cDao.list(),
             gDao.list()
         ];
@@ -93,6 +94,7 @@ export const load = async ({ url, cookies }: { url: URL; cookies: any }) =>
         return {
             filters,
             videos,
+            totalCount,
             channels,
             groups,
             profileId,
