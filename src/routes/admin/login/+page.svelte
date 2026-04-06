@@ -2,10 +2,10 @@
     export let form: any;
 </script>
 
-<div class="page stack">
-    <section class="panel" style="max-width: 28rem;">
+<div class="page login-page">
+    <section class="panel login-panel">
         <h1>Admin Login</h1>
-        <form method="POST" class="stack">
+        <form method="POST" class="stack login-form">
             <label>
                 Password
                 <input name="password" type="password" required />
@@ -19,3 +19,33 @@
         </form>
     </section>
 </div>
+
+<style>
+    .login-page {
+        display: flex;
+        justify-content: center;
+    }
+
+    .login-panel {
+        width: min(100%, 28rem);
+        margin-top: 8vh;
+    }
+
+    .login-panel h1 {
+        text-align: center;
+    }
+
+    .login-form {
+        align-items: center;
+    }
+
+    .login-form label,
+    .login-form .inline-actions,
+    .login-form .error-text {
+        width: 100%;
+    }
+
+    .login-form .inline-actions {
+        justify-content: center;
+    }
+    </style>
