@@ -149,7 +149,7 @@
 <style>
     .grid {
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-        gap: 0.9rem;
+        grid-template-columns: repeat(auto-fit, minmax(clamp(250px, 18vw, 320px), 1fr));
+        gap: 1rem;
     }
 </style>
