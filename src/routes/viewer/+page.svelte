@@ -60,13 +60,6 @@
                 <label>Search
                     <input name="term" value={f.term || ''} placeholder="title/description" />
                 </label>
-                <label>Watched
-                    <select name="watched" bind:value={f.watched}>
-                        <option value="all">All</option>
-                        <option value="watched">Watched</option>
-                        <option value="unwatched">Unwatched</option>
-                    </select>
-                </label>
                 <label>Date from (ms)
                     <input type="number" name="dateFrom" value={f.dateFrom ?? ''} />
                 </label>
@@ -83,14 +76,16 @@
                         {/each}
                     </select>
                 </label>
-                <label>Ignored
-                    <select name="ignored" bind:value={f.ignored}>
-                        <option value="hide">Hide ignored</option>
-                        <option value="show">Show ignored</option>
-                    </select>
-                </label>
-                <label>Per page
+                <label class="compact-field">Per page
                     <input type="number" name="limit" min="1" max="1000" value={f.limit} />
+                </label>
+                <label class="filter-toggle">
+                    <input type="checkbox" name="unwatchedOnly" value="1" checked={f.watched === 'unwatched'} />
+                    <span>Unwatched only</span>
+                </label>
+                <label class="filter-toggle">
+                    <input type="checkbox" name="showIgnored" value="1" checked={f.ignored === 'show'} />
+                    <span>Show ignored</span>
                 </label>
                 {#if f.groupId != null}
                     <input type="hidden" name="groupId" value={f.groupId} />
@@ -151,5 +146,34 @@
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(clamp(250px, 18vw, 320px), 1fr));
         gap: 1rem;
+    }
+
+    .compact-field {
+        flex: 0 0 7rem;
+    }
+
+    .compact-field input {
+        min-width: 0;
+    }
+
+    .filter-toggle {
+        flex: 0 0 auto;
+        display: inline-flex;
+        flex-direction: row;
+        align-items: center;
+        gap: 0.5rem;
+        min-height: 2.5rem;
+        padding: 0.15rem 0;
+        color: var(--text);
+        white-space: nowrap;
+    }
+
+    .filter-toggle input {
+        width: 1rem;
+        min-width: 1rem;
+        height: 1rem;
+        min-height: 1rem;
+        margin: 0;
+        accent-color: var(--accent);
     }
 </style>

@@ -20,9 +20,13 @@ export const load = async ({ url, cookies }: { url: URL; cookies: any }) =>
     const term = url.searchParams.get('term') || undefined;
     const profileKey = getActiveProfileKey(cookies);
     const watchedParamRaw = url.searchParams.get('watched');
-    const watchedParam = watchedParamRaw ?? (profileKey === 'child' ? 'unwatched' : 'all');
+    const unwatchedOnly = url.searchParams.get('unwatchedOnly');
+    const watchedParam = unwatchedOnly === '1'
+        ? 'unwatched'
+        : (watchedParamRaw ?? (profileKey === 'child' ? 'unwatched' : 'all'));
     const watched = (watchedParam === 'watched' || watchedParam === 'unwatched') ? watchedParam : 'all';
-    const ignoredParam = url.searchParams.get('ignored') || 'hide';
+    const showIgnored = url.searchParams.get('showIgnored');
+    const ignoredParam = showIgnored === '1' ? 'show' : (url.searchParams.get('ignored') || 'hide');
     const ignored = (ignoredParam === 'show') ? 'show' : 'hide';
     const dateFrom = url.searchParams.get('dateFrom');
     const dateTo = url.searchParams.get('dateTo');
