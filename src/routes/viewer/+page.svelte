@@ -52,8 +52,8 @@
             <p class="muted">Virtual channel: {activeVirtualChannel.name}</p>
         {/if}
         <form method="GET" class="stack">
-            <div class="fields">
-                <label class="boxed-field">
+            <div class="fields filter-row">
+                <label class="boxed-field compact-search-field">
                     <span class="boxed-field-label">Search</span>
                     <input name="term" value={f.term || ''} placeholder="title/description" />
                 </label>
@@ -63,9 +63,7 @@
                 <div class="compact-date-field">
                     <DatePicker label="To" name="dateTo" value={f.dateToInput} max={today} />
                 </div>
-            </div>
-            <div class="fields">
-                <label class="boxed-field">
+                <label class="boxed-field compact-channel-field">
                     <span class="boxed-field-label">Source Channel</span>
                     <select name="channelId" value={f.channelId ?? ''}>
                         <option value="">Any</option>
@@ -90,7 +88,7 @@
                     <input type="hidden" name="groupId" value={f.groupId} />
                 {/if}
                 <input type="hidden" name="offset" value={f.offset} />
-                <div class="inline-actions">
+                <div class="inline-actions apply-wrap">
                     <button type="submit">Apply</button>
                 </div>
             </div>
@@ -185,6 +183,15 @@
         background: transparent;
     }
 
+    .compact-search-field,
+    .compact-channel-field {
+        flex: 0 1 22rem;
+    }
+
+    .filter-row {
+        align-items: stretch;
+    }
+
     .filter-toggle {
         flex: 0 0 auto;
         display: inline-flex;
@@ -204,5 +211,15 @@
         min-height: 1rem;
         margin: 0;
         accent-color: var(--accent);
+    }
+
+    .apply-wrap {
+        align-self: stretch;
+    }
+
+    .apply-wrap button {
+        height: 100%;
+        min-height: 100%;
+        padding-inline: 1.1rem;
     }
 </style>
