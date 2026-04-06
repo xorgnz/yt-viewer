@@ -4,6 +4,7 @@ import { ProfileDAO } from '$lib/daos/profileDAO';
 import { FlagsDAO } from '$lib/daos/flagsDAO';
 import { HistoryDAO } from '$lib/daos/historyDAO';
 import { error, fail, redirect } from '@sveltejs/kit';
+import { ensureProfiles, getActiveProfileKey } from '$lib/profiles';
 
 function getMode(): DatabaseMode
 {
@@ -13,19 +14,18 @@ function getMode(): DatabaseMode
     return DatabaseMode.Dev;
 }
 
-export const load = async ({ params, url }: { params: { videoId: string }, url: URL }) =>
+export const load = async ({ params, cookies }: { params: { videoId: string }, cookies: any }) =>
 {
     const videoId = String(params.videoId || '').trim();
     if (!videoId) throw error(400, 'Missing videoId');
-    const profileKey = (url.searchParams.get('profile') || 'default').trim();
+    const profileKey = getActiveProfileKey(cookies);
 
     const dbw = new DatabaseWrapper(getMode());
     const db = dbw.open();
     try {
-        // Ensure profiles exist and resolve by key
+        // Load the video in the context of the active site-wide profile.
         const profiles = new ProfileDAO(db);
-        profiles.upsertByKey('default', 'Default');
-        profiles.upsertByKey('child', 'Child');
+        ensureProfiles(profiles);
         const profile = profiles.getByKey(profileKey) || profiles.getByKey('default');
         if (!profile) throw error(500, 'Failed to resolve default profile');
 
@@ -34,28 +34,27 @@ export const load = async ({ params, url }: { params: { videoId: string }, url: 
         const video = vdao.getForViewerByYoutubeId(videoId, profile.id);
         if (!video) throw error(404, 'Video not found');
 
-        return { video, profileId: profile.id, profileKey };
+        return { video, profileId: profile.id, profileKey, profileName: profile.name };
     } finally {
         dbw.close();
     }
 };
 
 export const actions = {
-    async markWatched({ request, params, url }: { request: Request; params: { videoId: string }, url: URL })
+    async markWatched({ request, params, url, cookies }: { request: Request; params: { videoId: string }, url: URL, cookies: any })
     {
         const videoYoutubeId = String(params.videoId || '').trim();
         if (!videoYoutubeId) return fail(400, { message: 'Missing videoId' });
 
         const form = await request.formData();
         const intent = String(form.get('intent') || 'watch'); // 'watch' | 'unwatch'
-        const profileKey = (url.searchParams.get('profile') || 'default').trim();
+        const profileKey = getActiveProfileKey(cookies);
 
         const dbw = new DatabaseWrapper(getMode());
         const db = dbw.open();
         try {
             const profiles = new ProfileDAO(db);
-            profiles.upsertByKey('default', 'Default');
-            profiles.upsertByKey('child', 'Child');
+            ensureProfiles(profiles);
             const profile = profiles.getByKey(profileKey) || profiles.getByKey('default');
             if (!profile) return fail(500, { message: 'Failed to resolve profile' });
 

@@ -4,7 +4,6 @@
         profileKey: string;
     };
 
-    const profileKey = data.profileKey || 'default';
 </script>
 
 <div class="page stack">
@@ -15,7 +14,7 @@
         {:else}
             <div class="grid">
                 {#each data.groups as g}
-                    <a class="group" href={`/viewer?${new URLSearchParams({ groupId: String(g.id), profile: profileKey }).toString()}`}>
+                    <a class="group" href={`/viewer?${new URLSearchParams({ groupId: String(g.id) }).toString()}`}>
                         <div class="name">{g.name}</div>
                         <div class="hint">View videos from this virtual channel</div>
                     </a>

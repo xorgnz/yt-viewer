@@ -2,6 +2,7 @@ import { DatabaseWrapper, DatabaseMode } from '$lib/daos/shared/DatabaseWrapper'
 import { ProfileDAO } from '$lib/daos/profileDAO';
 import { SourceChannelDAO } from '$lib/daos/sourceChannelDAO';
 import { HistoryDAO } from '$lib/daos/historyDAO';
+import { ensureProfiles, getActiveProfileKey } from '$lib/profiles';
 
 function getMode(): DatabaseMode
 {
@@ -11,17 +12,17 @@ function getMode(): DatabaseMode
     return DatabaseMode.Dev;
 }
 
-export const load = async ({ url }: { url: URL }) =>
+export const load = async ({ url, cookies }: { url: URL; cookies: any }) =>
 {
-    // Filters: profile (by key), channelId, dateFrom, dateTo, pagination
-    const profileKey = (url.searchParams.get('profile') || 'default').trim();
+    // Filters: channelId, dateFrom, dateTo, pagination
+    const profileKey = getActiveProfileKey(cookies);
     const channelId = url.searchParams.get('channelId');
     const dateFrom = url.searchParams.get('dateFrom');
     const dateTo = url.searchParams.get('dateTo');
     const limit = url.searchParams.get('limit');
     const offset = url.searchParams.get('offset');
 
-    const filters = {
+        const filters = {
         profileKey,
         channelId: channelId ? Number(channelId) : null,
         dateFrom: dateFrom ? Number(dateFrom) : null,
@@ -33,10 +34,9 @@ export const load = async ({ url }: { url: URL }) =>
     const dbw = new DatabaseWrapper(getMode());
     const db = dbw.open();
     try {
-        // Ensure profiles exist (default + child as per PRD)
+        // Resolve history against the active site-wide profile.
         const pDao = new ProfileDAO(db);
-        pDao.upsertByKey('default', 'Default');
-        pDao.upsertByKey('child', 'Child');
+        ensureProfiles(pDao);
 
         const profile = pDao.getByKey(filters.profileKey) || pDao.getByKey('default');
         const profileId = profile!.id;
@@ -60,7 +60,8 @@ export const load = async ({ url }: { url: URL }) =>
             filters,
             items,
             channels,
-            profileId
+            profileId,
+            profileName: profile!.name
         };
     }
     finally {

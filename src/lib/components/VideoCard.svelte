@@ -15,7 +15,6 @@
         ignored: number;
     };
 
-    export let profileKey: string;
     export let filters: {
         term?: string;
         watched: 'all' | 'watched' | 'unwatched';
@@ -40,7 +39,6 @@
         term: filters.term || '',
         watched: filters.watched,
         ignored: filters.ignored,
-        profile: profileKey,
         dateFrom: filters.dateFrom != null ? String(filters.dateFrom) : '',
         dateTo: filters.dateTo != null ? String(filters.dateTo) : '',
         channelId: filters.channelId != null ? String(filters.channelId) : '',
@@ -51,7 +49,7 @@
 </script>
 
 <div class="card" title={video.title}>
-    <a class="thumb" href={`/viewer/watch/${video.youtube_id}?profile=${encodeURIComponent(profileKey)}`} aria-label={`Open ${video.title}`}>
+    <a class="thumb" href={`/viewer/watch/${video.youtube_id}`} aria-label={`Open ${video.title}`}>
         {#if video.thumbnail_url}
             <img src={video.thumbnail_url} alt={video.title} loading="lazy" />
         {:else}
@@ -70,7 +68,7 @@
         </div>
     </a>
     <div class="meta">
-        <a class="title" href={`/viewer/watch/${video.youtube_id}?profile=${encodeURIComponent(profileKey)}`}>{video.title}</a>
+        <a class="title" href={`/viewer/watch/${video.youtube_id}`}>{video.title}</a>
         <div class="chan">{video.channel_title}</div>
         <div class="pub">{fmtDate(video.published_at)}</div>
     </div>

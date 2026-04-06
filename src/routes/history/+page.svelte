@@ -19,6 +19,7 @@
         }>;
         channels: Array<{ id: number; youtube_id: string; title: string }>;
         profileId: number;
+        profileName: string;
     };
 
     const f = data.filters;
@@ -55,12 +56,10 @@
     <section class="panel">
         <h1>History</h1>
         <form method="GET" class="fields">
-            <label>Profile
-                <select name="profile" bind:value={f.profileKey}>
-                    <option value="default">Default</option>
-                    <option value="child">Child</option>
-                </select>
-            </label>
+            <div>
+                <div class="muted">Active Profile</div>
+                <div>{data.profileName}</div>
+            </div>
             <label>Channel
                 <select name="channelId" value={f.channelId ?? ''}>
                     <option value="">Any</option>
@@ -90,7 +89,6 @@
             <div>{data.items.length} items</div>
             <div class="pager">
                 <a class="btn btn-secondary" rel="prev" href={`?${new URLSearchParams({
-                    profile: f.profileKey,
                     channelId: f.channelId != null ? String(f.channelId) : '',
                     dateFrom: f.dateFrom != null ? String(f.dateFrom) : '',
                     dateTo: f.dateTo != null ? String(f.dateTo) : '',
@@ -98,7 +96,6 @@
                     offset: String(prevOffset())
                 }).toString()}`}>Prev</a>
                 <a class="btn btn-secondary" rel="next" href={`?${new URLSearchParams({
-                    profile: f.profileKey,
                     channelId: f.channelId != null ? String(f.channelId) : '',
                     dateFrom: f.dateFrom != null ? String(f.dateFrom) : '',
                     dateTo: f.dateTo != null ? String(f.dateTo) : '',
@@ -131,8 +128,8 @@
                                 <td class="col-chan">{it.channel_title}</td>
                                 <td class="col-actions">
                                     <div class="inline-actions">
-                                        <a class="btn btn-secondary" href={`/viewer/watch/${it.youtube_id}?profile=${encodeURIComponent(f.profileKey)}`} title="Open watch page">Watch</a>
-                                        <a class="btn btn-secondary" href={`/viewer?channelId=${it.channel_id}&profile=${encodeURIComponent(f.profileKey)}`} title="More from channel">Channel</a>
+                                        <a class="btn btn-secondary" href={`/viewer/watch/${it.youtube_id}`} title="Open watch page">Watch</a>
+                                        <a class="btn btn-secondary" href={`/viewer?channelId=${it.channel_id}`} title="More from channel">Channel</a>
                                         <a class="btn btn-secondary" target="_blank" rel="noopener" href={`https://www.youtube.com/watch?v=${it.youtube_id}`} title="Open on YouTube">YouTube</a>
                                     </div>
                                 </td>

@@ -30,6 +30,7 @@
         groups: Array<{ id: number; name: string }>;
         profileId: number;
         profileKey: string;
+        profileName: string;
     };
 
     const f = data.filters;
@@ -52,12 +53,6 @@
         <h1>Video List</h1>
         <form method="GET" class="stack">
             <div class="fields">
-                <label>Profile
-                    <select name="profile" bind:value={data.profileKey}>
-                        <option value="default">Default</option>
-                        <option value="child">Child</option>
-                    </select>
-                </label>
                 <label>Search
                     <input name="term" value={f.term || ''} placeholder="title/description" />
                 </label>
@@ -117,7 +112,6 @@
                     term: f.term || '',
                     watched: f.watched,
                     ignored: f.ignored,
-                    profile: data.profileKey,
                     dateFrom: f.dateFrom != null ? String(f.dateFrom) : '',
                     dateTo: f.dateTo != null ? String(f.dateTo) : '',
                     channelId: f.channelId != null ? String(f.channelId) : '',
@@ -129,7 +123,6 @@
                     term: f.term || '',
                     watched: f.watched,
                     ignored: f.ignored,
-                    profile: data.profileKey,
                     dateFrom: f.dateFrom != null ? String(f.dateFrom) : '',
                     dateTo: f.dateTo != null ? String(f.dateTo) : '',
                     channelId: f.channelId != null ? String(f.channelId) : '',
@@ -147,7 +140,7 @@
         {:else}
             <div class="grid">
                 {#each data.videos as v}
-                    <VideoCard video={v} profileKey={data.profileKey} filters={f} />
+                    <VideoCard video={v} filters={f} />
                 {/each}
             </div>
         {/if}

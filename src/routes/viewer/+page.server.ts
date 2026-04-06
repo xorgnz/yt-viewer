@@ -5,6 +5,7 @@ import { VirtualChannelDAO } from '$lib/daos/virtualChannelDAO';
 import { ProfileDAO } from '$lib/daos/profileDAO';
 import { FlagsDAO } from '$lib/daos/flagsDAO';
 import { fail, redirect } from '@sveltejs/kit';
+import { ensureProfiles, getActiveProfileKey } from '$lib/profiles';
 
 function getMode(): DatabaseMode
 {
@@ -14,10 +15,10 @@ function getMode(): DatabaseMode
     return DatabaseMode.Dev;
 }
 
-export const load = async ({ url }: { url: URL }) =>
+export const load = async ({ url, cookies }: { url: URL; cookies: any }) =>
 {
     const term = url.searchParams.get('term') || undefined;
-    const profileKey = (url.searchParams.get('profile') || 'default').trim();
+    const profileKey = getActiveProfileKey(cookies);
     const watchedParamRaw = url.searchParams.get('watched');
     const watchedParam = watchedParamRaw ?? (profileKey === 'child' ? 'unwatched' : 'all');
     const watched = (watchedParam === 'watched' || watchedParam === 'unwatched') ? watchedParam : 'all';
@@ -45,10 +46,9 @@ export const load = async ({ url }: { url: URL }) =>
     const dbw = new DatabaseWrapper(getMode());
     const db = dbw.open();
     try {
-        // Ensure profiles exist for viewer features and resolve active profile by key
+        // Resolve the site-wide active profile before loading profile-scoped viewer state.
         const pDao = new ProfileDAO(db);
-        pDao.upsertByKey('default', 'Default');
-        pDao.upsertByKey('child', 'Child');
+        ensureProfiles(pDao);
         const profile = pDao.getByKey(profileKey) || pDao.getByKey('default');
         const profileId = profile!.id;
 
@@ -68,7 +68,8 @@ export const load = async ({ url }: { url: URL }) =>
             channels,
             groups,
             profileId,
-            profileKey
+            profileKey,
+            profileName: profile!.name
         };
     } finally {
         dbw.close();
@@ -76,13 +77,13 @@ export const load = async ({ url }: { url: URL }) =>
 };
 
 export const actions = {
-    async toggleFlag({ request, url }: { request: Request; url: URL })
+    async toggleFlag({ request, url, cookies }: { request: Request; url: URL; cookies: any })
     {
         const form = await request.formData();
         const videoIdStr = String(form.get('videoId') || '').trim();
         const kind = String(form.get('kind') || '').trim(); // 'favorite' | 'ignored'
         const valueStr = String(form.get('value') || '').trim(); // '0' | '1'
-        const profileKey = (url.searchParams.get('profile') || 'default').trim();
+        const profileKey = getActiveProfileKey(cookies);
 
         const videoId = Number(videoIdStr);
         const value = valueStr === '1' ? 1 : (valueStr === '0' ? 0 : NaN);
@@ -95,8 +96,7 @@ export const actions = {
         const db = dbw.open();
         try {
             const pDao = new ProfileDAO(db);
-            pDao.upsertByKey('default', 'Default');
-            pDao.upsertByKey('child', 'Child');
+            ensureProfiles(pDao);
             const profile = pDao.getByKey(profileKey) || pDao.getByKey('default');
             const profileId = profile!.id;
 

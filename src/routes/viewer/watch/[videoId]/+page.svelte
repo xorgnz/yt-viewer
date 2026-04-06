@@ -1,5 +1,6 @@
 <script lang="ts">
     import { onMount, onDestroy } from 'svelte';
+
     export let data: {
         video: {
             id: number;
@@ -18,6 +19,7 @@
         };
         profileId: number;
         profileKey: string;
+        profileName: string;
     };
 
     let consideredWatched = !!data.video.watched;
@@ -56,13 +58,18 @@
                         if (form) form.submit();
                     }
                 }
-            } catch { /* noop */ }
+            } catch {
+                // No-op while the player API is still warming up.
+            }
         }, 1000);
     }
 
     function stopPolling()
     {
-        if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
+        if (pollTimer) {
+            clearInterval(pollTimer);
+            pollTimer = null;
+        }
     }
 
     onMount(() => {
@@ -82,14 +89,15 @@
                         onReady: () => { startPolling(); },
                         onStateChange: (e: any) => {
                             const YT = (window as any).YT;
-                            if (e && YT && typeof YT.PlayerState !== 'undefined') {
-                                if (e.data === YT.PlayerState.PLAYING) startPolling();
+                            if (e && YT && typeof YT.PlayerState !== 'undefined' && e.data === YT.PlayerState.PLAYING) {
+                                startPolling();
                             }
                         }
                     }
                 });
                 return true;
             }
+
             return false;
         }
 
@@ -105,25 +113,39 @@
 
         return () => {
             stopPolling();
-            try { if (player && typeof player.destroy === 'function') player.destroy(); } catch { /* noop */ }
+            try {
+                if (player && typeof player.destroy === 'function') {
+                    player.destroy();
+                }
+            } catch {
+                // Ignore teardown issues from the YouTube iframe API.
+            }
         };
     });
 
     onDestroy(() => {
         stopPolling();
-        try { if (player && typeof player.destroy === 'function') player.destroy(); } catch { /* noop */ }
+        try {
+            if (player && typeof player.destroy === 'function') {
+                player.destroy();
+            }
+        } catch {
+            // Ignore teardown issues from the YouTube iframe API.
+        }
     });
 </script>
 
 <div class="page stack">
     <section class="panel">
-        <a class="back" href={`/viewer?profile=${encodeURIComponent(data.profileKey)}`}>Back to video list</a>
+        <a class="back" href="/viewer">Back to video list</a>
 
         <h1 class="title">{data.video.title}</h1>
         <div class="meta">
+            <span class="channel">Profile: {data.profileName}</span>
+            <span class="dot">|</span>
             <span class="channel">{data.video.channel_title}</span>
             {#if data.video.published_at}
-                <span class="dot">•</span>
+                <span class="dot">|</span>
                 <span class="date">{formatDate(data.video.published_at)}</span>
             {/if}
             <span class="badges">
@@ -137,9 +159,9 @@
                     <span class="badge ignored">Ignored</span>
                 {/if}
             </span>
-            <span class="dot">•</span>
-            <a class="channel-link" href={`/viewer?channelId=${data.video.channel_id}&profile=${encodeURIComponent(data.profileKey)}`}>More from this channel</a>
-            <span class="dot">•</span>
+            <span class="dot">|</span>
+            <a class="channel-link" href={`/viewer?channelId=${data.video.channel_id}`}>More from this channel</a>
+            <span class="dot">|</span>
             <a class="yt-link" target="_blank" rel="noopener" href={`https://www.youtube.com/watch?v=${data.video.youtube_id}`}>Open on YouTube</a>
         </div>
 
@@ -148,7 +170,7 @@
         </div>
 
         <div class="inline-actions action-bar">
-            <form id="watchForm" method="POST" action={`?/markWatched&profile=${encodeURIComponent(data.profileKey)}`} class="inline-form">
+            <form id="watchForm" method="POST" action="?/markWatched" class="inline-form">
                 <input type="hidden" name="intent" value={(consideredWatched || data.video.watched) ? 'unwatch' : 'watch'} />
                 <button type="submit" aria-pressed={consideredWatched || !!data.video.watched}>
                     {#if consideredWatched || data.video.watched}
