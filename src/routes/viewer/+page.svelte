@@ -53,7 +53,8 @@
         {/if}
         <form method="GET" class="stack">
             <div class="fields">
-                <label>Search
+                <label class="boxed-field">
+                    <span class="boxed-field-label">Search</span>
                     <input name="term" value={f.term || ''} placeholder="title/description" />
                 </label>
                 <div class="compact-date-field">
@@ -64,7 +65,8 @@
                 </div>
             </div>
             <div class="fields">
-                <label>Source Channel
+                <label class="boxed-field">
+                    <span class="boxed-field-label">Source Channel</span>
                     <select name="channelId" value={f.channelId ?? ''}>
                         <option value="">Any</option>
                         {#each data.channels as ch}
@@ -72,7 +74,8 @@
                         {/each}
                     </select>
                 </label>
-                <label class="compact-field">Per page
+                <label class="boxed-field compact-field">
+                    <span class="boxed-field-label">Per page</span>
                     <input type="number" name="limit" min="1" max="1000" value={f.limit} />
                 </label>
                 <label class="filter-toggle">
@@ -154,6 +157,32 @@
 
     .compact-date-field {
         flex: 0 0 10.5rem;
+    }
+
+    .boxed-field {
+        display: flex;
+        flex-direction: column;
+        gap: 0.2rem;
+        min-height: 2.5rem;
+        padding: 0.45rem 0.7rem;
+        border: 1px solid var(--border);
+        border-radius: var(--radius-sm);
+        background: var(--bg-soft);
+        color: var(--text);
+    }
+
+    .boxed-field-label {
+        color: var(--text-muted);
+        font-size: 0.8rem;
+    }
+
+    .boxed-field input,
+    .boxed-field select {
+        min-height: auto;
+        padding: 0;
+        border: 0;
+        border-radius: 0;
+        background: transparent;
     }
 
     .filter-toggle {
