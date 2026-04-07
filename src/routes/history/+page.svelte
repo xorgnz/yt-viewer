@@ -114,6 +114,16 @@
 <div class="page stack">
     <section class="panel">
         <h1>History</h1>
+        <details class="help-box">
+            <summary>How history works</summary>
+            <div class="help-copy">
+                <p>History sessions are created after more than 5 seconds of active watch time.</p>
+                <p>While playback continues, the current session is updated about every 10 seconds.</p>
+                <p>If you resume the same video within 5 minutes of the last history update, the same session is reused. Longer gaps start a new session.</p>
+                <p>Time watched reflects time spent actively watching, including replays, not the furthest timestamp reached.</p>
+                <p>The watched flag is separate from history. A video can appear in history without being marked watched, and manual watched toggles do not create history rows.</p>
+            </div>
+        </details>
         <form method="GET" class="fields">
             <div>
                 <div class="muted">Active Profile</div>
@@ -298,5 +308,27 @@
 
     .nested-history {
         margin-top: 0.5rem;
+    }
+
+    .help-box {
+        margin-bottom: 1rem;
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        background: var(--bg-soft);
+        padding: 0.75rem 1rem;
+    }
+
+    .help-box summary {
+        cursor: pointer;
+        font-weight: 600;
+    }
+
+    .help-copy {
+        margin-top: 0.75rem;
+        color: var(--text-muted);
+    }
+
+    .help-copy p {
+        margin: 0 0 0.5rem 0;
     }
 </style>
