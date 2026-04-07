@@ -45,6 +45,7 @@ To guide an AI assistant in working with the user to create a concise, high-leve
 
 5. **Wait for Explicit Approval**
    - Do not write `/ai-work/{feature-tag}-scope.md` until the user explicitly approves the summary or draft
+   - Ask `Approve this? Y/N.` after presenting the summary or draft
 
 ### Execute and Report
 

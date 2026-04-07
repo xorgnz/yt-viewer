@@ -52,6 +52,7 @@ To guide an AI assistant in creating a detailed Product Requirements Document in
 6. **Wait for Explicit Approval to Finalize**
    - Refine the draft with the user as needed
    - Do not treat the PRD as finalized until the user explicitly approves the draft
+   - Ask `Approve this? Y/N.` when the draft is ready to finalize
 
 ### Finalize and Report
 
