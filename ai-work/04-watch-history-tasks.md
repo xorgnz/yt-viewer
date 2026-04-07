@@ -41,12 +41,12 @@
   - [x] 3.2 Preserve the existing automatic watched-threshold behavior on the watch page
   - [x] 3.3 Add or adjust server endpoints/actions needed for lightweight history-session create/update requests separate from watched toggles
   - [x] 3.4 Verify that watched filtering elsewhere in the viewer still depends only on `video_flags.watched`
-- [ ] 4.0 Expand the history page to support session view, per-video view, and inline help for the new logic
+- [x] 4.0 Expand the history page to support session view, per-video view, and inline help for the new logic
   - [x] 4.1 Add a mode switch for chronological session view versus per-video summary view
   - [x] 4.2 Update the session view to show video title, source channel name, session start, last updated time, and accumulated watch time
   - [x] 4.3 Add the per-video summary view with expandable underlying sessions
   - [x] 4.4 Add inline expandable help explaining the 5-second threshold, 10-second updates, 5-minute session split rule, watch-time semantics, and watched-flag separation
-  - [ ] 4.5 Keep existing filtering and pagination behavior working across the updated history views where practical
+  - [x] 4.5 Keep existing filtering and pagination behavior working across the updated history views where practical
 - [ ] 5.0 Validate the new watch-history behavior with targeted automated tests and checks
   - [ ] 5.1 Add DAO-level tests for session creation, reuse within 5 minutes, split after 5 minutes, and accumulated time updates
   - [ ] 5.2 Add route or action tests covering separation of manual watched toggles from history-session writes

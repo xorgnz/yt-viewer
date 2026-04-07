@@ -161,12 +161,13 @@
 
     <section class="stack">
         <div class="toolbar">
-            <div>{data.items.length} items</div>
+            <div>{data.items.length} {f.mode === 'videos' ? 'videos' : 'sessions'}</div>
             <div class="pager">
                 <a class="btn btn-secondary" rel="prev" href={`?${queryWithOffset(prevOffset())}`}>Prev</a>
                 <a class="btn btn-secondary" rel="next" href={`?${queryWithOffset(nextOffset())}`}>Next</a>
             </div>
             <div class="hint">Date filter: {humanDate(f.dateFrom)} - {humanDate(f.dateTo)}</div>
+            <div class="hint">View: {f.mode === 'videos' ? 'By video' : 'Sessions'}</div>
             <div class="spacer"></div>
         </div>
 

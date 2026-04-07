@@ -58,7 +58,14 @@ export const load = async ({ url, cookies }: { url: URL; cookies: any }) =>
         const items = filters.mode === 'videos'
             ? hDao.listVideoSummariesWithFilters(queryFilters)
             : hDao.listSessionsWithFilters(queryFilters);
-        const sessionItems = hDao.listSessionsWithFilters(queryFilters);
+        const sessionItems = hDao.listSessionsWithFilters({
+            profileId,
+            channelId: filters.channelId ?? undefined,
+            dateFrom: filters.dateFrom ?? undefined,
+            dateTo: filters.dateTo ?? undefined,
+            limit: 1000,
+            offset: 0
+        });
 
         const channels = cDao.list();
 
