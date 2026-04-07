@@ -84,8 +84,7 @@
                     consideredWatched = true;
                     if (!data.video.watched)
                     {
-                        const form = document.getElementById('watchForm') as HTMLFormElement | null;
-                        if (form) form.submit();
+                        submitWatchedThreshold();
                     }
                 }
             } catch {
@@ -160,6 +159,19 @@
         } catch {
             // Ignore transient progress-update failures and retry later.
         }
+    }
+
+    function submitWatchedThreshold()
+    {
+        const form = document.getElementById('watchForm') as HTMLFormElement | null;
+        if (!form) return;
+
+        const intentInput = form.querySelector('input[name="intent"]') as HTMLInputElement | null;
+        if (intentInput) {
+            intentInput.value = 'watch';
+        }
+
+        form.requestSubmit();
     }
 
     onMount(() => {
