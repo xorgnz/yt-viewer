@@ -31,7 +31,7 @@
   - [x] 1.4 Add DAO query support for both chronological session history and per-video summary history views
   - [x] 1.5 Ensure the schema change discards legacy watch-history rows as agreed for this feature
 - [ ] 2.0 Update watch-page playback logic to create and extend watch-history sessions independently from watched-flag changes
-  - [ ] 2.1 Track elapsed watch time on the client based on active playback rather than furthest playback position reached
+  - [x] 2.1 Track elapsed watch time on the client based on active playback rather than furthest playback position reached
   - [ ] 2.2 Create a watch-history session only after more than 5 seconds of accumulated watch time
   - [ ] 2.3 Periodically persist active session watch time at roughly 10-second intervals while playback continues
   - [ ] 2.4 Reuse the most recent session when the last persisted update is within 5 minutes, and start a fresh session after longer gaps

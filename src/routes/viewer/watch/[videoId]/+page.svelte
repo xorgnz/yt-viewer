@@ -25,6 +25,9 @@
     let consideredWatched = !!data.video.watched;
     let pollTimer: any = null;
     let player: any = null;
+    let isActivelyPlaying = false;
+    let lastPlaybackTickAt: number | null = null;
+    let elapsedWatchSeconds = 0;
 
     function formatDate(ms: number | null): string
     {
@@ -40,9 +43,19 @@
     function startPolling()
     {
         stopPolling();
+        lastPlaybackTickAt = Date.now();
         pollTimer = setInterval(() => {
             try {
                 if (!player || typeof player.getCurrentTime !== 'function') return;
+
+                const now = Date.now();
+                if (isActivelyPlaying && lastPlaybackTickAt != null)
+                {
+                    const deltaSeconds = Math.max(0, (now - lastPlaybackTickAt) / 1000);
+                    elapsedWatchSeconds += deltaSeconds;
+                }
+                lastPlaybackTickAt = now;
+
                 const current: number = Number(player.getCurrentTime());
                 let duration: number = Number(typeof player.getDuration === 'function' ? player.getDuration() : (data.video.duration_seconds || 0));
                 if (!duration || !Number.isFinite(duration) || duration <= 0) return;
@@ -70,6 +83,13 @@
             clearInterval(pollTimer);
             pollTimer = null;
         }
+        lastPlaybackTickAt = null;
+    }
+
+    function setPlaybackActive(active: boolean)
+    {
+        isActivelyPlaying = active;
+        lastPlaybackTickAt = Date.now();
     }
 
     onMount(() => {
@@ -89,8 +109,16 @@
                         onReady: () => { startPolling(); },
                         onStateChange: (e: any) => {
                             const YT = (window as any).YT;
-                            if (e && YT && typeof YT.PlayerState !== 'undefined' && e.data === YT.PlayerState.PLAYING) {
+                            if (!e || !YT || typeof YT.PlayerState === 'undefined') return;
+
+                            if (e.data === YT.PlayerState.PLAYING) {
+                                setPlaybackActive(true);
                                 startPolling();
+                                return;
+                            }
+
+                            if (e.data === YT.PlayerState.PAUSED || e.data === YT.PlayerState.ENDED) {
+                                setPlaybackActive(false);
                             }
                         }
                     }
