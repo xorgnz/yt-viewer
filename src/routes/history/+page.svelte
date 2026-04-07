@@ -65,6 +65,20 @@
         } catch { return ''; }
     }
 
+    function fmtDuration(totalSeconds: number): string
+    {
+        const seconds = Math.max(0, Math.floor(totalSeconds || 0));
+        const hours = Math.floor(seconds / 3600);
+        const minutes = Math.floor((seconds % 3600) / 60);
+        const secs = seconds % 60;
+
+        if (hours > 0) {
+            return `${hours}:${String(minutes).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+        }
+
+        return `${minutes}:${String(secs).padStart(2, '0')}`;
+    }
+
     function nextOffset(): number { return f.offset + f.limit; }
     function prevOffset(): number { return Math.max(0, f.offset - f.limit); }
 
@@ -137,9 +151,13 @@
                 <table class="history">
                     <thead>
                         <tr>
-                            <th class="col-time">{f.mode === 'videos' ? 'Latest session' : 'Watched'}</th>
+                            <th class="col-time">{f.mode === 'videos' ? 'Latest session' : 'Session start'}</th>
                             <th class="col-title">Title</th>
                             <th class="col-chan">Channel</th>
+                            {#if f.mode === 'sessions'}
+                                <th class="col-meta">Last updated</th>
+                                <th class="col-meta">Time watched</th>
+                            {/if}
                             {#if f.mode === 'videos'}
                                 <th class="col-meta">Sessions</th>
                             {/if}
@@ -158,6 +176,10 @@
                                 </td>
                                 <td class="col-title">{it.title}</td>
                                 <td class="col-chan">{it.channel_title}</td>
+                                {#if f.mode === 'sessions'}
+                                    <td class="col-meta">{fmtDate((it as any).last_updated_at)}</td>
+                                    <td class="col-meta">{fmtDuration((it as any).time_watched_seconds)}</td>
+                                {/if}
                                 {#if f.mode === 'videos'}
                                     <td class="col-meta">{(it as any).session_count}</td>
                                 {/if}
