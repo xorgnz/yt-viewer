@@ -28,6 +28,7 @@
     let isActivelyPlaying = false;
     let lastPlaybackTickAt: number | null = null;
     let elapsedWatchSeconds = 0;
+    let historySessionCreated = false;
 
     function formatDate(ms: number | null): string
     {
@@ -60,6 +61,12 @@
                 let duration: number = Number(typeof player.getDuration === 'function' ? player.getDuration() : (data.video.duration_seconds || 0));
                 if (!duration || !Number.isFinite(duration) || duration <= 0) return;
 
+                if (!historySessionCreated && elapsedWatchSeconds > 5)
+                {
+                    historySessionCreated = true;
+                    createHistorySession();
+                }
+
                 const thresholdTime = duration < 120 ? duration * 0.75 : Math.max(0, duration - 30);
 
                 if (!consideredWatched && current >= thresholdTime)
@@ -90,6 +97,24 @@
     {
         isActivelyPlaying = active;
         lastPlaybackTickAt = Date.now();
+    }
+
+    async function createHistorySession()
+    {
+        const formData = new FormData();
+        formData.set('watchSeconds', String(Math.floor(elapsedWatchSeconds)));
+
+        try {
+            const response = await fetch('?/createHistorySession', {
+                method: 'POST',
+                body: formData
+            });
+            if (!response.ok) {
+                historySessionCreated = false;
+            }
+        } catch {
+            historySessionCreated = false;
+        }
     }
 
     onMount(() => {

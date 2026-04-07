@@ -41,6 +41,47 @@ export const load = async ({ params, cookies }: { params: { videoId: string }, c
 };
 
 export const actions = {
+    async createHistorySession({ request, params, cookies }: { request: Request; params: { videoId: string }, cookies: any })
+    {
+        const videoYoutubeId = String(params.videoId || '').trim();
+        if (!videoYoutubeId) return fail(400, { message: 'Missing videoId' });
+
+        const form = await request.formData();
+        const watchSeconds = Number(form.get('watchSeconds') || 0);
+        if (!Number.isFinite(watchSeconds) || watchSeconds <= 5) {
+            return fail(400, { message: 'Insufficient watch time for history session' });
+        }
+
+        const profileKey = getActiveProfileKey(cookies);
+        const dbw = new DatabaseWrapper(getMode());
+        const db = dbw.open();
+        try {
+            const profiles = new ProfileDAO(db);
+            ensureProfiles(profiles);
+            const profile = profiles.getByKey(profileKey) || profiles.getByKey('default');
+            if (!profile) return fail(500, { message: 'Failed to resolve profile' });
+
+            const vdao = new VideoDAO(db);
+            const video = vdao.getForViewerByYoutubeId(videoYoutubeId, profile.id);
+            if (!video) return fail(404, { message: 'Video not found' });
+
+            const history = new HistoryDAO(db);
+            const now = Date.now();
+            history.createSession({
+                video_id: video.id,
+                profile_id: profile.id,
+                session_started_at: now,
+                last_updated_at: now,
+                time_watched_seconds: Math.floor(watchSeconds)
+            });
+
+            return { ok: true };
+        }
+        finally {
+            dbw.close();
+        }
+    },
+
     async markWatched({ request, params, url, cookies }: { request: Request; params: { videoId: string }, url: URL, cookies: any })
     {
         const videoYoutubeId = String(params.videoId || '').trim();
