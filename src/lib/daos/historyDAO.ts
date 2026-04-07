@@ -89,10 +89,9 @@ export class HistoryDAO extends SqliteDAO
     }
 
     /**
-     * Returns watch history rows joined with basic video and channel details,
-     * ordered by newest first, with optional filters.
+     * Returns one row per watch session, ordered by newest session first.
      */
-    listWithFilters(filters: {
+    listSessionsWithFilters(filters: {
         profileId?: number | null;
         channelId?: number | null;
         dateFrom?: number | null; // inclusive, ms epoch
@@ -153,6 +152,108 @@ export class HistoryDAO extends SqliteDAO
             JOIN source_channels c ON c.id = v.channel_id
             ${whereSql}
             ORDER BY h.session_started_at DESC
+            LIMIT :limit OFFSET :offset
+        `;
+
+        return this.db.prepare(sql).all(params) as any[];
+    }
+
+    listWithFilters(filters: {
+        profileId?: number | null;
+        channelId?: number | null;
+        dateFrom?: number | null;
+        dateTo?: number | null;
+        limit?: number;
+        offset?: number;
+    }): Array<{
+        session_started_at: number;
+        last_updated_at: number;
+        time_watched_seconds: number;
+        profile_id: number;
+        video_id: number;
+        youtube_id: string;
+        title: string;
+        channel_id: number;
+        channel_title: string;
+    }>
+    {
+        return this.listSessionsWithFilters(filters);
+    }
+
+    /**
+     * Returns one row per video with aggregate session data, ordered by latest
+     * session start time first, with optional filters.
+     */
+    listVideoSummariesWithFilters(filters: {
+        profileId?: number | null;
+        channelId?: number | null;
+        dateFrom?: number | null; // inclusive, ms epoch
+        dateTo?: number | null;   // inclusive, ms epoch
+        limit?: number;
+        offset?: number;
+    }): Array<{
+        profile_id: number;
+        video_id: number;
+        youtube_id: string;
+        title: string;
+        channel_id: number;
+        channel_title: string;
+        total_time_watched_seconds: number;
+        session_count: number;
+        latest_session_started_at: number;
+        latest_last_updated_at: number;
+    }>
+    {
+        const where: string[] = [];
+        const params: Record<string, any> = {};
+
+        if (filters.profileId != null) {
+            where.push('h.profile_id = :profileId');
+            params.profileId = filters.profileId;
+        }
+        if (filters.channelId != null) {
+            where.push('v.channel_id = :channelId');
+            params.channelId = filters.channelId;
+        }
+        if (filters.dateFrom != null) {
+            where.push('h.session_started_at >= :dateFrom');
+            params.dateFrom = filters.dateFrom;
+        }
+        if (filters.dateTo != null) {
+            where.push('h.session_started_at <= :dateTo');
+            params.dateTo = filters.dateTo;
+        }
+
+        const whereSql = where.length ? `WHERE ${where.join(' AND ')}` : '';
+        const limit = Math.max(0, Math.min(1000, filters.limit ?? 100));
+        const offset = Math.max(0, filters.offset ?? 0);
+        params.limit = limit;
+        params.offset = offset;
+
+        const sql = `
+            SELECT
+                h.profile_id,
+                v.id AS video_id,
+                v.youtube_id,
+                v.title,
+                c.id AS channel_id,
+                c.title AS channel_title,
+                SUM(h.time_watched_seconds) AS total_time_watched_seconds,
+                COUNT(*) AS session_count,
+                MAX(h.session_started_at) AS latest_session_started_at,
+                MAX(h.last_updated_at) AS latest_last_updated_at
+            FROM watch_history h
+            JOIN videos v ON v.id = h.video_id
+            JOIN source_channels c ON c.id = v.channel_id
+            ${whereSql}
+            GROUP BY
+                h.profile_id,
+                v.id,
+                v.youtube_id,
+                v.title,
+                c.id,
+                c.title
+            ORDER BY latest_session_started_at DESC
             LIMIT :limit OFFSET :offset
         `;
 

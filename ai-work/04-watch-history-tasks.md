@@ -28,7 +28,7 @@
   - [x] 1.1 Replace the current `watch_history` schema with session-oriented fields for session start, last update, and accumulated time watched
   - [x] 1.2 Update the watch-history entity and DAO contracts to match the new persisted shape
   - [x] 1.3 Add DAO support for finding the most recent session for a video/profile, creating a new session after the threshold, and incrementally updating an existing session
-  - [ ] 1.4 Add DAO query support for both chronological session history and per-video summary history views
+  - [x] 1.4 Add DAO query support for both chronological session history and per-video summary history views
   - [ ] 1.5 Ensure the schema change discards legacy watch-history rows as agreed for this feature
 - [ ] 2.0 Update watch-page playback logic to create and extend watch-history sessions independently from watched-flag changes
   - [ ] 2.1 Track elapsed watch time on the client based on active playback rather than furthest playback position reached
