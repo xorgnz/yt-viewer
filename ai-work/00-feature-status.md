@@ -1,8 +1,8 @@
 # Feature Status
 
-**Current Feature:** `03-inline-assign`
-**Current Branch:** `feature/03-inline-assign`
-**Last Updated:** `2026-04-04`
+**Current Feature:** `04-watch-history`
+**Current Branch:** `feature/04-watch-history`
+**Last Updated:** `2026-04-06`
 
 ## Shared Feature-State Contract
 
@@ -60,4 +60,5 @@ Additional guidance:
 | --- | --- | --- | --- | --- | --- |
 | `01-initial` | `feature/01-initial` | `completed` | `2026-02-17` | `2026-03-23` | Initial YouTube viewer and tracker feature |
 | `02-vchannel-mgmt` | `feature/02-vchannel-mgmt` | `completed` | `2026-03-23` | `2026-04-04` | Advanced admin UI for virtual channel source associations and video selection |
-| `03-inline-assign` | `feature/03-inline-assign` | `active` | `2026-04-04` |  | Inline source-channel assignment controls on the virtual channels admin page |
+| `03-inline-assign` | `feature/03-inline-assign` | `completed` | `2026-04-04` | `2026-04-06` | Inline source-channel assignment controls on the virtual channels admin page |
+| `04-watch-history` | `feature/04-watch-history` | `active` | `2026-04-06` |  | Decouple watch history from watched flags and track playback sessions with elapsed watch time |
