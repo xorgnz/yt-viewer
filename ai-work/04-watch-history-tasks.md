@@ -25,7 +25,7 @@
 ## Tasks
 
 - [ ] 1.0 Redesign the watch-history data model and persistence around session-based watch tracking
-  - [ ] 1.1 Replace the current `watch_history` schema with session-oriented fields for session start, last update, and accumulated time watched
+  - [x] 1.1 Replace the current `watch_history` schema with session-oriented fields for session start, last update, and accumulated time watched
   - [ ] 1.2 Update the watch-history entity and DAO contracts to match the new persisted shape
   - [ ] 1.3 Add DAO support for finding the most recent session for a video/profile, creating a new session after the threshold, and incrementally updating an existing session
   - [ ] 1.4 Add DAO query support for both chronological session history and per-video summary history views

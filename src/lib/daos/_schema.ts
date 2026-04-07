@@ -2,7 +2,7 @@
 // Note: This file intentionally contains only schema DDL, not database creation/connection code.
 
 // Schema version
-export const SCHEMA_VERSION = 6;
+export const SCHEMA_VERSION = 7;
 
 
 export const CREATE_TABLE_SOURCE_CHANNELS = `
@@ -90,7 +90,9 @@ CREATE TABLE IF NOT EXISTS watch_history (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     video_id INTEGER NOT NULL,
     profile_id INTEGER NOT NULL,
-    watched_at INTEGER NOT NULL,
+    session_started_at INTEGER NOT NULL,
+    last_updated_at INTEGER NOT NULL,
+    time_watched_seconds INTEGER NOT NULL DEFAULT 0,
     FOREIGN KEY (video_id) REFERENCES videos(id) ON DELETE CASCADE,
     FOREIGN KEY (profile_id) REFERENCES profiles(id) ON DELETE CASCADE
 );`;
@@ -110,8 +112,9 @@ CREATE INDEX IF NOT EXISTS idx_virtual_channel_assignment_video_selections_assig
 CREATE INDEX IF NOT EXISTS idx_virtual_channel_assignment_video_selections_video ON virtual_channel_assignment_video_selections(video_id);
 CREATE INDEX IF NOT EXISTS idx_virtual_channel_assignment_video_selections_state ON virtual_channel_assignment_video_selections(review_state);
 CREATE INDEX IF NOT EXISTS idx_videos_channel ON videos(channel_id);
-CREATE INDEX IF NOT EXISTS idx_history_profile_time ON watch_history(profile_id, watched_at DESC);
-CREATE INDEX IF NOT EXISTS idx_history_video_time ON watch_history(video_id, watched_at DESC);
+CREATE INDEX IF NOT EXISTS idx_history_profile_time ON watch_history(profile_id, session_started_at DESC);
+CREATE INDEX IF NOT EXISTS idx_history_video_time ON watch_history(video_id, session_started_at DESC);
+CREATE INDEX IF NOT EXISTS idx_history_video_profile_update ON watch_history(video_id, profile_id, last_updated_at DESC);
 `;
 
 export const ALL_DDL = [
