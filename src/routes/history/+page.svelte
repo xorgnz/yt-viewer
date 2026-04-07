@@ -9,7 +9,9 @@
             offset: number;
         };
         items: Array<{
-            watched_at: number;
+            session_started_at: number;
+            last_updated_at: number;
+            time_watched_seconds: number;
             profile_id: number;
             video_id: number;
             youtube_id: string;
@@ -123,7 +125,7 @@
                     <tbody>
                         {#each data.items as it}
                             <tr>
-                                <td class="col-time">{fmtDate(it.watched_at)}</td>
+                                <td class="col-time">{fmtDate(it.session_started_at)}</td>
                                 <td class="col-title">{it.title}</td>
                                 <td class="col-chan">{it.channel_title}</td>
                                 <td class="col-actions">

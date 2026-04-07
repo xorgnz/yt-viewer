@@ -3,19 +3,39 @@ import type { WatchHistory } from '$lib/entities/watchHistory';
 
 export class HistoryDAO extends SqliteDAO
 {
-    // Accept a plain object for inserts rather than an instance of WatchHistory
-    add(entry: { video_id: number; profile_id: number; watched_at: number }): number
+    // Accept a plain object for inserts rather than an instance of WatchHistory.
+    add(entry: {
+        video_id: number;
+        profile_id: number;
+        session_started_at: number;
+        last_updated_at: number;
+        time_watched_seconds: number;
+    }): number
     {
         const info = this.db
-            .prepare(`INSERT INTO watch_history(video_id, profile_id, watched_at) VALUES(?,?,?)`)
-            .run(entry.video_id, entry.profile_id, entry.watched_at);
+            .prepare(`
+                INSERT INTO watch_history(
+                    video_id,
+                    profile_id,
+                    session_started_at,
+                    last_updated_at,
+                    time_watched_seconds
+                ) VALUES(?,?,?,?,?)
+            `)
+            .run(
+                entry.video_id,
+                entry.profile_id,
+                entry.session_started_at,
+                entry.last_updated_at,
+                entry.time_watched_seconds
+            );
         return Number(info.lastInsertRowid);
     }
 
     listByProfile(profile_id: number, limit = 100): WatchHistory[]
     {
         return this.db
-            .prepare(`SELECT * FROM watch_history WHERE profile_id = ? ORDER BY watched_at DESC LIMIT ?`)
+            .prepare(`SELECT * FROM watch_history WHERE profile_id = ? ORDER BY session_started_at DESC LIMIT ?`)
             .all(profile_id, limit) as WatchHistory[];
     }
 
@@ -31,7 +51,9 @@ export class HistoryDAO extends SqliteDAO
         limit?: number;
         offset?: number;
     }): Array<{
-        watched_at: number;
+        session_started_at: number;
+        last_updated_at: number;
+        time_watched_seconds: number;
         profile_id: number;
         video_id: number;
         youtube_id: string;
@@ -52,11 +74,11 @@ export class HistoryDAO extends SqliteDAO
             params.channelId = filters.channelId;
         }
         if (filters.dateFrom != null) {
-            where.push('h.watched_at >= :dateFrom');
+            where.push('h.session_started_at >= :dateFrom');
             params.dateFrom = filters.dateFrom;
         }
         if (filters.dateTo != null) {
-            where.push('h.watched_at <= :dateTo');
+            where.push('h.session_started_at <= :dateTo');
             params.dateTo = filters.dateTo;
         }
 
@@ -68,7 +90,9 @@ export class HistoryDAO extends SqliteDAO
 
         const sql = `
             SELECT
-                h.watched_at,
+                h.session_started_at,
+                h.last_updated_at,
+                h.time_watched_seconds,
                 h.profile_id,
                 v.id AS video_id,
                 v.youtube_id,
@@ -79,7 +103,7 @@ export class HistoryDAO extends SqliteDAO
             JOIN videos v ON v.id = h.video_id
             JOIN source_channels c ON c.id = v.channel_id
             ${whereSql}
-            ORDER BY h.watched_at DESC
+            ORDER BY h.session_started_at DESC
             LIMIT :limit OFFSET :offset
         `;
 

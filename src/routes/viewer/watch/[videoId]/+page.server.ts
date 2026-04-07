@@ -74,7 +74,13 @@ export const actions = {
             {
                 // Set watched flag and record history
                 flags.set(video.id, profile.id, { watched: 1 });
-                history.add({ video_id: video.id, profile_id: profile.id, watched_at: Date.now() });
+                history.add({
+                    video_id: video.id,
+                    profile_id: profile.id,
+                    session_started_at: Date.now(),
+                    last_updated_at: Date.now(),
+                    time_watched_seconds: 0
+                });
             }
         }
         finally {
