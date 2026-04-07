@@ -158,7 +158,6 @@ export const actions = {
             if (!video) return fail(404, { message: 'Video not found' });
 
             const flags = new FlagsDAO(db);
-            const history = new HistoryDAO(db);
 
             if (intent === 'unwatch')
             {
@@ -167,15 +166,8 @@ export const actions = {
             }
             else
             {
-                // Set watched flag and record history
+                // Set watched flag without altering watch history.
                 flags.set(video.id, profile.id, { watched: 1 });
-                history.add({
-                    video_id: video.id,
-                    profile_id: profile.id,
-                    session_started_at: Date.now(),
-                    last_updated_at: Date.now(),
-                    time_watched_seconds: 0
-                });
             }
         }
         finally {
