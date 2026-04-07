@@ -39,7 +39,7 @@
 - [ ] 3.0 Refactor watched-flag actions so manual watched toggles are decoupled from watch-history recording
   - [x] 3.1 Remove history creation side effects from the manual watched/unwatched action
   - [x] 3.2 Preserve the existing automatic watched-threshold behavior on the watch page
-  - [ ] 3.3 Add or adjust server endpoints/actions needed for lightweight history-session create/update requests separate from watched toggles
+  - [x] 3.3 Add or adjust server endpoints/actions needed for lightweight history-session create/update requests separate from watched toggles
   - [ ] 3.4 Verify that watched filtering elsewhere in the viewer still depends only on `video_flags.watched`
 - [ ] 4.0 Expand the history page to support session view, per-video view, and inline help for the new logic
   - [ ] 4.1 Add a mode switch for chronological session view versus per-video summary view

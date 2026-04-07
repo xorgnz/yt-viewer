@@ -43,6 +43,7 @@ export const load = async ({ params, cookies }: { params: { videoId: string }, c
 };
 
 export const actions = {
+    // Persist the first qualifying watch-history session independently of watched flags.
     async createHistorySession({ request, params, cookies }: { request: Request; params: { videoId: string }, cookies: any })
     {
         const videoYoutubeId = String(params.videoId || '').trim();
@@ -93,6 +94,7 @@ export const actions = {
         }
     },
 
+    // Update the active watch-history session independently of watched flags.
     async updateHistoryProgress({ request, params, cookies }: { request: Request; params: { videoId: string }, cookies: any })
     {
         const videoYoutubeId = String(params.videoId || '').trim();
