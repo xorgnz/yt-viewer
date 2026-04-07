@@ -29,6 +29,7 @@
     let lastPlaybackTickAt: number | null = null;
     let elapsedWatchSeconds = 0;
     let historySessionCreated = false;
+    let lastPersistedWatchSeconds = 0;
 
     function formatDate(ms: number | null): string
     {
@@ -65,6 +66,11 @@
                 {
                     historySessionCreated = true;
                     createHistorySession();
+                }
+
+                if (historySessionCreated && (elapsedWatchSeconds - lastPersistedWatchSeconds) >= 10)
+                {
+                    updateHistoryProgress();
                 }
 
                 const thresholdTime = duration < 120 ? duration * 0.75 : Math.max(0, duration - 30);
@@ -111,9 +117,29 @@
             });
             if (!response.ok) {
                 historySessionCreated = false;
+                return;
             }
+            lastPersistedWatchSeconds = Math.floor(elapsedWatchSeconds);
         } catch {
             historySessionCreated = false;
+        }
+    }
+
+    async function updateHistoryProgress()
+    {
+        const formData = new FormData();
+        formData.set('watchSeconds', String(Math.floor(elapsedWatchSeconds)));
+
+        try {
+            const response = await fetch('?/updateHistoryProgress', {
+                method: 'POST',
+                body: formData
+            });
+            if (response.ok) {
+                lastPersistedWatchSeconds = Math.floor(elapsedWatchSeconds);
+            }
+        } catch {
+            // Ignore transient progress-update failures and retry later.
         }
     }
 
