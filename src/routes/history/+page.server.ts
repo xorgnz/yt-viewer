@@ -14,16 +14,19 @@ function getMode(): DatabaseMode
 
 export const load = async ({ url, cookies }: { url: URL; cookies: any }) =>
 {
-    // Filters: channelId, dateFrom, dateTo, pagination
+    // Filters: mode, channelId, dateFrom, dateTo, pagination
     const profileKey = getActiveProfileKey(cookies);
+    const modeRaw = url.searchParams.get('mode');
     const channelId = url.searchParams.get('channelId');
     const dateFrom = url.searchParams.get('dateFrom');
     const dateTo = url.searchParams.get('dateTo');
     const limit = url.searchParams.get('limit');
     const offset = url.searchParams.get('offset');
+    const mode = modeRaw === 'videos' ? 'videos' : 'sessions';
 
-        const filters = {
+    const filters = {
         profileKey,
+        mode,
         channelId: channelId ? Number(channelId) : null,
         dateFrom: dateFrom ? Number(dateFrom) : null,
         dateTo: dateTo ? Number(dateTo) : null,
@@ -44,16 +47,18 @@ export const load = async ({ url, cookies }: { url: URL; cookies: any }) =>
         const hDao = new HistoryDAO(db);
         const cDao = new SourceChannelDAO(db);
 
-        const items = hDao.listWithFilters({
+        const queryFilters = {
             profileId,
             channelId: filters.channelId ?? undefined,
             dateFrom: filters.dateFrom ?? undefined,
             dateTo: filters.dateTo ?? undefined,
             limit: filters.limit,
             offset: filters.offset
-        });
+        };
+        const items = filters.mode === 'videos'
+            ? hDao.listVideoSummariesWithFilters(queryFilters)
+            : hDao.listSessionsWithFilters(queryFilters);
 
-        // Channels list to support filtering UI in next task
         const channels = cDao.list();
 
         return {
