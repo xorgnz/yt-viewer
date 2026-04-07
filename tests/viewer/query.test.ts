@@ -5,6 +5,7 @@ import { SourceChannelDAO } from '$lib/daos/sourceChannelDAO';
 import { VideoDAO } from '$lib/daos/videoDAO';
 import { ProfileDAO } from '$lib/daos/profileDAO';
 import { FlagsDAO } from '$lib/daos/flagsDAO';
+import { HistoryDAO } from '$lib/daos/historyDAO';
 import { VirtualChannelDAO } from '$lib/daos/virtualChannelDAO';
 import { AssignmentDAO } from '$lib/daos/assignmentDAO';
 
@@ -78,6 +79,27 @@ describe('VideoDAO.listForViewer filters (task 4.1)', () => {
         expect(unwatched).toContain('V1');
         expect(unwatched).toContain('V3');
         expect(unwatched).toContain('V4');
+        expect(unwatched).not.toContain('V2');
+    });
+
+    it('does not treat watch-history rows as watched-filter state', () => {
+        const vDao = new VideoDAO(db);
+        const history = new HistoryDAO(db);
+        const v1 = vDao.getByExternalId('V1')!;
+
+        history.createSession({
+            video_id: v1.id,
+            profile_id: profileId,
+            session_started_at: baseNow,
+            last_updated_at: baseNow,
+            time_watched_seconds: 25
+        });
+
+        const watched = vDao.listForViewer({ watched: 'watched' }, profileId).map(v => v.youtube_id);
+        const unwatched = vDao.listForViewer({ watched: 'unwatched' }, profileId).map(v => v.youtube_id);
+
+        expect(watched).toEqual(['V2']);
+        expect(unwatched).toContain('V1');
         expect(unwatched).not.toContain('V2');
     });
 

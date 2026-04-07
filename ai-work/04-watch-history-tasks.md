@@ -36,11 +36,11 @@
   - [x] 2.3 Periodically persist active session watch time at roughly 10-second intervals while playback continues
   - [x] 2.4 Reuse the most recent session when the last persisted update is within 5 minutes, and start a fresh session after longer gaps
   - [x] 2.5 Keep repeated viewing and rewatches counting toward accumulated time watched
-- [ ] 3.0 Refactor watched-flag actions so manual watched toggles are decoupled from watch-history recording
+- [x] 3.0 Refactor watched-flag actions so manual watched toggles are decoupled from watch-history recording
   - [x] 3.1 Remove history creation side effects from the manual watched/unwatched action
   - [x] 3.2 Preserve the existing automatic watched-threshold behavior on the watch page
   - [x] 3.3 Add or adjust server endpoints/actions needed for lightweight history-session create/update requests separate from watched toggles
-  - [ ] 3.4 Verify that watched filtering elsewhere in the viewer still depends only on `video_flags.watched`
+  - [x] 3.4 Verify that watched filtering elsewhere in the viewer still depends only on `video_flags.watched`
 - [ ] 4.0 Expand the history page to support session view, per-video view, and inline help for the new logic
   - [ ] 4.1 Add a mode switch for chronological session view versus per-video summary view
   - [ ] 4.2 Update the session view to show video title, source channel name, session start, last updated time, and accumulated watch time
