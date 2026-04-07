@@ -50,5 +50,5 @@
 - [ ] 5.0 Validate the new watch-history behavior with targeted automated tests and checks
   - [x] 5.1 Add DAO-level tests for session creation, reuse within 5 minutes, split after 5 minutes, and accumulated time updates
   - [x] 5.2 Add route or action tests covering separation of manual watched toggles from history-session writes
-  - [ ] 5.3 Add history page load tests for both chronological session data and per-video summary data
+  - [x] 5.3 Add history page load tests for both chronological session data and per-video summary data
   - [ ] 5.4 Run targeted automated checks for the updated history and watch flows without starting long-running processes
