@@ -53,6 +53,8 @@
                 if (!player || typeof player.getCurrentTime !== 'function') return;
 
                 const now = Date.now();
+
+                // Accumulate wall-clock watch time so replayed segments still count.
                 if (isActivelyPlaying && lastPlaybackTickAt != null)
                 {
                     const deltaSeconds = Math.max(0, (now - lastPlaybackTickAt) / 1000);

@@ -30,12 +30,12 @@
   - [x] 1.3 Add DAO support for finding the most recent session for a video/profile, creating a new session after the threshold, and incrementally updating an existing session
   - [x] 1.4 Add DAO query support for both chronological session history and per-video summary history views
   - [x] 1.5 Ensure the schema change discards legacy watch-history rows as agreed for this feature
-- [ ] 2.0 Update watch-page playback logic to create and extend watch-history sessions independently from watched-flag changes
+- [x] 2.0 Update watch-page playback logic to create and extend watch-history sessions independently from watched-flag changes
   - [x] 2.1 Track elapsed watch time on the client based on active playback rather than furthest playback position reached
   - [x] 2.2 Create a watch-history session only after more than 5 seconds of accumulated watch time
   - [x] 2.3 Periodically persist active session watch time at roughly 10-second intervals while playback continues
   - [x] 2.4 Reuse the most recent session when the last persisted update is within 5 minutes, and start a fresh session after longer gaps
-  - [ ] 2.5 Keep repeated viewing and rewatches counting toward accumulated time watched
+  - [x] 2.5 Keep repeated viewing and rewatches counting toward accumulated time watched
 - [ ] 3.0 Refactor watched-flag actions so manual watched toggles are decoupled from watch-history recording
   - [ ] 3.1 Remove history creation side effects from the manual watched/unwatched action
   - [ ] 3.2 Preserve the existing automatic watched-threshold behavior on the watch page
