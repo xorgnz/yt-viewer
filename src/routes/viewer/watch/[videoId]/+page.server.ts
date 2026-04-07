@@ -6,6 +6,8 @@ import { HistoryDAO } from '$lib/daos/historyDAO';
 import { error, fail, redirect } from '@sveltejs/kit';
 import { ensureProfiles, getActiveProfileKey } from '$lib/profiles';
 
+const HISTORY_SESSION_GAP_MS = 5 * 60 * 1000;
+
 function getMode(): DatabaseMode
 {
     const env = process.env.NODE_ENV || 'development';
@@ -67,13 +69,22 @@ export const actions = {
 
             const history = new HistoryDAO(db);
             const now = Date.now();
-            history.createSession({
-                video_id: video.id,
-                profile_id: profile.id,
-                session_started_at: now,
-                last_updated_at: now,
-                time_watched_seconds: Math.floor(watchSeconds)
-            });
+            const latestSession = history.findMostRecentSession(video.id, profile.id);
+
+            if (latestSession && (now - latestSession.last_updated_at) <= HISTORY_SESSION_GAP_MS) {
+                history.updateSessionProgress(latestSession.id, {
+                    last_updated_at: now,
+                    time_watched_seconds: Math.floor(watchSeconds)
+                });
+            } else {
+                history.createSession({
+                    video_id: video.id,
+                    profile_id: profile.id,
+                    session_started_at: now,
+                    last_updated_at: now,
+                    time_watched_seconds: Math.floor(watchSeconds)
+                });
+            }
 
             return { ok: true };
         }
@@ -109,6 +120,9 @@ export const actions = {
             const history = new HistoryDAO(db);
             const session = history.findMostRecentSession(video.id, profile.id);
             if (!session) return fail(404, { message: 'History session not found' });
+            if ((Date.now() - session.last_updated_at) > HISTORY_SESSION_GAP_MS) {
+                return fail(409, { message: 'History session is no longer active' });
+            }
 
             history.updateSessionProgress(session.id, {
                 last_updated_at: Date.now(),

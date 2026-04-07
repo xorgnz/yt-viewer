@@ -30,6 +30,8 @@
     let elapsedWatchSeconds = 0;
     let historySessionCreated = false;
     let lastPersistedWatchSeconds = 0;
+    let lastHistoryActivityAt: number | null = null;
+    const HISTORY_SESSION_GAP_MS = 5 * 60 * 1000;
 
     function formatDate(ms: number | null): string
     {
@@ -101,6 +103,14 @@
 
     function setPlaybackActive(active: boolean)
     {
+        if (active && lastHistoryActivityAt != null && (Date.now() - lastHistoryActivityAt) > HISTORY_SESSION_GAP_MS)
+        {
+            elapsedWatchSeconds = 0;
+            historySessionCreated = false;
+            lastPersistedWatchSeconds = 0;
+            lastHistoryActivityAt = null;
+        }
+
         isActivelyPlaying = active;
         lastPlaybackTickAt = Date.now();
     }
@@ -120,6 +130,7 @@
                 return;
             }
             lastPersistedWatchSeconds = Math.floor(elapsedWatchSeconds);
+            lastHistoryActivityAt = Date.now();
         } catch {
             historySessionCreated = false;
         }
@@ -137,6 +148,12 @@
             });
             if (response.ok) {
                 lastPersistedWatchSeconds = Math.floor(elapsedWatchSeconds);
+                lastHistoryActivityAt = Date.now();
+            } else if (response.status === 409) {
+                elapsedWatchSeconds = 0;
+                historySessionCreated = false;
+                lastPersistedWatchSeconds = 0;
+                lastHistoryActivityAt = null;
             }
         } catch {
             // Ignore transient progress-update failures and retry later.
