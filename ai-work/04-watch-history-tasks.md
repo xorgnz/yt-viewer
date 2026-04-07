@@ -44,7 +44,7 @@
 - [ ] 4.0 Expand the history page to support session view, per-video view, and inline help for the new logic
   - [x] 4.1 Add a mode switch for chronological session view versus per-video summary view
   - [x] 4.2 Update the session view to show video title, source channel name, session start, last updated time, and accumulated watch time
-  - [ ] 4.3 Add the per-video summary view with expandable underlying sessions
+  - [x] 4.3 Add the per-video summary view with expandable underlying sessions
   - [ ] 4.4 Add inline expandable help explaining the 5-second threshold, 10-second updates, 5-minute session split rule, watch-time semantics, and watched-flag separation
   - [ ] 4.5 Keep existing filtering and pagination behavior working across the updated history views where practical
 - [ ] 5.0 Validate the new watch-history behavior with targeted automated tests and checks

@@ -34,6 +34,17 @@
                 latest_last_updated_at: number;
             }
         >;
+        sessionItems: Array<{
+            session_started_at: number;
+            last_updated_at: number;
+            time_watched_seconds: number;
+            profile_id: number;
+            video_id: number;
+            youtube_id: string;
+            title: string;
+            channel_id: number;
+            channel_title: string;
+        }>;
         channels: Array<{ id: number; youtube_id: string; title: string }>;
         profileId: number;
         profileName: string;
@@ -93,6 +104,11 @@
             offset: String(offset)
         }).toString();
     }
+
+    function sessionsForVideo(videoId: number)
+    {
+        return data.sessionItems.filter((it) => it.video_id === videoId);
+    }
 </script>
 
 <div class="page stack">
@@ -148,52 +164,75 @@
             <p class="muted">No history items match these filters.</p>
         {:else}
             <div class="table-wrap">
-                <table class="history">
-                    <thead>
-                        <tr>
-                            <th class="col-time">{f.mode === 'videos' ? 'Latest session' : 'Session start'}</th>
-                            <th class="col-title">Title</th>
-                            <th class="col-chan">Channel</th>
-                            {#if f.mode === 'sessions'}
+                {#if f.mode === 'videos'}
+                    <div class="video-summary-list">
+                        {#each data.items as it}
+                            <details class="video-summary">
+                                <summary>
+                                    <span class="summary-title">{it.title}</span>
+                                    <span class="summary-meta">{it.channel_title}</span>
+                                    <span class="summary-meta">{(it as any).session_count} sessions</span>
+                                    <span class="summary-meta">{fmtDuration((it as any).total_time_watched_seconds)}</span>
+                                    <span class="summary-meta">Latest {fmtDate((it as any).latest_session_started_at)}</span>
+                                </summary>
+                                <div class="summary-links inline-actions">
+                                    <a class="btn btn-secondary" href={`/viewer/watch/${it.youtube_id}`} title="Open watch page">Watch</a>
+                                    <a class="btn btn-secondary" href={`/viewer?channelId=${it.channel_id}`} title="More from channel">Channel</a>
+                                    <a class="btn btn-secondary" target="_blank" rel="noopener" href={`https://www.youtube.com/watch?v=${it.youtube_id}`} title="Open on YouTube">YouTube</a>
+                                </div>
+                                <table class="history nested-history">
+                                    <thead>
+                                        <tr>
+                                            <th class="col-time">Session start</th>
+                                            <th class="col-meta">Last updated</th>
+                                            <th class="col-meta">Time watched</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {#each sessionsForVideo(it.video_id) as session}
+                                            <tr>
+                                                <td class="col-time">{fmtDate(session.session_started_at)}</td>
+                                                <td class="col-meta">{fmtDate(session.last_updated_at)}</td>
+                                                <td class="col-meta">{fmtDuration(session.time_watched_seconds)}</td>
+                                            </tr>
+                                        {/each}
+                                    </tbody>
+                                </table>
+                            </details>
+                        {/each}
+                    </div>
+                {:else}
+                    <table class="history">
+                        <thead>
+                            <tr>
+                                <th class="col-time">Session start</th>
+                                <th class="col-title">Title</th>
+                                <th class="col-chan">Channel</th>
                                 <th class="col-meta">Last updated</th>
                                 <th class="col-meta">Time watched</th>
-                            {/if}
-                            {#if f.mode === 'videos'}
-                                <th class="col-meta">Sessions</th>
-                            {/if}
-                            <th class="col-actions">Links</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {#each data.items as it}
-                            <tr>
-                                <td class="col-time">
-                                    {#if f.mode === 'videos'}
-                                        {fmtDate((it as any).latest_session_started_at)}
-                                    {:else}
-                                        {fmtDate((it as any).session_started_at)}
-                                    {/if}
-                                </td>
-                                <td class="col-title">{it.title}</td>
-                                <td class="col-chan">{it.channel_title}</td>
-                                {#if f.mode === 'sessions'}
+                                <th class="col-actions">Links</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {#each data.items as it}
+                                <tr>
+                                    <td class="col-time">{fmtDate((it as any).session_started_at)}</td>
+                                    <td class="col-title">{it.title}</td>
+                                    <td class="col-chan">{it.channel_title}</td>
                                     <td class="col-meta">{fmtDate((it as any).last_updated_at)}</td>
                                     <td class="col-meta">{fmtDuration((it as any).time_watched_seconds)}</td>
-                                {/if}
-                                {#if f.mode === 'videos'}
-                                    <td class="col-meta">{(it as any).session_count}</td>
-                                {/if}
-                                <td class="col-actions">
-                                    <div class="inline-actions">
-                                        <a class="btn btn-secondary" href={`/viewer/watch/${it.youtube_id}`} title="Open watch page">Watch</a>
-                                        <a class="btn btn-secondary" href={`/viewer?channelId=${it.channel_id}`} title="More from channel">Channel</a>
-                                        <a class="btn btn-secondary" target="_blank" rel="noopener" href={`https://www.youtube.com/watch?v=${it.youtube_id}`} title="Open on YouTube">YouTube</a>
-                                    </div>
-                                </td>
-                            </tr>
-                        {/each}
-                    </tbody>
-                </table>
+                                    <td class="col-actions">
+                                        <div class="inline-actions">
+                                            <a class="btn btn-secondary" href={`/viewer/watch/${it.youtube_id}`} title="Open watch page">Watch</a>
+                                            <a class="btn btn-secondary" href={`/viewer?channelId=${it.channel_id}`} title="More from channel">Channel</a>
+                                            <a class="btn btn-secondary" target="_blank" rel="noopener" href={`https://www.youtube.com/watch?v=${it.youtube_id}`} title="Open on YouTube">YouTube</a>
+                                        </div>
+                                    </td>
+                                </tr>
+                            {/each}
+                        </tbody>
+                    </table>
+                {/if}
             </div>
         {/if}
     </section>
@@ -222,5 +261,42 @@
     .col-meta {
         color: var(--text-muted);
         font-size: 0.9rem;
+    }
+
+    .video-summary-list {
+        display: grid;
+        gap: 0.75rem;
+    }
+
+    .video-summary {
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        background: var(--bg-soft);
+        padding: 0.75rem 1rem;
+    }
+
+    .video-summary summary {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem 1rem;
+        cursor: pointer;
+        align-items: center;
+    }
+
+    .summary-title {
+        font-weight: 600;
+    }
+
+    .summary-meta {
+        color: var(--text-muted);
+        font-size: 0.9rem;
+    }
+
+    .summary-links {
+        margin: 0.75rem 0;
+    }
+
+    .nested-history {
+        margin-top: 0.5rem;
     }
 </style>
