@@ -10,11 +10,6 @@ To provide a short reference for shorthand commands used across the workflow rul
 
 ## Shorthand Commands
 
-### `Go`
-
-- Used after a parent-task draft has been written under rule 5.
-- Means: expand the existing task file with sub-tasks and finish the detailed task list.
-
 ### `run 8`
 
 - Uses rule 8 with the active feature as the default context.

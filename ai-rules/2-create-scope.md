@@ -98,12 +98,6 @@ Ask 5-7 questions maximum, focusing on:
 
 - [Constraint or assumption]
 - [Constraint or assumption]
-
-## Next Steps
-
-- [ ] Create detailed PRD based on this scope
-- [ ] Review and approve scope
-- [ ] Generate task breakdown
 ```
 
 ## Example Interaction Flow

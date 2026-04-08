@@ -1,12 +1,12 @@
 ---
-version: 1.3.1
-timestamp: 2026-04-04 10:45
+version: 1.4.0
+timestamp: 2026-04-07 09:20
 ---
 # Rule: Generating a Product Requirements Document (PRD)
 
 ## Goal
 
-To guide an AI assistant in creating a detailed Product Requirements Document in Markdown format for the active feature, based on the scope and the user's clarifications.
+To guide an AI assistant in creating a clear, implementation-relevant Product Requirements Document in Markdown format for the active feature, based on the scope and the user's clarifications.
 
 ## Prerequisites
 
@@ -34,50 +34,51 @@ To guide an AI assistant in creating a detailed Product Requirements Document in
 
 ### Propose
 
-4. **Generate the PRD Draft**
-   - Write the PRD using the established structure
-   - Capture the important clarifications inside the draft
+4. **Generate the PRD Proposal**
+   - Write the PRD using a structure that matches the feature complexity
+   - Capture the important clarifications inside the proposed PRD
    - If two or more plausible interpretations remain, do not infer
    - Present the top candidate interpretations briefly and ask the user to choose
 
-### Execute Draft Write
-
-5. **Save the Draft PRD**
-   - Save the draft to `/ai-work/{feature-tag}-prd.md`
-   - Mark the document clearly as a draft until the user approves it
-   - Report that the draft PRD was written and identify the target file
-
 ### Approval Gate
 
-6. **Wait for Explicit Approval to Finalize**
-   - Refine the draft with the user as needed
-   - Do not treat the PRD as finalized until the user explicitly approves the draft
-   - Ask `Approve this? Y/N.` when the draft is ready to finalize
+5. **Wait for Explicit Approval**
+   - Refine the proposal with the user as needed
+   - Do not write `/ai-work/{feature-tag}-prd.md` until the user explicitly approves the proposal
+   - Ask `Approve this? Y/N.` when the proposal is ready to write
 
-### Finalize and Report
+### Execute and Report
 
-7. **Finalize the PRD**
-   - Update `/ai-work/{feature-tag}-prd.md` to remove any draft marker once approved
-   - Report that the PRD was finalized
+6. **Save the Approved PRD**
+   - Save the approved PRD to `/ai-work/{feature-tag}-prd.md`
+   - Report that the PRD was written and identify the target file
 
-## Required PRD Sections
+## PRD Structure Guidance
 
-1. Introduction/Overview
+Every PRD should cover these core elements:
+
+1. Overview
 2. Goals
-3. User Stories
-4. Functional Requirements
-5. Non-Goals
-6. Design Considerations
-7. Technical Considerations
-8. Success Metrics
-9. Clarifications Applied
-10. Open Questions
+3. Requirements
+4. Constraints and considerations
+
+Add more detailed sections when they materially improve execution clarity. Useful optional sections include:
+
+- User stories
+- Non-goals
+- Design considerations
+- Technical considerations
+- Success metrics
+- Clarifications applied
+- Open questions
+- Risks, assumptions, dependencies, rollout notes, or similar project-specific sections
 
 ## Final Instructions
 
 1. Do not start implementation from this rule
 2. Capture the important clarifications inside the PRD
 3. Use the scope file as the concise boundary document
-4. Write the first PRD draft to the file and mark it as draft status before refinement
-5. Do not create or update PRDs for paused or completed features unless the user explicitly asks for an exception
-6. Require explicit approval before treating the PRD as final
+4. Keep the PRD as lean as possible while still giving implementation enough direction
+5. Add detailed sections only when they improve clarity for the feature at hand
+6. Do not create or update PRDs for paused or completed features unless the user explicitly asks for an exception
+7. Require explicit approval before writing the PRD file

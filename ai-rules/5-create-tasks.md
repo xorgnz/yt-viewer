@@ -1,12 +1,12 @@
 ---
-version: 1.2.1
-timestamp: 2026-04-04 10:00
+version: 1.3.0
+timestamp: 2026-04-07 09:05
 ---
 # Rule: Generating a Task List from User Requirements
 
 ## Goal
 
-To guide an AI assistant in creating a detailed, step-by-step task list in Markdown format for the active feature.
+To guide an AI assistant in creating a concise, implementation-ready task list in Markdown format for the active feature.
 
 ## Prerequisites
 
@@ -26,25 +26,23 @@ To guide an AI assistant in creating a detailed, step-by-step task list in Markd
 
 1. Identify the active feature from `/ai-work/00-feature-status.md`
 2. Analyze the PRD and master tech stack
-3. Generate the high-level parent tasks first
-4. Save the parent-task draft to `/ai-work/{feature-tag}-tasks.md`
-5. Wait for the user's explicit `Go`
-6. Expand the same file with sub-tasks
-7. Identify relevant files, including tests where applicable, and finish the task list in the same file
+3. Generate the task list in one pass, using parent tasks and sub-tasks only where they improve execution clarity
+4. Identify relevant files and tests when that context will materially help implementation
+5. Save the completed task list to `/ai-work/{feature-tag}-tasks.md`
 
 ## Output Format
 
 The task list must include:
 
-- `## Relevant Files`
-- `### Notes`
-- `## Instructions for Completing Tasks`
 - `## Tasks`
 
-Tasks must use markdown checkboxes and hierarchical numbering.
+The task list may also include supporting sections such as `## Relevant Files` when they add real value.
+
+Tasks must use markdown checkboxes. Use hierarchical numbering only when it improves readability.
 
 ## Final Instructions
 
 1. All task tracking occurs inside `/ai-work/{feature-tag}-tasks.md`
-2. Save the parent-task draft first, then pause and wait for the user's `Go` before expanding it
-3. Do not generate or revise task lists for paused or completed features unless the user explicitly asks for an exception
+2. Generate the full task list in one pass unless the user explicitly asks for a staged draft-first workflow
+3. Keep the task list focused on concrete implementation work rather than template filler
+4. Do not generate or revise task lists for paused or completed features unless the user explicitly asks for an exception
