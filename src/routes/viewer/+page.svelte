@@ -1,4 +1,8 @@
 <script lang="ts">
+    import { goto } from '$app/navigation';
+    import DatePicker from '$lib/components/DatePicker.svelte';
+    import VideoCard from '$lib/components/VideoCard.svelte';
+
     export let data: {
         filters: {
             term?: string;
@@ -36,14 +40,21 @@
         profileName: string;
     };
 
+    const FILTER_DEBOUNCE_MS = 450;
+
     let f = data.filters;
     let activeVirtualChannel = data.groups.find((group) => group.id === f.groupId) ?? null;
     const today = new Date().toISOString().slice(0, 10);
     let totalPages = Math.max(1, Math.ceil(data.totalCount / f.limit));
     let currentPage = Math.min(totalPages, Math.floor(f.offset / f.limit) + 1);
-
-    import DatePicker from '$lib/components/DatePicker.svelte';
-    import VideoCard from '$lib/components/VideoCard.svelte';
+    let termInput = f.term || '';
+    let dateFromInput = f.dateFromInput;
+    let dateToInput = f.dateToInput;
+    let channelIdInput = f.channelId != null ? String(f.channelId) : '';
+    let limitInput = String(f.limit);
+    let watchedMode: 'all' | 'watched' | 'unwatched' = f.watched;
+    let showIgnored = f.ignored === 'show';
+    let debounceTimer: ReturnType<typeof setTimeout> | null = null;
 
     function buildPageHref(page: number): string
     {
@@ -97,9 +108,94 @@
         return pages;
     }
 
+    function clearPendingApply()
+    {
+        if (debounceTimer) {
+            clearTimeout(debounceTimer);
+            debounceTimer = null;
+        }
+    }
+
+    function buildFilterQuery(): string
+    {
+        const params = new URLSearchParams({
+            term: termInput,
+            watched: watchedMode === 'watched' ? 'watched' : 'all',
+            ignored: showIgnored ? 'show' : 'hide',
+            dateFrom: dateFromInput,
+            dateTo: dateToInput,
+            channelId: channelIdInput,
+            groupId: f.groupId != null ? String(f.groupId) : '',
+            limit: limitInput,
+            offset: '0'
+        });
+
+        if (watchedMode === 'unwatched') {
+            params.set('unwatchedOnly', '1');
+        }
+
+        if (showIgnored) {
+            params.set('showIgnored', '1');
+        }
+
+        return params.toString();
+    }
+
+    async function applyFiltersNow()
+    {
+        clearPendingApply();
+        await goto(`?${buildFilterQuery()}`, {
+            keepFocus: true,
+            noScroll: true
+        });
+    }
+
+    function scheduleApply()
+    {
+        clearPendingApply();
+        debounceTimer = setTimeout(() => {
+            void applyFiltersNow();
+        }, FILTER_DEBOUNCE_MS);
+    }
+
+    function handleImmediateFilterChange()
+    {
+        void applyFiltersNow();
+    }
+
+    function handleFilterSubmit(event: SubmitEvent)
+    {
+        event.preventDefault();
+        void applyFiltersNow();
+    }
+
+    function handleFilterKeydown(event: KeyboardEvent)
+    {
+        if (event.key !== 'Enter') {
+            return;
+        }
+
+        event.preventDefault();
+        void applyFiltersNow();
+    }
+
+    function handleWatchedOnlyChange(event: Event)
+    {
+        const checked = (event.currentTarget as HTMLInputElement).checked;
+        watchedMode = checked ? 'unwatched' : (watchedMode === 'unwatched' ? 'all' : watchedMode);
+        void applyFiltersNow();
+    }
+
     let visiblePages = getVisiblePages(currentPage, totalPages);
 
     $: f = data.filters;
+    $: termInput = f.term || '';
+    $: dateFromInput = f.dateFromInput;
+    $: dateToInput = f.dateToInput;
+    $: channelIdInput = f.channelId != null ? String(f.channelId) : '';
+    $: limitInput = String(f.limit);
+    $: watchedMode = f.watched;
+    $: showIgnored = f.ignored === 'show';
     $: activeVirtualChannel = data.groups.find((group) => group.id === f.groupId) ?? null;
     $: totalPages = Math.max(1, Math.ceil(data.totalCount / f.limit));
     $: currentPage = Math.min(totalPages, Math.floor(f.offset / f.limit) + 1);
@@ -112,47 +208,64 @@
         {#if activeVirtualChannel}
             <p class="muted">Virtual channel: {activeVirtualChannel.name}</p>
         {/if}
-        <form method="GET" class="stack">
+        <form method="GET" class="stack" on:submit={handleFilterSubmit}>
             <div class="fields filter-row">
                 <label class="boxed-field compact-search-field">
                     <span class="boxed-field-label">Search</span>
-                    <input name="term" value={f.term || ''} placeholder="title/description" />
+                    <input
+                        name="term"
+                        bind:value={termInput}
+                        placeholder="title/description"
+                        on:input={scheduleApply}
+                        on:keydown={handleFilterKeydown}
+                    />
                 </label>
                 <div class="compact-date-field">
-                    <DatePicker label="From" name="dateFrom" value={f.dateFromInput} max={today} />
+                    <DatePicker label="From" name="dateFrom" bind:value={dateFromInput} max={today} onCommit={handleImmediateFilterChange} />
                 </div>
                 <div class="compact-date-field">
-                    <DatePicker label="To" name="dateTo" value={f.dateToInput} max={today} />
+                    <DatePicker label="To" name="dateTo" bind:value={dateToInput} max={today} onCommit={handleImmediateFilterChange} />
                 </div>
                 <label class="boxed-field compact-channel-field">
                     <span class="boxed-field-label">Source Channel</span>
-                    <select name="channelId" value={f.channelId ?? ''}>
+                    <select name="channelId" bind:value={channelIdInput} on:change={handleImmediateFilterChange}>
                         <option value="">Any</option>
                         {#each data.channels as ch}
-                            <option value={ch.id} selected={f.channelId === ch.id}>{ch.title}</option>
+                            <option value={ch.id}>{ch.title}</option>
                         {/each}
                     </select>
                 </label>
                 <label class="boxed-field compact-field">
                     <span class="boxed-field-label">Per page</span>
-                    <input type="number" name="limit" min="1" max="1000" value={f.limit} />
+                    <input
+                        type="number"
+                        name="limit"
+                        min="1"
+                        max="1000"
+                        bind:value={limitInput}
+                        on:input={scheduleApply}
+                        on:keydown={handleFilterKeydown}
+                    />
                 </label>
-                <input type="hidden" name="watched" value={f.watched === 'watched' ? 'watched' : 'all'} />
+                <input type="hidden" name="watched" value={watchedMode === 'watched' ? 'watched' : 'all'} />
                 <label class="filter-toggle">
-                    <input type="checkbox" name="unwatchedOnly" value="1" checked={f.watched === 'unwatched'} />
+                    <input
+                        type="checkbox"
+                        name="unwatchedOnly"
+                        value="1"
+                        checked={watchedMode === 'unwatched'}
+                        on:change={handleWatchedOnlyChange}
+                    />
                     <span>Unwatched only</span>
                 </label>
                 <label class="filter-toggle">
-                    <input type="checkbox" name="showIgnored" value="1" checked={f.ignored === 'show'} />
+                    <input type="checkbox" name="showIgnored" value="1" bind:checked={showIgnored} on:change={handleImmediateFilterChange} />
                     <span>Show ignored</span>
                 </label>
                 {#if f.groupId != null}
                     <input type="hidden" name="groupId" value={f.groupId} />
                 {/if}
-                <input type="hidden" name="offset" value={f.offset} />
-                <div class="inline-actions apply-wrap">
-                    <button type="submit">Apply</button>
-                </div>
+                <input type="hidden" name="offset" value="0" />
             </div>
         </form>
     </section>
@@ -259,16 +372,6 @@
         min-height: 1rem;
         margin: 0;
         accent-color: var(--accent);
-    }
-
-    .apply-wrap {
-        align-self: stretch;
-    }
-
-    .apply-wrap button {
-        height: 100%;
-        min-height: 100%;
-        padding-inline: 1.1rem;
     }
 
     .toolbar {

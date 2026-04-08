@@ -3,6 +3,7 @@
     export let name: string;
     export let value: string = '';
     export let max: string;
+    export let onCommit: (() => void) | null = null;
 
     type PickerMode = 'day' | 'month-year';
 
@@ -107,6 +108,7 @@
 
         value = formatDate(nextDate);
         open = false;
+        onCommit?.();
     }
 
     function selectYear(year: number)
@@ -139,6 +141,7 @@
     {
         value = '';
         open = false;
+        onCommit?.();
     }
 </script>
 
