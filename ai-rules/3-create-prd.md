@@ -1,17 +1,17 @@
 ---
-version: 1.4.0
-timestamp: 2026-04-07 09:20
+version: 1.5.0
+timestamp: 2026-04-08 11:05
 ---
 # Rule: Generating a Product Requirements Document (PRD)
 
 ## Goal
 
-To guide an AI assistant in creating a clear, implementation-relevant Product Requirements Document in Markdown format for the active feature, based on the scope and the user's clarifications.
+To guide an AI assistant in creating a clear, implementation-relevant Product Requirements Document in Markdown format for the active feature or an explicitly selected planned feature, based on the scope and the user's clarifications.
 
 ## Prerequisites
 
 - A feature tag must exist
-- `/ai-work/00-feature-status.md` must identify the feature as `active`
+- `/ai-work/00-feature-status.md` must identify the feature as `active` or an explicitly selected `planned` feature
 - The feature must not be marked `paused` or `completed`
 - A scope file should exist at `/ai-work/{feature-tag}-scope.md`
 - Follow the shared feature-state contract in `/ai-work/00-feature-status.md`
@@ -20,9 +20,12 @@ To guide an AI assistant in creating a clear, implementation-relevant Product Re
 
 ### Inspect
 
-1. **Identify the Active Feature**
+1. **Identify the Feature**
    - Read `/ai-work/00-feature-status.md`
    - Use the active feature as the default source of truth
+   - If the user names a different feature and it is `planned`, PRD creation may proceed without activating that feature
+   - If the user names a different feature and it is `paused` or `completed`, stop and tell the user rule 3 does not run on that feature state
+   - Only require the feature-change workflow when the user wants a different feature to become the active working feature
 
 2. **Read the Scope**
    - Check for `/ai-work/{feature-tag}-scope.md`
@@ -80,5 +83,6 @@ Add more detailed sections when they materially improve execution clarity. Usefu
 3. Use the scope file as the concise boundary document
 4. Keep the PRD as lean as possible while still giving implementation enough direction
 5. Add detailed sections only when they improve clarity for the feature at hand
-6. Do not create or update PRDs for paused or completed features unless the user explicitly asks for an exception
-7. Require explicit approval before writing the PRD file
+6. Do not create or update PRDs for paused or completed features
+7. Allow PRD work for an explicitly selected planned feature without activating it
+8. Require explicit approval before writing the PRD file

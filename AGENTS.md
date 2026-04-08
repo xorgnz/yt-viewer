@@ -1,4 +1,3 @@
-<!-- BEGIN: Shared Downstream Guidelines -->
 # Shared Downstream Guidelines
 
 This file is the shared base for downstream agent guidelines.
@@ -63,17 +62,13 @@ When needed, you may also append one or more technology-specific overlays from `
 - Keep comments short and directional. Do not restate obvious code behavior unless an obscure or complex algorithm needs explanation.
 - Precede standalone comments with a blank line.
 - End-of-line comments are acceptable in short declaration blocks. Align those comments to a consistent visual column so they remain tidy.
-<!-- END: Shared Downstream Guidelines -->
 
-<!-- BEGIN: Codex Agent Overlay -->
 # Codex-Specific Downstream Notes
 
 Combine this file with `downstream/guidelines/shared.md` at deployment time.
 
 There are currently no Codex-specific behavior overrides beyond the shared downstream guidance.
-<!-- END: Codex Agent Overlay -->
 
-<!-- BEGIN: Windows Environment Overlay -->
 # Windows Environment Notes
 
 Use this overlay when the downstream project is being run from a Windows shell environment.
@@ -90,9 +85,7 @@ This means native Windows shell usage, not WSL, unless the target repository exp
 
 - Assume the project is being run with Node on Windows unless the target repository clearly documents a different local runtime expectation.
 - Treat `windows` and `wsl` as distinct environment choices. Do not assume WSL behavior when the selected environment is Windows.
-<!-- END: Windows Environment Overlay -->
 
-<!-- BEGIN: TypeScript + SvelteKit Toolset Overlay -->
 # TypeScript + SvelteKit Toolset Notes
 
 Use this overlay when the downstream project is primarily built with TypeScript and SvelteKit.
@@ -120,4 +113,4 @@ Use this overlay when the downstream project is primarily built with TypeScript 
 ## Validation
 
 - When practical, prefer targeted checks that fit the stack, such as TypeScript checking, Svelte checks, or focused test runs already defined by the target repository.
-<!-- END: TypeScript + SvelteKit Toolset Overlay -->
+
