@@ -46,9 +46,23 @@
         limit: String(filters.limit),
         offset: String(filters.offset)
     }).toString();
+
+    $: isIgnored = !!video.ignored;
+    $: isFavorite = !!video.favorite;
+    $: isWatched = !!video.watched;
+    $: isFavoriteWatched = !isIgnored && isFavorite && isWatched;
+    $: isFavoriteOnly = !isIgnored && isFavorite && !isWatched;
+    $: isWatchedOnly = !isIgnored && isWatched && !isFavorite;
 </script>
 
-<div class="card" title={video.title}>
+<div
+    class="card"
+    class:card-ignored={isIgnored}
+    class:card-favorite-watched={isFavoriteWatched}
+    class:card-favorite={isFavoriteOnly}
+    class:card-watched={isWatchedOnly}
+    title={video.title}
+>
     <a class="thumb" href={`/viewer/watch/${video.youtube_id}`} aria-label={`Open ${video.title}`}>
         {#if video.thumbnail_url}
             <img src={video.thumbnail_url} alt={video.title} loading="lazy" />
@@ -103,8 +117,34 @@
         border-radius: 6px;
         overflow: hidden;
         color: #fff;
-        background: #1e1e1e;
+        background:
+            linear-gradient(180deg, rgba(36, 36, 36, 0.96), rgba(24, 24, 24, 0.98));
         position: relative;
+        transition: border-color .15s ease, box-shadow .15s ease, background .15s ease;
+    }
+    .card.card-watched {
+        border-color: rgba(67, 160, 71, 0.7);
+        background:
+            linear-gradient(180deg, rgba(28, 58, 34, 0.96), rgba(18, 34, 22, 0.98));
+        box-shadow: inset 0 1px 0 rgba(129, 199, 132, 0.14);
+    }
+    .card.card-favorite {
+        border-color: rgba(227, 179, 65, 0.75);
+        background:
+            linear-gradient(180deg, rgba(64, 51, 18, 0.96), rgba(35, 28, 11, 0.98));
+        box-shadow: inset 0 1px 0 rgba(255, 224, 130, 0.18);
+    }
+    .card.card-favorite-watched {
+        border-color: rgba(171, 198, 79, 0.78);
+        background:
+            linear-gradient(135deg, rgba(78, 63, 18, 0.96), rgba(28, 58, 34, 0.98));
+        box-shadow: inset 0 1px 0 rgba(212, 225, 87, 0.16);
+    }
+    .card.card-ignored {
+        border-color: rgba(229, 115, 115, 0.78);
+        background:
+            linear-gradient(180deg, rgba(78, 24, 30, 0.97), rgba(40, 14, 18, 0.99));
+        box-shadow: inset 0 1px 0 rgba(239, 154, 154, 0.16);
     }
     .card a { color: inherit; text-decoration: none; }
     /* Floating actions in bottom-right */
