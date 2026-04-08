@@ -35,55 +35,64 @@ The feature will support mouse-based range and additive selection, cross-paginat
 7. Selection does not need to persist across full page reloads, sessions, or unrelated viewer contexts.
 8. Keyboard-only multi-selection behavior is out of scope for this version.
 
+#### Selection State Tracking
+
+9. The client must track selection as a set of selected video ids rather than as page-local row positions.
+10. The client must track a selection anchor video id for Shift range behavior, and that anchor must update on non-Shift explicit selection actions.
+11. The client must treat cross-page selection as membership within the current filtered result set, not just the currently rendered page.
+12. The client must maintain or receive enough ordered result-set identity data to resolve Shift ranges consistently even when the range spans multiple pages.
+13. The client must derive a selection-context key from the active viewer filters and profile so it can invalidate the selected set and range anchor when that context changes.
+14. The current page should be treated as a visible slice of the same filtered result-set selection model rather than as an isolated selection scope.
+
 ### Visual Treatment
 
-9. Selected video cards must display a clear selected-state treatment.
-10. The selected-state treatment should include a blue outline and a blue checkmark indicator or equivalent clearly visible affordance.
-11. The selected-state treatment must coexist with existing watched, favorite, and ignored visual treatments without making selection ambiguous.
+15. Selected video cards must display a clear selected-state treatment.
+16. The selected-state treatment should include a blue outline and a blue checkmark indicator or equivalent clearly visible affordance.
+17. The selected-state treatment must coexist with existing watched, favorite, and ignored visual treatments without making selection ambiguous.
 
 ### Bulk Action Bar
 
-12. A bulk-action bar must appear when one or more videos are selected.
-13. The bulk-action bar must display the count of selected videos.
-14. The bulk-action bar must make it obvious when part of the current selection is on another page.
-15. The bulk-action bar must expose controls for watched, favorite, and ignored.
+18. A bulk-action bar must appear when one or more videos are selected.
+19. The bulk-action bar must display the count of selected videos.
+20. The bulk-action bar must make it obvious when part of the current selection is on another page.
+21. The bulk-action bar must expose controls for watched, favorite, and ignored.
 
 ### Tri-State Bulk Controls
 
-16. Each bulk flag control must support three visible states for the current selection:
+22. Each bulk flag control must support three visible states for the current selection:
     - unset when all selected videos have the flag unset
     - set when all selected videos have the flag set
     - mixed when the selected videos contain both states
-17. Mixed state may use a square or equivalent visual treatment distinct from checked and unchecked.
-18. Clicking a control in the unset state must set that flag on all selected videos.
-19. Clicking a control in the set state must clear that flag on all selected videos.
-20. Clicking a control in the mixed state must first set that flag on all selected videos.
-21. A subsequent click after reaching the set state must clear that flag on all selected videos.
-22. Watched status must follow the same tri-state behavior as favorite and ignored.
+23. Mixed state may use a square or equivalent visual treatment distinct from checked and unchecked.
+24. Clicking a control in the unset state must set that flag on all selected videos.
+25. Clicking a control in the set state must clear that flag on all selected videos.
+26. Clicking a control in the mixed state must first set that flag on all selected videos.
+27. A subsequent click after reaching the set state must clear that flag on all selected videos.
+28. Watched status must follow the same tri-state behavior as favorite and ignored.
 
 ### Bulk Update Behavior
 
-23. Bulk updates must operate on the entire current selected set, including selected items not visible on the current page.
-24. The system should attempt to apply the chosen update to all selected videos.
-25. If some items fail to update, the system must report that clearly.
-26. The success message must summarize the completed action, for example `12 videos marked ignored`.
-27. After a bulk action succeeds or partially succeeds, the selection must remain active.
-28. The bulk-action bar must display recent action feedback while selection remains active.
+29. Bulk updates must operate on the entire current selected set, including selected items not visible on the current page.
+30. The system should attempt to apply the chosen update to all selected videos.
+31. If some items fail to update, the system must report that clearly.
+32. The success message must summarize the completed action, for example `12 videos marked ignored`.
+33. After a bulk action succeeds or partially succeeds, the selection must remain active.
+34. The bulk-action bar must display recent action feedback while selection remains active.
 
 ### Undo
 
-29. The UI must provide an undo action after a bulk update.
-30. Undo must attempt to restore the original flag state for the affected selected videos.
-31. Undo must support recovery from the mixed-state workflow by restoring the original mixed distribution when possible.
-32. If undo only partially succeeds, the UI must report that clearly.
-33. Undo should be available from the bulk-action bar or an equally obvious nearby location.
+35. The UI must provide an undo action after a bulk update.
+36. Undo must attempt to restore the original flag state for the affected selected videos.
+37. Undo must support recovery from the mixed-state workflow by restoring the original mixed distribution when possible.
+38. If undo only partially succeeds, the UI must report that clearly.
+39. Undo should be available from the bulk-action bar or an equally obvious nearby location.
 
 ### Data and Server Behavior
 
-34. The implementation must reuse the existing per-video boolean flag model for watched, favorite, and ignored rather than introducing a separate bulk-only state model.
-35. The viewer must gain server-side support for bulk flag updates over a list of selected video identifiers.
-36. The viewer must gain server-side support for undoing the most recent bulk update scope represented by the client request.
-37. Bulk update and undo responses must return enough result detail for the client to show success, partial-failure, and mixed-state recovery feedback.
+40. The implementation must reuse the existing per-video boolean flag model for watched, favorite, and ignored rather than introducing a separate bulk-only state model.
+41. The viewer must gain server-side support for bulk flag updates over a list of selected video identifiers.
+42. The viewer must gain server-side support for undoing the most recent bulk update scope represented by the client request.
+43. Bulk update and undo responses must return enough result detail for the client to show success, partial-failure, and mixed-state recovery feedback.
 
 ## Constraints and Considerations
 
