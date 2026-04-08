@@ -44,6 +44,15 @@ The feature will support mouse-based range and additive selection, cross-paginat
 13. The client must derive a selection-context key from the active viewer filters and profile so it can invalidate the selected set and range anchor when that context changes.
 14. The current page should be treated as a visible slice of the same filtered result-set selection model rather than as an isolated selection scope.
 
+#### Selection Clearing Rules
+
+- The selected set and selection anchor must clear when any viewer filter input changes the filtered result-set context.
+- Pagination changes alone must not clear selection because they remain inside the same filtered result set.
+- Profile changes must clear selection because flag state and visible result membership are profile-scoped.
+- Explicit user actions to clear selection must remove the selected set, selection anchor, bulk-action feedback, and any pending undo scope tied only to the previous selection context.
+- Successful or partially successful bulk actions must not clear selection automatically.
+- Route transitions away from the viewer page may discard in-memory selection state without persistence requirements.
+
 ### Visual Treatment
 
 15. Selected video cards must display a clear selected-state treatment.

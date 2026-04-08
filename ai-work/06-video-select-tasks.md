@@ -14,7 +14,7 @@
 
 - [ ] 1.0 Define the bulk-selection state model and server contract for viewer multi-select actions
   - [x] 1.1 Define how the client tracks selected video ids, range anchor state, and cross-page selection within the current filtered result set
-  - [ ] 1.2 Define when selection is cleared, including filter changes and other viewer state transitions
+  - [x] 1.2 Define when selection is cleared, including filter changes and other viewer state transitions
   - [ ] 1.3 Define the bulk-action request and response shape for watched, favorite, and ignored updates
   - [ ] 1.4 Define the undo payload and response contract so the client can restore original mixed flag state after a bulk action
   - [ ] 1.5 Define how bulk responses report full success, partial success, failed ids, and human-readable action feedback
