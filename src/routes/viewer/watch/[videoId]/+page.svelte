@@ -22,7 +22,11 @@
         profileName: string;
     };
 
-    let consideredWatched = !!data.video.watched;
+    let watched = !!data.video.watched;
+    let thresholdReached = watched;
+    let suppressThresholdWatch = false;
+    let thresholdWatchSubmitted = watched;
+    let showWatched = watched;
     let pollTimer: any = null;
     let player: any = null;
     let isActivelyPlaying = false;
@@ -31,7 +35,10 @@
     let historySessionCreated = false;
     let lastPersistedWatchSeconds = 0;
     let lastHistoryActivityAt: number | null = null;
+    let watchMutationPending = false;
     const HISTORY_SESSION_GAP_MS = 5 * 60 * 1000;
+
+    $: showWatched = watched || (thresholdReached && !suppressThresholdWatch);
 
     function formatDate(ms: number | null): string
     {
@@ -78,13 +85,22 @@
                 }
 
                 const thresholdTime = duration < 120 ? duration * 0.75 : Math.max(0, duration - 30);
+                const hasReachedThreshold = current >= thresholdTime;
 
-                if (!consideredWatched && current >= thresholdTime)
+                if (!hasReachedThreshold)
                 {
-                    consideredWatched = true;
-                    if (!data.video.watched)
+                    thresholdReached = false;
+                    thresholdWatchSubmitted = watched;
+                    suppressThresholdWatch = false;
+                }
+                else
+                {
+                    thresholdReached = true;
+
+                    if (!watched && !thresholdWatchSubmitted && !watchMutationPending && !suppressThresholdWatch)
                     {
-                        submitWatchedThreshold();
+                        thresholdWatchSubmitted = true;
+                        void updateWatchedStatus('watch');
                     }
                 }
             } catch {
@@ -161,17 +177,64 @@
         }
     }
 
-    function submitWatchedThreshold()
+    async function updateWatchedStatus(intent: 'watch' | 'unwatch')
     {
-        const form = document.getElementById('watchForm') as HTMLFormElement | null;
-        if (!form) return;
-
-        const intentInput = form.querySelector('input[name="intent"]') as HTMLInputElement | null;
-        if (intentInput) {
-            intentInput.value = 'watch';
+        if (watchMutationPending)
+        {
+            return;
         }
 
-        form.requestSubmit();
+        const previousWatched = watched;
+        const previousThresholdReached = thresholdReached;
+        const previousSuppressThresholdWatch = suppressThresholdWatch;
+        const previousThresholdWatchSubmitted = thresholdWatchSubmitted;
+
+        watchMutationPending = true;
+
+        if (intent === 'watch')
+        {
+            watched = true;
+            suppressThresholdWatch = false;
+            thresholdWatchSubmitted = true;
+        }
+        else
+        {
+            watched = false;
+            thresholdReached = false;
+            thresholdWatchSubmitted = false;
+            suppressThresholdWatch = true;
+        }
+
+        const formData = new FormData();
+        formData.set('intent', intent);
+
+        try {
+            const response = await fetch('?/markWatched', {
+                method: 'POST',
+                body: formData
+            });
+
+            if (!response.ok)
+            {
+                watched = previousWatched;
+                thresholdReached = previousThresholdReached;
+                suppressThresholdWatch = previousSuppressThresholdWatch;
+                thresholdWatchSubmitted = previousThresholdWatchSubmitted;
+            }
+        } catch {
+            watched = previousWatched;
+            thresholdReached = previousThresholdReached;
+            suppressThresholdWatch = previousSuppressThresholdWatch;
+            thresholdWatchSubmitted = previousThresholdWatchSubmitted;
+        } finally {
+            watchMutationPending = false;
+        }
+    }
+
+    function handleWatchSubmit(event: SubmitEvent)
+    {
+        event.preventDefault();
+        void updateWatchedStatus(showWatched ? 'unwatch' : 'watch');
     }
 
     onMount(() => {
@@ -262,7 +325,7 @@
                 {#if data.video.favorite}
                     <span class="badge favorite">Favorite</span>
                 {/if}
-                {#if data.video.watched}
+                {#if watched}
                     <span class="badge watched">Watched</span>
                 {/if}
                 {#if data.video.ignored}
@@ -280,17 +343,17 @@
         </div>
 
         <div class="inline-actions action-bar">
-            <form id="watchForm" method="POST" action="?/markWatched" class="inline-form">
-                <input type="hidden" name="intent" value={(consideredWatched || data.video.watched) ? 'unwatch' : 'watch'} />
-                <button type="submit" aria-pressed={consideredWatched || !!data.video.watched}>
-                    {#if consideredWatched || data.video.watched}
+            <form id="watchForm" method="POST" action="?/markWatched" class="inline-form" on:submit={handleWatchSubmit}>
+                <input type="hidden" name="intent" value={showWatched ? 'unwatch' : 'watch'} />
+                <button type="submit" aria-pressed={showWatched} disabled={watchMutationPending}>
+                    {#if showWatched}
                         Clear watch status
                     {:else}
                         Mark as Watched
                     {/if}
                 </button>
             </form>
-            {#if consideredWatched || data.video.watched}
+            {#if showWatched}
                 <span class="badge watched watch-indicator" aria-live="polite">Watched</span>
             {/if}
             {#if data.video.favorite}

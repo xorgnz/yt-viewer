@@ -76,16 +76,18 @@ describe('viewer watch route actions', () => {
         const form = new FormData();
         form.set('intent', 'watch');
 
-        await expect(routeModule.actions.markWatched({
+        const result = await routeModule.actions.markWatched({
             request: new Request('http://localhost/viewer/watch/WATCH_ME', {
                 method: 'POST',
                 body: form
             }),
             params: { videoId: 'WATCH_ME' },
-            url: new URL('http://localhost/viewer/watch/WATCH_ME'),
             cookies: cookieJar()
-        } as any)).rejects.toMatchObject({
-            status: 303
+        } as any);
+
+        expect(result).toEqual({
+            ok: true,
+            watched: 1
         });
 
         const db = openDb();

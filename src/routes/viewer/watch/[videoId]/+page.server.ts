@@ -3,7 +3,7 @@ import { VideoDAO } from '$lib/daos/videoDAO';
 import { ProfileDAO } from '$lib/daos/profileDAO';
 import { FlagsDAO } from '$lib/daos/flagsDAO';
 import { HistoryDAO } from '$lib/daos/historyDAO';
-import { error, fail, redirect } from '@sveltejs/kit';
+import { error, fail } from '@sveltejs/kit';
 import { ensureProfiles, getActiveProfileKey } from '$lib/profiles';
 
 const HISTORY_SESSION_GAP_MS = 5 * 60 * 1000;
@@ -138,7 +138,7 @@ export const actions = {
         }
     },
 
-    async markWatched({ request, params, url, cookies }: { request: Request; params: { videoId: string }, url: URL, cookies: any })
+    async markWatched({ request, params, cookies }: { request: Request; params: { videoId: string }, cookies: any })
     {
         const videoYoutubeId = String(params.videoId || '').trim();
         if (!videoYoutubeId) return fail(400, { message: 'Missing videoId' });
@@ -176,8 +176,9 @@ export const actions = {
             dbw.close();
         }
 
-        const qs = url.searchParams.toString();
-        const suffix = qs ? `?${qs}` : '';
-        throw redirect(303, `/viewer/watch/${videoYoutubeId}${suffix}`);
+        return {
+            ok: true,
+            watched: intent === 'unwatch' ? 0 : 1
+        };
     }
 };
