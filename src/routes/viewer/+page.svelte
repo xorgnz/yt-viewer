@@ -137,6 +137,7 @@
                     <span class="boxed-field-label">Per page</span>
                     <input type="number" name="limit" min="1" max="1000" value={f.limit} />
                 </label>
+                <input type="hidden" name="watched" value={f.watched === 'watched' ? 'watched' : 'all'} />
                 <label class="filter-toggle">
                     <input type="checkbox" name="unwatchedOnly" value="1" checked={f.watched === 'unwatched'} />
                     <span>Unwatched only</span>
