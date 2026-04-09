@@ -4,7 +4,7 @@ import { SourceChannelDAO } from '$lib/daos/sourceChannelDAO';
 import { VirtualChannelDAO } from '$lib/daos/virtualChannelDAO';
 import { ProfileDAO } from '$lib/daos/profileDAO';
 import { FlagsDAO, type BulkFlagKind } from '$lib/daos/flagsDAO';
-import { fail, redirect } from '@sveltejs/kit';
+import { fail } from '@sveltejs/kit';
 import { ensureProfiles, getActiveProfileKey } from '$lib/profiles';
 
 function parseDateOnly(value: string | null, boundary: 'start' | 'end'): number | null
@@ -268,7 +268,7 @@ export const load = async ({ url, cookies }: { url: URL; cookies: any }) =>
 };
 
 export const actions = {
-    async toggleFlag({ request, url, cookies }: { request: Request; url: URL; cookies: any })
+    async toggleFlag({ request, cookies }: { request: Request; cookies: any })
     {
         const form = await request.formData();
         const videoIdStr = String(form.get('videoId') || '').trim();
@@ -308,8 +308,12 @@ export const actions = {
             dbw.close();
         }
 
-        // Stay on the same page with same query params
-        throw redirect(303, `/viewer?${url.searchParams.toString()}`);
+        return {
+            ok: true,
+            videoId,
+            kind,
+            value
+        };
     },
 
     async bulkUpdateFlags({ request, cookies }: { request: Request; cookies: any })

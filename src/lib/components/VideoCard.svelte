@@ -15,20 +15,10 @@
         ignored: number;
     };
 
-    export let filters: {
-        term?: string;
-        watched: 'all' | 'watched' | 'unwatched';
-        ignored: 'hide' | 'show';
-        dateFrom: number | null;
-        dateTo: number | null;
-        channelId: number | null;
-        groupId: number | null;
-        limit: number;
-        offset: number;
-    };
     export let isSelected = false;
     export let onCardClick: ((event: MouseEvent | KeyboardEvent, videoId: number) => void) | null = null;
     export let onCardMouseDown: ((event: MouseEvent, videoId: number) => void) | null = null;
+    export let onToggleFlag: ((videoId: number, kind: 'watched' | 'favorite' | 'ignored', value: 0 | 1) => void) | null = null;
 
     function fmtDate(ms: number | null): string {
         if (!ms) return '';
@@ -38,24 +28,23 @@
         } catch { return ''; }
     }
 
-    $: actionQuery = new URLSearchParams({
-        term: filters.term || '',
-        watched: filters.watched,
-        ignored: filters.ignored,
-        dateFrom: filters.dateFrom != null ? String(filters.dateFrom) : '',
-        dateTo: filters.dateTo != null ? String(filters.dateTo) : '',
-        channelId: filters.channelId != null ? String(filters.channelId) : '',
-        groupId: filters.groupId != null ? String(filters.groupId) : '',
-        limit: String(filters.limit),
-        offset: String(filters.offset)
-    }).toString();
-
     $: isIgnored = !!video.ignored;
     $: isFavorite = !!video.favorite;
     $: isWatched = !!video.watched;
     $: isFavoriteWatched = !isIgnored && isFavorite && isWatched;
     $: isFavoriteOnly = !isIgnored && isFavorite && !isWatched;
     $: isWatchedOnly = !isIgnored && isWatched && !isFavorite;
+
+    function handleFlagClick(
+        event: MouseEvent,
+        kind: 'watched' | 'favorite' | 'ignored',
+        value: 0 | 1
+    ): void
+    {
+        event.preventDefault();
+        event.stopPropagation();
+        onToggleFlag?.(video.id, kind, value);
+    }
 </script>
 
 <div
@@ -90,33 +79,39 @@
         <div class="pub">{fmtDate(video.published_at)}</div>
     </div>
     <div class="actions">
-        <form method="POST" action={`?/toggleFlag&${actionQuery}`}>
-            <input type="hidden" name="videoId" value={video.id} />
-            <input type="hidden" name="kind" value="favorite" />
-            <input type="hidden" name="value" value={video.favorite ? 0 : 1} />
-            <button type="submit" class="icon favorite" class:active={!!video.favorite} aria-pressed={!!video.favorite} title={video.favorite ? 'Unfavorite' : 'Mark favorite'}>
+        <button
+            type="button"
+            class="icon favorite"
+            class:active={!!video.favorite}
+            aria-pressed={!!video.favorite}
+            title={video.favorite ? 'Unfavorite' : 'Mark favorite'}
+            on:click={(event) => handleFlagClick(event, 'favorite', video.favorite ? 0 : 1)}
+        >
                 <span class="icon-glyph" aria-hidden="true">&#9733;</span>
                 <span class="sr-only">{video.favorite ? 'Unfavorite' : 'Mark favorite'}</span>
-            </button>
-        </form>
-        <form method="POST" action={`?/toggleFlag&${actionQuery}`}>
-            <input type="hidden" name="videoId" value={video.id} />
-            <input type="hidden" name="kind" value="watched" />
-            <input type="hidden" name="value" value={video.watched ? 0 : 1} />
-            <button type="submit" class="icon watched" class:active={!!video.watched} aria-pressed={!!video.watched} title={video.watched ? 'Mark unwatched' : 'Mark watched'}>
+        </button>
+        <button
+            type="button"
+            class="icon watched"
+            class:active={!!video.watched}
+            aria-pressed={!!video.watched}
+            title={video.watched ? 'Mark unwatched' : 'Mark watched'}
+            on:click={(event) => handleFlagClick(event, 'watched', video.watched ? 0 : 1)}
+        >
                 <span class="icon-glyph" aria-hidden="true">&#10003;</span>
                 <span class="sr-only">{video.watched ? 'Mark unwatched' : 'Mark watched'}</span>
-            </button>
-        </form>
-        <form method="POST" action={`?/toggleFlag&${actionQuery}`}>
-            <input type="hidden" name="videoId" value={video.id} />
-            <input type="hidden" name="kind" value="ignored" />
-            <input type="hidden" name="value" value={video.ignored ? 0 : 1} />
-            <button type="submit" class="icon ignored" class:active={!!video.ignored} aria-pressed={!!video.ignored} title={video.ignored ? 'Unignore' : 'Ignore video'}>
+        </button>
+        <button
+            type="button"
+            class="icon ignored"
+            class:active={!!video.ignored}
+            aria-pressed={!!video.ignored}
+            title={video.ignored ? 'Unignore' : 'Ignore video'}
+            on:click={(event) => handleFlagClick(event, 'ignored', video.ignored ? 0 : 1)}
+        >
                 <span class="icon-glyph" aria-hidden="true">&#10005;</span>
                 <span class="sr-only">{video.ignored ? 'Unignore' : 'Ignore video'}</span>
-            </button>
-        </form>
+        </button>
     </div>
 </div>
 
@@ -199,12 +194,12 @@
         align-items: center;
         pointer-events: none; /* allow clicks only on buttons */
     }
-    .actions form { display: inline; pointer-events: auto; }
     .actions button {
         width: 1.9rem;
         height: 1.9rem;
         min-width: 1.9rem;
         min-height: 1.9rem;
+        pointer-events: auto;
         padding: 0;
         gap: 0;
         display: inline-flex;

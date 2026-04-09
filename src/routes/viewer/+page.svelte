@@ -428,6 +428,44 @@
         });
     }
 
+    function updateVisibleVideoFlag(videoId: number, kind: ViewerSelectionFlagKind, value: ViewerSelectionFlagValue)
+    {
+        visibleVideos = visibleVideos.map((video) => {
+            if (video.id !== videoId) {
+                return video;
+            }
+
+            return {
+                ...video,
+                [kind]: value
+            };
+        });
+    }
+
+    async function handleCardFlagToggle(videoId: number, kind: ViewerSelectionFlagKind, value: ViewerSelectionFlagValue)
+    {
+        if (bulkActionPending) {
+            return;
+        }
+
+        const form = new FormData();
+        form.set('videoId', String(videoId));
+        form.set('kind', kind);
+        form.set('value', String(value));
+
+        const response = await fetch('?/toggleFlag', {
+            method: 'POST',
+            body: form
+        });
+        const result = deserialize(await response.text());
+
+        if (result.type !== 'success' || !result.data) {
+            return;
+        }
+
+        updateVisibleVideoFlag(videoId, kind, value);
+    }
+
     async function handleBulkFlagToggle(kind: ViewerSelectionFlagKind, controlState: ViewerSelectionControlState)
     {
         if (bulkActionPending || selectionState.selectedVideoIds.length === 0) {
@@ -796,10 +834,10 @@
                 {#each visibleVideos as v}
                     <VideoCard
                         video={v}
-                        filters={f}
                         isSelected={selectionState.selectedVideoIds.includes(v.id)}
                         onCardMouseDown={handleCardMouseDown}
                         onCardClick={handleCardClick}
+                        onToggleFlag={handleCardFlagToggle}
                     />
                 {/each}
             </div>
