@@ -16,12 +16,14 @@ export type ViewerSelectionState = {
     currentPageVideoIds: number[];
     currentPageVideos: ViewerSelectionVideoSnapshot[];
     selectedVideoState: Record<number, Omit<ViewerSelectionVideoSnapshot, 'id'>>;
+    baselineSelectedVideoState: Record<number, Omit<ViewerSelectionVideoSnapshot, 'id'>>;
 };
 
 type PersistedViewerSelectionState = {
     selectedVideoIds: number[];
     anchorVideoId: number | null;
     selectedVideoState?: Record<number, Omit<ViewerSelectionVideoSnapshot, 'id'>>;
+    baselineSelectedVideoState?: Record<number, Omit<ViewerSelectionVideoSnapshot, 'id'>>;
 };
 
 const VIEWER_SELECTION_STORAGE_PREFIX = 'ytcw-viewer-selection:';
@@ -142,7 +144,8 @@ export function createViewerSelectionState(contextKey: string, currentPageVideos
         anchorVideoId: null,
         currentPageVideoIds: createCurrentPageVideoIds(normalizedCurrentPageVideos),
         currentPageVideos: normalizedCurrentPageVideos,
-        selectedVideoState: {}
+        selectedVideoState: {},
+        baselineSelectedVideoState: {}
     };
 }
 
@@ -164,6 +167,7 @@ export function reconcileViewerSelectionState(
         ? previousState.anchorVideoId
         : null;
     const selectedVideoState = createViewerSelectionStateMap(selectedVideoIds, previousState.selectedVideoState);
+    const baselineSelectedVideoState = createViewerSelectionStateMap(selectedVideoIds, previousState.baselineSelectedVideoState);
     const currentPageVideoState = createCurrentPageVideoStateMap(normalizedCurrentPageVideos);
 
     for (const videoId of selectedVideoIds) {
@@ -178,7 +182,8 @@ export function reconcileViewerSelectionState(
         anchorVideoId,
         currentPageVideoIds: normalizedCurrentPageIds,
         currentPageVideos: normalizedCurrentPageVideos,
-        selectedVideoState
+        selectedVideoState,
+        baselineSelectedVideoState
     };
 }
 
@@ -212,6 +217,10 @@ export function loadPersistedViewerSelectionState(contextKey: string, currentPag
             : null;
         const normalizedCurrentPageVideos = normalizeViewerSelectionVideoSnapshots(currentPageVideos);
         const selectedVideoState = createViewerSelectionStateMap(selectedVideoIds, parsed?.selectedVideoState);
+        const baselineSelectedVideoState = createViewerSelectionStateMap(
+            selectedVideoIds,
+            parsed?.baselineSelectedVideoState ?? parsed?.selectedVideoState
+        );
         const currentPageVideoState = createCurrentPageVideoStateMap(normalizedCurrentPageVideos);
 
         for (const videoId of selectedVideoIds) {
@@ -226,7 +235,8 @@ export function loadPersistedViewerSelectionState(contextKey: string, currentPag
             anchorVideoId,
             currentPageVideoIds: createCurrentPageVideoIds(normalizedCurrentPageVideos),
             currentPageVideos: normalizedCurrentPageVideos,
-            selectedVideoState
+            selectedVideoState,
+            baselineSelectedVideoState
         };
     } catch {
         window.sessionStorage.removeItem(`${VIEWER_SELECTION_STORAGE_PREFIX}${contextKey}`);
@@ -249,7 +259,8 @@ export function persistViewerSelectionState(state: ViewerSelectionState)
     const payload: PersistedViewerSelectionState = {
         selectedVideoIds: normalizeViewerSelectionIds(state.selectedVideoIds),
         anchorVideoId: state.anchorVideoId,
-        selectedVideoState: createViewerSelectionStateMap(state.selectedVideoIds, state.selectedVideoState)
+        selectedVideoState: createViewerSelectionStateMap(state.selectedVideoIds, state.selectedVideoState),
+        baselineSelectedVideoState: createViewerSelectionStateMap(state.selectedVideoIds, state.baselineSelectedVideoState)
     };
     window.sessionStorage.setItem(storageKey, JSON.stringify(payload));
 }
@@ -271,20 +282,27 @@ export function toggleViewerSelectionVideo(state: ViewerSelectionState, videoId:
     }
 
     const currentPageVideoState = createCurrentPageVideoStateMap(state.currentPageVideos);
+    const wasSelected = state.selectedVideoIds.includes(normalizedVideoId);
     const selectedVideoIds = state.selectedVideoIds.includes(normalizedVideoId)
         ? state.selectedVideoIds.filter((id) => id !== normalizedVideoId)
         : [...state.selectedVideoIds, normalizedVideoId];
     const selectedVideoState = createViewerSelectionStateMap(selectedVideoIds, state.selectedVideoState);
+    const baselineSelectedVideoState = createViewerSelectionStateMap(selectedVideoIds, state.baselineSelectedVideoState);
 
     if (selectedVideoIds.includes(normalizedVideoId) && currentPageVideoState[normalizedVideoId]) {
         selectedVideoState[normalizedVideoId] = currentPageVideoState[normalizedVideoId];
+    }
+
+    if (!wasSelected && selectedVideoIds.includes(normalizedVideoId) && currentPageVideoState[normalizedVideoId]) {
+        baselineSelectedVideoState[normalizedVideoId] = currentPageVideoState[normalizedVideoId];
     }
 
     return {
         ...state,
         selectedVideoIds: normalizeViewerSelectionIds(selectedVideoIds),
         anchorVideoId: normalizedVideoId,
-        selectedVideoState
+        selectedVideoState,
+        baselineSelectedVideoState
     };
 }
 
@@ -297,6 +315,7 @@ export function selectSingleViewerSelectionVideo(state: ViewerSelectionState, vi
 
     const currentPageVideoState = createCurrentPageVideoStateMap(state.currentPageVideos);
     const selectedVideoState: Record<number, Omit<ViewerSelectionVideoSnapshot, 'id'>> = {};
+    const baselineSelectedVideoState: Record<number, Omit<ViewerSelectionVideoSnapshot, 'id'>> = {};
 
     if (currentPageVideoState[normalizedVideoId]) {
         selectedVideoState[normalizedVideoId] = currentPageVideoState[normalizedVideoId];
@@ -304,11 +323,18 @@ export function selectSingleViewerSelectionVideo(state: ViewerSelectionState, vi
         selectedVideoState[normalizedVideoId] = state.selectedVideoState[normalizedVideoId];
     }
 
+    if (state.baselineSelectedVideoState[normalizedVideoId]) {
+        baselineSelectedVideoState[normalizedVideoId] = state.baselineSelectedVideoState[normalizedVideoId];
+    } else if (currentPageVideoState[normalizedVideoId]) {
+        baselineSelectedVideoState[normalizedVideoId] = currentPageVideoState[normalizedVideoId];
+    }
+
     return {
         ...state,
         selectedVideoIds: [normalizedVideoId],
         anchorVideoId: normalizedVideoId,
-        selectedVideoState
+        selectedVideoState,
+        baselineSelectedVideoState
     };
 }
 
@@ -341,16 +367,21 @@ export function selectViewerSelectionRange(state: ViewerSelectionState, videoId:
     if (targetIndex < 0 || anchorIndex < 0) {
         const selectedVideoIds = normalizeViewerSelectionIds([...state.selectedVideoIds, normalizedVideoId]);
         const selectedVideoState = createViewerSelectionStateMap(selectedVideoIds, state.selectedVideoState);
+        const baselineSelectedVideoState = createViewerSelectionStateMap(selectedVideoIds, state.baselineSelectedVideoState);
 
         if (currentPageVideoState[normalizedVideoId]) {
             selectedVideoState[normalizedVideoId] = currentPageVideoState[normalizedVideoId];
+            if (!state.baselineSelectedVideoState[normalizedVideoId]) {
+                baselineSelectedVideoState[normalizedVideoId] = currentPageVideoState[normalizedVideoId];
+            }
         }
 
         return {
             ...state,
             selectedVideoIds,
             anchorVideoId: state.anchorVideoId ?? normalizedVideoId,
-            selectedVideoState
+            selectedVideoState,
+            baselineSelectedVideoState
         };
     }
 
@@ -359,17 +390,22 @@ export function selectViewerSelectionRange(state: ViewerSelectionState, videoId:
     const rangeIds = state.currentPageVideoIds.slice(start, end + 1);
     const selectedVideoIds = normalizeViewerSelectionIds([...state.selectedVideoIds, ...rangeIds]);
     const selectedVideoState = createViewerSelectionStateMap(selectedVideoIds, state.selectedVideoState);
+    const baselineSelectedVideoState = createViewerSelectionStateMap(selectedVideoIds, state.baselineSelectedVideoState);
 
     for (const rangeId of rangeIds) {
         if (currentPageVideoState[rangeId]) {
             selectedVideoState[rangeId] = currentPageVideoState[rangeId];
+            if (!state.baselineSelectedVideoState[rangeId]) {
+                baselineSelectedVideoState[rangeId] = currentPageVideoState[rangeId];
+            }
         }
     }
 
     return {
         ...state,
         selectedVideoIds,
-        selectedVideoState
+        selectedVideoState,
+        baselineSelectedVideoState
     };
 }
 
@@ -444,24 +480,27 @@ export function applyViewerSelectionBulkFlag(
     };
 }
 
-export function restoreViewerSelectionBulkFlagStates(
+export function restoreViewerSelectionVideoStates(
     state: ViewerSelectionState,
-    kind: ViewerSelectionFlagKind,
-    restoredStates: Array<{ videoId: number; value: ViewerSelectionFlagValue }>
+    restoredStates: ViewerSelectionVideoSnapshot[]
 ): ViewerSelectionState
 {
     if (restoredStates.length === 0) {
         return state;
     }
 
-    const restoredStateMap = new Map<number, ViewerSelectionFlagValue>();
+    const restoredStateMap = new Map<number, Omit<ViewerSelectionVideoSnapshot, 'id'>>();
     for (const restoredState of restoredStates) {
-        const videoId = Number(restoredState.videoId);
+        const videoId = Number(restoredState.id);
         if (!Number.isInteger(videoId) || videoId <= 0) {
             continue;
         }
 
-        restoredStateMap.set(videoId, normalizeViewerSelectionFlagValue(restoredState.value));
+        restoredStateMap.set(videoId, {
+            watched: normalizeViewerSelectionFlagValue(restoredState.watched),
+            favorite: normalizeViewerSelectionFlagValue(restoredState.favorite),
+            ignored: normalizeViewerSelectionFlagValue(restoredState.ignored)
+        });
     }
 
     if (restoredStateMap.size === 0) {
@@ -476,16 +515,13 @@ export function restoreViewerSelectionBulkFlagStates(
 
         return {
             ...video,
-            [kind]: restoredStateMap.get(video.id)!
+            ...restoredStateMap.get(video.id)!
         };
     });
 
-    for (const [videoId, value] of restoredStateMap.entries()) {
+    for (const [videoId, restoredState] of restoredStateMap.entries()) {
         if (selectedVideoState[videoId]) {
-            selectedVideoState[videoId] = {
-                ...selectedVideoState[videoId],
-                [kind]: value
-            };
+            selectedVideoState[videoId] = restoredState;
         }
     }
 
@@ -502,6 +538,7 @@ export function clearViewerSelectionState(state: ViewerSelectionState): ViewerSe
         ...state,
         selectedVideoIds: [],
         anchorVideoId: null,
-        selectedVideoState: {}
+        selectedVideoState: {},
+        baselineSelectedVideoState: {}
     };
 }

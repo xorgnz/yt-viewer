@@ -16,7 +16,7 @@
         loadPersistedViewerSelectionState,
         persistViewerSelectionState,
         reconcileViewerSelectionState,
-        restoreViewerSelectionBulkFlagStates,
+        restoreViewerSelectionVideoStates,
         selectViewerSelectionRange,
         toggleSingleViewerSelectionVideo,
         toggleViewerSelectionVideo,
@@ -80,18 +80,17 @@
         ignored: number;
     };
 
-    type BulkUndoState = {
-        videoId: number;
-        value: ViewerSelectionFlagValue;
-    };
-
     type BulkActionFeedback = {
         message: string;
         tone: 'success' | 'warning' | 'error';
         undo: {
-            kind: ViewerSelectionFlagKind;
             requestedVideoIds: number[];
-            originalStates: BulkUndoState[];
+            originalStates: Array<{
+                videoId: number;
+                watched: ViewerSelectionFlagValue;
+                favorite: ViewerSelectionFlagValue;
+                ignored: ViewerSelectionFlagValue;
+            }>;
         } | null;
     };
 
@@ -354,26 +353,30 @@
         return 'error';
     }
 
-    function normalizeBulkUndoPayload(kind: ViewerSelectionFlagKind, rawUndo: unknown): BulkActionFeedback['undo']
+    function buildSelectionBaselineUndoPayload(): BulkActionFeedback['undo']
     {
-        const requestedVideoIds = Array.isArray((rawUndo as any)?.requestedVideoIds)
-            ? (rawUndo as any).requestedVideoIds.filter((value: unknown) => Number.isInteger(value) && Number(value) > 0)
-            : [];
-        const originalStates = Array.isArray((rawUndo as any)?.originalStates)
-            ? (rawUndo as any).originalStates
-                .map((state: any) => ({
-                    videoId: Number(state?.videoId),
-                    value: Number(state?.value) === 1 ? 1 : 0
-                }))
-                .filter((state: BulkUndoState) => Number.isInteger(state.videoId) && state.videoId > 0)
-            : [];
+        const requestedVideoIds = [...selectionState.selectedVideoIds];
+        const originalStates = requestedVideoIds
+            .map((videoId) => {
+                const baselineState = selectionState.baselineSelectedVideoState[videoId];
+                if (!baselineState) {
+                    return null;
+                }
+
+                return {
+                    videoId,
+                    watched: baselineState.watched,
+                    favorite: baselineState.favorite,
+                    ignored: baselineState.ignored
+                };
+            })
+            .filter((state): state is NonNullable<typeof state> => !!state);
 
         if (requestedVideoIds.length === 0 || originalStates.length === 0) {
             return null;
         }
 
         return {
-            kind,
             requestedVideoIds,
             originalStates
         };
@@ -398,11 +401,15 @@
         });
     }
 
-    function restoreVisibleVideoBulkFlagStates(kind: ViewerSelectionFlagKind, restoredStates: BulkUndoState[])
+    function restoreVisibleVideoStates(restoredStates: ViewerSelectionVideoSnapshot[])
     {
-        const restoredStateMap = new Map<number, ViewerSelectionFlagValue>();
+        const restoredStateMap = new Map<number, Omit<ViewerSelectionVideoSnapshot, 'id'>>();
         for (const restoredState of restoredStates) {
-            restoredStateMap.set(restoredState.videoId, restoredState.value);
+            restoredStateMap.set(restoredState.id, {
+                watched: restoredState.watched,
+                favorite: restoredState.favorite,
+                ignored: restoredState.ignored
+            });
         }
 
         if (restoredStateMap.size === 0) {
@@ -416,7 +423,7 @@
 
             return {
                 ...video,
-                [kind]: restoredStateMap.get(video.id)!
+                ...restoredStateMap.get(video.id)!
             };
         });
     }
@@ -460,7 +467,7 @@
                 ? actionResult.succeededIds as number[]
                 : [];
             const feedbackTone = getBulkActionFeedbackTone(actionResult.outcome, actionResult.ok);
-            const undo = normalizeBulkUndoPayload(kind, actionResult.undo);
+            const undo = buildSelectionBaselineUndoPayload();
 
             bulkActionFeedback = {
                 message: String(actionResult.message || failureMessage),
@@ -486,12 +493,11 @@
         try {
             const undo = bulkActionFeedback.undo;
             const form = new FormData();
-            form.set('kind', undo.kind);
             form.set('videoIds', undo.requestedVideoIds.join(','));
             form.set('originalStates', JSON.stringify(undo.originalStates));
             form.set('selectionContextKey', selectionState.contextKey);
 
-            const response = await fetch('?/undoBulkUpdateFlags', {
+            const response = await fetch('?/restoreSelectionState', {
                 method: 'POST',
                 body: form
             });
@@ -514,14 +520,20 @@
                     : []
             );
             const restoredStates = undo.originalStates.filter((state) => succeededIdSet.has(state.videoId));
+            const restoredSnapshots = restoredStates.map((state) => ({
+                id: state.videoId,
+                watched: state.watched,
+                favorite: state.favorite,
+                ignored: state.ignored
+            }));
 
-            selectionState = restoreViewerSelectionBulkFlagStates(selectionState, undo.kind, restoredStates);
-            restoreVisibleVideoBulkFlagStates(undo.kind, restoredStates);
+            selectionState = restoreViewerSelectionVideoStates(selectionState, restoredSnapshots);
+            restoreVisibleVideoStates(restoredSnapshots);
 
             bulkActionFeedback = {
                 message: String(actionResult.message || failureMessage),
                 tone: getBulkActionFeedbackTone(actionResult.outcome, actionResult.ok),
-                undo: null
+                undo: actionResult.outcome === 'full_success' ? null : undo
             };
         } finally {
             bulkActionPending = false;

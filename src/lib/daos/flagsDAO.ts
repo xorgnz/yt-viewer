@@ -149,4 +149,40 @@ export class FlagsDAO extends SqliteDAO
 
         transaction(Array.from(uniqueEntries.entries()).map(([videoId, value]) => ({ videoId, value })));
     }
+
+    setMany(entries: Array<{ videoId: number; watched: 0 | 1; favorite: 0 | 1; ignored: 0 | 1 }>, profileId: number)
+    {
+        if (entries.length === 0) {
+            return;
+        }
+
+        const uniqueEntries = new Map<number, { watched: 0 | 1; favorite: 0 | 1; ignored: 0 | 1 }>();
+        for (const entry of entries) {
+            uniqueEntries.set(entry.videoId, {
+                watched: entry.watched,
+                favorite: entry.favorite,
+                ignored: entry.ignored
+            });
+        }
+
+        const videoIds = Array.from(uniqueEntries.keys());
+        this.ensureRows(videoIds, profileId);
+
+        const update = this.db.prepare(`
+            UPDATE video_flags
+            SET watched = ?,
+                favorite = ?,
+                ignored = ?,
+                updated_at = (strftime('%s','now')*1000)
+            WHERE video_id = ?
+              AND profile_id = ?
+        `);
+        const transaction = this.db.transaction((items: Array<{ videoId: number; watched: 0 | 1; favorite: 0 | 1; ignored: 0 | 1 }>) => {
+            for (const item of items) {
+                update.run(item.watched, item.favorite, item.ignored, item.videoId, profileId);
+            }
+        });
+
+        transaction(Array.from(uniqueEntries.entries()).map(([videoId, value]) => ({ videoId, ...value })));
+    }
 }

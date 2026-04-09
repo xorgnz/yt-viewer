@@ -527,4 +527,79 @@ describe('viewer bulk flag actions', () => {
             db.close();
         }
     });
+
+    it('restores the selected set back to its original multi-flag state after multiple bulk actions', async () => {
+        const watchedForm = new FormData();
+        watchedForm.set('kind', 'watched');
+        watchedForm.set('value', '1');
+        watchedForm.set('videoIds', '1,2,3');
+
+        const favoriteForm = new FormData();
+        favoriteForm.set('kind', 'favorite');
+        favoriteForm.set('value', '1');
+        favoriteForm.set('videoIds', '1,2,3');
+
+        await routeModule.actions.bulkUpdateFlags({
+            request: new Request('http://localhost/viewer', {
+                method: 'POST',
+                body: watchedForm
+            }),
+            cookies: cookieJar()
+        } as any);
+
+        await routeModule.actions.bulkUpdateFlags({
+            request: new Request('http://localhost/viewer', {
+                method: 'POST',
+                body: favoriteForm
+            }),
+            cookies: cookieJar()
+        } as any);
+
+        const restoreForm = new FormData();
+        restoreForm.set('videoIds', '1,2,3');
+        restoreForm.set('originalStates', JSON.stringify([
+            { videoId: 1, watched: 0, favorite: 0, ignored: 0 },
+            { videoId: 2, watched: 1, favorite: 1, ignored: 0 },
+            { videoId: 3, watched: 0, favorite: 0, ignored: 1 }
+        ]));
+
+        const restoreResult = await routeModule.actions.restoreSelectionState({
+            request: new Request('http://localhost/viewer', {
+                method: 'POST',
+                body: restoreForm
+            }),
+            cookies: cookieJar()
+        } as any);
+
+        expect(restoreResult).toMatchObject({
+            ok: true,
+            outcome: 'full_success',
+            requestedCount: 3,
+            attemptedCount: 3,
+            succeededCount: 3,
+            failedCount: 0,
+            skippedCount: 0,
+            succeededIds: [1, 2, 3],
+            failedIds: [],
+            skippedIds: [],
+            message: '3 videos restored.'
+        });
+
+        const db = openDb();
+        try {
+            const rows = db.prepare(`
+                SELECT video_id, watched, favorite, ignored
+                FROM video_flags
+                WHERE profile_id = 1
+                ORDER BY video_id
+            `).all() as Array<{ video_id: number; watched: number; favorite: number; ignored: number }>;
+            expect(rows.map((row) => [row.video_id, row.watched, row.favorite, row.ignored])).toEqual([
+                [1, 0, 0, 0],
+                [2, 1, 1, 0],
+                [3, 0, 0, 1]
+            ]);
+        } finally {
+            db.close();
+        }
+    });
 });

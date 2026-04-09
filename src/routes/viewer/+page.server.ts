@@ -44,6 +44,13 @@ type BulkUndoState = {
     value: BulkFlagValue;
 };
 
+type BulkRestoreState = {
+    videoId: number;
+    watched: BulkFlagValue;
+    favorite: BulkFlagValue;
+    ignored: BulkFlagValue;
+};
+
 function parseBulkFlagKind(raw: FormDataEntryValue | null): BulkFlagKind | null
 {
     const value = String(raw || '').trim();
@@ -94,6 +101,50 @@ function parseUndoStates(raw: FormDataEntryValue | null): BulkUndoState[] | null
                 return null;
             }
             states.push({ videoId, value: value as BulkFlagValue });
+        }
+
+        return states;
+    } catch {
+        return null;
+    }
+}
+
+function parseRestoreStates(raw: FormDataEntryValue | null): BulkRestoreState[] | null
+{
+    const text = String(raw || '').trim();
+    if (!text) {
+        return [];
+    }
+
+    try {
+        const parsed = JSON.parse(text);
+        if (!Array.isArray(parsed)) {
+            return null;
+        }
+
+        const states: BulkRestoreState[] = [];
+        for (const item of parsed) {
+            const videoId = Number((item as any)?.videoId);
+            const watched = Number((item as any)?.watched);
+            const favorite = Number((item as any)?.favorite);
+            const ignored = Number((item as any)?.ignored);
+
+            if (
+                !Number.isInteger(videoId) ||
+                videoId <= 0 ||
+                (watched !== 0 && watched !== 1) ||
+                (favorite !== 0 && favorite !== 1) ||
+                (ignored !== 0 && ignored !== 1)
+            ) {
+                return null;
+            }
+
+            states.push({
+                videoId,
+                watched: watched as BulkFlagValue,
+                favorite: favorite as BulkFlagValue,
+                ignored: ignored as BulkFlagValue
+            });
         }
 
         return states;
@@ -383,6 +434,74 @@ export const actions = {
                 selectionContextKey,
                 selectedCount: requestedUndoIds.length,
                 requestedCount: requestedUndoIds.length,
+                attemptedCount: applicableStates.length,
+                succeededCount: succeededIds.length,
+                failedCount: failedIds.length,
+                skippedCount: skippedIds.length,
+                succeededIds,
+                failedIds,
+                skippedIds,
+                message
+            };
+        } finally {
+            dbw.close();
+        }
+    },
+
+    async restoreSelectionState({ request, cookies }: { request: Request; cookies: any })
+    {
+        const form = await request.formData();
+        const requestedVideoIds = parseVideoIds(form.get('videoIds'));
+        const restoreStates = parseRestoreStates(form.get('originalStates'));
+        const selectionContextKey = String(form.get('selectionContextKey') || '').trim() || null;
+        const profileKey = getActiveProfileKey(cookies);
+
+        if (restoreStates === null) {
+            return fail(400, { message: 'Invalid restore parameters' });
+        }
+
+        const dbw = new DatabaseWrapper(getMode());
+        const db = dbw.open();
+        try {
+            const pDao = new ProfileDAO(db);
+            ensureProfiles(pDao);
+            const profile = pDao.getByKey(profileKey) || pDao.getByKey('default');
+            const profileId = profile!.id;
+
+            const videos = new VideoDAO(db);
+            const flags = new FlagsDAO(db);
+            const existingIds = videos.listExistingIds(requestedVideoIds);
+            const existingIdSet = new Set(existingIds);
+            const requestedRestoreIds = requestedVideoIds.length > 0
+                ? requestedVideoIds
+                : restoreStates.map((state) => state.videoId);
+            const restoreStateMap = new Map<number, BulkRestoreState>();
+            for (const state of restoreStates) {
+                restoreStateMap.set(state.videoId, state);
+            }
+
+            const applicableStates = requestedRestoreIds
+                .filter((videoId) => existingIdSet.has(videoId) && restoreStateMap.has(videoId))
+                .map((videoId) => restoreStateMap.get(videoId)!);
+            const succeededIds = applicableStates.map((state) => state.videoId);
+            const failedIds = requestedRestoreIds.filter((videoId) => !existingIdSet.has(videoId));
+            const skippedIds = requestedRestoreIds.filter((videoId) => existingIdSet.has(videoId) && !restoreStateMap.has(videoId));
+
+            flags.setMany(applicableStates, profileId);
+
+            const message = formatBulkMessage(
+                succeededIds.length,
+                failedIds.length,
+                skippedIds.length,
+                'restored'
+            );
+
+            return {
+                ok: succeededIds.length > 0,
+                outcome: getOutcome(succeededIds.length, failedIds.length, skippedIds.length),
+                selectionContextKey,
+                selectedCount: requestedRestoreIds.length,
+                requestedCount: requestedRestoreIds.length,
                 attemptedCount: applicableStates.length,
                 succeededCount: succeededIds.length,
                 failedCount: failedIds.length,
