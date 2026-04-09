@@ -354,4 +354,128 @@ describe('viewer bulk flag actions', () => {
             db.close();
         }
     });
+
+    it('undo restores the original mixed watched state after a bulk action', async () => {
+        const bulkForm = new FormData();
+        bulkForm.set('kind', 'watched');
+        bulkForm.set('value', '1');
+        bulkForm.set('videoIds', '1,2,3');
+
+        const bulkResult = await routeModule.actions.bulkUpdateFlags({
+            request: new Request('http://localhost/viewer', {
+                method: 'POST',
+                body: bulkForm
+            }),
+            cookies: cookieJar()
+        } as any);
+
+        expect((bulkResult as any).outcome).toBe('full_success');
+
+        const undoForm = new FormData();
+        undoForm.set('kind', 'watched');
+        undoForm.set('videoIds', '1,2,3');
+        undoForm.set('originalStates', JSON.stringify((bulkResult as any).undo.originalStates));
+
+        const undoResult = await routeModule.actions.undoBulkUpdateFlags({
+            request: new Request('http://localhost/viewer', {
+                method: 'POST',
+                body: undoForm
+            }),
+            cookies: cookieJar()
+        } as any);
+
+        expect(undoResult).toMatchObject({
+            ok: true,
+            outcome: 'full_success',
+            kind: 'watched',
+            requestedCount: 3,
+            attemptedCount: 3,
+            succeededCount: 3,
+            failedCount: 0,
+            skippedCount: 0,
+            succeededIds: [1, 2, 3],
+            failedIds: [],
+            skippedIds: [],
+            message: '3 videos restored.'
+        });
+
+        const db = openDb();
+        try {
+            const rows = db.prepare(`
+                SELECT video_id, watched
+                FROM video_flags
+                WHERE profile_id = 1
+                ORDER BY video_id
+            `).all() as Array<{ video_id: number; watched: number }>;
+            expect(rows.map((row) => [row.video_id, row.watched])).toEqual([
+                [1, 0],
+                [2, 1],
+                [3, 0]
+            ]);
+        } finally {
+            db.close();
+        }
+    });
+
+    it('undo restores the original mixed ignored state after a bulk action', async () => {
+        const bulkForm = new FormData();
+        bulkForm.set('kind', 'ignored');
+        bulkForm.set('value', '1');
+        bulkForm.set('videoIds', '1,2,3');
+
+        const bulkResult = await routeModule.actions.bulkUpdateFlags({
+            request: new Request('http://localhost/viewer', {
+                method: 'POST',
+                body: bulkForm
+            }),
+            cookies: cookieJar()
+        } as any);
+
+        expect((bulkResult as any).outcome).toBe('full_success');
+
+        const undoForm = new FormData();
+        undoForm.set('kind', 'ignored');
+        undoForm.set('videoIds', '1,2,3');
+        undoForm.set('originalStates', JSON.stringify((bulkResult as any).undo.originalStates));
+
+        const undoResult = await routeModule.actions.undoBulkUpdateFlags({
+            request: new Request('http://localhost/viewer', {
+                method: 'POST',
+                body: undoForm
+            }),
+            cookies: cookieJar()
+        } as any);
+
+        expect(undoResult).toMatchObject({
+            ok: true,
+            outcome: 'full_success',
+            kind: 'ignored',
+            requestedCount: 3,
+            attemptedCount: 3,
+            succeededCount: 3,
+            failedCount: 0,
+            skippedCount: 0,
+            succeededIds: [1, 2, 3],
+            failedIds: [],
+            skippedIds: [],
+            message: '3 videos restored.'
+        });
+
+        const db = openDb();
+        try {
+            const rows = db.prepare(`
+                SELECT video_id, ignored
+                FROM video_flags
+                WHERE profile_id = 1
+                ORDER BY video_id
+            `).all() as Array<{ video_id: number; ignored: number }>;
+            expect(rows.map((row) => [row.video_id, row.ignored])).toEqual([
+                [1, 0],
+                [2, 0],
+                [3, 1]
+            ]);
+        } finally {
+            db.close();
+        }
+    });
 });
