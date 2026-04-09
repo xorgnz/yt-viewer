@@ -4,6 +4,7 @@
     import DatePicker from '$lib/components/DatePicker.svelte';
     import VideoCard from '$lib/components/VideoCard.svelte';
     import {
+        clearPersistedViewerSelectionState,
         createViewerSelectionContextKey,
         createViewerSelectionState,
         loadPersistedViewerSelectionState,
@@ -262,9 +263,15 @@
             groupId: f.groupId
         });
         const nextCurrentPageVideoIds = data.videos.map((video) => video.id);
+        const contextChanged = selectionState.contextKey !== nextContextKey;
+
+        if (browser && selectionState.contextKey && contextChanged) {
+            clearPersistedViewerSelectionState(selectionState.contextKey);
+            hydratedSelectionContextKey = nextContextKey;
+        }
 
         if (
-            selectionState.contextKey !== nextContextKey ||
+            contextChanged ||
             selectionState.currentPageVideoIds.join(',') !== nextCurrentPageVideoIds.join(',')
         ) {
             selectionState = reconcileViewerSelectionState(selectionState, nextContextKey, nextCurrentPageVideoIds);

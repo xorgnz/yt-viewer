@@ -26,12 +26,12 @@
   - [x] 2.4 Add a viewer undo endpoint that can restore original flag values for the previously affected selected set
   - [x] 2.5 Ensure partial-failure cases are reported explicitly without hiding successful updates
 
-- [ ] 3.0 Add viewer multi-selection behavior across the filtered and paginated result set
+- [x] 3.0 Add viewer multi-selection behavior across the filtered and paginated result set
   - [x] 3.1 Add client-side selection state management for selected ids, selection anchor, and current-page membership
   - [x] 3.2 Implement Ctrl or platform-equivalent additive selection on viewer cards
   - [x] 3.3 Implement Shift range selection based on the current selection anchor
   - [x] 3.4 Preserve selection across pagination within the current filtered result set
-  - [ ] 3.5 Clear selection automatically when the viewer filter set changes
+  - [x] 3.5 Clear selection automatically when the viewer filter set changes
 
 - [ ] 4.0 Build the bulk-selection UI and selected-state affordances in the viewer
   - [ ] 4.1 Add selected-state card visuals, including blue outline and blue checkmark feedback

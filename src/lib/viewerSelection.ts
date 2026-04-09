@@ -5,6 +5,13 @@ export type ViewerSelectionState = {
     currentPageVideoIds: number[];
 };
 
+type PersistedViewerSelectionState = {
+    selectedVideoIds: number[];
+    anchorVideoId: number | null;
+};
+
+const VIEWER_SELECTION_STORAGE_PREFIX = 'ytcw-viewer-selection:';
+
 type ViewerSelectionContextInput = {
     profileKey: string;
     term?: string;
@@ -83,6 +90,64 @@ export function getCurrentPageSelectedVideoIds(state: ViewerSelectionState): num
 export function hasSelectionOutsideCurrentPage(state: ViewerSelectionState): boolean
 {
     return state.selectedVideoIds.length > getCurrentPageSelectedVideoIds(state).length;
+}
+
+export function loadPersistedViewerSelectionState(contextKey: string, currentPageVideoIds: number[]): ViewerSelectionState | null
+{
+    if (typeof window === 'undefined') {
+        return null;
+    }
+
+    const raw = window.sessionStorage.getItem(`${VIEWER_SELECTION_STORAGE_PREFIX}${contextKey}`);
+    if (!raw) {
+        return null;
+    }
+
+    try {
+        const parsed = JSON.parse(raw) as PersistedViewerSelectionState;
+        const selectedVideoIds = normalizeViewerSelectionIds(parsed?.selectedVideoIds || []);
+        const anchorVideoId = parsed?.anchorVideoId != null && selectedVideoIds.includes(parsed.anchorVideoId)
+            ? parsed.anchorVideoId
+            : null;
+
+        return {
+            contextKey,
+            selectedVideoIds,
+            anchorVideoId,
+            currentPageVideoIds: normalizeViewerSelectionIds(currentPageVideoIds)
+        };
+    } catch {
+        window.sessionStorage.removeItem(`${VIEWER_SELECTION_STORAGE_PREFIX}${contextKey}`);
+        return null;
+    }
+}
+
+export function persistViewerSelectionState(state: ViewerSelectionState)
+{
+    if (typeof window === 'undefined') {
+        return;
+    }
+
+    const storageKey = `${VIEWER_SELECTION_STORAGE_PREFIX}${state.contextKey}`;
+    if (state.selectedVideoIds.length === 0 && state.anchorVideoId == null) {
+        window.sessionStorage.removeItem(storageKey);
+        return;
+    }
+
+    const payload: PersistedViewerSelectionState = {
+        selectedVideoIds: normalizeViewerSelectionIds(state.selectedVideoIds),
+        anchorVideoId: state.anchorVideoId
+    };
+    window.sessionStorage.setItem(storageKey, JSON.stringify(payload));
+}
+
+export function clearPersistedViewerSelectionState(contextKey: string)
+{
+    if (typeof window === 'undefined' || !contextKey) {
+        return;
+    }
+
+    window.sessionStorage.removeItem(`${VIEWER_SELECTION_STORAGE_PREFIX}${contextKey}`);
 }
 
 export function toggleViewerSelectionVideo(state: ViewerSelectionState, videoId: number): ViewerSelectionState
