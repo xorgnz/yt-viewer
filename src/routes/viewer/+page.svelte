@@ -7,6 +7,8 @@
         clearPersistedViewerSelectionState,
         createViewerSelectionContextKey,
         createViewerSelectionState,
+        getCurrentPageSelectedVideoIds,
+        hasSelectionOutsideCurrentPage,
         loadPersistedViewerSelectionState,
         persistViewerSelectionState,
         reconcileViewerSelectionState,
@@ -70,6 +72,8 @@
     let selectionState: ViewerSelectionState = createViewerSelectionState('', []);
     let hydratedSelectionContextKey: string | null = null;
     let hasActiveSelection = false;
+    let selectedCount = 0;
+    let offPageSelectedCount = 0;
 
     function buildPageHref(page: number): string
     {
@@ -253,6 +257,10 @@
     $: currentPage = Math.min(totalPages, Math.floor(f.offset / f.limit) + 1);
     $: visiblePages = getVisiblePages(currentPage, totalPages);
     $: hasActiveSelection = selectionState.selectedVideoIds.length > 0;
+    $: selectedCount = selectionState.selectedVideoIds.length;
+    $: offPageSelectedCount = hasSelectionOutsideCurrentPage(selectionState)
+        ? selectedCount - getCurrentPageSelectedVideoIds(selectionState).length
+        : 0;
     $: {
         const nextContextKey = createViewerSelectionContextKey({
             profileKey: data.profileKey,
@@ -371,7 +379,12 @@
             <div class="bulk-action-bar" role="status" aria-live="polite">
                 <div class="bulk-action-copy">
                     <strong>Bulk actions</strong>
-                    <span>Selection active. Bulk controls will apply to the selected videos.</span>
+                    <span>{selectedCount} {selectedCount === 1 ? 'video selected' : 'videos selected'}</span>
+                    {#if offPageSelectedCount > 0}
+                        <span class="bulk-action-note">
+                            {offPageSelectedCount} {offPageSelectedCount === 1 ? 'selected video is' : 'selected videos are'} on other pages.
+                        </span>
+                    {/if}
                 </div>
             </div>
         {/if}
@@ -515,6 +528,11 @@
     .bulk-action-copy span {
         color: var(--text-muted);
         font-size: 0.92rem;
+    }
+
+    .bulk-action-note {
+        color: color-mix(in srgb, var(--accent) 72%, white);
+        font-weight: 600;
     }
 
     .pager {
