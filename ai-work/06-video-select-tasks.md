@@ -30,7 +30,7 @@
   - [x] 3.1 Add client-side selection state management for selected ids, selection anchor, and current-page membership
   - [x] 3.2 Implement Ctrl or platform-equivalent additive selection on viewer cards
   - [x] 3.3 Implement Shift range selection based on the current selection anchor
-  - [ ] 3.4 Preserve selection across pagination within the current filtered result set
+  - [x] 3.4 Preserve selection across pagination within the current filtered result set
   - [ ] 3.5 Clear selection automatically when the viewer filter set changes
 
 - [ ] 4.0 Build the bulk-selection UI and selected-state affordances in the viewer

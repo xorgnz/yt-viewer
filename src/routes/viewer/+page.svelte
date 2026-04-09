@@ -1,10 +1,13 @@
 <script lang="ts">
+    import { browser } from '$app/environment';
     import { goto } from '$app/navigation';
     import DatePicker from '$lib/components/DatePicker.svelte';
     import VideoCard from '$lib/components/VideoCard.svelte';
     import {
         createViewerSelectionContextKey,
         createViewerSelectionState,
+        loadPersistedViewerSelectionState,
+        persistViewerSelectionState,
         reconcileViewerSelectionState,
         selectViewerSelectionRange,
         toggleViewerSelectionVideo,
@@ -64,6 +67,7 @@
     let showIgnored = f.ignored === 'show';
     let debounceTimer: ReturnType<typeof setTimeout> | null = null;
     let selectionState: ViewerSelectionState = createViewerSelectionState('', []);
+    let hydratedSelectionContextKey: string | null = null;
 
     function buildPageHref(page: number): string
     {
@@ -265,6 +269,23 @@
         ) {
             selectionState = reconcileViewerSelectionState(selectionState, nextContextKey, nextCurrentPageVideoIds);
         }
+    }
+
+    $: if (browser && selectionState.contextKey && hydratedSelectionContextKey !== selectionState.contextKey) {
+        const persistedSelectionState = loadPersistedViewerSelectionState(
+            selectionState.contextKey,
+            selectionState.currentPageVideoIds
+        );
+
+        if (persistedSelectionState) {
+            selectionState = persistedSelectionState;
+        }
+
+        hydratedSelectionContextKey = selectionState.contextKey;
+    }
+
+    $: if (browser && selectionState.contextKey && hydratedSelectionContextKey === selectionState.contextKey) {
+        persistViewerSelectionState(selectionState);
     }
 </script>
 
