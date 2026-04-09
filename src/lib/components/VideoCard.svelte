@@ -28,6 +28,7 @@
     };
     export let isSelected = false;
     export let onCardClick: ((event: MouseEvent | KeyboardEvent, videoId: number) => void) | null = null;
+    export let onCardMouseDown: ((event: MouseEvent, videoId: number) => void) | null = null;
 
     function fmtDate(ms: number | null): string {
         if (!ms) return '';
@@ -68,6 +69,7 @@
     role="button"
     tabindex="0"
     aria-pressed={isSelected}
+    on:mousedown={(event) => onCardMouseDown?.(event, video.id)}
     on:click={(event) => onCardClick?.(event, video.id)}
     on:keydown={(event) => onCardClick?.(event, video.id)}
     title={video.title}

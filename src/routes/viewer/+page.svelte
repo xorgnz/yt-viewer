@@ -293,6 +293,22 @@
         selectionState = toggleViewerSelectionVideo(selectionState, videoId);
     }
 
+    function handleCardMouseDown(event: MouseEvent)
+    {
+        if (bulkActionPending) {
+            return;
+        }
+
+        const target = event.target as HTMLElement | null;
+        if (target?.closest('button, form')) {
+            return;
+        }
+
+        if (event.shiftKey || event.ctrlKey || event.metaKey) {
+            event.preventDefault();
+        }
+    }
+
     function handleViewerBackgroundClick(event: MouseEvent)
     {
         if (
@@ -762,6 +778,7 @@
                         video={v}
                         filters={f}
                         isSelected={selectionState.selectedVideoIds.includes(v.id)}
+                        onCardMouseDown={handleCardMouseDown}
                         onCardClick={handleCardClick}
                     />
                 {/each}
