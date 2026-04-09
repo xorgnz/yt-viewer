@@ -41,7 +41,7 @@
   - [x] 4.5 Add success, partial-failure, and undo feedback in the bulk-action bar while keeping the selection active
 
 - [ ] 5.0 Validate bulk viewer selection, tri-state behavior, and undo with focused automated tests
-  - [ ] 5.1 Add server or route tests for bulk watched, favorite, and ignored updates on selected id sets
+  - [x] 5.1 Add server or route tests for bulk watched, favorite, and ignored updates on selected id sets
   - [ ] 5.2 Add tests for undo restoring previous flag values, including mixed-state recovery cases
   - [ ] 5.3 Add tests covering partial-failure reporting and partial undo reporting
   - [ ] 5.4 Add client-relevant tests where practical for selection-clearing behavior on filter changes

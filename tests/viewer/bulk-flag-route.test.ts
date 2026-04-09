@@ -144,6 +144,124 @@ describe('viewer bulk flag actions', () => {
         }
     });
 
+    it('bulk updates favorite flags and returns undo data', async () => {
+        const form = new FormData();
+        form.set('kind', 'favorite');
+        form.set('value', '1');
+        form.set('videoIds', '1,3');
+        form.set('selectedCount', '2');
+
+        const result = await routeModule.actions.bulkUpdateFlags({
+            request: new Request('http://localhost/viewer', {
+                method: 'POST',
+                body: form
+            }),
+            cookies: cookieJar()
+        } as any);
+
+        expect(result).toMatchObject({
+            ok: true,
+            outcome: 'full_success',
+            kind: 'favorite',
+            value: 1,
+            selectedCount: 2,
+            requestedCount: 2,
+            attemptedCount: 2,
+            succeededCount: 2,
+            failedCount: 0,
+            skippedCount: 0,
+            succeededIds: [1, 3],
+            failedIds: [],
+            skippedIds: [],
+            message: '2 videos marked favorite.'
+        });
+        expect((result as any).undo).toEqual({
+            kind: 'favorite',
+            value: 1,
+            requestedVideoIds: [1, 3],
+            originalStates: [
+                { videoId: 1, value: 0 },
+                { videoId: 3, value: 0 }
+            ]
+        });
+
+        const db = openDb();
+        try {
+            const rows = db.prepare(`
+                SELECT video_id, favorite
+                FROM video_flags
+                WHERE profile_id = 1
+                ORDER BY video_id
+            `).all() as Array<{ video_id: number; favorite: number }>;
+            expect(rows.map((row) => [row.video_id, row.favorite])).toEqual([
+                [1, 1],
+                [2, 1],
+                [3, 1]
+            ]);
+        } finally {
+            db.close();
+        }
+    });
+
+    it('bulk updates ignored flags and returns undo data', async () => {
+        const form = new FormData();
+        form.set('kind', 'ignored');
+        form.set('value', '1');
+        form.set('videoIds', '1,2');
+        form.set('selectedCount', '2');
+
+        const result = await routeModule.actions.bulkUpdateFlags({
+            request: new Request('http://localhost/viewer', {
+                method: 'POST',
+                body: form
+            }),
+            cookies: cookieJar()
+        } as any);
+
+        expect(result).toMatchObject({
+            ok: true,
+            outcome: 'full_success',
+            kind: 'ignored',
+            value: 1,
+            selectedCount: 2,
+            requestedCount: 2,
+            attemptedCount: 2,
+            succeededCount: 2,
+            failedCount: 0,
+            skippedCount: 0,
+            succeededIds: [1, 2],
+            failedIds: [],
+            skippedIds: [],
+            message: '2 videos marked ignored.'
+        });
+        expect((result as any).undo).toEqual({
+            kind: 'ignored',
+            value: 1,
+            requestedVideoIds: [1, 2],
+            originalStates: [
+                { videoId: 1, value: 0 },
+                { videoId: 2, value: 0 }
+            ]
+        });
+
+        const db = openDb();
+        try {
+            const rows = db.prepare(`
+                SELECT video_id, ignored
+                FROM video_flags
+                WHERE profile_id = 1
+                ORDER BY video_id
+            `).all() as Array<{ video_id: number; ignored: number }>;
+            expect(rows.map((row) => [row.video_id, row.ignored])).toEqual([
+                [1, 1],
+                [2, 1],
+                [3, 1]
+            ]);
+        } finally {
+            db.close();
+        }
+    });
+
     it('reports partial success when some requested ids do not exist', async () => {
         const form = new FormData();
         form.set('kind', 'favorite');
