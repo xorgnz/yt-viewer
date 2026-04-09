@@ -103,6 +103,22 @@ The feature will support mouse-based range and additive selection, cross-paginat
 42. The viewer must gain server-side support for undoing the most recent bulk update scope represented by the client request.
 43. Bulk update and undo responses must return enough result detail for the client to show success, partial-failure, and mixed-state recovery feedback.
 
+#### Bulk Action Request Contract
+
+- The bulk-action request must identify exactly one target flag per request: `watched`, `favorite`, or `ignored`.
+- The request must carry the selected video ids as explicit identifiers rather than as page-local indexes.
+- The request must carry the desired target boolean value for the selected set so mixed-state transitions resolve deterministically.
+- The request must carry enough selection-context information to reject or safely ignore stale requests generated from an outdated filter context when needed.
+- The request should carry lightweight client context metadata, such as selected-count and whether selection spans multiple pages, only when it materially improves validation or response messaging.
+
+#### Bulk Action Response Contract
+
+- The bulk-action response must identify the target flag and the requested target boolean value.
+- The response must report the total selected count and the count of ids the server attempted to process.
+- The response must report which ids were successfully updated and which ids failed.
+- The response must provide enough original-state information for a follow-up undo request covering the same action scope.
+- The response must include user-facing summary text suitable for the bulk-action bar without requiring the client to reconstruct the action meaning from low-level fields.
+
 ## Constraints and Considerations
 
 - Filter changes invalidate the current selection.
