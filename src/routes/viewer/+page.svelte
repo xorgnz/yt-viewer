@@ -2,6 +2,12 @@
     import { goto } from '$app/navigation';
     import DatePicker from '$lib/components/DatePicker.svelte';
     import VideoCard from '$lib/components/VideoCard.svelte';
+    import {
+        createViewerSelectionContextKey,
+        createViewerSelectionState,
+        reconcileViewerSelectionState,
+        type ViewerSelectionState
+    } from '$lib/viewerSelection';
 
     export let data: {
         filters: {
@@ -55,6 +61,7 @@
     let watchedMode: 'all' | 'watched' | 'unwatched' = f.watched;
     let showIgnored = f.ignored === 'show';
     let debounceTimer: ReturnType<typeof setTimeout> | null = null;
+    let selectionState: ViewerSelectionState = createViewerSelectionState('', []);
 
     function buildPageHref(page: number): string
     {
@@ -200,6 +207,26 @@
     $: totalPages = Math.max(1, Math.ceil(data.totalCount / f.limit));
     $: currentPage = Math.min(totalPages, Math.floor(f.offset / f.limit) + 1);
     $: visiblePages = getVisiblePages(currentPage, totalPages);
+    $: {
+        const nextContextKey = createViewerSelectionContextKey({
+            profileKey: data.profileKey,
+            term: f.term,
+            watched: f.watched,
+            ignored: f.ignored,
+            dateFromInput: f.dateFromInput,
+            dateToInput: f.dateToInput,
+            channelId: f.channelId,
+            groupId: f.groupId
+        });
+        const nextCurrentPageVideoIds = data.videos.map((video) => video.id);
+
+        if (
+            selectionState.contextKey !== nextContextKey ||
+            selectionState.currentPageVideoIds.join(',') !== nextCurrentPageVideoIds.join(',')
+        ) {
+            selectionState = reconcileViewerSelectionState(selectionState, nextContextKey, nextCurrentPageVideoIds);
+        }
+    }
 </script>
 
 <div class="page stack">

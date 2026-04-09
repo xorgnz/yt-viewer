@@ -27,7 +27,7 @@
   - [x] 2.5 Ensure partial-failure cases are reported explicitly without hiding successful updates
 
 - [ ] 3.0 Add viewer multi-selection behavior across the filtered and paginated result set
-  - [ ] 3.1 Add client-side selection state management for selected ids, selection anchor, and current-page membership
+  - [x] 3.1 Add client-side selection state management for selected ids, selection anchor, and current-page membership
   - [ ] 3.2 Implement Ctrl or platform-equivalent additive selection on viewer cards
   - [ ] 3.3 Implement Shift range selection based on the current selection anchor
   - [ ] 3.4 Preserve selection across pagination within the current filtered result set
