@@ -19,12 +19,12 @@
   - [x] 1.4 Define the undo payload and response contract so the client can restore original mixed flag state after a bulk action
   - [x] 1.5 Define how bulk responses report full success, partial success, failed ids, and human-readable action feedback
 
-- [ ] 2.0 Add server-side bulk flag update and undo support for the viewer
-  - [ ] 2.1 Add shared persistence helpers or DAO support for applying one boolean flag value across many selected videos
-  - [ ] 2.2 Add a viewer bulk-action endpoint that can update watched, favorite, or ignored for a supplied selected set
-  - [ ] 2.3 Ensure the bulk-action endpoint returns enough detail for selected count, changed count, failed ids, and user-facing feedback
-  - [ ] 2.4 Add a viewer undo endpoint that can restore original flag values for the previously affected selected set
-  - [ ] 2.5 Ensure partial-failure cases are reported explicitly without hiding successful updates
+- [x] 2.0 Add server-side bulk flag update and undo support for the viewer
+  - [x] 2.1 Add shared persistence helpers or DAO support for applying one boolean flag value across many selected videos
+  - [x] 2.2 Add a viewer bulk-action endpoint that can update watched, favorite, or ignored for a supplied selected set
+  - [x] 2.3 Ensure the bulk-action endpoint returns enough detail for selected count, changed count, failed ids, and user-facing feedback
+  - [x] 2.4 Add a viewer undo endpoint that can restore original flag values for the previously affected selected set
+  - [x] 2.5 Ensure partial-failure cases are reported explicitly without hiding successful updates
 
 - [ ] 3.0 Add viewer multi-selection behavior across the filtered and paginated result set
   - [ ] 3.1 Add client-side selection state management for selected ids, selection anchor, and current-page membership

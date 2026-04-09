@@ -3,7 +3,7 @@ import { VideoDAO } from '$lib/daos/videoDAO';
 import { SourceChannelDAO } from '$lib/daos/sourceChannelDAO';
 import { VirtualChannelDAO } from '$lib/daos/virtualChannelDAO';
 import { ProfileDAO } from '$lib/daos/profileDAO';
-import { FlagsDAO } from '$lib/daos/flagsDAO';
+import { FlagsDAO, type BulkFlagKind } from '$lib/daos/flagsDAO';
 import { fail, redirect } from '@sveltejs/kit';
 import { ensureProfiles, getActiveProfileKey } from '$lib/profiles';
 
@@ -35,6 +35,116 @@ function getMode(): DatabaseMode
     if (env === 'test') return DatabaseMode.Test;
     if (env === 'production') return DatabaseMode.Live;
     return DatabaseMode.Dev;
+}
+
+type BulkFlagValue = 0 | 1;
+
+type BulkUndoState = {
+    videoId: number;
+    value: BulkFlagValue;
+};
+
+function parseBulkFlagKind(raw: FormDataEntryValue | null): BulkFlagKind | null
+{
+    const value = String(raw || '').trim();
+    if (value === 'watched' || value === 'favorite' || value === 'ignored') {
+        return value;
+    }
+
+    return null;
+}
+
+function parseBulkFlagValue(raw: FormDataEntryValue | null): BulkFlagValue | null
+{
+    const value = String(raw || '').trim();
+    if (value === '1') return 1;
+    if (value === '0') return 0;
+    return null;
+}
+
+function parseVideoIds(raw: FormDataEntryValue | null): number[]
+{
+    const text = String(raw || '').trim();
+    if (!text) {
+        return [];
+    }
+
+    const values = text.split(',').map((part) => Number(part.trim())).filter((value) => Number.isInteger(value) && value > 0);
+    return Array.from(new Set(values));
+}
+
+function parseUndoStates(raw: FormDataEntryValue | null): BulkUndoState[] | null
+{
+    const text = String(raw || '').trim();
+    if (!text) {
+        return [];
+    }
+
+    try {
+        const parsed = JSON.parse(text);
+        if (!Array.isArray(parsed)) {
+            return null;
+        }
+
+        const states: BulkUndoState[] = [];
+        for (const item of parsed) {
+            const videoId = Number((item as any)?.videoId);
+            const value = Number((item as any)?.value);
+            if (!Number.isInteger(videoId) || videoId <= 0 || (value !== 0 && value !== 1)) {
+                return null;
+            }
+            states.push({ videoId, value: value as BulkFlagValue });
+        }
+
+        return states;
+    } catch {
+        return null;
+    }
+}
+
+function describeBulkAction(flag: BulkFlagKind, value: BulkFlagValue): string
+{
+    if (flag === 'ignored') {
+        return value === 1 ? 'marked ignored' : 'cleared ignored';
+    }
+    if (flag === 'favorite') {
+        return value === 1 ? 'marked favorite' : 'cleared favorite';
+    }
+    return value === 1 ? 'marked watched' : 'cleared watched';
+}
+
+function formatBulkMessage(succeededCount: number, failedCount: number, skippedCount: number, actionText: string): string
+{
+    const noun = succeededCount === 1 ? 'video' : 'videos';
+    if (succeededCount > 0 && failedCount === 0 && skippedCount === 0) {
+        return `${succeededCount} ${noun} ${actionText}.`;
+    }
+
+    const segments: string[] = [];
+    if (succeededCount > 0) {
+        segments.push(`${succeededCount} ${noun} ${actionText}`);
+    }
+    if (failedCount > 0) {
+        segments.push(`${failedCount} failed`);
+    }
+    if (skippedCount > 0) {
+        segments.push(`${skippedCount} skipped`);
+    }
+
+    return `${segments.join(', ')}.`;
+}
+
+function getOutcome(succeededCount: number, failedCount: number, skippedCount: number): 'full_success' | 'partial_success' | 'failed'
+{
+    if (succeededCount === 0) {
+        return 'failed';
+    }
+
+    if (failedCount === 0 && skippedCount === 0) {
+        return 'full_success';
+    }
+
+    return 'partial_success';
 }
 
 export const load = async ({ url, cookies }: { url: URL; cookies: any }) =>
@@ -142,5 +252,148 @@ export const actions = {
 
         // Stay on the same page with same query params
         throw redirect(303, `/viewer?${url.searchParams.toString()}`);
+    },
+
+    async bulkUpdateFlags({ request, cookies }: { request: Request; cookies: any })
+    {
+        const form = await request.formData();
+        const kind = parseBulkFlagKind(form.get('kind'));
+        const value = parseBulkFlagValue(form.get('value'));
+        const requestedVideoIds = parseVideoIds(form.get('videoIds'));
+        const selectionContextKey = String(form.get('selectionContextKey') || '').trim() || null;
+        const selectedCountHintRaw = Number(form.get('selectedCount') || requestedVideoIds.length);
+        const selectedCountHint = Number.isInteger(selectedCountHintRaw) && selectedCountHintRaw >= 0
+            ? selectedCountHintRaw
+            : requestedVideoIds.length;
+        const spansMultiplePages = String(form.get('spansMultiplePages') || '').trim() === '1';
+        const profileKey = getActiveProfileKey(cookies);
+
+        if (!kind || value === null || requestedVideoIds.length === 0) {
+            return fail(400, { message: 'Invalid bulk flag parameters' });
+        }
+
+        const dbw = new DatabaseWrapper(getMode());
+        const db = dbw.open();
+        try {
+            const pDao = new ProfileDAO(db);
+            ensureProfiles(pDao);
+            const profile = pDao.getByKey(profileKey) || pDao.getByKey('default');
+            const profileId = profile!.id;
+
+            const videos = new VideoDAO(db);
+            const flags = new FlagsDAO(db);
+            const existingIds = videos.listExistingIds(requestedVideoIds);
+            const existingIdSet = new Set(existingIds);
+            const failedIds = requestedVideoIds.filter((videoId) => !existingIdSet.has(videoId));
+            const originalValueMap = flags.getValueMap(existingIds, profileId, kind);
+            const undoStates = existingIds.map((videoId) => ({
+                videoId,
+                value: originalValueMap.get(videoId) ?? 0
+            }));
+
+            flags.setManyValue(existingIds, profileId, kind, value);
+
+            const actionText = describeBulkAction(kind, value);
+            const succeededIds = [...existingIds];
+            const skippedIds: number[] = [];
+            const message = formatBulkMessage(succeededIds.length, failedIds.length, skippedIds.length, actionText);
+
+            return {
+                ok: succeededIds.length > 0,
+                outcome: getOutcome(succeededIds.length, failedIds.length, skippedIds.length),
+                kind,
+                value,
+                selectionContextKey,
+                selectedCount: selectedCountHint,
+                spansMultiplePages,
+                requestedCount: requestedVideoIds.length,
+                attemptedCount: existingIds.length,
+                succeededCount: succeededIds.length,
+                failedCount: failedIds.length,
+                skippedCount: skippedIds.length,
+                succeededIds,
+                failedIds,
+                skippedIds,
+                message,
+                undo: {
+                    kind,
+                    value,
+                    requestedVideoIds,
+                    originalStates: undoStates
+                }
+            };
+        } finally {
+            dbw.close();
+        }
+    },
+
+    async undoBulkUpdateFlags({ request, cookies }: { request: Request; cookies: any })
+    {
+        const form = await request.formData();
+        const kind = parseBulkFlagKind(form.get('kind'));
+        const requestedVideoIds = parseVideoIds(form.get('videoIds'));
+        const undoStates = parseUndoStates(form.get('originalStates'));
+        const selectionContextKey = String(form.get('selectionContextKey') || '').trim() || null;
+        const profileKey = getActiveProfileKey(cookies);
+
+        if (!kind || undoStates === null) {
+            return fail(400, { message: 'Invalid bulk undo parameters' });
+        }
+
+        const dbw = new DatabaseWrapper(getMode());
+        const db = dbw.open();
+        try {
+            const pDao = new ProfileDAO(db);
+            ensureProfiles(pDao);
+            const profile = pDao.getByKey(profileKey) || pDao.getByKey('default');
+            const profileId = profile!.id;
+
+            const videos = new VideoDAO(db);
+            const flags = new FlagsDAO(db);
+            const existingIds = videos.listExistingIds(requestedVideoIds);
+            const existingIdSet = new Set(existingIds);
+            const requestedUndoIds = requestedVideoIds.length > 0
+                ? requestedVideoIds
+                : undoStates.map((state) => state.videoId);
+            const undoStateMap = new Map<number, BulkFlagValue>();
+            for (const state of undoStates) {
+                undoStateMap.set(state.videoId, state.value);
+            }
+
+            const applicableStates = requestedUndoIds
+                .filter((videoId) => existingIdSet.has(videoId) && undoStateMap.has(videoId))
+                .map((videoId) => ({ videoId, value: undoStateMap.get(videoId)! }));
+            const succeededIds = applicableStates.map((state) => state.videoId);
+            const failedIds = requestedUndoIds.filter((videoId) => !existingIdSet.has(videoId));
+            const skippedIds = requestedUndoIds.filter((videoId) => existingIdSet.has(videoId) && !undoStateMap.has(videoId));
+
+            flags.setManyValues(applicableStates, profileId, kind);
+
+            const message = formatBulkMessage(
+                succeededIds.length,
+                failedIds.length,
+                skippedIds.length,
+                'restored'
+            );
+
+            return {
+                ok: succeededIds.length > 0,
+                outcome: getOutcome(succeededIds.length, failedIds.length, skippedIds.length),
+                kind,
+                selectionContextKey,
+                selectedCount: requestedUndoIds.length,
+                requestedCount: requestedUndoIds.length,
+                attemptedCount: applicableStates.length,
+                succeededCount: succeededIds.length,
+                failedCount: failedIds.length,
+                skippedCount: skippedIds.length,
+                succeededIds,
+                failedIds,
+                skippedIds,
+                message
+            };
+        } finally {
+            dbw.close();
+        }
     }
 };

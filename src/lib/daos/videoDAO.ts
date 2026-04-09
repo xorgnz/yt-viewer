@@ -125,6 +125,22 @@ export class VideoDAO extends SqliteDAO
         return this.db.prepare(`SELECT id, youtube_id, channel_id, title, description, published_at, duration_seconds, thumbnail_url, length_classification FROM videos WHERE id = ?`).get(id) as Video | undefined;
     }
 
+    listExistingIds(ids: number[]): number[]
+    {
+        if (ids.length === 0) {
+            return [];
+        }
+
+        const placeholders = ids.map(() => '?').join(',');
+        const rows = this.db.prepare(`
+            SELECT id
+            FROM videos
+            WHERE id IN (${placeholders})
+        `).all(...ids) as Array<{ id: number }>;
+
+        return rows.map((row) => row.id);
+    }
+
     getByExternalId(external_id: string): Video | undefined
     {
         return this.db.prepare(`SELECT id, youtube_id, channel_id, title, description, published_at, duration_seconds, thumbnail_url, length_classification FROM videos WHERE youtube_id = ?`).get(external_id) as Video | undefined;
