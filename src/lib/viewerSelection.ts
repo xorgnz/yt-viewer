@@ -288,6 +288,44 @@ export function toggleViewerSelectionVideo(state: ViewerSelectionState, videoId:
     };
 }
 
+export function selectSingleViewerSelectionVideo(state: ViewerSelectionState, videoId: number): ViewerSelectionState
+{
+    const normalizedVideoId = Number(videoId);
+    if (!Number.isInteger(normalizedVideoId) || normalizedVideoId <= 0) {
+        return state;
+    }
+
+    const currentPageVideoState = createCurrentPageVideoStateMap(state.currentPageVideos);
+    const selectedVideoState: Record<number, Omit<ViewerSelectionVideoSnapshot, 'id'>> = {};
+
+    if (currentPageVideoState[normalizedVideoId]) {
+        selectedVideoState[normalizedVideoId] = currentPageVideoState[normalizedVideoId];
+    } else if (state.selectedVideoState[normalizedVideoId]) {
+        selectedVideoState[normalizedVideoId] = state.selectedVideoState[normalizedVideoId];
+    }
+
+    return {
+        ...state,
+        selectedVideoIds: [normalizedVideoId],
+        anchorVideoId: normalizedVideoId,
+        selectedVideoState
+    };
+}
+
+export function toggleSingleViewerSelectionVideo(state: ViewerSelectionState, videoId: number): ViewerSelectionState
+{
+    const normalizedVideoId = Number(videoId);
+    if (!Number.isInteger(normalizedVideoId) || normalizedVideoId <= 0) {
+        return state;
+    }
+
+    if (state.selectedVideoIds.length === 1 && state.selectedVideoIds[0] === normalizedVideoId) {
+        return clearViewerSelectionState(state);
+    }
+
+    return selectSingleViewerSelectionVideo(state, normalizedVideoId);
+}
+
 export function selectViewerSelectionRange(state: ViewerSelectionState, videoId: number): ViewerSelectionState
 {
     const normalizedVideoId = Number(videoId);

@@ -4,6 +4,8 @@ import {
     createViewerSelectionContextKey,
     createViewerSelectionState,
     reconcileViewerSelectionState,
+    selectSingleViewerSelectionVideo,
+    toggleSingleViewerSelectionVideo,
     toggleViewerSelectionVideo
 } from '../../src/lib/viewerSelection';
 
@@ -81,5 +83,32 @@ describe('viewerSelection filter-context behavior', () => {
         expect(clearedState.selectedVideoIds).toEqual([]);
         expect(clearedState.anchorVideoId).toBeNull();
         expect(clearedState.selectedVideoState).toEqual({});
+    });
+
+    it('replaces the selection with a single selected card for plain-click behavior', () => {
+        const contextKey = createContextKey();
+        let state = createViewerSelectionState(contextKey, pageOneVideos);
+
+        state = toggleViewerSelectionVideo(state, 1);
+        state = toggleViewerSelectionVideo(state, 2);
+        state = selectSingleViewerSelectionVideo(state, 1);
+
+        expect(state.selectedVideoIds).toEqual([1]);
+        expect(state.anchorVideoId).toBe(1);
+        expect(state.selectedVideoState).toEqual({
+            1: { watched: 0, favorite: 0, ignored: 0 }
+        });
+    });
+
+    it('clears the selection when the already-selected single card is plain-clicked again', () => {
+        const contextKey = createContextKey();
+        let state = createViewerSelectionState(contextKey, pageOneVideos);
+
+        state = toggleSingleViewerSelectionVideo(state, 1);
+        state = toggleSingleViewerSelectionVideo(state, 1);
+
+        expect(state.selectedVideoIds).toEqual([]);
+        expect(state.anchorVideoId).toBeNull();
+        expect(state.selectedVideoState).toEqual({});
     });
 });

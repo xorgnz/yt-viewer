@@ -18,6 +18,7 @@
         reconcileViewerSelectionState,
         restoreViewerSelectionBulkFlagStates,
         selectViewerSelectionRange,
+        toggleSingleViewerSelectionVideo,
         toggleViewerSelectionVideo,
         type ViewerSelectionControlState,
         type ViewerSelectionFlagKind,
@@ -273,7 +274,7 @@
         }
 
         const target = event.target as HTMLElement | null;
-        if (target?.closest('button, form')) {
+        if (target?.closest('a, button, form')) {
             return;
         }
 
@@ -285,6 +286,7 @@
         }
 
         if (!event.ctrlKey && !event.metaKey) {
+            selectionState = toggleSingleViewerSelectionVideo(selectionState, videoId);
             return;
         }
 
@@ -300,7 +302,7 @@
         }
 
         const target = event.target as HTMLElement | null;
-        if (target?.closest('button, form')) {
+        if (target?.closest('a, button, form')) {
             return;
         }
 
@@ -674,8 +676,14 @@
     </section>
 
     <section class="stack">
-        {#if hasActiveSelection}
-            <div class="bulk-action-bar" role="status" aria-live="polite">
+        <div class="bulk-action-slot" class:is-empty={!hasActiveSelection}>
+            <div
+                class="bulk-action-bar"
+                class:is-hidden={!hasActiveSelection}
+                role="status"
+                aria-live="polite"
+                aria-hidden={!hasActiveSelection}
+            >
                 <div class="bulk-action-copy">
                     <strong>Bulk actions</strong>
                     <span>{selectedCount} {selectedCount === 1 ? 'video selected' : 'videos selected'}</span>
@@ -751,7 +759,7 @@
                     </button>
                 </div>
             </div>
-        {/if}
+        </div>
 
         <div class="toolbar">
             {#if data.totalCount > 0 && totalPages > 1}
@@ -866,17 +874,33 @@
         justify-content: center;
     }
 
+    .bulk-action-slot {
+        min-height: 8.5rem;
+        display: flex;
+        align-items: flex-start;
+        justify-content: center;
+    }
+
+    .bulk-action-slot.is-empty {
+        pointer-events: none;
+    }
+
     .bulk-action-bar {
         display: flex;
         align-items: center;
         justify-content: space-between;
         gap: 1rem;
+        width: min(100%, 58rem);
         padding: 0.9rem 1rem;
         border: 1px solid color-mix(in srgb, var(--accent) 40%, var(--border));
         border-radius: var(--radius);
         background:
             linear-gradient(180deg, color-mix(in srgb, var(--accent) 16%, var(--bg-soft)), var(--bg-soft));
         box-shadow: 0 0.75rem 1.5rem rgba(0, 0, 0, 0.12);
+    }
+
+    .bulk-action-bar.is-hidden {
+        visibility: hidden;
     }
 
     .bulk-action-copy {
@@ -950,6 +974,7 @@
         gap: 0.65rem;
         align-items: center;
         justify-content: flex-end;
+        flex: 0 1 auto;
     }
 
     .bulk-flag-control {
@@ -1048,5 +1073,20 @@
 
     .pager-ellipsis {
         color: var(--text-muted);
+    }
+
+    @media (max-width: 900px) {
+        .bulk-action-slot {
+            min-height: 11rem;
+        }
+
+        .bulk-action-bar {
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        .bulk-action-controls {
+            justify-content: flex-start;
+        }
     }
 </style>
