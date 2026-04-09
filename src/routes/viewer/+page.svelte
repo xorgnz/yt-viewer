@@ -6,6 +6,7 @@
         createViewerSelectionContextKey,
         createViewerSelectionState,
         reconcileViewerSelectionState,
+        selectViewerSelectionRange,
         toggleViewerSelectionVideo,
         type ViewerSelectionState
     } from '$lib/viewerSelection';
@@ -206,12 +207,23 @@
             return;
         }
 
-        if ((!event.ctrlKey && !event.metaKey) || event.defaultPrevented) {
+        if (event.defaultPrevented) {
             return;
         }
 
         const target = event.target as HTMLElement | null;
         if (target?.closest('button, form')) {
+            return;
+        }
+
+        if (event.shiftKey) {
+            event.preventDefault();
+            event.stopPropagation();
+            selectionState = selectViewerSelectionRange(selectionState, videoId);
+            return;
+        }
+
+        if (!event.ctrlKey && !event.metaKey) {
             return;
         }
 

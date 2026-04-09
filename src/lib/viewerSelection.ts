@@ -102,3 +102,31 @@ export function toggleViewerSelectionVideo(state: ViewerSelectionState, videoId:
         anchorVideoId: normalizedVideoId
     };
 }
+
+export function selectViewerSelectionRange(state: ViewerSelectionState, videoId: number): ViewerSelectionState
+{
+    const normalizedVideoId = Number(videoId);
+    if (!Number.isInteger(normalizedVideoId) || normalizedVideoId <= 0) {
+        return state;
+    }
+
+    const targetIndex = state.currentPageVideoIds.indexOf(normalizedVideoId);
+    const anchorIndex = state.anchorVideoId != null ? state.currentPageVideoIds.indexOf(state.anchorVideoId) : -1;
+
+    if (targetIndex < 0 || anchorIndex < 0) {
+        return {
+            ...state,
+            selectedVideoIds: normalizeViewerSelectionIds([...state.selectedVideoIds, normalizedVideoId]),
+            anchorVideoId: state.anchorVideoId ?? normalizedVideoId
+        };
+    }
+
+    const start = Math.min(anchorIndex, targetIndex);
+    const end = Math.max(anchorIndex, targetIndex);
+    const rangeIds = state.currentPageVideoIds.slice(start, end + 1);
+
+    return {
+        ...state,
+        selectedVideoIds: normalizeViewerSelectionIds([...state.selectedVideoIds, ...rangeIds])
+    };
+}
