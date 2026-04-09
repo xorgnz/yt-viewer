@@ -96,6 +96,15 @@ The feature will support mouse-based range and additive selection, cross-paginat
 38. If undo only partially succeeds, the UI must report that clearly.
 39. Undo should be available from the bulk-action bar or an equally obvious nearby location.
 
+#### Undo Contract
+
+- The undo request must identify the original bulk action it is reversing, not just the currently selected set.
+- The undo payload must carry the per-video original flag values needed to restore pre-action state for the affected ids.
+- The undo payload must be scoped to one target flag and one bulk action at a time.
+- The undo request must tolerate partially successful original actions by restoring only ids for which original-state data exists.
+- The undo response must report restored ids, failed ids, and any ids that were skipped because no reversible prior state was available.
+- The undo contract must support restoring a previously mixed selection back to its original distribution rather than only toggling all ids to one shared value.
+
 ### Data and Server Behavior
 
 40. The implementation must reuse the existing per-video boolean flag model for watched, favorite, and ignored rather than introducing a separate bulk-only state model.
