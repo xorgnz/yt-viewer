@@ -272,14 +272,19 @@ export const actions = {
     {
         const form = await request.formData();
         const videoIdStr = String(form.get('videoId') || '').trim();
-        const kind = String(form.get('kind') || '').trim(); // 'favorite' | 'ignored'
+        const kind = String(form.get('kind') || '').trim(); // 'watched' | 'favorite' | 'ignored'
         const valueStr = String(form.get('value') || '').trim(); // '0' | '1'
         const profileKey = getActiveProfileKey(cookies);
 
         const videoId = Number(videoIdStr);
         const value = valueStr === '1' ? 1 : (valueStr === '0' ? 0 : NaN);
 
-        if (!videoId || Number.isNaN(videoId) || (kind !== 'favorite' && kind !== 'ignored') || Number.isNaN(value)) {
+        if (
+            !videoId ||
+            Number.isNaN(videoId) ||
+            (kind !== 'watched' && kind !== 'favorite' && kind !== 'ignored') ||
+            Number.isNaN(value)
+        ) {
             return fail(400, { message: 'Invalid toggle parameters' });
         }
 
@@ -292,7 +297,9 @@ export const actions = {
             const profileId = profile!.id;
 
             const flags = new FlagsDAO(db);
-            if (kind === 'favorite') {
+            if (kind === 'watched') {
+                flags.set(videoId, profileId, { watched: value as 0 | 1 });
+            } else if (kind === 'favorite') {
                 flags.set(videoId, profileId, { favorite: value as 0 | 1 });
             } else if (kind === 'ignored') {
                 flags.set(videoId, profileId, { ignored: value as 0 | 1 });

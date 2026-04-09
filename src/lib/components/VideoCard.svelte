@@ -112,6 +112,19 @@
         </form>
         <form method="POST" action={`?/toggleFlag&${actionQuery}`}>
             <input type="hidden" name="videoId" value={video.id} />
+            <input type="hidden" name="kind" value="watched" />
+            <input type="hidden" name="value" value={video.watched ? 0 : 1} />
+            <button type="submit" class="icon watched" class:active={!!video.watched} aria-pressed={!!video.watched} title={video.watched ? 'Mark unwatched' : 'Mark watched'}>
+                {#if video.watched}
+                    &#10003;
+                {:else}
+                    &#9675;
+                {/if}
+                <span class="sr-only">{video.watched ? 'Mark unwatched' : 'Mark watched'}</span>
+            </button>
+        </form>
+        <form method="POST" action={`?/toggleFlag&${actionQuery}`}>
+            <input type="hidden" name="videoId" value={video.id} />
             <input type="hidden" name="kind" value="ignored" />
             <input type="hidden" name="value" value={video.ignored ? 0 : 1} />
             <button type="submit" class="icon ignored" class:active={!!video.ignored} aria-pressed={!!video.ignored} title={video.ignored ? 'Unignore' : 'Ignore video'}>
@@ -219,6 +232,7 @@
     }
     .actions button:hover { background: rgba(54,54,54,0.95); transform: translateY(-1px); }
     .actions button.active.favorite { background: #e3b341; color: #161616; border-color: #c79c25; }
+    .actions button.watched.active { background: #2e7d32; border-color: #1f5a23; color: #f4fff4; }
     .actions button.ignored.active { background: #b00020; border-color: #7a0015; color: #fff; }
     .actions button.icon { padding: 0; }
     .sr-only {
