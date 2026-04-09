@@ -405,3 +405,55 @@ export function applyViewerSelectionBulkFlag(
         selectedVideoState
     };
 }
+
+export function restoreViewerSelectionBulkFlagStates(
+    state: ViewerSelectionState,
+    kind: ViewerSelectionFlagKind,
+    restoredStates: Array<{ videoId: number; value: ViewerSelectionFlagValue }>
+): ViewerSelectionState
+{
+    if (restoredStates.length === 0) {
+        return state;
+    }
+
+    const restoredStateMap = new Map<number, ViewerSelectionFlagValue>();
+    for (const restoredState of restoredStates) {
+        const videoId = Number(restoredState.videoId);
+        if (!Number.isInteger(videoId) || videoId <= 0) {
+            continue;
+        }
+
+        restoredStateMap.set(videoId, normalizeViewerSelectionFlagValue(restoredState.value));
+    }
+
+    if (restoredStateMap.size === 0) {
+        return state;
+    }
+
+    const selectedVideoState = createViewerSelectionStateMap(state.selectedVideoIds, state.selectedVideoState);
+    const currentPageVideos = state.currentPageVideos.map((video) => {
+        if (!restoredStateMap.has(video.id)) {
+            return video;
+        }
+
+        return {
+            ...video,
+            [kind]: restoredStateMap.get(video.id)!
+        };
+    });
+
+    for (const [videoId, value] of restoredStateMap.entries()) {
+        if (selectedVideoState[videoId]) {
+            selectedVideoState[videoId] = {
+                ...selectedVideoState[videoId],
+                [kind]: value
+            };
+        }
+    }
+
+    return {
+        ...state,
+        currentPageVideos,
+        selectedVideoState
+    };
+}

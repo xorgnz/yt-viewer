@@ -15,6 +15,7 @@
         loadPersistedViewerSelectionState,
         persistViewerSelectionState,
         reconcileViewerSelectionState,
+        restoreViewerSelectionBulkFlagStates,
         selectViewerSelectionRange,
         toggleViewerSelectionVideo,
         type ViewerSelectionControlState,
@@ -77,6 +78,21 @@
         ignored: number;
     };
 
+    type BulkUndoState = {
+        videoId: number;
+        value: ViewerSelectionFlagValue;
+    };
+
+    type BulkActionFeedback = {
+        message: string;
+        tone: 'success' | 'warning' | 'error';
+        undo: {
+            kind: ViewerSelectionFlagKind;
+            requestedVideoIds: number[];
+            originalStates: BulkUndoState[];
+        } | null;
+    };
+
     const FILTER_DEBOUNCE_MS = 450;
 
     let f = data.filters;
@@ -103,6 +119,7 @@
     let favoriteControlState: ViewerSelectionControlState = 'unchecked';
     let ignoredControlState: ViewerSelectionControlState = 'unchecked';
     let bulkActionPending = false;
+    let bulkActionFeedback: BulkActionFeedback | null = null;
 
     function buildPageHref(page: number): string
     {
@@ -280,6 +297,86 @@
         return controlState === 'checked' ? 0 : 1;
     }
 
+    function getBulkActionFeedbackTone(outcome: unknown, ok: unknown): 'success' | 'warning' | 'error'
+    {
+        if (outcome === 'partial_success') {
+            return 'warning';
+        }
+
+        if (ok === true || outcome === 'full_success') {
+            return 'success';
+        }
+
+        return 'error';
+    }
+
+    function normalizeBulkUndoPayload(kind: ViewerSelectionFlagKind, rawUndo: unknown): BulkActionFeedback['undo']
+    {
+        const requestedVideoIds = Array.isArray((rawUndo as any)?.requestedVideoIds)
+            ? (rawUndo as any).requestedVideoIds.filter((value: unknown) => Number.isInteger(value) && Number(value) > 0)
+            : [];
+        const originalStates = Array.isArray((rawUndo as any)?.originalStates)
+            ? (rawUndo as any).originalStates
+                .map((state: any) => ({
+                    videoId: Number(state?.videoId),
+                    value: Number(state?.value) === 1 ? 1 : 0
+                }))
+                .filter((state: BulkUndoState) => Number.isInteger(state.videoId) && state.videoId > 0)
+            : [];
+
+        if (requestedVideoIds.length === 0 || originalStates.length === 0) {
+            return null;
+        }
+
+        return {
+            kind,
+            requestedVideoIds,
+            originalStates
+        };
+    }
+
+    function applyVisibleVideoBulkFlag(kind: ViewerSelectionFlagKind, value: ViewerSelectionFlagValue, updatedVideoIds: number[])
+    {
+        const updatedIdSet = new Set(updatedVideoIds);
+        if (updatedIdSet.size === 0) {
+            return;
+        }
+
+        visibleVideos = visibleVideos.map((video) => {
+            if (!updatedIdSet.has(video.id)) {
+                return video;
+            }
+
+            return {
+                ...video,
+                [kind]: value
+            };
+        });
+    }
+
+    function restoreVisibleVideoBulkFlagStates(kind: ViewerSelectionFlagKind, restoredStates: BulkUndoState[])
+    {
+        const restoredStateMap = new Map<number, ViewerSelectionFlagValue>();
+        for (const restoredState of restoredStates) {
+            restoredStateMap.set(restoredState.videoId, restoredState.value);
+        }
+
+        if (restoredStateMap.size === 0) {
+            return;
+        }
+
+        visibleVideos = visibleVideos.map((video) => {
+            if (!restoredStateMap.has(video.id)) {
+                return video;
+            }
+
+            return {
+                ...video,
+                [kind]: restoredStateMap.get(video.id)!
+            };
+        });
+    }
+
     async function handleBulkFlagToggle(kind: ViewerSelectionFlagKind, controlState: ViewerSelectionControlState)
     {
         if (bulkActionPending || selectionState.selectedVideoIds.length === 0) {
@@ -303,30 +400,85 @@
                 body: form
             });
             const result = deserialize(await response.text());
+            const failureMessage = (result as any)?.data?.message || 'Bulk update failed.';
 
             if (result.type !== 'success' || !result.data) {
+                bulkActionFeedback = {
+                    message: failureMessage,
+                    tone: 'error',
+                    undo: null
+                };
                 return;
             }
 
-            const succeededIds = Array.isArray((result.data as any).succeededIds)
-                ? (result.data as any).succeededIds as number[]
+            const actionResult = result.data as any;
+            const succeededIds = Array.isArray(actionResult.succeededIds)
+                ? actionResult.succeededIds as number[]
                 : [];
+            const feedbackTone = getBulkActionFeedbackTone(actionResult.outcome, actionResult.ok);
+            const undo = normalizeBulkUndoPayload(kind, actionResult.undo);
+
+            bulkActionFeedback = {
+                message: String(actionResult.message || failureMessage),
+                tone: feedbackTone,
+                undo
+            };
 
             selectionState = applyViewerSelectionBulkFlag(selectionState, kind, nextValue, succeededIds);
+            applyVisibleVideoBulkFlag(kind, nextValue, succeededIds);
+        } finally {
+            bulkActionPending = false;
+        }
+    }
 
-            if (succeededIds.length > 0) {
-                const succeededIdSet = new Set(succeededIds);
-                visibleVideos = visibleVideos.map((video) => {
-                    if (!succeededIdSet.has(video.id)) {
-                        return video;
-                    }
+    async function handleBulkUndo()
+    {
+        if (bulkActionPending || !bulkActionFeedback?.undo) {
+            return;
+        }
 
-                    return {
-                        ...video,
-                        [kind]: nextValue
-                    };
-                });
+        bulkActionPending = true;
+
+        try {
+            const undo = bulkActionFeedback.undo;
+            const form = new FormData();
+            form.set('kind', undo.kind);
+            form.set('videoIds', undo.requestedVideoIds.join(','));
+            form.set('originalStates', JSON.stringify(undo.originalStates));
+            form.set('selectionContextKey', selectionState.contextKey);
+
+            const response = await fetch('?/undoBulkUpdateFlags', {
+                method: 'POST',
+                body: form
+            });
+            const result = deserialize(await response.text());
+            const failureMessage = (result as any)?.data?.message || 'Bulk undo failed.';
+
+            if (result.type !== 'success' || !result.data) {
+                bulkActionFeedback = {
+                    message: failureMessage,
+                    tone: 'error',
+                    undo
+                };
+                return;
             }
+
+            const actionResult = result.data as any;
+            const succeededIdSet = new Set(
+                Array.isArray(actionResult.succeededIds)
+                    ? actionResult.succeededIds as number[]
+                    : []
+            );
+            const restoredStates = undo.originalStates.filter((state) => succeededIdSet.has(state.videoId));
+
+            selectionState = restoreViewerSelectionBulkFlagStates(selectionState, undo.kind, restoredStates);
+            restoreVisibleVideoBulkFlagStates(undo.kind, restoredStates);
+
+            bulkActionFeedback = {
+                message: String(actionResult.message || failureMessage),
+                tone: getBulkActionFeedbackTone(actionResult.outcome, actionResult.ok),
+                undo: null
+            };
         } finally {
             bulkActionPending = false;
         }
@@ -403,6 +555,9 @@
 
     $: if (browser && selectionState.contextKey && hydratedSelectionContextKey === selectionState.contextKey) {
         persistViewerSelectionState(selectionState);
+    }
+    $: if (!hasActiveSelection && bulkActionFeedback) {
+        bulkActionFeedback = null;
     }
 </script>
 
@@ -484,6 +639,21 @@
                         <span class="bulk-action-note">
                             {offPageSelectedCount} {offPageSelectedCount === 1 ? 'selected video is' : 'selected videos are'} on other pages.
                         </span>
+                    {/if}
+                    {#if bulkActionFeedback}
+                        <div class="bulk-action-feedback" data-tone={bulkActionFeedback.tone}>
+                            <span>{bulkActionFeedback.message}</span>
+                            {#if bulkActionFeedback.undo}
+                                <button
+                                    type="button"
+                                    class="bulk-action-undo"
+                                    disabled={bulkActionPending}
+                                    on:click={() => void handleBulkUndo()}
+                                >
+                                    Undo
+                                </button>
+                            {/if}
+                        </div>
                     {/if}
                 </div>
                 <div class="bulk-action-controls" role="group" aria-label="Bulk selection flags">
@@ -683,6 +853,50 @@
     .bulk-action-note {
         color: color-mix(in srgb, var(--accent) 72%, white);
         font-weight: 600;
+    }
+
+    .bulk-action-feedback {
+        display: inline-flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 0.65rem;
+        width: fit-content;
+        margin-top: 0.2rem;
+        padding: 0.5rem 0.7rem;
+        border-radius: var(--radius-sm);
+        font-size: 0.9rem;
+        font-weight: 600;
+    }
+
+    .bulk-action-feedback[data-tone='success'] {
+        background: rgba(39, 174, 96, 0.12);
+        color: #1f7a46;
+    }
+
+    .bulk-action-feedback[data-tone='warning'] {
+        background: rgba(227, 179, 65, 0.16);
+        color: #8c6400;
+    }
+
+    .bulk-action-feedback[data-tone='error'] {
+        background: rgba(208, 55, 95, 0.12);
+        color: #a11a3f;
+    }
+
+    .bulk-action-undo {
+        min-height: 2rem;
+        padding: 0.35rem 0.7rem;
+        border: 1px solid currentColor;
+        border-radius: 999px;
+        background: transparent;
+        color: inherit;
+        cursor: pointer;
+        font-weight: 700;
+    }
+
+    .bulk-action-undo:disabled {
+        opacity: 0.65;
+        cursor: wait;
     }
 
     .bulk-action-controls {
