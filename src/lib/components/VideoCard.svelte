@@ -26,6 +26,8 @@
         limit: number;
         offset: number;
     };
+    export let isSelected = false;
+    export let onCardClick: ((event: MouseEvent | KeyboardEvent, videoId: number) => void) | null = null;
 
     function fmtDate(ms: number | null): string {
         if (!ms) return '';
@@ -61,6 +63,13 @@
     class:card-favorite-watched={isFavoriteWatched}
     class:card-favorite={isFavoriteOnly}
     class:card-watched={isWatchedOnly}
+    class:card-selected={isSelected}
+    data-selected={isSelected ? '1' : '0'}
+    role="button"
+    tabindex="0"
+    aria-pressed={isSelected}
+    on:click={(event) => onCardClick?.(event, video.id)}
+    on:keydown={(event) => onCardClick?.(event, video.id)}
     title={video.title}
 >
     <a class="thumb" href={`/viewer/watch/${video.youtube_id}`} aria-label={`Open ${video.title}`}>

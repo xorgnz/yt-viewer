@@ -84,3 +84,21 @@ export function hasSelectionOutsideCurrentPage(state: ViewerSelectionState): boo
 {
     return state.selectedVideoIds.length > getCurrentPageSelectedVideoIds(state).length;
 }
+
+export function toggleViewerSelectionVideo(state: ViewerSelectionState, videoId: number): ViewerSelectionState
+{
+    const normalizedVideoId = Number(videoId);
+    if (!Number.isInteger(normalizedVideoId) || normalizedVideoId <= 0) {
+        return state;
+    }
+
+    const selectedVideoIds = state.selectedVideoIds.includes(normalizedVideoId)
+        ? state.selectedVideoIds.filter((id) => id !== normalizedVideoId)
+        : [...state.selectedVideoIds, normalizedVideoId];
+
+    return {
+        ...state,
+        selectedVideoIds: normalizeViewerSelectionIds(selectedVideoIds),
+        anchorVideoId: normalizedVideoId
+    };
+}

@@ -6,6 +6,7 @@
         createViewerSelectionContextKey,
         createViewerSelectionState,
         reconcileViewerSelectionState,
+        toggleViewerSelectionVideo,
         type ViewerSelectionState
     } from '$lib/viewerSelection';
 
@@ -193,6 +194,32 @@
         void applyFiltersNow();
     }
 
+    function handleCardClick(event: MouseEvent | KeyboardEvent, videoId: number)
+    {
+        if (event instanceof KeyboardEvent) {
+            if (event.key !== 'Enter' && event.key !== ' ') {
+                return;
+            }
+
+            event.preventDefault();
+            selectionState = toggleViewerSelectionVideo(selectionState, videoId);
+            return;
+        }
+
+        if ((!event.ctrlKey && !event.metaKey) || event.defaultPrevented) {
+            return;
+        }
+
+        const target = event.target as HTMLElement | null;
+        if (target?.closest('button, form')) {
+            return;
+        }
+
+        event.preventDefault();
+        event.stopPropagation();
+        selectionState = toggleViewerSelectionVideo(selectionState, videoId);
+    }
+
     let visiblePages = getVisiblePages(currentPage, totalPages);
 
     $: f = data.filters;
@@ -319,7 +346,12 @@
         {:else}
             <div class="grid">
                 {#each data.videos as v}
-                    <VideoCard video={v} filters={f} />
+                    <VideoCard
+                        video={v}
+                        filters={f}
+                        isSelected={selectionState.selectedVideoIds.includes(v.id)}
+                        onCardClick={handleCardClick}
+                    />
                 {/each}
             </div>
         {/if}
