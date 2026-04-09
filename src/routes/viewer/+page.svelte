@@ -69,6 +69,7 @@
     let debounceTimer: ReturnType<typeof setTimeout> | null = null;
     let selectionState: ViewerSelectionState = createViewerSelectionState('', []);
     let hydratedSelectionContextKey: string | null = null;
+    let hasActiveSelection = false;
 
     function buildPageHref(page: number): string
     {
@@ -251,6 +252,7 @@
     $: totalPages = Math.max(1, Math.ceil(data.totalCount / f.limit));
     $: currentPage = Math.min(totalPages, Math.floor(f.offset / f.limit) + 1);
     $: visiblePages = getVisiblePages(currentPage, totalPages);
+    $: hasActiveSelection = selectionState.selectedVideoIds.length > 0;
     $: {
         const nextContextKey = createViewerSelectionContextKey({
             profileKey: data.profileKey,
@@ -365,6 +367,15 @@
     </section>
 
     <section class="stack">
+        {#if hasActiveSelection}
+            <div class="bulk-action-bar" role="status" aria-live="polite">
+                <div class="bulk-action-copy">
+                    <strong>Bulk actions</strong>
+                    <span>Selection active. Bulk controls will apply to the selected videos.</span>
+                </div>
+            </div>
+        {/if}
+
         <div class="toolbar">
             {#if data.totalCount > 0 && totalPages > 1}
                 <div class="pager" aria-label="Pagination">
@@ -475,6 +486,35 @@
 
     .toolbar {
         justify-content: center;
+    }
+
+    .bulk-action-bar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        padding: 0.9rem 1rem;
+        border: 1px solid color-mix(in srgb, var(--accent) 40%, var(--border));
+        border-radius: var(--radius);
+        background:
+            linear-gradient(180deg, color-mix(in srgb, var(--accent) 16%, var(--bg-soft)), var(--bg-soft));
+        box-shadow: 0 0.75rem 1.5rem rgba(0, 0, 0, 0.12);
+    }
+
+    .bulk-action-copy {
+        display: flex;
+        flex-direction: column;
+        gap: 0.2rem;
+    }
+
+    .bulk-action-copy strong {
+        color: var(--text);
+        font-size: 0.98rem;
+    }
+
+    .bulk-action-copy span {
+        color: var(--text-muted);
+        font-size: 0.92rem;
     }
 
     .pager {
