@@ -1,4 +1,4 @@
-<script lang="ts">
+﻿<script lang="ts">
     import { browser } from '$app/environment';
     import { deserialize } from '$app/forms';
     import { goto } from '$app/navigation';
@@ -619,7 +619,7 @@
 
 <svelte:window on:click={handleViewerBackgroundClick} />
 
-<div class="page stack">
+<div class="page stack viewer-page">
     <section class="panel">
         <h1>Video List</h1>
         {#if activeVirtualChannel}
@@ -687,108 +687,108 @@
         </form>
     </section>
 
-    <section class="stack">
-        <div class="bulk-action-slot" class:is-empty={!hasActiveSelection}>
-            <div
-                class="bulk-action-bar"
-                class:is-hidden={!hasActiveSelection}
-                role="status"
-                aria-live="polite"
-                aria-hidden={!hasActiveSelection}
-            >
-                <div class="bulk-action-copy">
-                    <strong>Bulk actions</strong>
-                    <span>{selectedCount} {selectedCount === 1 ? 'video selected' : 'videos selected'}</span>
-                    {#if offPageSelectedCount > 0}
-                        <span class="bulk-action-note">
-                            {offPageSelectedCount} {offPageSelectedCount === 1 ? 'selected video is' : 'selected videos are'} on other pages.
-                        </span>
-                    {/if}
-                    {#if bulkActionFeedback}
-                        <div class="bulk-action-feedback" data-tone={bulkActionFeedback.tone}>
-                            <span>{bulkActionFeedback.message}</span>
-                            {#if bulkActionFeedback.undo}
-                                <button
-                                    type="button"
-                                    class="bulk-action-undo"
-                                    disabled={bulkActionPending}
-                                    on:click={() => void handleBulkUndo()}
-                                >
-                                    Undo
-                                </button>
-                            {/if}
-                        </div>
-                    {/if}
+    <div class="bulk-action-slot" class:is-empty={!hasActiveSelection}>
+        <div
+            class="bulk-action-bar"
+            class:is-hidden={!hasActiveSelection}
+            role="status"
+            aria-live="polite"
+            aria-hidden={!hasActiveSelection}
+        >
+            <div class="bulk-action-copy">
+                <span>{bulkActionFeedback?.message ?? `${selectedCount} ${selectedCount === 1 ? 'video selected' : 'videos selected'}`}</span>
+                {#if offPageSelectedCount > 0}
+                    <span class="bulk-action-note">
+                        {offPageSelectedCount} {offPageSelectedCount === 1 ? 'selected video is' : 'selected videos are'} on other pages.
+                    </span>
+                {/if}
+            </div>
+            <div class="bulk-action-controls-wrap">
+                <div class="bulk-action-undo-slot">
+                    <button
+                        type="button"
+                        class="bulk-action-undo"
+                        class:is-hidden={!bulkActionFeedback?.undo}
+                        aria-hidden={!bulkActionFeedback?.undo}
+                        tabindex={!bulkActionFeedback?.undo ? -1 : 0}
+                        disabled={!bulkActionFeedback?.undo || bulkActionPending}
+                        on:click={() => void handleBulkUndo()}
+                    >
+                        Undo
+                    </button>
                 </div>
+
                 <div class="bulk-action-controls" role="group" aria-label="Bulk selection flags">
-                    <button
-                        type="button"
-                        class="bulk-flag-control"
-                        data-state={watchedControlState}
-                        disabled={bulkActionPending}
-                        on:click={() => void handleBulkFlagToggle('watched', watchedControlState)}
-                    >
-                        <span class="bulk-flag-box" data-state={watchedControlState}>
-                            {#if watchedControlState === 'checked'}
-                                ✓
-                            {:else if watchedControlState === 'mixed'}
-                                ■
-                            {/if}
-                        </span>
-                        <span>Watched</span>
-                    </button>
-                    <button
-                        type="button"
-                        class="bulk-flag-control"
-                        data-state={favoriteControlState}
-                        disabled={bulkActionPending}
-                        on:click={() => void handleBulkFlagToggle('favorite', favoriteControlState)}
-                    >
-                        <span class="bulk-flag-box" data-state={favoriteControlState}>
-                            {#if favoriteControlState === 'checked'}
-                                ✓
-                            {:else if favoriteControlState === 'mixed'}
-                                ■
-                            {/if}
-                        </span>
-                        <span>Favorite</span>
-                    </button>
-                    <button
-                        type="button"
-                        class="bulk-flag-control"
-                        data-state={ignoredControlState}
-                        disabled={bulkActionPending}
-                        on:click={() => void handleBulkFlagToggle('ignored', ignoredControlState)}
-                    >
-                        <span class="bulk-flag-box" data-state={ignoredControlState}>
-                            {#if ignoredControlState === 'checked'}
-                                ✓
-                            {:else if ignoredControlState === 'mixed'}
-                                ■
-                            {/if}
-                        </span>
-                        <span>Ignored</span>
-                    </button>
+                <button
+                    type="button"
+                    class="bulk-flag-control"
+                    data-state={watchedControlState}
+                    disabled={bulkActionPending}
+                    on:click={() => void handleBulkFlagToggle('watched', watchedControlState)}
+                >
+                    <span class="bulk-flag-box" data-state={watchedControlState}>
+                        {#if watchedControlState === 'checked'}
+                            &#10003;
+                        {:else if watchedControlState === 'mixed'}
+                            &#9632;
+                        {/if}
+                    </span>
+                    <span>Watched</span>
+                </button>
+                <button
+                    type="button"
+                    class="bulk-flag-control"
+                    data-state={favoriteControlState}
+                    disabled={bulkActionPending}
+                    on:click={() => void handleBulkFlagToggle('favorite', favoriteControlState)}
+                >
+                    <span class="bulk-flag-box" data-state={favoriteControlState}>
+                        {#if favoriteControlState === 'checked'}
+                            &#10003;
+                        {:else if favoriteControlState === 'mixed'}
+                            &#9632;
+                        {/if}
+                    </span>
+                    <span>Favorite</span>
+                </button>
+                <button
+                    type="button"
+                    class="bulk-flag-control"
+                    data-state={ignoredControlState}
+                    disabled={bulkActionPending}
+                    on:click={() => void handleBulkFlagToggle('ignored', ignoredControlState)}
+                >
+                    <span class="bulk-flag-box" data-state={ignoredControlState}>
+                        {#if ignoredControlState === 'checked'}
+                            &#10003;
+                        {:else if ignoredControlState === 'mixed'}
+                            &#9632;
+                        {/if}
+                    </span>
+                    <span>Ignored</span>
+                </button>
                 </div>
             </div>
         </div>
+    </div>
 
+    {#if data.totalCount > 0 && totalPages > 1}
         <div class="toolbar">
-            {#if data.totalCount > 0 && totalPages > 1}
-                <div class="pager" aria-label="Pagination">
-                    {#each visiblePages as page}
-                        {#if page === 'ellipsis'}
-                            <span class="pager-ellipsis">..</span>
-                        {:else if page === currentPage}
-                            <span class="pager-link pager-link-current" aria-current="page">{page}</span>
-                        {:else}
-                            <a class="pager-link" href={buildPageHref(page)}>{page}</a>
-                        {/if}
-                    {/each}
-                </div>
-            {/if}
+            <div class="pager" aria-label="Pagination">
+                {#each visiblePages as page}
+                    {#if page === 'ellipsis'}
+                        <span class="pager-ellipsis">..</span>
+                    {:else if page === currentPage}
+                        <span class="pager-link pager-link-current" aria-current="page">{page}</span>
+                    {:else}
+                        <a class="pager-link" href={buildPageHref(page as number)}>{page}</a>
+                    {/if}
+                {/each}
+            </div>
         </div>
+    {/if}
 
+    <section class="panel viewer-results-panel">
         {#if data.videos.length === 0}
             <p class="muted">No videos match these filters.</p>
         {:else}
@@ -808,6 +808,14 @@
 </div>
 
 <style>
+    .viewer-page {
+        gap: 0.5rem;
+    }
+
+    .viewer-page > * {
+        margin-block: 0;
+    }
+
     .grid {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(clamp(250px, 18vw, 320px), 1fr));
@@ -857,6 +865,10 @@
         flex: 0 1 22rem;
     }
 
+    .viewer-results-panel {
+        padding: 0.6rem;
+    }
+
     .filter-row {
         align-items: stretch;
     }
@@ -887,10 +899,11 @@
     }
 
     .bulk-action-slot {
-        min-height: 8.5rem;
+        min-height: 3.1rem;
         display: flex;
-        align-items: flex-start;
+        align-items: center;
         justify-content: center;
+        margin-block: 0;
     }
 
     .bulk-action-slot.is-empty {
@@ -901,14 +914,18 @@
         display: flex;
         align-items: center;
         justify-content: space-between;
-        gap: 1rem;
-        width: min(100%, 58rem);
-        padding: 0.9rem 1rem;
+        gap: 0.85rem;
+        width: min(100%, 54rem);
+        min-height: 3.1rem;
+        padding: 0.45rem 0.85rem;
         border: 1px solid color-mix(in srgb, var(--accent) 40%, var(--border));
         border-radius: var(--radius);
         background:
             linear-gradient(180deg, color-mix(in srgb, var(--accent) 16%, var(--bg-soft)), var(--bg-soft));
         box-shadow: 0 0.75rem 1.5rem rgba(0, 0, 0, 0.12);
+        overflow-x: auto;
+        overflow-y: hidden;
+        scrollbar-width: thin;
     }
 
     .bulk-action-bar.is-hidden {
@@ -917,18 +934,17 @@
 
     .bulk-action-copy {
         display: flex;
-        flex-direction: column;
-        gap: 0.2rem;
-    }
-
-    .bulk-action-copy strong {
-        color: var(--text);
-        font-size: 0.98rem;
+        flex-direction: row;
+        align-items: center;
+        gap: 0.6rem;
+        min-height: 1.9rem;
+        min-width: 0;
+        white-space: nowrap;
     }
 
     .bulk-action-copy span {
         color: var(--text-muted);
-        font-size: 0.92rem;
+        font-size: 0.88rem;
     }
 
     .bulk-action-note {
@@ -936,43 +952,39 @@
         font-weight: 600;
     }
 
-    .bulk-action-feedback {
+    .bulk-action-controls-wrap {
         display: inline-flex;
         align-items: center;
-        flex-wrap: wrap;
-        gap: 0.65rem;
-        width: fit-content;
-        margin-top: 0.2rem;
-        padding: 0.5rem 0.7rem;
-        border-radius: var(--radius-sm);
-        font-size: 0.9rem;
-        font-weight: 600;
+        justify-content: flex-end;
+        gap: 0.55rem;
+        flex: 0 1 auto;
+        min-width: 0;
     }
 
-    .bulk-action-feedback[data-tone='success'] {
-        background: rgba(39, 174, 96, 0.12);
-        color: #1f7a46;
-    }
-
-    .bulk-action-feedback[data-tone='warning'] {
-        background: rgba(227, 179, 65, 0.16);
-        color: #8c6400;
-    }
-
-    .bulk-action-feedback[data-tone='error'] {
-        background: rgba(208, 55, 95, 0.12);
-        color: #a11a3f;
+    .bulk-action-undo-slot {
+        display: inline-flex;
+        align-items: center;
+        justify-content: flex-end;
+        width: 4.8rem;
+        min-width: 4.8rem;
     }
 
     .bulk-action-undo {
-        min-height: 2rem;
-        padding: 0.35rem 0.7rem;
+        min-height: 1.65rem;
+        width: 4.8rem;
+        padding: 0.2rem 0.55rem;
         border: 1px solid currentColor;
         border-radius: 999px;
         background: transparent;
         color: inherit;
         cursor: pointer;
         font-weight: 700;
+        box-sizing: border-box;
+    }
+
+    .bulk-action-undo.is-hidden {
+        visibility: hidden;
+        pointer-events: none;
     }
 
     .bulk-action-undo:disabled {
@@ -982,25 +994,34 @@
 
     .bulk-action-controls {
         display: flex;
-        flex-wrap: wrap;
-        gap: 0.65rem;
+        flex-wrap: nowrap;
+        gap: 0.45rem;
         align-items: center;
         justify-content: flex-end;
-        flex: 0 1 auto;
+        white-space: nowrap;
     }
 
     .bulk-flag-control {
         display: inline-flex;
         align-items: center;
-        gap: 0.55rem;
-        min-height: 2.6rem;
-        padding: 0.55rem 0.85rem;
+        gap: 0.45rem;
+        min-height: 2rem;
+        padding: 0.3rem 0.65rem;
         border: 1px solid color-mix(in srgb, var(--border) 75%, var(--accent));
         border-radius: 999px;
         background: rgba(255, 255, 255, 0.72);
         color: var(--text);
         cursor: pointer;
         transition: border-color 0.15s ease, background 0.15s ease, transform 0.15s ease;
+        font-size: 0.88rem;
+    }
+
+    .bulk-flag-control {
+        color: #24303d;
+    }
+
+    .bulk-flag-control span {
+        color: inherit;
     }
 
     .bulk-flag-control:hover:not(:disabled) {
@@ -1088,17 +1109,9 @@
     }
 
     @media (max-width: 900px) {
-        .bulk-action-slot {
-            min-height: 11rem;
-        }
-
         .bulk-action-bar {
-            flex-direction: column;
-            align-items: stretch;
-        }
-
-        .bulk-action-controls {
-            justify-content: flex-start;
+            width: 100%;
         }
     }
 </style>
+
