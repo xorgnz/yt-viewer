@@ -457,3 +457,13 @@ export function restoreViewerSelectionBulkFlagStates(
         selectedVideoState
     };
 }
+
+export function clearViewerSelectionState(state: ViewerSelectionState): ViewerSelectionState
+{
+    return {
+        ...state,
+        selectedVideoIds: [],
+        anchorVideoId: null,
+        selectedVideoState: {}
+    };
+}

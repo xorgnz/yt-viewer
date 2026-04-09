@@ -6,6 +6,7 @@
     import VideoCard from '$lib/components/VideoCard.svelte';
     import {
         applyViewerSelectionBulkFlag,
+        clearViewerSelectionState,
         clearPersistedViewerSelectionState,
         createViewerSelectionContextKey,
         createViewerSelectionState,
@@ -292,6 +293,31 @@
         selectionState = toggleViewerSelectionVideo(selectionState, videoId);
     }
 
+    function handleViewerBackgroundClick(event: MouseEvent)
+    {
+        if (
+            bulkActionPending ||
+            !hasActiveSelection ||
+            event.defaultPrevented ||
+            event.shiftKey ||
+            event.ctrlKey ||
+            event.metaKey
+        ) {
+            return;
+        }
+
+        const target = event.target as HTMLElement | null;
+        if (!target) {
+            return;
+        }
+
+        if (target.closest('.card, .bulk-action-bar, .pager, .panel')) {
+            return;
+        }
+
+        selectionState = clearViewerSelectionState(selectionState);
+    }
+
     function getNextBulkFlagValue(controlState: ViewerSelectionControlState): ViewerSelectionFlagValue
     {
         return controlState === 'checked' ? 0 : 1;
@@ -560,6 +586,8 @@
         bulkActionFeedback = null;
     }
 </script>
+
+<svelte:window on:click={handleViewerBackgroundClick} />
 
 <div class="page stack">
     <section class="panel">

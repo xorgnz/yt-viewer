@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+    clearViewerSelectionState,
     createViewerSelectionContextKey,
     createViewerSelectionState,
     reconcileViewerSelectionState,
@@ -64,5 +65,21 @@ describe('viewerSelection filter-context behavior', () => {
         expect(nextState.anchorVideoId).toBeNull();
         expect(nextState.selectedVideoState).toEqual({});
         expect(nextState.currentPageVideoIds).toEqual([1, 2]);
+    });
+
+    it('clears selected ids, anchor, and stored flag state without changing the page context', () => {
+        const contextKey = createContextKey();
+        let state = createViewerSelectionState(contextKey, pageOneVideos);
+
+        state = toggleViewerSelectionVideo(state, 1);
+        state = toggleViewerSelectionVideo(state, 2);
+
+        const clearedState = clearViewerSelectionState(state);
+
+        expect(clearedState.contextKey).toBe(contextKey);
+        expect(clearedState.currentPageVideoIds).toEqual([1, 2]);
+        expect(clearedState.selectedVideoIds).toEqual([]);
+        expect(clearedState.anchorVideoId).toBeNull();
+        expect(clearedState.selectedVideoState).toEqual({});
     });
 });
