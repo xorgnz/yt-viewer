@@ -128,6 +128,17 @@ The feature will support mouse-based range and additive selection, cross-paginat
 - The response must provide enough original-state information for a follow-up undo request covering the same action scope.
 - The response must include user-facing summary text suitable for the bulk-action bar without requiring the client to reconstruct the action meaning from low-level fields.
 
+#### Bulk Response Reporting Rules
+
+- The response must classify the outcome as full success, partial success, or failed.
+- Full success means every requested eligible id was updated to the requested target value.
+- Partial success means at least one requested id was updated and at least one requested id failed or was skipped.
+- Failed means no requested id was updated successfully.
+- The response must include counts for selected ids, attempted ids, succeeded ids, failed ids, and skipped ids when applicable.
+- The response must include failed-id detail suitable for diagnostics without forcing the main user-facing message to expose raw identifiers.
+- The response must include concise human-readable feedback for the action bar, such as `12 videos marked ignored` or `9 videos updated, 3 failed`.
+- Undo responses must follow the same reporting structure so the client can present consistent post-action messaging.
+
 ## Constraints and Considerations
 
 - Filter changes invalidate the current selection.
