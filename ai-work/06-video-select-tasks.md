@@ -34,7 +34,7 @@
   - [x] 3.5 Clear selection automatically when the viewer filter set changes
 
 - [ ] 4.0 Build the bulk-selection UI and selected-state affordances in the viewer
-  - [ ] 4.1 Add selected-state card visuals, including blue outline and blue checkmark feedback
+  - [x] 4.1 Add selected-state card visuals, including blue outline and blue checkmark feedback
   - [ ] 4.2 Add a bulk-action bar that appears when one or more videos are selected
   - [ ] 4.3 Show selected-count metadata and make it obvious when some selected videos are on other pages
   - [ ] 4.4 Add tri-state bulk controls for watched, favorite, and ignored, including mixed-state display behavior

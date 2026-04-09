@@ -73,6 +73,9 @@
     title={video.title}
 >
     <a class="thumb" href={`/viewer/watch/${video.youtube_id}`} aria-label={`Open ${video.title}`}>
+        {#if isSelected}
+            <span class="selection-indicator" aria-hidden="true">✓</span>
+        {/if}
         {#if video.thumbnail_url}
             <img src={video.thumbnail_url} alt={video.title} loading="lazy" />
         {:else}
@@ -155,6 +158,36 @@
             linear-gradient(180deg, rgba(78, 24, 30, 0.97), rgba(40, 14, 18, 0.99));
         box-shadow: inset 0 1px 0 rgba(239, 154, 154, 0.16);
     }
+    .card.card-selected {
+        border-color: #3b82f6;
+        box-shadow:
+            inset 0 1px 0 rgba(255, 255, 255, 0.08),
+            0 0 0 3px rgba(59, 130, 246, 0.35);
+    }
+    .card.card-selected.card-watched {
+        border-color: #4fba7a;
+        box-shadow:
+            inset 0 1px 0 rgba(255, 255, 255, 0.08),
+            0 0 0 3px rgba(59, 130, 246, 0.35);
+    }
+    .card.card-selected.card-favorite {
+        border-color: #69a9f5;
+        box-shadow:
+            inset 0 1px 0 rgba(255, 255, 255, 0.08),
+            0 0 0 3px rgba(59, 130, 246, 0.35);
+    }
+    .card.card-selected.card-favorite-watched {
+        border-color: #72b8d0;
+        box-shadow:
+            inset 0 1px 0 rgba(255, 255, 255, 0.08),
+            0 0 0 3px rgba(59, 130, 246, 0.35);
+    }
+    .card.card-selected.card-ignored {
+        border-color: rgba(229, 115, 115, 0.9);
+        box-shadow:
+            inset 0 1px 0 rgba(239, 154, 154, 0.16),
+            0 0 0 3px rgba(59, 130, 246, 0.35);
+    }
     .card a { color: inherit; text-decoration: none; }
     /* Floating actions in bottom-right */
     .actions {
@@ -200,6 +233,25 @@
     .thumb { position: relative; aspect-ratio: 16/9; background: #111; display: block; }
     .thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
     .thumb .placeholder { width: 100%; height: 100%; background: repeating-linear-gradient(45deg, #2a2a2a, #2a2a2a 10px, #242424 10px, #242424 20px); }
+    .selection-indicator {
+        position: absolute;
+        top: 0.55rem;
+        right: 0.55rem;
+        z-index: 2;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 1.9rem;
+        height: 1.9rem;
+        border: 2px solid rgba(186, 230, 253, 0.95);
+        border-radius: 999px;
+        background: linear-gradient(180deg, rgba(59, 130, 246, 0.98), rgba(29, 78, 216, 0.98));
+        color: #eff6ff;
+        font-size: 1rem;
+        font-weight: 800;
+        line-height: 1;
+        box-shadow: 0 0.35rem 0.9rem rgba(8, 47, 73, 0.45);
+    }
     .badges { position: absolute; top: 4px; left: 4px; display: flex; gap: 4px; }
     .badge { padding: 2px 6px; font-size: .7rem; border-radius: 3px; background: rgba(0,0,0,.65); color: #fff; }
     .badge.favorite { background: #e3b341; color: #161616; }
