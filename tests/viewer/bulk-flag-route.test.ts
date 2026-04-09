@@ -478,4 +478,53 @@ describe('viewer bulk flag actions', () => {
             db.close();
         }
     });
+
+    it('reports partial success when bulk undo only restores part of the requested set', async () => {
+        const undoForm = new FormData();
+        undoForm.set('kind', 'favorite');
+        undoForm.set('videoIds', '1,2,999');
+        undoForm.set('originalStates', JSON.stringify([
+            { videoId: 1, value: 0 }
+        ]));
+
+        const undoResult = await routeModule.actions.undoBulkUpdateFlags({
+            request: new Request('http://localhost/viewer', {
+                method: 'POST',
+                body: undoForm
+            }),
+            cookies: cookieJar()
+        } as any);
+
+        expect(undoResult).toMatchObject({
+            ok: true,
+            outcome: 'partial_success',
+            kind: 'favorite',
+            requestedCount: 3,
+            attemptedCount: 1,
+            succeededCount: 1,
+            failedCount: 1,
+            skippedCount: 1,
+            succeededIds: [1],
+            failedIds: [999],
+            skippedIds: [2],
+            message: '1 video restored, 1 failed, 1 skipped.'
+        });
+
+        const db = openDb();
+        try {
+            const rows = db.prepare(`
+                SELECT video_id, favorite
+                FROM video_flags
+                WHERE profile_id = 1
+                ORDER BY video_id
+            `).all() as Array<{ video_id: number; favorite: number }>;
+            expect(rows.map((row) => [row.video_id, row.favorite])).toEqual([
+                [1, 0],
+                [2, 1],
+                [3, 0]
+            ]);
+        } finally {
+            db.close();
+        }
+    });
 });
