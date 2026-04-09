@@ -1,4 +1,4 @@
-<script lang="ts">
+﻿<script lang="ts">
     export let video: {
         id: number;
         youtube_id: string;
@@ -76,24 +76,13 @@
 >
     <a class="thumb" href={`/viewer/watch/${video.youtube_id}`} aria-label={`Open ${video.title}`}>
         {#if isSelected}
-            <span class="selection-indicator" aria-hidden="true">✓</span>
+            <span class="selection-indicator" aria-hidden="true">&#10003;</span>
         {/if}
         {#if video.thumbnail_url}
             <img src={video.thumbnail_url} alt={video.title} loading="lazy" />
         {:else}
             <div class="placeholder"></div>
         {/if}
-        <div class="badges">
-            {#if video.ignored}
-                <span class="badge ignored">ignored</span>
-            {/if}
-            {#if video.favorite}
-                <span class="badge favorite">★</span>
-            {/if}
-            {#if video.watched}
-                <span class="badge watched">watched</span>
-            {/if}
-        </div>
     </a>
     <div class="meta">
         <a class="title" href={`/viewer/watch/${video.youtube_id}`}>{video.title}</a>
@@ -106,7 +95,7 @@
             <input type="hidden" name="kind" value="favorite" />
             <input type="hidden" name="value" value={video.favorite ? 0 : 1} />
             <button type="submit" class="icon favorite" class:active={!!video.favorite} aria-pressed={!!video.favorite} title={video.favorite ? 'Unfavorite' : 'Mark favorite'}>
-                {video.favorite ? '★' : '☆'}
+                <span class="icon-glyph" aria-hidden="true">&#9733;</span>
                 <span class="sr-only">{video.favorite ? 'Unfavorite' : 'Mark favorite'}</span>
             </button>
         </form>
@@ -115,11 +104,7 @@
             <input type="hidden" name="kind" value="watched" />
             <input type="hidden" name="value" value={video.watched ? 0 : 1} />
             <button type="submit" class="icon watched" class:active={!!video.watched} aria-pressed={!!video.watched} title={video.watched ? 'Mark unwatched' : 'Mark watched'}>
-                {#if video.watched}
-                    &#10003;
-                {:else}
-                    &#9675;
-                {/if}
+                <span class="icon-glyph" aria-hidden="true">&#10003;</span>
                 <span class="sr-only">{video.watched ? 'Mark unwatched' : 'Mark watched'}</span>
             </button>
         </form>
@@ -128,7 +113,7 @@
             <input type="hidden" name="kind" value="ignored" />
             <input type="hidden" name="value" value={video.ignored ? 0 : 1} />
             <button type="submit" class="icon ignored" class:active={!!video.ignored} aria-pressed={!!video.ignored} title={video.ignored ? 'Unignore' : 'Ignore video'}>
-                {video.ignored ? '✓' : '⊖'}
+                <span class="icon-glyph" aria-hidden="true">&#10005;</span>
                 <span class="sr-only">{video.ignored ? 'Unignore' : 'Ignore video'}</span>
             </button>
         </form>
@@ -216,24 +201,60 @@
     }
     .actions form { display: inline; pointer-events: auto; }
     .actions button {
-        width: 36px;
-        height: 36px;
-        display: grid;
-        place-items: center;
-        border: 1px solid #333;
-        background: rgba(34,34,34,0.9);
-        color: #fff;
-        border-radius: 18px;
+        width: 1.9rem;
+        height: 1.9rem;
+        min-width: 1.9rem;
+        min-height: 1.9rem;
+        padding: 0;
+        gap: 0;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border: 2px solid rgba(184, 184, 184, 0.75);
+        background: linear-gradient(180deg, rgba(46, 46, 46, 0.96), rgba(24, 24, 24, 0.98));
+        color: rgba(132, 138, 146, 0.82);
+        border-radius: 999px;
         cursor: pointer;
-        box-shadow: 0 2px 6px rgba(0,0,0,0.35);
-        transition: transform .1s ease, background .15s ease, border-color .15s ease;
-        font-size: 1.05rem;
+        box-shadow: 0 0.3rem 0.75rem rgba(0, 0, 0, 0.38);
+        transition: transform .1s ease, background .15s ease, border-color .15s ease, box-shadow .15s ease;
+        font-size: 0.98rem;
+        font-weight: 800;
         line-height: 1;
     }
-    .actions button:hover { background: rgba(54,54,54,0.95); transform: translateY(-1px); }
-    .actions button.active.favorite { background: #e3b341; color: #161616; border-color: #c79c25; }
-    .actions button.watched.active { background: #2e7d32; border-color: #1f5a23; color: #f4fff4; }
-    .actions button.ignored.active { background: #b00020; border-color: #7a0015; color: #fff; }
+    .actions button .icon-glyph {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 1em;
+        height: 1em;
+        line-height: 1;
+        flex: 0 0 auto;
+        transform: translateY(-1px);
+    }
+    .actions button:hover {
+        background: linear-gradient(180deg, rgba(68, 68, 68, 0.98), rgba(34, 34, 34, 0.98));
+        border-color: rgba(214, 214, 214, 0.8);
+        transform: translateY(-1px);
+        box-shadow: 0 0.4rem 0.95rem rgba(0, 0, 0, 0.42);
+    }
+    .actions button.active.favorite {
+        background: linear-gradient(180deg, rgba(227, 179, 65, 0.98), rgba(199, 156, 37, 0.98));
+        color: #161616;
+        border-color: rgba(255, 232, 162, 0.95);
+        box-shadow: 0 0.35rem 0.9rem rgba(106, 76, 6, 0.38);
+    }
+    .actions button.watched.active {
+        background: linear-gradient(180deg, rgba(46, 125, 50, 0.98), rgba(31, 90, 35, 0.98));
+        border-color: rgba(180, 234, 185, 0.92);
+        color: #f4fff4;
+        box-shadow: 0 0.35rem 0.9rem rgba(12, 57, 23, 0.4);
+    }
+    .actions button.ignored.active {
+        background: linear-gradient(180deg, rgba(176, 0, 32, 0.98), rgba(122, 0, 21, 0.98));
+        border-color: rgba(255, 190, 198, 0.92);
+        color: #fff;
+        box-shadow: 0 0.35rem 0.9rem rgba(72, 0, 13, 0.42);
+    }
     .actions button.icon { padding: 0; }
     .sr-only {
         position: absolute;
@@ -268,13 +289,9 @@
         line-height: 1;
         box-shadow: 0 0.35rem 0.9rem rgba(8, 47, 73, 0.45);
     }
-    .badges { position: absolute; top: 4px; left: 4px; display: flex; gap: 4px; }
-    .badge { padding: 2px 6px; font-size: .7rem; border-radius: 3px; background: rgba(0,0,0,.65); color: #fff; }
-    .badge.favorite { background: #e3b341; color: #161616; }
-    .badge.ignored { background: #999; }
-    .badge.watched { background: #2e7d32; }
     .meta { padding: .65rem .65rem .25rem; }
     .title { display: -webkit-box; font-weight: 600; font-size: 1.05rem; margin-bottom: .35rem; overflow: hidden; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; }
     .chan { color: #bbb; font-size: .9rem; }
     .pub { color: #999; font-size: .85rem; }
 </style>
+
