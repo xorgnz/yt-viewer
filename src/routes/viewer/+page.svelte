@@ -1,19 +1,26 @@
 <script lang="ts">
     import { browser } from '$app/environment';
+    import { deserialize } from '$app/forms';
     import { goto } from '$app/navigation';
     import DatePicker from '$lib/components/DatePicker.svelte';
     import VideoCard from '$lib/components/VideoCard.svelte';
     import {
+        applyViewerSelectionBulkFlag,
         clearPersistedViewerSelectionState,
         createViewerSelectionContextKey,
         createViewerSelectionState,
         getCurrentPageSelectedVideoIds,
+        getViewerSelectionControlState,
         hasSelectionOutsideCurrentPage,
         loadPersistedViewerSelectionState,
         persistViewerSelectionState,
         reconcileViewerSelectionState,
         selectViewerSelectionRange,
         toggleViewerSelectionVideo,
+        type ViewerSelectionControlState,
+        type ViewerSelectionFlagKind,
+        type ViewerSelectionFlagValue,
+        type ViewerSelectionVideoSnapshot,
         type ViewerSelectionState
     } from '$lib/viewerSelection';
 
@@ -54,6 +61,22 @@
         profileName: string;
     };
 
+    type ViewerVideo = {
+        id: number;
+        youtube_id: string;
+        channel_id: number;
+        title: string;
+        description: string;
+        published_at: number | null;
+        duration_seconds: number | null;
+        thumbnail_url: string | null;
+        channel_title: string;
+        channel_youtube_id: string;
+        watched: number;
+        favorite: number;
+        ignored: number;
+    };
+
     const FILTER_DEBOUNCE_MS = 450;
 
     let f = data.filters;
@@ -74,6 +97,12 @@
     let hasActiveSelection = false;
     let selectedCount = 0;
     let offPageSelectedCount = 0;
+    let visibleVideos: ViewerVideo[] = data.videos;
+    let currentPageSelectionVideos: ViewerSelectionVideoSnapshot[] = [];
+    let watchedControlState: ViewerSelectionControlState = 'unchecked';
+    let favoriteControlState: ViewerSelectionControlState = 'unchecked';
+    let ignoredControlState: ViewerSelectionControlState = 'unchecked';
+    let bulkActionPending = false;
 
     function buildPageHref(page: number): string
     {
@@ -207,6 +236,10 @@
 
     function handleCardClick(event: MouseEvent | KeyboardEvent, videoId: number)
     {
+        if (bulkActionPending) {
+            return;
+        }
+
         if (event instanceof KeyboardEvent) {
             if (event.key !== 'Enter' && event.key !== ' ') {
                 return;
@@ -242,9 +275,73 @@
         selectionState = toggleViewerSelectionVideo(selectionState, videoId);
     }
 
+    function getNextBulkFlagValue(controlState: ViewerSelectionControlState): ViewerSelectionFlagValue
+    {
+        return controlState === 'checked' ? 0 : 1;
+    }
+
+    async function handleBulkFlagToggle(kind: ViewerSelectionFlagKind, controlState: ViewerSelectionControlState)
+    {
+        if (bulkActionPending || selectionState.selectedVideoIds.length === 0) {
+            return;
+        }
+
+        bulkActionPending = true;
+
+        try {
+            const nextValue = getNextBulkFlagValue(controlState);
+            const form = new FormData();
+            form.set('kind', kind);
+            form.set('value', String(nextValue));
+            form.set('videoIds', selectionState.selectedVideoIds.join(','));
+            form.set('selectionContextKey', selectionState.contextKey);
+            form.set('selectedCount', String(selectionState.selectedVideoIds.length));
+            form.set('spansMultiplePages', offPageSelectedCount > 0 ? '1' : '0');
+
+            const response = await fetch('?/bulkUpdateFlags', {
+                method: 'POST',
+                body: form
+            });
+            const result = deserialize(await response.text());
+
+            if (result.type !== 'success' || !result.data) {
+                return;
+            }
+
+            const succeededIds = Array.isArray((result.data as any).succeededIds)
+                ? (result.data as any).succeededIds as number[]
+                : [];
+
+            selectionState = applyViewerSelectionBulkFlag(selectionState, kind, nextValue, succeededIds);
+
+            if (succeededIds.length > 0) {
+                const succeededIdSet = new Set(succeededIds);
+                visibleVideos = visibleVideos.map((video) => {
+                    if (!succeededIdSet.has(video.id)) {
+                        return video;
+                    }
+
+                    return {
+                        ...video,
+                        [kind]: nextValue
+                    };
+                });
+            }
+        } finally {
+            bulkActionPending = false;
+        }
+    }
+
     let visiblePages = getVisiblePages(currentPage, totalPages);
 
     $: f = data.filters;
+    $: visibleVideos = data.videos;
+    $: currentPageSelectionVideos = visibleVideos.map((video) => ({
+        id: video.id,
+        watched: video.watched ? 1 : 0,
+        favorite: video.favorite ? 1 : 0,
+        ignored: video.ignored ? 1 : 0
+    }));
     $: termInput = f.term || '';
     $: dateFromInput = f.dateFromInput;
     $: dateToInput = f.dateToInput;
@@ -261,6 +358,9 @@
     $: offPageSelectedCount = hasSelectionOutsideCurrentPage(selectionState)
         ? selectedCount - getCurrentPageSelectedVideoIds(selectionState).length
         : 0;
+    $: watchedControlState = getViewerSelectionControlState(selectionState, 'watched');
+    $: favoriteControlState = getViewerSelectionControlState(selectionState, 'favorite');
+    $: ignoredControlState = getViewerSelectionControlState(selectionState, 'ignored');
     $: {
         const nextContextKey = createViewerSelectionContextKey({
             profileKey: data.profileKey,
@@ -272,7 +372,7 @@
             channelId: f.channelId,
             groupId: f.groupId
         });
-        const nextCurrentPageVideoIds = data.videos.map((video) => video.id);
+        const nextCurrentPageVideoIds = currentPageSelectionVideos.map((video) => video.id);
         const contextChanged = selectionState.contextKey !== nextContextKey;
 
         if (browser && selectionState.contextKey && contextChanged) {
@@ -284,14 +384,14 @@
             contextChanged ||
             selectionState.currentPageVideoIds.join(',') !== nextCurrentPageVideoIds.join(',')
         ) {
-            selectionState = reconcileViewerSelectionState(selectionState, nextContextKey, nextCurrentPageVideoIds);
+            selectionState = reconcileViewerSelectionState(selectionState, nextContextKey, currentPageSelectionVideos);
         }
     }
 
     $: if (browser && selectionState.contextKey && hydratedSelectionContextKey !== selectionState.contextKey) {
         const persistedSelectionState = loadPersistedViewerSelectionState(
             selectionState.contextKey,
-            selectionState.currentPageVideoIds
+            currentPageSelectionVideos
         );
 
         if (persistedSelectionState) {
@@ -386,6 +486,56 @@
                         </span>
                     {/if}
                 </div>
+                <div class="bulk-action-controls" role="group" aria-label="Bulk selection flags">
+                    <button
+                        type="button"
+                        class="bulk-flag-control"
+                        data-state={watchedControlState}
+                        disabled={bulkActionPending}
+                        on:click={() => void handleBulkFlagToggle('watched', watchedControlState)}
+                    >
+                        <span class="bulk-flag-box" data-state={watchedControlState}>
+                            {#if watchedControlState === 'checked'}
+                                ✓
+                            {:else if watchedControlState === 'mixed'}
+                                ■
+                            {/if}
+                        </span>
+                        <span>Watched</span>
+                    </button>
+                    <button
+                        type="button"
+                        class="bulk-flag-control"
+                        data-state={favoriteControlState}
+                        disabled={bulkActionPending}
+                        on:click={() => void handleBulkFlagToggle('favorite', favoriteControlState)}
+                    >
+                        <span class="bulk-flag-box" data-state={favoriteControlState}>
+                            {#if favoriteControlState === 'checked'}
+                                ✓
+                            {:else if favoriteControlState === 'mixed'}
+                                ■
+                            {/if}
+                        </span>
+                        <span>Favorite</span>
+                    </button>
+                    <button
+                        type="button"
+                        class="bulk-flag-control"
+                        data-state={ignoredControlState}
+                        disabled={bulkActionPending}
+                        on:click={() => void handleBulkFlagToggle('ignored', ignoredControlState)}
+                    >
+                        <span class="bulk-flag-box" data-state={ignoredControlState}>
+                            {#if ignoredControlState === 'checked'}
+                                ✓
+                            {:else if ignoredControlState === 'mixed'}
+                                ■
+                            {/if}
+                        </span>
+                        <span>Ignored</span>
+                    </button>
+                </div>
             </div>
         {/if}
 
@@ -409,7 +559,7 @@
             <p class="muted">No videos match these filters.</p>
         {:else}
             <div class="grid">
-                {#each data.videos as v}
+                {#each visibleVideos as v}
                     <VideoCard
                         video={v}
                         filters={f}
@@ -533,6 +683,73 @@
     .bulk-action-note {
         color: color-mix(in srgb, var(--accent) 72%, white);
         font-weight: 600;
+    }
+
+    .bulk-action-controls {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.65rem;
+        align-items: center;
+        justify-content: flex-end;
+    }
+
+    .bulk-flag-control {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.55rem;
+        min-height: 2.6rem;
+        padding: 0.55rem 0.85rem;
+        border: 1px solid color-mix(in srgb, var(--border) 75%, var(--accent));
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.72);
+        color: var(--text);
+        cursor: pointer;
+        transition: border-color 0.15s ease, background 0.15s ease, transform 0.15s ease;
+    }
+
+    .bulk-flag-control:hover:not(:disabled) {
+        border-color: color-mix(in srgb, var(--accent) 50%, var(--border));
+        transform: translateY(-1px);
+    }
+
+    .bulk-flag-control:disabled {
+        opacity: 0.65;
+        cursor: wait;
+    }
+
+    .bulk-flag-control[data-state='checked'] {
+        background: color-mix(in srgb, var(--accent) 18%, white);
+        border-color: color-mix(in srgb, var(--accent) 55%, var(--border));
+    }
+
+    .bulk-flag-control[data-state='mixed'] {
+        background: color-mix(in srgb, var(--accent) 12%, white);
+        border-color: color-mix(in srgb, var(--accent) 42%, var(--border));
+    }
+
+    .bulk-flag-box {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 1.1rem;
+        height: 1.1rem;
+        border: 2px solid color-mix(in srgb, var(--accent) 65%, var(--border));
+        border-radius: 0.28rem;
+        background: white;
+        color: var(--accent);
+        font-size: 0.82rem;
+        font-weight: 800;
+        line-height: 1;
+    }
+
+    .bulk-flag-box[data-state='checked'] {
+        background: color-mix(in srgb, var(--accent) 80%, white);
+        color: white;
+    }
+
+    .bulk-flag-box[data-state='mixed'] {
+        background: color-mix(in srgb, var(--accent) 32%, white);
+        color: var(--accent);
     }
 
     .pager {
