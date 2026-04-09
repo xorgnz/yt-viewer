@@ -44,5 +44,5 @@
   - [x] 5.1 Add server or route tests for bulk watched, favorite, and ignored updates on selected id sets
   - [x] 5.2 Add tests for undo restoring previous flag values, including mixed-state recovery cases
   - [x] 5.3 Add tests covering partial-failure reporting and partial undo reporting
-  - [ ] 5.4 Add client-relevant tests where practical for selection-clearing behavior on filter changes
+  - [x] 5.4 Add client-relevant tests where practical for selection-clearing behavior on filter changes
   - [ ] 5.5 Run targeted validation for the new viewer bulk-selection flow using the existing project checks
