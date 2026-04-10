@@ -17,7 +17,7 @@ To define a reusable shorthand for processing the subtasks of a parent task one 
 - It means:
   1. take the next subtask under the specified parent task
   2. run rule 6 for that subtask
-  3. run rule 7 using its default selection behavior
+  3. run rule 7 using the default option
   4. run rule 8 with approval included
   5. only then move to the next subtask
 
