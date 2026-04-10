@@ -1,8 +1,8 @@
 # Feature Status
 
-**Current Feature:** `06-video-select`
+**Current Feature:** `05-db-migrations`
 **Current Branch:** `main`
-**Last Updated:** `2026-04-08`
+**Last Updated:** `2026-04-10`
 
 ## Shared Feature-State Contract
 
@@ -62,5 +62,5 @@ Additional guidance:
 | `02-vchannel-mgmt` | `feature/02-vchannel-mgmt` | `completed` | `2026-03-23` | `2026-04-04` | Advanced admin UI for virtual channel source associations and video selection |
 | `03-inline-assign` | `feature/03-inline-assign` | `completed` | `2026-04-04` | `2026-04-06` | Inline source-channel assignment controls on the virtual channels admin page |
 | `04-watch-history` | `feature/04-watch-history` | `completed` | `2026-04-06` | `2026-04-07` | Decouple watch history from watched flags and track playback sessions with elapsed watch time |
-| `05-db-migrations` | `feature/05-db-migrations` | `paused` | `2026-04-07` |  | Forward-only database migration infrastructure for evolving local app data safely across releases |
-| `06-video-select` | `feature/06-video-select` | `active` | `2026-04-08` |  | Multi-select video actions in the viewer using range and additive selection |
+| `05-db-migrations` | `feature/05-db-migrations` | `active` | `2026-04-07` |  | Forward-only database migration infrastructure for evolving local app data safely across releases |
+| `06-video-select` | `feature/06-video-select` | `completed` | `2026-04-08` | `2026-04-10` | Multi-select video actions in the viewer using range and additive selection |
