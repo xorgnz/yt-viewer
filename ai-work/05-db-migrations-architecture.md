@@ -12,6 +12,7 @@ It currently covers task `1.1`:
 - latest-only upgrade behavior
 - migration metadata storage shape
 - engine-adapter boundary
+- file and registration conventions
 
 Metadata storage shape, engine adapters, and registration conventions are defined separately by later tasks in this feature.
 
@@ -169,3 +170,56 @@ It is narrower:
 - migration orchestration and migration definitions should be isolated behind a portable contract
 
 That keeps task `1.3` focused on the migration system itself instead of forcing a broad repository-wide data-access rewrite.
+
+## File and Registration Conventions
+
+Future migration work should live in dedicated migration-focused modules rather than being mixed into `_schema.ts` or the existing application DAOs.
+
+### Planned Locations
+
+Use these repository locations:
+
+- `src/lib/daos/migrations/` for migration definition files and the migration registry
+- `src/lib/daos/shared/` for engine-neutral runner code and engine-specific adapter implementations
+- `scripts/migrate_database.ts` as the explicit command entrypoint that invokes the runner
+- `scripts/create_database.ts` as the fresh-create path that applies the latest schema directly without replaying migrations
+
+### Migration Definition Files
+
+Each migration should be defined in its own file under `src/lib/daos/migrations/`.
+
+Convention:
+
+- file name begins with the target version for stable discovery by humans
+- file exports one migration definition
+- file contents describe only the step needed to reach that target version
+
+Example naming pattern:
+
+- `src/lib/daos/migrations/v0008_add_migration_history.ts`
+- `src/lib/daos/migrations/v0009_split_profile_flags.ts`
+
+The runner should still order by declared migration `version`, not by file name.
+
+### Registry Convention
+
+`src/lib/daos/migrations/` should include a single registry module that exports the full ordered migration set for the application.
+
+Rules:
+
+- new migrations are added to the registry explicitly
+- the registry is the source of truth for supported upgrade targets
+- registration should fail fast on duplicate versions or invalid ordering
+
+This keeps migration availability explicit and reviewable in code review.
+
+### Future Feature Contribution Rule
+
+When a future feature changes persisted schema or requires a deterministic data rewrite:
+
+- add a new migration file for the next schema version
+- register it in the migration registry
+- update the latest schema bootstrap in `_schema.ts` so fresh-create remains current
+- add or update tests for both fresh-create and migration behavior when relevant
+
+This avoids a split-brain design where fresh-create and migration history drift apart.

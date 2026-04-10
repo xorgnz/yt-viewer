@@ -30,7 +30,7 @@
   - [x] 1.1 Define the migration model, including version, name, ordering, execution contract, and latest-only upgrade behavior
   - [x] 1.2 Define the migration metadata storage shape so applied migrations record at least version, name, applied timestamp, and success-related state
   - [x] 1.3 Design an engine-adapter boundary so top-level migration flow does not depend directly on SQLite-only concepts
-  - [ ] 1.4 Establish conventions for where future migration files live and how schema-changing features register new migrations
+  - [x] 1.4 Establish conventions for where future migration files live and how schema-changing features register new migrations
   - [ ] 1.5 Define supported versus unsupported source-state handling so unknown or ambiguous databases fail clearly
 
 - [ ] 2.0 Implement the explicit migration command workflow for `dev` and `live`, including latest-only upgrade behavior
