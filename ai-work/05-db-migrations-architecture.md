@@ -10,6 +10,7 @@ It currently covers task `1.1`:
 - ordering behavior
 - execution contract
 - latest-only upgrade behavior
+- migration metadata storage shape
 
 Metadata storage shape, engine adapters, and registration conventions are defined separately by later tasks in this feature.
 
@@ -63,3 +64,50 @@ Behavior:
 - when the current version is unknown, higher than supported, or otherwise ambiguous, the runner refuses to proceed
 
 This keeps the operational workflow narrow: one source-state check, one ordered upgrade path, and one supported destination.
+
+## Migration Metadata Storage Shape
+
+Migration tracking should move beyond a single `schema_version` key and record applied migration history explicitly.
+
+The design keeps two metadata layers:
+
+- a current-state record for quick version detection
+- an append-only migration history record for auditability
+
+### Current State Record
+
+The current schema version remains readable without scanning full history.
+
+Required fields:
+
+- `current_version`: integer latest successfully applied schema version
+- `updated_at`: timestamp for when the current-state record was last changed
+
+This may continue to live in `_meta` or a replacement metadata table, but the runner should treat it as derived from successful migration completion, not as an independent source of truth that can advance ahead of history.
+
+### Applied Migration History
+
+Each successful or attempted migration should have a durable metadata record.
+
+Required fields:
+
+- `version`: integer target version declared by the migration
+- `name`: stable migration slug
+- `applied_at`: timestamp written when the migration attempt finishes successfully
+- `success`: boolean-like status flag for whether the migration completed successfully
+
+Recommended additional fields for traceability:
+
+- `started_at`: timestamp for when the migration attempt began
+- `error_message`: nullable short failure summary when `success` is false
+
+### Recording Rules
+
+Metadata behavior:
+
+- a successful migration writes a history row with its `version`, `name`, `applied_at`, and `success = true`
+- the current-state record advances only after the migration completes successfully
+- a failed migration attempt may write a failure record when practical, but it must not advance the current version
+- the runner must reject states where the current version and successful history entries disagree
+
+This shape supports both operator-readable history and strict refusal behavior for inconsistent databases.
