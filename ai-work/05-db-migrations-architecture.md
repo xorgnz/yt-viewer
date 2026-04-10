@@ -11,6 +11,7 @@ It currently covers task `1.1`:
 - execution contract
 - latest-only upgrade behavior
 - migration metadata storage shape
+- engine-adapter boundary
 
 Metadata storage shape, engine adapters, and registration conventions are defined separately by later tasks in this feature.
 
@@ -111,3 +112,60 @@ Metadata behavior:
 - the runner must reject states where the current version and successful history entries disagree
 
 This shape supports both operator-readable history and strict refusal behavior for inconsistent databases.
+
+## Engine-Adapter Boundary
+
+Top-level migration flow should depend on a migration adapter interface, not on `better-sqlite3` APIs directly.
+
+The boundary separates two layers:
+
+- runner layer: decides whether migration is needed, validates metadata, orders migrations, and reports progress
+- adapter layer: performs engine-specific reads, writes, transactions, and backup operations
+
+### Runner Responsibilities
+
+The runner owns engine-agnostic policy:
+
+- inspect current migration state through adapter calls
+- validate whether the source state is supported
+- choose pending migrations based on registered versions
+- execute migrations in order
+- update metadata only through adapter methods
+- stop on first failure and surface a clear result
+
+The runner must not call SQLite-specific methods such as `pragma`, `prepare`, `exec`, or `transaction` directly.
+
+### Adapter Responsibilities
+
+The adapter owns engine-specific mechanics:
+
+- open migration-capable connections
+- read current version and migration metadata
+- run schema or data mutation statements inside a safe transactional unit when supported
+- write migration success or failure metadata
+- create backups and restore from backups when required by later tasks
+
+For SQLite, the first adapter implementation will wrap `better-sqlite3` and hide direct SQL driver operations behind these responsibilities.
+
+### Migration Definition Boundary
+
+Each migration should receive an engine-neutral execution context from the adapter layer rather than a raw SQLite database handle.
+
+That context should expose only the operations needed for migration work, such as:
+
+- execute statements
+- query rows or scalar values
+- run a transactional block
+
+This keeps individual migrations aligned with the shared migration workflow even if the underlying database engine changes later.
+
+### Intent of the Boundary
+
+This boundary does not try to make all existing DAOs database-agnostic in this feature.
+
+It is narrower:
+
+- application DAOs may remain SQLite-specific for now
+- migration orchestration and migration definitions should be isolated behind a portable contract
+
+That keeps task `1.3` focused on the migration system itself instead of forcing a broad repository-wide data-access rewrite.
