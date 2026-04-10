@@ -34,7 +34,7 @@
   - [x] 1.5 Define supported versus unsupported source-state handling so unknown or ambiguous databases fail clearly
 
 - [ ] 2.0 Implement the explicit migration command workflow for `dev` and `live`, including latest-only upgrade behavior
-  - [ ] 2.1 Add shared migration runner code that discovers the current state and applies pending migrations in order
+  - [x] 2.1 Add shared migration runner code that discovers the current state and applies pending migrations in order
   - [ ] 2.2 Refactor `scripts/migrate_database.ts` into a true forward-only upgrade command for `dev` and `live`
   - [ ] 2.3 Ensure the migration command always targets the latest supported version rather than accepting arbitrary version targets
   - [ ] 2.4 Add migration definition registration and loading for the first supported forward-looking migration set
