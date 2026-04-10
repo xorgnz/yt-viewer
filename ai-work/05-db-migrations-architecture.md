@@ -13,6 +13,7 @@ It currently covers task `1.1`:
 - migration metadata storage shape
 - engine-adapter boundary
 - file and registration conventions
+- supported-source-state policy
 
 Metadata storage shape, engine adapters, and registration conventions are defined separately by later tasks in this feature.
 
@@ -223,3 +224,53 @@ When a future feature changes persisted schema or requires a deterministic data 
 - add or update tests for both fresh-create and migration behavior when relevant
 
 This avoids a split-brain design where fresh-create and migration history drift apart.
+
+## Supported Source-State Policy
+
+The migration runner must classify the database state before it attempts any upgrade work.
+
+### Supported States
+
+A database is considered supported for migration only when all of the following are true:
+
+- the current version can be determined reliably
+- that version is lower than or equal to the highest registered migration version
+- the version corresponds to a known supported starting point in the registry
+- migration metadata, if present, is internally consistent
+
+In the initial implementation, supported source states should be intentionally narrow and explicit. The runner should prefer a short allowlist of known upgradeable versions over broad guesswork.
+
+### Unsupported States
+
+The runner must refuse to proceed when any of these conditions are true:
+
+- no trustworthy current version can be determined
+- the database claims a version newer than the application supports
+- migration history contains duplicate successful versions
+- migration history names or versions disagree with the registered migration set
+- the current-state record disagrees with the highest successful applied migration
+- required metadata tables are partially present in a way that prevents reliable interpretation
+- the database appears to be an ad hoc historical development state that was never declared upgradeable
+
+### Ambiguous States
+
+An ambiguous state is any state where multiple interpretations are plausible and the runner cannot prove which one is correct.
+
+Examples:
+
+- schema objects imply one version while metadata claims another
+- migration metadata exists but is incomplete in a way that cannot be distinguished from partial manual edits
+- the database contains some, but not all, artifacts of a migration attempt without a reliable success marker
+
+Ambiguous states must be treated as unsupported, not as best-effort upgrade candidates.
+
+### Refusal Behavior
+
+When the state is unsupported or ambiguous:
+
+- do not run any migration steps
+- do not rewrite metadata to "fix" the state automatically
+- do not fall back to destructive reset behavior
+- return a clear error describing why the state was refused
+
+This policy is intentionally conservative. It protects user data by requiring migration eligibility to be provable rather than assumed.
