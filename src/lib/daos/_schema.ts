@@ -2,7 +2,7 @@
 // Note: This file intentionally contains only schema DDL, not database creation/connection code.
 
 // Schema version
-export const SCHEMA_VERSION = 7;
+export const SCHEMA_VERSION = 8;
 
 
 export const CREATE_TABLE_SOURCE_CHANNELS = `
@@ -100,6 +100,17 @@ CREATE TABLE IF NOT EXISTS watch_history (
     FOREIGN KEY (profile_id) REFERENCES profiles(id) ON DELETE CASCADE
 );`;
 
+export const CREATE_TABLE_MIGRATION_HISTORY = `
+CREATE TABLE IF NOT EXISTS migration_history (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    version INTEGER NOT NULL,
+    name TEXT NOT NULL,
+    started_at INTEGER NOT NULL,
+    applied_at INTEGER DEFAULT NULL,
+    success INTEGER NOT NULL DEFAULT 0,
+    error_message TEXT DEFAULT NULL
+);`;
+
 export const CREATE_INDEXES = `
 -- Uniqueness on external IDs
 CREATE UNIQUE INDEX IF NOT EXISTS uq_source_channels_youtube_id ON source_channels(youtube_id);
@@ -118,6 +129,7 @@ CREATE INDEX IF NOT EXISTS idx_videos_channel ON videos(channel_id);
 CREATE INDEX IF NOT EXISTS idx_history_profile_time ON watch_history(profile_id, session_started_at DESC);
 CREATE INDEX IF NOT EXISTS idx_history_video_time ON watch_history(video_id, session_started_at DESC);
 CREATE INDEX IF NOT EXISTS idx_history_video_profile_update ON watch_history(video_id, profile_id, last_updated_at DESC);
+CREATE INDEX IF NOT EXISTS idx_migration_history_version ON migration_history(version);
 `;
 
 export const ALL_DDL = [
@@ -130,5 +142,6 @@ export const ALL_DDL = [
     CREATE_TABLE_VIDEO_FLAGS,
     DROP_TABLE_WATCH_HISTORY,
     CREATE_TABLE_WATCH_HISTORY,
+    CREATE_TABLE_MIGRATION_HISTORY,
     CREATE_INDEXES
 ];

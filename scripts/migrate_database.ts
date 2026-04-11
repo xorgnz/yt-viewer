@@ -7,7 +7,7 @@ import Database from 'better-sqlite3';
 import { DatabaseMode } from '$lib/daos/shared/DatabaseWrapper';
 import { MigrationRunner } from '$lib/daos/shared/MigrationRunner';
 import { SqliteMigrationAdapter } from '$lib/daos/shared/SqliteMigrationAdapter';
-import type { MigrationDefinition } from '$lib/daos/migrations/migrationTypes';
+import { MIGRATIONS } from '$lib/daos/migrations/registry';
 
 type ModeArg = DatabaseMode;
 
@@ -81,9 +81,7 @@ async function main()
 
     const db = new Database(dbPath);
     try {
-        // Keep migration selection explicit until the first migration registry lands.
-        const migrations: MigrationDefinition[] = [];
-        const runner = new MigrationRunner(new SqliteMigrationAdapter(db), migrations);
+        const runner = new MigrationRunner(new SqliteMigrationAdapter(db), MIGRATIONS);
         const result = runner.runToLatest();
 
         if (result.appliedMigrations.length === 0) {
