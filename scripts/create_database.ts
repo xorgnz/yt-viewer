@@ -52,7 +52,7 @@ function parseArgs(): { mode: DatabaseMode; reset: boolean }
 function usage(error?: string): never
 {
     const script = path.basename(fileURLToPath(import.meta.url));
-    const message = `\nUsage:\n  ${script} --mode <test|dev|live> [--reset]\n  ${script} <test|dev|live> [--reset]\n\nCreates a SQLite database for the given mode using the current schema (v${SCHEMA_VERSION}).\n- Refuses to run if the target DB file already exists unless --reset is supplied.\n- With --reset, deletes the existing DB file first and recreates it from scratch.\n- Creates it with WAL + NORMAL and applies the current schema.\n`;
+    const message = `\nUsage:\n  ${script} --mode <test|dev|live> [--reset]\n  ${script} <test|dev|live> [--reset]\n\nCreates a SQLite database for the given mode using the current schema (v${SCHEMA_VERSION}).\n- Test mode always recreates the database from scratch and does not use in-place migrations.\n- Dev and live refuse to overwrite an existing DB file unless --reset is supplied.\n- With --reset, deletes the existing DB file first and recreates it from scratch.\n- Creates it with WAL + NORMAL and applies the current schema.\n`;
     if (error) console.error(`Error: ${error}\n`);
     console.log(message);
     exit(error ? 1 : 0);
@@ -65,10 +65,14 @@ async function main()
 
     ensureDir(dbPath);
     if (fs.existsSync(dbPath)) {
-        if (!reset) {
+        if (mode === DatabaseMode.Test) {
+            fs.unlinkSync(dbPath);
+        } else if (!reset) {
             throw new Error(`Refusing to overwrite existing database at: ${dbPath}. Re-run with --reset to replace it.`);
         }
-        fs.unlinkSync(dbPath);
+        if (mode !== DatabaseMode.Test) {
+            fs.unlinkSync(dbPath);
+        }
     }
 
     const db = new Database(dbPath);
