@@ -1,8 +1,8 @@
 import type { LayoutServerLoad } from './$types';
 import { DatabaseMode, DatabaseWrapper } from '$lib/daos/shared/DatabaseWrapper';
 import { ProfileDAO } from '$lib/daos/profileDAO';
-import { ensureProfiles, getActiveProfileKey } from '$lib/profiles';
-import { hasAdminSession } from '$lib/auth/admin';
+import { ServerProfileContext } from '$lib/server/ServerProfileContext';
+import { ServerAdminSession } from '$lib/server/ServerAdminSession';
 
 function getMode(): DatabaseMode
 {
@@ -20,16 +20,14 @@ export const load: LayoutServerLoad = async ({ cookies }) =>
     try {
         // Resolve the site-wide active profile once so pages can treat it as current identity.
         const profileDAO = new ProfileDAO(db);
-        ensureProfiles(profileDAO);
-        const profiles = profileDAO.list();
-        const activeProfileKey = getActiveProfileKey(cookies);
-        const activeProfile = profileDAO.getByKey(activeProfileKey) || profileDAO.getByKey('default');
+        const profileContext = ServerProfileContext.resolve(profileDAO, cookies);
+        const adminSession = ServerAdminSession.resolve(cookies);
 
         return {
-            profiles,
-            activeProfileKey: activeProfile?.key || 'default',
-            activeProfileName: activeProfile?.name || 'Adult',
-            isAdminLoggedIn: hasAdminSession(cookies)
+            profiles: profileDAO.list(),
+            activeProfileKey: profileContext.activeProfileKey,
+            activeProfileName: profileContext.activeProfileName,
+            isAdminLoggedIn: adminSession.isLoggedIn
         };
     } finally {
         wrapper.close();

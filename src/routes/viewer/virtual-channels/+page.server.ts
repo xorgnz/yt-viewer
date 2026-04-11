@@ -2,7 +2,7 @@ import type { PageServerLoad } from './$types';
 import { DatabaseWrapper, DatabaseMode } from '$lib/daos/shared/DatabaseWrapper';
 import { VirtualChannelDAO } from '$lib/daos/virtualChannelDAO';
 import { ProfileDAO } from '$lib/daos/profileDAO';
-import { ensureProfiles, getActiveProfileKey } from '$lib/profiles';
+import { ServerProfileContext } from '$lib/server/ServerProfileContext';
 
 function envToMode(): DatabaseMode
 {
@@ -14,22 +14,18 @@ function envToMode(): DatabaseMode
 
 export const load: PageServerLoad = async ({ cookies }) =>
 {
-    const profileKey = getActiveProfileKey(cookies);
-
     const dbw = new DatabaseWrapper(envToMode());
     const db = dbw.open();
     try {
         // Resolve the active profile for viewer navigation context.
-        const pDao = new ProfileDAO(db);
-        ensureProfiles(pDao);
-        const profile = pDao.getByKey(profileKey) || pDao.getByKey('default');
+        const profileContext = ServerProfileContext.resolve(new ProfileDAO(db), cookies);
 
         const gDao = new VirtualChannelDAO(db);
         const groups = gDao.list();
 
         return {
             groups,
-            profileKey: profile!.key
+            profileKey: profileContext.activeProfileKey
         };
     } finally {
         dbw.close();

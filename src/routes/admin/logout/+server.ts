@@ -1,8 +1,8 @@
-import { clearAdminSession } from '$lib/auth/admin';
+import { ServerAdminSession } from '$lib/server/ServerAdminSession';
 import { redirect } from '@sveltejs/kit';
 
 export const POST = async ({ cookies }: any) =>
 {
-    clearAdminSession(cookies);
+    ServerAdminSession.clear(cookies);
     throw redirect(302, '/');
 };

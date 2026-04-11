@@ -5,7 +5,7 @@ import { VirtualChannelDAO } from '$lib/daos/virtualChannelDAO';
 import { ProfileDAO } from '$lib/daos/profileDAO';
 import { FlagsDAO, type BulkFlagKind } from '$lib/daos/flagsDAO';
 import { fail } from '@sveltejs/kit';
-import { ensureProfiles, getActiveProfileKey } from '$lib/profiles';
+import { ServerProfileContext } from '$lib/server/ServerProfileContext';
 
 function parseDateOnly(value: string | null, boundary: 'start' | 'end'): number | null
 {
@@ -201,13 +201,8 @@ function getOutcome(succeededCount: number, failedCount: number, skippedCount: n
 export const load = async ({ url, cookies }: { url: URL; cookies: any }) =>
 {
     const term = url.searchParams.get('term') || undefined;
-    const profileKey = getActiveProfileKey(cookies);
     const watchedParamRaw = url.searchParams.get('watched');
     const unwatchedOnly = url.searchParams.get('unwatchedOnly');
-    const watchedParam = unwatchedOnly === '1'
-        ? 'unwatched'
-        : (watchedParamRaw ?? (profileKey === 'child' ? 'unwatched' : 'all'));
-    const watched = (watchedParam === 'watched' || watchedParam === 'unwatched') ? watchedParam : 'all';
     const showIgnored = url.searchParams.get('showIgnored');
     const ignoredParam = showIgnored === '1' ? 'show' : (url.searchParams.get('ignored') || 'hide');
     const ignored = (ignoredParam === 'show') ? 'show' : 'hide';
@@ -218,36 +213,36 @@ export const load = async ({ url, cookies }: { url: URL; cookies: any }) =>
     const limit = url.searchParams.get('limit');
     const offset = url.searchParams.get('offset');
 
-    const filters = {
-        term,
-        watched: watched as 'all' | 'watched' | 'unwatched',
-        ignored: ignored as 'hide' | 'show',
-        dateFrom: parseDateOnly(dateFromInput, 'start'),
-        dateTo: parseDateOnly(dateToInput, 'end'),
-        dateFromInput,
-        dateToInput,
-        channelId: channelId ? Number(channelId) : null,
-        groupId: groupId ? Number(groupId) : null,
-        limit: limit ? Number(limit) : 200,
-        offset: offset ? Number(offset) : 0
-    } as const;
-
     const dbw = new DatabaseWrapper(getMode());
     const db = dbw.open();
     try {
         // Resolve the site-wide active profile before loading profile-scoped viewer state.
-        const pDao = new ProfileDAO(db);
-        ensureProfiles(pDao);
-        const profile = pDao.getByKey(profileKey) || pDao.getByKey('default');
-        const profileId = profile!.id;
+        const profileContext = ServerProfileContext.resolve(new ProfileDAO(db), cookies);
+        const watchedParam = unwatchedOnly === '1'
+            ? 'unwatched'
+            : (watchedParamRaw ?? (profileContext.activeProfileKey === 'child' ? 'unwatched' : 'all'));
+        const watched = (watchedParam === 'watched' || watchedParam === 'unwatched') ? watchedParam : 'all';
+        const filters = {
+            term,
+            watched: watched as 'all' | 'watched' | 'unwatched',
+            ignored: ignored as 'hide' | 'show',
+            dateFrom: parseDateOnly(dateFromInput, 'start'),
+            dateTo: parseDateOnly(dateToInput, 'end'),
+            dateFromInput,
+            dateToInput,
+            channelId: channelId ? Number(channelId) : null,
+            groupId: groupId ? Number(groupId) : null,
+            limit: limit ? Number(limit) : 200,
+            offset: offset ? Number(offset) : 0
+        } as const;
 
         const vDao = new VideoDAO(db);
         const cDao = new SourceChannelDAO(db);
         const gDao = new VirtualChannelDAO(db);
 
         const [videos, totalCount, channels, groups] = [
-            vDao.listForViewer(filters as any, profileId),
-            vDao.countForViewer(filters as any, profileId),
+            vDao.listForViewer(filters as any, profileContext.activeProfileId),
+            vDao.countForViewer(filters as any, profileContext.activeProfileId),
             cDao.list(),
             gDao.list()
         ];
@@ -258,9 +253,9 @@ export const load = async ({ url, cookies }: { url: URL; cookies: any }) =>
             totalCount,
             channels,
             groups,
-            profileId,
-            profileKey,
-            profileName: profile!.name
+            profileId: profileContext.activeProfileId,
+            profileKey: profileContext.activeProfileKey,
+            profileName: profileContext.activeProfileName
         };
     } finally {
         dbw.close();
@@ -274,7 +269,6 @@ export const actions = {
         const videoIdStr = String(form.get('videoId') || '').trim();
         const kind = String(form.get('kind') || '').trim(); // 'watched' | 'favorite' | 'ignored'
         const valueStr = String(form.get('value') || '').trim(); // '0' | '1'
-        const profileKey = getActiveProfileKey(cookies);
 
         const videoId = Number(videoIdStr);
         const value = valueStr === '1' ? 1 : (valueStr === '0' ? 0 : NaN);
@@ -291,18 +285,15 @@ export const actions = {
         const dbw = new DatabaseWrapper(getMode());
         const db = dbw.open();
         try {
-            const pDao = new ProfileDAO(db);
-            ensureProfiles(pDao);
-            const profile = pDao.getByKey(profileKey) || pDao.getByKey('default');
-            const profileId = profile!.id;
+            const profileContext = ServerProfileContext.resolve(new ProfileDAO(db), cookies);
 
             const flags = new FlagsDAO(db);
             if (kind === 'watched') {
-                flags.set(videoId, profileId, { watched: value as 0 | 1 });
+                flags.set(videoId, profileContext.activeProfileId, { watched: value as 0 | 1 });
             } else if (kind === 'favorite') {
-                flags.set(videoId, profileId, { favorite: value as 0 | 1 });
+                flags.set(videoId, profileContext.activeProfileId, { favorite: value as 0 | 1 });
             } else if (kind === 'ignored') {
-                flags.set(videoId, profileId, { ignored: value as 0 | 1 });
+                flags.set(videoId, profileContext.activeProfileId, { ignored: value as 0 | 1 });
             }
         } finally {
             dbw.close();
@@ -328,7 +319,6 @@ export const actions = {
             ? selectedCountHintRaw
             : requestedVideoIds.length;
         const spansMultiplePages = String(form.get('spansMultiplePages') || '').trim() === '1';
-        const profileKey = getActiveProfileKey(cookies);
 
         if (!kind || value === null || requestedVideoIds.length === 0) {
             return fail(400, { message: 'Invalid bulk flag parameters' });
@@ -337,23 +327,20 @@ export const actions = {
         const dbw = new DatabaseWrapper(getMode());
         const db = dbw.open();
         try {
-            const pDao = new ProfileDAO(db);
-            ensureProfiles(pDao);
-            const profile = pDao.getByKey(profileKey) || pDao.getByKey('default');
-            const profileId = profile!.id;
+            const profileContext = ServerProfileContext.resolve(new ProfileDAO(db), cookies);
 
             const videos = new VideoDAO(db);
             const flags = new FlagsDAO(db);
             const existingIds = videos.listExistingIds(requestedVideoIds);
             const existingIdSet = new Set(existingIds);
             const failedIds = requestedVideoIds.filter((videoId) => !existingIdSet.has(videoId));
-            const originalValueMap = flags.getValueMap(existingIds, profileId, kind);
+            const originalValueMap = flags.getValueMap(existingIds, profileContext.activeProfileId, kind);
             const undoStates = existingIds.map((videoId) => ({
                 videoId,
                 value: originalValueMap.get(videoId) ?? 0
             }));
 
-            flags.setManyValue(existingIds, profileId, kind, value);
+            flags.setManyValue(existingIds, profileContext.activeProfileId, kind, value);
 
             const actionText = describeBulkAction(kind, value);
             const succeededIds = [...existingIds];
@@ -396,7 +383,6 @@ export const actions = {
         const requestedVideoIds = parseVideoIds(form.get('videoIds'));
         const undoStates = parseUndoStates(form.get('originalStates'));
         const selectionContextKey = String(form.get('selectionContextKey') || '').trim() || null;
-        const profileKey = getActiveProfileKey(cookies);
 
         if (!kind || undoStates === null) {
             return fail(400, { message: 'Invalid bulk undo parameters' });
@@ -405,10 +391,7 @@ export const actions = {
         const dbw = new DatabaseWrapper(getMode());
         const db = dbw.open();
         try {
-            const pDao = new ProfileDAO(db);
-            ensureProfiles(pDao);
-            const profile = pDao.getByKey(profileKey) || pDao.getByKey('default');
-            const profileId = profile!.id;
+            const profileContext = ServerProfileContext.resolve(new ProfileDAO(db), cookies);
 
             const videos = new VideoDAO(db);
             const flags = new FlagsDAO(db);
@@ -429,7 +412,7 @@ export const actions = {
             const failedIds = requestedUndoIds.filter((videoId) => !existingIdSet.has(videoId));
             const skippedIds = requestedUndoIds.filter((videoId) => existingIdSet.has(videoId) && !undoStateMap.has(videoId));
 
-            flags.setManyValues(applicableStates, profileId, kind);
+            flags.setManyValues(applicableStates, profileContext.activeProfileId, kind);
 
             const message = formatBulkMessage(
                 succeededIds.length,
@@ -465,7 +448,6 @@ export const actions = {
         const requestedVideoIds = parseVideoIds(form.get('videoIds'));
         const restoreStates = parseRestoreStates(form.get('originalStates'));
         const selectionContextKey = String(form.get('selectionContextKey') || '').trim() || null;
-        const profileKey = getActiveProfileKey(cookies);
 
         if (restoreStates === null) {
             return fail(400, { message: 'Invalid restore parameters' });
@@ -474,10 +456,7 @@ export const actions = {
         const dbw = new DatabaseWrapper(getMode());
         const db = dbw.open();
         try {
-            const pDao = new ProfileDAO(db);
-            ensureProfiles(pDao);
-            const profile = pDao.getByKey(profileKey) || pDao.getByKey('default');
-            const profileId = profile!.id;
+            const profileContext = ServerProfileContext.resolve(new ProfileDAO(db), cookies);
 
             const videos = new VideoDAO(db);
             const flags = new FlagsDAO(db);
@@ -498,7 +477,7 @@ export const actions = {
             const failedIds = requestedRestoreIds.filter((videoId) => !existingIdSet.has(videoId));
             const skippedIds = requestedRestoreIds.filter((videoId) => existingIdSet.has(videoId) && !restoreStateMap.has(videoId));
 
-            flags.setMany(applicableStates, profileId);
+            flags.setMany(applicableStates, profileContext.activeProfileId);
 
             const message = formatBulkMessage(
                 succeededIds.length,
