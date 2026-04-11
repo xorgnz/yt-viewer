@@ -19,6 +19,7 @@ export interface MigrationAdapter
 {
     getCurrentVersion(): number | null;
     getRecordedMigrationState(): RecordedMigrationState;
+    recordSuccessfulMigration(version: number, name: string): void;
     setCurrentVersion(version: number): void;
     runInTransaction<T>(operation: (context: MigrationExecutionContext) => T): T;
 }

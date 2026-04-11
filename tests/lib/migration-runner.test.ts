@@ -134,4 +134,41 @@ describe('MigrationRunner', () => {
 
         db.close();
     });
+
+    it('records migration metadata with version, name, timestamps, and success state', () => {
+        const db = createPreV8Database();
+        const runner = new MigrationRunner(new SqliteMigrationAdapter(db), MIGRATIONS);
+
+        runner.runToLatest();
+
+        const historyRows = db
+            .prepare(`
+                SELECT
+                    version,
+                    name,
+                    started_at,
+                    applied_at,
+                    success
+                FROM migration_history
+                ORDER BY id
+            `)
+            .all() as Array<{
+                version: number;
+                name: string;
+                started_at: number;
+                applied_at: number | null;
+                success: number;
+            }>;
+
+        expect(historyRows).toHaveLength(1);
+        expect(historyRows[0].version).toBe(8);
+        expect(historyRows[0].name).toBe('add_migration_history');
+        expect(historyRows[0].success).toBe(1);
+        expect(typeof historyRows[0].started_at).toBe('number');
+        expect(historyRows[0].started_at).toBeGreaterThan(0);
+        expect(typeof historyRows[0].applied_at).toBe('number');
+        expect(historyRows[0].applied_at).toBeGreaterThanOrEqual(historyRows[0].started_at);
+
+        db.close();
+    });
 });

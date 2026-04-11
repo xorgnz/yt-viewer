@@ -137,6 +137,24 @@ export class SqliteMigrationAdapter implements MigrationAdapter
         };
     }
 
+    recordSuccessfulMigration(version: number, name: string): void
+    {
+        const now = Date.now();
+
+        this.db
+            .prepare(`
+                INSERT INTO migration_history(
+                    version,
+                    name,
+                    started_at,
+                    applied_at,
+                    success,
+                    error_message
+                ) VALUES(?,?,?,?,?,?)
+            `)
+            .run(version, name, now, now, 1, null);
+    }
+
     setCurrentVersion(version: number): void
     {
         this.schemaVersionDao.createMetaTable();

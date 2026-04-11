@@ -156,6 +156,7 @@ export class MigrationRunner
 
             this.adapter.runInTransaction((context) => {
                 migration.apply(context);
+                this.adapter.recordSuccessfulMigration(migration.version, migration.name);
                 this.adapter.setCurrentVersion(migration.version);
             });
 
