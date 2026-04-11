@@ -55,7 +55,7 @@
   - [x] 4.5 Update any developer-facing usage expectations in code comments or helper output so fresh-create versus migrate workflows are unambiguous
 
 - [ ] 5.0 Add focused automated test coverage for migration execution, refusal paths, and recovery behavior
-  - [ ] 5.1 Add tests for fresh database creation at the latest schema for disposable environments
+  - [x] 5.1 Add tests for fresh database creation at the latest schema for disposable environments
   - [ ] 5.2 Add tests for successful forward migration of a supported prior database state to the latest version
   - [ ] 5.3 Add tests covering migration metadata recording, including applied version, name, and timestamp behavior
   - [ ] 5.4 Add tests covering refusal on unknown or unsupported database states
