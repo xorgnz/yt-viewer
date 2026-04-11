@@ -4,17 +4,17 @@ import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 import fs from 'node:fs';
 import Database from 'better-sqlite3';
-import { SchemaVersionDAO } from '$lib/daos/schemaVersionDAO';
-import { ALL_DDL, SCHEMA_VERSION } from '$lib/daos/_schema';
 import { DatabaseMode } from '$lib/daos/shared/DatabaseWrapper';
+import { MigrationRunner } from '$lib/daos/shared/MigrationRunner';
+import { SqliteMigrationAdapter } from '$lib/daos/shared/SqliteMigrationAdapter';
+import type { MigrationDefinition } from '$lib/daos/migrations/migrationTypes';
 
 type ModeArg = DatabaseMode;
 
-function parseArgs(): { mode: ModeArg; reset: boolean }
+function parseArgs(): { mode: ModeArg }
 {
     const args = argv.slice(2);
     let modeStr: string | undefined;
-    let reset = false;
 
     for (let i = 0; i < args.length; i++) {
         const a = args[i];
@@ -23,8 +23,6 @@ function parseArgs(): { mode: ModeArg; reset: boolean }
         } else if (a === '--mode' || a === '-m') {
             modeStr = args[i + 1];
             i += 1;
-        } else if (a === '--reset' || a === '--force') {
-            reset = true;
         } else if (!a.startsWith('-') && !modeStr) {
             modeStr = a;
         }
@@ -33,9 +31,9 @@ function parseArgs(): { mode: ModeArg; reset: boolean }
     if (!modeStr) usage('Missing mode.');
     const normalized = String(modeStr).toLowerCase();
     switch (normalized) {
-        case 'test': return { mode: DatabaseMode.Test, reset };
-        case 'dev': return { mode: DatabaseMode.Dev, reset };
-        case 'live': return { mode: DatabaseMode.Live, reset };
+        case 'dev': return { mode: DatabaseMode.Dev };
+        case 'live': return { mode: DatabaseMode.Live };
+        case 'test': usage('Migration is only supported for dev and live databases.');
         default: usage(`Unknown mode: ${modeStr}`);
     }
 }
@@ -43,7 +41,7 @@ function parseArgs(): { mode: ModeArg; reset: boolean }
 function usage(error?: string): never
 {
     const script = path.basename(fileURLToPath(import.meta.url));
-    const message = `\nUsage:\n  ${script} --mode <test|dev|live> --reset\n  ${script} <test|dev|live> --reset\n\nReplaces an existing SQLite database with the current schema (v${SCHEMA_VERSION}).\n- Incremental in-place migrations are no longer supported for this feature line.\n- This command requires --reset and deletes the existing DB file before recreating it.\n- If the DB file does not exist yet, use create_database instead.\n`;
+    const message = `\nUsage:\n  ${script} --mode <dev|live>\n  ${script} <dev|live>\n\nRuns the explicit forward-only migration workflow for an existing database.\n- Only dev and live databases are supported by this command.\n- Test databases should continue using create_database for fresh setup.\n- The command upgrades only to the latest supported version known to the app.\n`;
     if (error) console.error(`Error: ${error}\n`);
     console.log(message);
     exit(error ? 1 : 0);
@@ -58,49 +56,34 @@ function resolveDbPath(mode: ModeArg): { dbPath: string }
     return { dbPath };
 }
 
-function ensureDir(filePath: string): void
-{
-    const dir = path.dirname(filePath);
-    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-}
-
 async function main()
 {
-    const { mode, reset } = parseArgs();
+    const { mode } = parseArgs();
     const { dbPath } = resolveDbPath(mode);
-
-    if (!reset) {
-        usage('This command only supports full database replacement. Re-run with --reset.');
-    }
 
     if (!fs.existsSync(dbPath)) {
         throw new Error(`Database file not found at: ${dbPath}. Create it first with: npm run create_database -- ${mode}`);
     }
 
-    ensureDir(dbPath);
-    fs.unlinkSync(dbPath);
-
     const db = new Database(dbPath);
     try {
-        db.pragma('journal_mode = WAL');
-        db.pragma('synchronous = NORMAL');
+        // Keep migration selection explicit until the first migration registry lands.
+        const migrations: MigrationDefinition[] = [];
+        const runner = new MigrationRunner(new SqliteMigrationAdapter(db), migrations);
+        const result = runner.runToLatest();
 
-        const schemaDAO = new SchemaVersionDAO(db);
-        schemaDAO.createMetaTable();
+        if (result.appliedMigrations.length === 0) {
+            console.log(`Database is already at the latest supported version: ${result.finalVersion}`);
+            return;
+        }
 
-        const tx = db.transaction(() => {
-            for (const ddl of ALL_DDL) db.exec(ddl);
-            schemaDAO.set(SCHEMA_VERSION);
-        });
-        tx();
-
-        console.log(`Recreated database with schema v${SCHEMA_VERSION} at: ${dbPath}`);
+        console.log(`Migrated database from version ${result.currentVersion} to version ${result.finalVersion}`);
     } finally {
         db.close();
     }
 }
 
 main().catch((err) => {
-    console.error('Database reset failed:', err?.message || err);
+    console.error('Database migration failed:', err?.message || err);
     exit(1);
 });
