@@ -8,8 +8,18 @@ import { DatabaseMode } from '$lib/daos/shared/DatabaseWrapper';
 import { MigrationRunner } from '$lib/daos/shared/MigrationRunner';
 import { SqliteMigrationAdapter } from '$lib/daos/shared/SqliteMigrationAdapter';
 import { MIGRATIONS } from '$lib/daos/migrations/registry';
+import type { MigrationDefinition, MigrationRunResult } from '$lib/daos/migrations/migrationTypes';
 
 type ModeArg = DatabaseMode;
+type MigrationWorkflowOptions = {
+    dbPath: string;
+    migrations?: MigrationDefinition[];
+};
+type MigrationWorkflowResult = {
+    backupPath: string;
+    failedArtifactPath: string | null;
+    migrationResult: MigrationRunResult;
+};
 
 function parseArgs(): { mode: ModeArg }
 {
@@ -101,24 +111,58 @@ function createFailedArtifactPath(dbPath: string): string
     return path.join(parsedPath.dir, `${parsedPath.name}-${formatTimestamp(new Date())}.failed${parsedPath.ext}`);
 }
 
+export function runMigrationWorkflow(options: MigrationWorkflowOptions): MigrationWorkflowResult
+{
+    const migrations = options.migrations || MIGRATIONS;
+
+    if (!fs.existsSync(options.dbPath)) {
+        throw new Error(`Database file not found at: ${options.dbPath}.`);
+    }
+
+    const backupPath = createPreMigrationBackup(options.dbPath);
+    let db: Database.Database | null = new Database(options.dbPath);
+
+    try {
+        const runner = new MigrationRunner(new SqliteMigrationAdapter(db), migrations);
+        const migrationResult = runner.runToLatest();
+
+        return {
+            backupPath,
+            failedArtifactPath: null,
+            migrationResult,
+        };
+    } catch (error) {
+        if (db) {
+            db.close();
+            db = null;
+        }
+
+        const failedArtifactPath = createFailedArtifactPath(options.dbPath);
+        fs.copyFileSync(options.dbPath, failedArtifactPath);
+        fs.copyFileSync(backupPath, options.dbPath);
+
+        throw new Error(
+            `Migration failed. Restored database: ${options.dbPath}. Backup: ${backupPath}. Failed artifact: ${failedArtifactPath}. ${error instanceof Error ? error.message : String(error)}`
+        );
+    } finally {
+        if (db) {
+            db.close();
+        }
+    }
+}
+
 async function main()
 {
     const { mode } = parseArgs();
     const { dbPath } = resolveDbPath(mode);
 
-    if (!fs.existsSync(dbPath)) {
-        throw new Error(`Database file not found at: ${dbPath}. Create it first with: npm run create_database -- ${mode}`);
-    }
-
-    const backupPath = createPreMigrationBackup(dbPath);
-    let db: Database.Database | null = new Database(dbPath);
     try {
-        const runner = new MigrationRunner(new SqliteMigrationAdapter(db), MIGRATIONS);
-        const result = runner.runToLatest();
+        const workflowResult = runMigrationWorkflow({ dbPath });
+        const result = workflowResult.migrationResult;
 
         // Report the discovered state and the upgrade result in a consistent format.
         console.log(`Database path: ${dbPath}`);
-        console.log(`Backup created: ${backupPath}`);
+        console.log(`Backup created: ${workflowResult.backupPath}`);
         console.log(`Detected version: ${result.currentVersion}`);
         console.log(`Target version: ${result.targetVersion}`);
 
@@ -131,25 +175,22 @@ async function main()
         console.log(`Applied migrations: ${result.appliedMigrations.map((migration) => `${migration.version}:${migration.name}`).join(', ')}`);
         console.log(`Final version: ${result.finalVersion}`);
     } catch (error) {
-        if (db) {
-            db.close();
-            db = null;
+        const message = error instanceof Error ? error.message : String(error);
+
+        if (message.startsWith('Database file not found at:')) {
+            throw new Error(`${message} Create it first with: npm run create_database -- ${mode}`);
         }
 
-        const failedArtifactPath = createFailedArtifactPath(dbPath);
-        fs.copyFileSync(dbPath, failedArtifactPath);
-        fs.copyFileSync(backupPath, dbPath);
-        throw new Error(
-            `Migration failed. Restored database: ${dbPath}. Backup: ${backupPath}. Failed artifact: ${failedArtifactPath}. ${error instanceof Error ? error.message : String(error)}`
-        );
-    } finally {
-        if (db) {
-            db.close();
-        }
+        throw new Error(message);
     }
 }
 
-main().catch((err) => {
-    console.error('Database migration failed:', err?.message || err);
-    exit(1);
-});
+const entryPath = process.argv[1] ? path.resolve(process.argv[1]) : null;
+const scriptPath = fileURLToPath(import.meta.url);
+
+if (entryPath === scriptPath) {
+    main().catch((err) => {
+        console.error('Database migration failed:', err?.message || err);
+        exit(1);
+    });
+}

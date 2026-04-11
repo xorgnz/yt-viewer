@@ -54,9 +54,9 @@
   - [x] 4.4 Add guardrails so normal database open paths do not silently trigger migrations during application startup
   - [x] 4.5 Update any developer-facing usage expectations in code comments or helper output so fresh-create versus migrate workflows are unambiguous
 
-- [ ] 5.0 Add focused automated test coverage for migration execution, refusal paths, and recovery behavior
+- [x] 5.0 Add focused automated test coverage for migration execution, refusal paths, and recovery behavior
   - [x] 5.1 Add tests for fresh database creation at the latest schema for disposable environments
   - [x] 5.2 Add tests for successful forward migration of a supported prior database state to the latest version
   - [x] 5.3 Add tests covering migration metadata recording, including applied version, name, and timestamp behavior
   - [x] 5.4 Add tests covering refusal on unknown or unsupported database states
-  - [ ] 5.5 Add tests for backup creation, failure-triggered restore, and retention of failed-state artifacts when practical
+  - [x] 5.5 Add tests for backup creation, failure-triggered restore, and retention of failed-state artifacts when practical
