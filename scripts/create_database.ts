@@ -4,9 +4,9 @@ import {fileURLToPath} from 'node:url';
 import path from 'node:path';
 import fs from 'node:fs';
 import Database from 'better-sqlite3';
-import {SchemaVersionDAO} from '$lib/daos/schemaVersionDAO';
-import {ALL_DDL, SCHEMA_VERSION} from '$lib/daos/_schema';
+import {SCHEMA_VERSION} from '$lib/daos/_schema';
 import {DatabaseMode} from "$lib/daos/shared/DatabaseWrapper";
+import { applyLatestSchemaBootstrap } from '$lib/daos/shared/LatestSchemaBootstrap';
 
 function parseArgs(): { mode: DatabaseMode; reset: boolean }
 {
@@ -80,16 +80,8 @@ async function main()
     db.pragma('journal_mode = WAL');
     db.pragma('synchronous = NORMAL');
 
-    // Initialize schema versioning/meta and run DDL
-    const schemaDAO = new SchemaVersionDAO(db);
-    schemaDAO.createMetaTable();
-
     // Fresh-create always applies the latest bootstrap schema in one pass.
-    const tx = db.transaction(() => {
-        for (const ddl of ALL_DDL) db.exec(ddl);
-        schemaDAO.set(SCHEMA_VERSION);
-    });
-    tx();
+    applyLatestSchemaBootstrap(db);
 
     db.close();
 
