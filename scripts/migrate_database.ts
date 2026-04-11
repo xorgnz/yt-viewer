@@ -105,7 +105,7 @@ async function main()
     }
 
     const backupPath = createPreMigrationBackup(dbPath);
-    const db = new Database(dbPath);
+    let db: Database.Database | null = new Database(dbPath);
     try {
         const runner = new MigrationRunner(new SqliteMigrationAdapter(db), MIGRATIONS);
         const result = runner.runToLatest();
@@ -123,8 +123,18 @@ async function main()
 
         console.log(`Applied migrations: ${result.appliedMigrations.map((migration) => `${migration.version}:${migration.name}`).join(', ')}`);
         console.log(`Final version: ${result.finalVersion}`);
+    } catch (error) {
+        if (db) {
+            db.close();
+            db = null;
+        }
+
+        fs.copyFileSync(backupPath, dbPath);
+        throw new Error(`Migration failed and the original database was restored from backup. ${error instanceof Error ? error.message : String(error)}`);
     } finally {
-        db.close();
+        if (db) {
+            db.close();
+        }
     }
 }
 
