@@ -79,14 +79,13 @@ async function main()
     // Initialize schema versioning/meta and run DDL
     const schemaDAO = new SchemaVersionDAO(db);
     schemaDAO.createMetaTable();
-    const current = schemaDAO.get();
-    if (current === null || current < SCHEMA_VERSION) {
-        const tx = db.transaction(() => {
-            for (const ddl of ALL_DDL) db.exec(ddl);
-            schemaDAO.set(SCHEMA_VERSION);
-        });
-        tx();
-    }
+
+    // Fresh-create always applies the latest bootstrap schema in one pass.
+    const tx = db.transaction(() => {
+        for (const ddl of ALL_DDL) db.exec(ddl);
+        schemaDAO.set(SCHEMA_VERSION);
+    });
+    tx();
 
     db.close();
 

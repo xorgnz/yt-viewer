@@ -48,7 +48,7 @@
   - [x] 3.5 Make failure and recovery output explicit so the operator can locate the restored database, backup, and any failed-state artifact
 
 - [ ] 4.0 Preserve fresh-create behavior for `test` and other disposable database workflows while separating it cleanly from migrations
-  - [ ] 4.1 Keep `scripts/create_database.ts` focused on fresh latest-schema creation rather than upgrade logic
+  - [x] 4.1 Keep `scripts/create_database.ts` focused on fresh latest-schema creation rather than upgrade logic
   - [ ] 4.2 Ensure `test` database workflows continue starting from scratch and do not depend on in-place migrations
   - [ ] 4.3 Separate latest-schema bootstrap responsibilities from migration responsibilities in shared database utilities
   - [ ] 4.4 Add guardrails so normal database open paths do not silently trigger migrations during application startup
