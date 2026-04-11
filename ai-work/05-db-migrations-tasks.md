@@ -40,12 +40,12 @@
   - [x] 2.4 Add migration definition registration and loading for the first supported forward-looking migration set
   - [x] 2.5 Ensure command output clearly reports detected version, applied migrations, and final version state
 
-- [ ] 3.0 Add backup, failure recovery, and unknown-state refusal behavior to the migration flow
+- [x] 3.0 Add backup, failure recovery, and unknown-state refusal behavior to the migration flow
   - [x] 3.1 Add automatic pre-migration backup creation for `dev` and `live` databases
   - [x] 3.2 Restore the original database automatically when a migration attempt fails after backup creation
   - [x] 3.3 Preserve a copy of the failed partially migrated database when practical for later inspection
   - [x] 3.4 Refuse to proceed when the database state is unknown, unsupported, or inconsistent with expected migration metadata
-  - [ ] 3.5 Make failure and recovery output explicit so the operator can locate the restored database, backup, and any failed-state artifact
+  - [x] 3.5 Make failure and recovery output explicit so the operator can locate the restored database, backup, and any failed-state artifact
 
 - [ ] 4.0 Preserve fresh-create behavior for `test` and other disposable database workflows while separating it cleanly from migrations
   - [ ] 4.1 Keep `scripts/create_database.ts` focused on fresh latest-schema creation rather than upgrade logic

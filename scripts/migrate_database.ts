@@ -117,6 +117,7 @@ async function main()
         const result = runner.runToLatest();
 
         // Report the discovered state and the upgrade result in a consistent format.
+        console.log(`Database path: ${dbPath}`);
         console.log(`Backup created: ${backupPath}`);
         console.log(`Detected version: ${result.currentVersion}`);
         console.log(`Target version: ${result.targetVersion}`);
@@ -139,7 +140,7 @@ async function main()
         fs.copyFileSync(dbPath, failedArtifactPath);
         fs.copyFileSync(backupPath, dbPath);
         throw new Error(
-            `Migration failed, saved the partially migrated database to ${failedArtifactPath}, and restored the original database from backup. ${error instanceof Error ? error.message : String(error)}`
+            `Migration failed. Restored database: ${dbPath}. Backup: ${backupPath}. Failed artifact: ${failedArtifactPath}. ${error instanceof Error ? error.message : String(error)}`
         );
     } finally {
         if (db) {
