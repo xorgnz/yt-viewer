@@ -47,12 +47,12 @@
   - [x] 3.4 Refuse to proceed when the database state is unknown, unsupported, or inconsistent with expected migration metadata
   - [x] 3.5 Make failure and recovery output explicit so the operator can locate the restored database, backup, and any failed-state artifact
 
-- [ ] 4.0 Preserve fresh-create behavior for `test` and other disposable database workflows while separating it cleanly from migrations
+- [x] 4.0 Preserve fresh-create behavior for `test` and other disposable database workflows while separating it cleanly from migrations
   - [x] 4.1 Keep `scripts/create_database.ts` focused on fresh latest-schema creation rather than upgrade logic
   - [x] 4.2 Ensure `test` database workflows continue starting from scratch and do not depend on in-place migrations
   - [x] 4.3 Separate latest-schema bootstrap responsibilities from migration responsibilities in shared database utilities
   - [x] 4.4 Add guardrails so normal database open paths do not silently trigger migrations during application startup
-  - [ ] 4.5 Update any developer-facing usage expectations in code comments or helper output so fresh-create versus migrate workflows are unambiguous
+  - [x] 4.5 Update any developer-facing usage expectations in code comments or helper output so fresh-create versus migrate workflows are unambiguous
 
 - [ ] 5.0 Add focused automated test coverage for migration execution, refusal paths, and recovery behavior
   - [ ] 5.1 Add tests for fresh database creation at the latest schema for disposable environments

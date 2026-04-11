@@ -46,8 +46,9 @@ export class DatabaseWrapper
 
     /**
      * Opens an existing database file for application use.
-     * This method does NOT create databases, set pragmas, or run schema migrations.
-     * Use the external CLI (scripts/create_database.ts) to create/initialize DB files.
+     * This method does NOT create databases, run latest-schema bootstrap, or run schema migrations.
+     * Use the external CLI (scripts/create_database.ts) for fresh-create setup and
+     * use (scripts/migrate_database.ts) for explicit in-place upgrades.
      */
     open(): Database.Database
     {

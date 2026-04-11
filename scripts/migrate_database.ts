@@ -55,7 +55,7 @@ function parseArgs(): { mode: ModeArg }
 function usage(error?: string): never
 {
     const script = path.basename(fileURLToPath(import.meta.url));
-    const message = `\nUsage:\n  ${script} --mode <dev|live>\n  ${script} <dev|live>\n\nRuns the explicit forward-only migration workflow for an existing database.\n- Only dev and live databases are supported by this command.\n- Test databases should continue using create_database for fresh setup.\n- The command upgrades only to the latest supported version known to the app.\n`;
+    const message = `\nUsage:\n  ${script} --mode <dev|live>\n  ${script} <dev|live>\n\nRuns the explicit forward-only migration workflow for an existing database.\n- Use this command for in-place upgrades only; it does not create fresh databases.\n- Only dev and live databases are supported by this command.\n- Test databases should continue using create_database for fresh setup.\n- The command upgrades only to the latest supported version known to the app.\n`;
     if (error) console.error(`Error: ${error}\n`);
     console.log(message);
     exit(error ? 1 : 0);
