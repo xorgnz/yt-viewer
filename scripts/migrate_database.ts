@@ -95,6 +95,12 @@ function createPreMigrationBackup(dbPath: string): string
     return backupPath;
 }
 
+function createFailedArtifactPath(dbPath: string): string
+{
+    const parsedPath = path.parse(dbPath);
+    return path.join(parsedPath.dir, `${parsedPath.name}-${formatTimestamp(new Date())}.failed${parsedPath.ext}`);
+}
+
 async function main()
 {
     const { mode } = parseArgs();
@@ -129,8 +135,12 @@ async function main()
             db = null;
         }
 
+        const failedArtifactPath = createFailedArtifactPath(dbPath);
+        fs.copyFileSync(dbPath, failedArtifactPath);
         fs.copyFileSync(backupPath, dbPath);
-        throw new Error(`Migration failed and the original database was restored from backup. ${error instanceof Error ? error.message : String(error)}`);
+        throw new Error(
+            `Migration failed, saved the partially migrated database to ${failedArtifactPath}, and restored the original database from backup. ${error instanceof Error ? error.message : String(error)}`
+        );
     } finally {
         if (db) {
             db.close();
