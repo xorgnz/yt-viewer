@@ -33,12 +33,12 @@
   - [x] 1.4 Establish conventions for where future migration files live and how schema-changing features register new migrations
   - [x] 1.5 Define supported versus unsupported source-state handling so unknown or ambiguous databases fail clearly
 
-- [ ] 2.0 Implement the explicit migration command workflow for `dev` and `live`, including latest-only upgrade behavior
+- [x] 2.0 Implement the explicit migration command workflow for `dev` and `live`, including latest-only upgrade behavior
   - [x] 2.1 Add shared migration runner code that discovers the current state and applies pending migrations in order
   - [x] 2.2 Refactor `scripts/migrate_database.ts` into a true forward-only upgrade command for `dev` and `live`
   - [x] 2.3 Ensure the migration command always targets the latest supported version rather than accepting arbitrary version targets
   - [x] 2.4 Add migration definition registration and loading for the first supported forward-looking migration set
-  - [ ] 2.5 Ensure command output clearly reports detected version, applied migrations, and final version state
+  - [x] 2.5 Ensure command output clearly reports detected version, applied migrations, and final version state
 
 - [ ] 3.0 Add backup, failure recovery, and unknown-state refusal behavior to the migration flow
   - [ ] 3.1 Add automatic pre-migration backup creation for `dev` and `live` databases

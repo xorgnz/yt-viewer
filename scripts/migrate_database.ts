@@ -84,12 +84,18 @@ async function main()
         const runner = new MigrationRunner(new SqliteMigrationAdapter(db), MIGRATIONS);
         const result = runner.runToLatest();
 
+        // Report the discovered state and the upgrade result in a consistent format.
+        console.log(`Detected version: ${result.currentVersion}`);
+        console.log(`Target version: ${result.targetVersion}`);
+
         if (result.appliedMigrations.length === 0) {
-            console.log(`Database is already at the latest supported version: ${result.finalVersion}`);
+            console.log('Applied migrations: none');
+            console.log(`Final version: ${result.finalVersion}`);
             return;
         }
 
-        console.log(`Migrated database from version ${result.currentVersion} to version ${result.finalVersion}`);
+        console.log(`Applied migrations: ${result.appliedMigrations.map((migration) => `${migration.version}:${migration.name}`).join(', ')}`);
+        console.log(`Final version: ${result.finalVersion}`);
     } finally {
         db.close();
     }
