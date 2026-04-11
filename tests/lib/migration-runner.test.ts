@@ -171,4 +171,37 @@ describe('MigrationRunner', () => {
 
         db.close();
     });
+
+    it('refuses to migrate when the schema version is unknown', () => {
+        const db = new Database(':memory:');
+        const runner = new MigrationRunner(new SqliteMigrationAdapter(db), MIGRATIONS);
+
+        expect(() => runner.runToLatest()).toThrow('Database schema version is unknown.');
+
+        db.close();
+    });
+
+    it('refuses to migrate when required migration metadata is inconsistent', () => {
+        const db = createPreV8Database();
+
+        db.exec(`
+            CREATE TABLE migration_history (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                version INTEGER NOT NULL,
+                name TEXT NOT NULL,
+                started_at INTEGER NOT NULL,
+                applied_at INTEGER DEFAULT NULL,
+                success INTEGER NOT NULL DEFAULT 0,
+                error_message TEXT DEFAULT NULL
+            );
+        `);
+
+        const runner = new MigrationRunner(new SqliteMigrationAdapter(db), MIGRATIONS);
+
+        expect(() => runner.runToLatest()).toThrow(
+            'Migration metadata exists for a database version that predates supported migrations.'
+        );
+
+        db.close();
+    });
 });
