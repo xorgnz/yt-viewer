@@ -15,7 +15,9 @@ function parseArgs(): { mode: ModeArg }
 {
     const args = argv.slice(2);
     let modeStr: string | undefined;
+    const extraPositionals: string[] = [];
 
+    // Parse the supported mode argument and reject unsupported target selectors.
     for (let i = 0; i < args.length; i++) {
         const a = args[i];
         if (a.startsWith('--mode=')) {
@@ -23,12 +25,24 @@ function parseArgs(): { mode: ModeArg }
         } else if (a === '--mode' || a === '-m') {
             modeStr = args[i + 1];
             i += 1;
+        } else if (a.startsWith('--target=') || a.startsWith('--to=')) {
+            usage('Target versions are not supported. This command always migrates to the latest supported version.');
+        } else if (a === '--target' || a === '--to' || a === '-t') {
+            usage('Target versions are not supported. This command always migrates to the latest supported version.');
         } else if (!a.startsWith('-') && !modeStr) {
             modeStr = a;
+        } else if (!a.startsWith('-')) {
+            extraPositionals.push(a);
+        } else {
+            usage(`Unknown argument: ${a}`);
         }
     }
 
     if (!modeStr) usage('Missing mode.');
+    if (extraPositionals.length > 0) {
+        usage(`Unexpected extra argument: ${extraPositionals[0]}`);
+    }
+
     const normalized = String(modeStr).toLowerCase();
     switch (normalized) {
         case 'dev': return { mode: DatabaseMode.Dev };
