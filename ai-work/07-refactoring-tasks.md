@@ -36,7 +36,7 @@
 ## Tasks
 
 - [ ] 1.0 Extract shared server request context and common route infrastructure
-  - [ ] 1.1 Create shared helpers for environment/database mode resolution, `DatabaseWrapper` setup, and request-scoped cleanup that can be reused across viewer, history, and admin routes
+  - [x] 1.1 Create shared helpers for environment/database mode resolution, `DatabaseWrapper` setup, and request-scoped cleanup that can be reused across viewer, history, and admin routes
   - [ ] 1.2 Extract profile/session resolution and admin-guard helpers from route files into explicit server-side modules built on `profiles.ts` and `auth/admin.ts`
   - [ ] 1.3 Refactor `+layout.server.ts`, `history/+page.server.ts`, viewer routes, and admin layout/routes to consume the shared request-context helpers instead of duplicating setup logic
   - [ ] 1.4 Consolidate repeated route-level parsing and validation helpers where the same request-shape handling appears across multiple server files
