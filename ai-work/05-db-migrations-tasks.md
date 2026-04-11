@@ -56,7 +56,7 @@
 
 - [ ] 5.0 Add focused automated test coverage for migration execution, refusal paths, and recovery behavior
   - [x] 5.1 Add tests for fresh database creation at the latest schema for disposable environments
-  - [ ] 5.2 Add tests for successful forward migration of a supported prior database state to the latest version
+  - [x] 5.2 Add tests for successful forward migration of a supported prior database state to the latest version
   - [ ] 5.3 Add tests covering migration metadata recording, including applied version, name, and timestamp behavior
   - [ ] 5.4 Add tests covering refusal on unknown or unsupported database states
   - [ ] 5.5 Add tests for backup creation, failure-triggered restore, and retention of failed-state artifacts when practical
