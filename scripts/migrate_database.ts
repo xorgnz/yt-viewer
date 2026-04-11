@@ -70,6 +70,31 @@ function resolveDbPath(mode: ModeArg): { dbPath: string }
     return { dbPath };
 }
 
+function formatTimestamp(date: Date): string
+{
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    const seconds = String(date.getSeconds()).padStart(2, '0');
+
+    return `${year}${month}${day}-${hours}${minutes}${seconds}`;
+}
+
+function createBackupPath(dbPath: string): string
+{
+    const parsedPath = path.parse(dbPath);
+    return path.join(parsedPath.dir, `${parsedPath.name}-${formatTimestamp(new Date())}.bak${parsedPath.ext}`);
+}
+
+function createPreMigrationBackup(dbPath: string): string
+{
+    const backupPath = createBackupPath(dbPath);
+    fs.copyFileSync(dbPath, backupPath);
+    return backupPath;
+}
+
 async function main()
 {
     const { mode } = parseArgs();
@@ -79,12 +104,14 @@ async function main()
         throw new Error(`Database file not found at: ${dbPath}. Create it first with: npm run create_database -- ${mode}`);
     }
 
+    const backupPath = createPreMigrationBackup(dbPath);
     const db = new Database(dbPath);
     try {
         const runner = new MigrationRunner(new SqliteMigrationAdapter(db), MIGRATIONS);
         const result = runner.runToLatest();
 
         // Report the discovered state and the upgrade result in a consistent format.
+        console.log(`Backup created: ${backupPath}`);
         console.log(`Detected version: ${result.currentVersion}`);
         console.log(`Target version: ${result.targetVersion}`);
 

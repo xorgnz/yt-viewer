@@ -41,7 +41,7 @@
   - [x] 2.5 Ensure command output clearly reports detected version, applied migrations, and final version state
 
 - [ ] 3.0 Add backup, failure recovery, and unknown-state refusal behavior to the migration flow
-  - [ ] 3.1 Add automatic pre-migration backup creation for `dev` and `live` databases
+  - [x] 3.1 Add automatic pre-migration backup creation for `dev` and `live` databases
   - [ ] 3.2 Restore the original database automatically when a migration attempt fails after backup creation
   - [ ] 3.3 Preserve a copy of the failed partially migrated database when practical for later inspection
   - [ ] 3.4 Refuse to proceed when the database state is unknown, unsupported, or inconsistent with expected migration metadata
