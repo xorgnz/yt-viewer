@@ -18,6 +18,7 @@ export interface MigrationDefinition
 export interface MigrationAdapter
 {
     getCurrentVersion(): number | null;
+    getRecordedMigrationState(): RecordedMigrationState;
     setCurrentVersion(version: number): void;
     runInTransaction<T>(operation: (context: MigrationExecutionContext) => T): T;
 }
@@ -26,6 +27,17 @@ export interface AppliedMigrationSummary
 {
     version: number;
     name: string;
+}
+
+export interface RecordedMigrationSummary extends AppliedMigrationSummary
+{
+    success: boolean;
+}
+
+export interface RecordedMigrationState
+{
+    historyTableExists: boolean;
+    migrations: RecordedMigrationSummary[];
 }
 
 export interface MigrationRunResult

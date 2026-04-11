@@ -40,6 +40,74 @@ export class MigrationRunner
         this.migrations = sortMigrations(migrations);
     }
 
+    private validateRecordedState(
+        currentVersion: number,
+        firstRegisteredVersion: number,
+        targetVersion: number
+    ): void
+    {
+        const recordedState = this.adapter.getRecordedMigrationState();
+        const registeredByVersion = new Map(this.migrations.map((migration) => [migration.version, migration.name]));
+
+        if (!recordedState.historyTableExists) {
+            if (currentVersion >= firstRegisteredVersion) {
+                throw new Error('Migration metadata table is missing for a version that should already include it.');
+            }
+
+            return;
+        }
+
+        if (currentVersion < firstRegisteredVersion) {
+            throw new Error('Migration metadata exists for a database version that predates supported migrations.');
+        }
+
+        const successfulMigrations = recordedState.migrations.filter((migration) => migration.success);
+        const failedMigrations = recordedState.migrations.filter((migration) => !migration.success);
+        const seenSuccessfulVersions = new Set<number>();
+
+        if (failedMigrations.length > 0) {
+            throw new Error('Migration metadata contains failed migration attempts. Refusing to continue.');
+        }
+
+        for (const migration of successfulMigrations) {
+            if (seenSuccessfulVersions.has(migration.version)) {
+                throw new Error(`Migration metadata contains duplicate successful version "${migration.version}".`);
+            }
+
+            seenSuccessfulVersions.add(migration.version);
+
+            const registeredName = registeredByVersion.get(migration.version);
+            if (!registeredName) {
+                throw new Error(`Migration metadata references unsupported version "${migration.version}".`);
+            }
+
+            if (registeredName !== migration.name) {
+                throw new Error(
+                    `Migration metadata name mismatch for version "${migration.version}": expected "${registeredName}", found "${migration.name}".`
+                );
+            }
+        }
+
+        if (successfulMigrations.length === 0) {
+            if (currentVersion !== targetVersion) {
+                throw new Error('Migration metadata is empty for a database that is not already at the latest supported version.');
+            }
+
+            return;
+        }
+
+        const highestSuccessfulVersion = successfulMigrations.reduce(
+            (highest, migration) => Math.max(highest, migration.version),
+            successfulMigrations[0].version
+        );
+
+        if (highestSuccessfulVersion !== currentVersion) {
+            throw new Error(
+                `Current schema version "${currentVersion}" does not match recorded migration history "${highestSuccessfulVersion}".`
+            );
+        }
+    }
+
     runToLatest(): MigrationRunResult
     {
         // Discover the current state before deciding whether any work is required.
@@ -64,12 +132,15 @@ export class MigrationRunner
 
         // Compute the only supported destination and validate the source state.
         const targetVersion = this.migrations[this.migrations.length - 1].version;
+        const firstRegisteredVersion = this.migrations[0].version;
 
         if (currentVersion > targetVersion) {
             throw new Error(
                 `Database schema version "${currentVersion}" is newer than the latest supported version "${targetVersion}".`
             );
         }
+
+        this.validateRecordedState(currentVersion, firstRegisteredVersion, targetVersion);
 
         const pendingMigrations = this.migrations.filter((migration) => migration.version > currentVersion);
         const appliedMigrations: MigrationRunResult['appliedMigrations'] = [];

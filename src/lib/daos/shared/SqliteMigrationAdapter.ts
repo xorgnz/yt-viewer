@@ -3,6 +3,7 @@ import { SchemaVersionDAO } from '$lib/daos/schemaVersionDAO';
 import type {
     MigrationAdapter,
     MigrationExecutionContext,
+    RecordedMigrationState,
     SqlParams,
 } from '$lib/daos/migrations/migrationTypes';
 
@@ -92,6 +93,48 @@ export class SqliteMigrationAdapter implements MigrationAdapter
     getCurrentVersion(): number | null
     {
         return this.schemaVersionDao.get();
+    }
+
+    getRecordedMigrationState(): RecordedMigrationState
+    {
+        const tableRow = this.db
+            .prepare(`
+                SELECT name
+                FROM sqlite_master
+                WHERE type = 'table' AND name = 'migration_history'
+            `)
+            .get() as { name: string } | undefined;
+
+        if (!tableRow) {
+            return {
+                historyTableExists: false,
+                migrations: [],
+            };
+        }
+
+        const migrations = this.db
+            .prepare(`
+                SELECT
+                    version,
+                    name,
+                    success
+                FROM migration_history
+                ORDER BY id
+            `)
+            .all() as Array<{
+                version: number;
+                name: string;
+                success: number;
+            }>;
+
+        return {
+            historyTableExists: true,
+            migrations: migrations.map((migration) => ({
+                version: migration.version,
+                name: migration.name,
+                success: migration.success === 1,
+            })),
+        };
     }
 
     setCurrentVersion(version: number): void

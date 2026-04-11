@@ -44,7 +44,7 @@
   - [x] 3.1 Add automatic pre-migration backup creation for `dev` and `live` databases
   - [x] 3.2 Restore the original database automatically when a migration attempt fails after backup creation
   - [x] 3.3 Preserve a copy of the failed partially migrated database when practical for later inspection
-  - [ ] 3.4 Refuse to proceed when the database state is unknown, unsupported, or inconsistent with expected migration metadata
+  - [x] 3.4 Refuse to proceed when the database state is unknown, unsupported, or inconsistent with expected migration metadata
   - [ ] 3.5 Make failure and recovery output explicit so the operator can locate the restored database, backup, and any failed-state artifact
 
 - [ ] 4.0 Preserve fresh-create behavior for `test` and other disposable database workflows while separating it cleanly from migrations
