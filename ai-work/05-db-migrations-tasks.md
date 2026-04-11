@@ -51,7 +51,7 @@
   - [x] 4.1 Keep `scripts/create_database.ts` focused on fresh latest-schema creation rather than upgrade logic
   - [x] 4.2 Ensure `test` database workflows continue starting from scratch and do not depend on in-place migrations
   - [x] 4.3 Separate latest-schema bootstrap responsibilities from migration responsibilities in shared database utilities
-  - [ ] 4.4 Add guardrails so normal database open paths do not silently trigger migrations during application startup
+  - [x] 4.4 Add guardrails so normal database open paths do not silently trigger migrations during application startup
   - [ ] 4.5 Update any developer-facing usage expectations in code comments or helper output so fresh-create versus migrate workflows are unambiguous
 
 - [ ] 5.0 Add focused automated test coverage for migration execution, refusal paths, and recovery behavior

@@ -1,6 +1,8 @@
 import Database from 'better-sqlite3';
 import fs from 'node:fs';
 import path from 'node:path';
+import { SCHEMA_VERSION } from '$lib/daos/_schema';
+import { SchemaVersionDAO } from '$lib/daos/schemaVersionDAO';
 
 export enum DatabaseMode
 {
@@ -54,7 +56,32 @@ export class DatabaseWrapper
         if (!fs.existsSync(p)) {
             throw new Error(`Database file not found at "${p}". Run \`npm run create_database -- ${this.mode}\` first to create it.`);
         }
-        this.db = new Database(p);
+
+        const db = new Database(p);
+        const schemaDao = new SchemaVersionDAO(db);
+        const currentVersion = schemaDao.get();
+
+        if (currentVersion === null) {
+            db.close();
+            throw new Error(`Database at "${p}" has no readable schema version. Recreate it or migrate it explicitly before startup.`);
+        }
+
+        if (currentVersion < SCHEMA_VERSION) {
+            db.close();
+
+            if (this.mode === DatabaseMode.Test) {
+                throw new Error(`Test database at "${p}" is on schema v${currentVersion}. Recreate it with \`npm run create_database -- test\`.`);
+            }
+
+            throw new Error(`Database at "${p}" is on schema v${currentVersion}. Run \`npm run migrate_database -- ${this.mode}\` before startup.`);
+        }
+
+        if (currentVersion > SCHEMA_VERSION) {
+            db.close();
+            throw new Error(`Database at "${p}" is on unsupported schema v${currentVersion}. This app supports up to v${SCHEMA_VERSION}.`);
+        }
+
+        this.db = db;
         return this.db;
     }
 
