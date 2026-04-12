@@ -127,7 +127,9 @@ describe('runMigrationWorkflow', () => {
             dbPath,
             migrations: MIGRATIONS,
         });
-        const finalVersion = new SchemaVersionDAO(new Database(dbPath)).get();
+        const migratedDb = new Database(dbPath);
+        const finalVersion = new SchemaVersionDAO(migratedDb).get();
+        migratedDb.close();
 
         expect(fs.existsSync(result.backupPath)).toBe(true);
         expect(result.failedArtifactPath).toBeNull();

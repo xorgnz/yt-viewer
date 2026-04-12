@@ -6,6 +6,7 @@ import { FlagsDAO, type BulkFlagKind } from '$lib/daos/flagsDAO';
 import { fail } from '@sveltejs/kit';
 import { ServerDatabaseContext } from '$lib/server/ServerDatabaseContext';
 import { ServerProfileContext } from '$lib/server/ServerProfileContext';
+import { ServerActionForm } from '$lib/server/ServerActionForm';
 
 function parseDateOnly(value: string | null, boundary: 'start' | 'end'): number | null
 {
@@ -59,17 +60,6 @@ function parseBulkFlagValue(raw: FormDataEntryValue | null): BulkFlagValue | nul
     if (value === '1') return 1;
     if (value === '0') return 0;
     return null;
-}
-
-function parseVideoIds(raw: FormDataEntryValue | null): number[]
-{
-    const text = String(raw || '').trim();
-    if (!text) {
-        return [];
-    }
-
-    const values = text.split(',').map((part) => Number(part.trim())).filter((value) => Number.isInteger(value) && value > 0);
-    return Array.from(new Set(values));
 }
 
 function parseUndoStates(raw: FormDataEntryValue | null): BulkUndoState[] | null
@@ -253,19 +243,15 @@ export const load = async ({ url, cookies }: { url: URL; cookies: any }) =>
 export const actions = {
     async toggleFlag({ request, cookies }: { request: Request; cookies: any })
     {
-        const form = await request.formData();
-        const videoIdStr = String(form.get('videoId') || '').trim();
-        const kind = String(form.get('kind') || '').trim(); // 'watched' | 'favorite' | 'ignored'
-        const valueStr = String(form.get('value') || '').trim(); // '0' | '1'
-
-        const videoId = Number(videoIdStr);
-        const value = valueStr === '1' ? 1 : (valueStr === '0' ? 0 : NaN);
+        const form = await ServerActionForm.fromRequest(request);
+        const videoId = form.getPositiveInteger('videoId');
+        const kind = parseBulkFlagKind(form.getRaw('kind'));
+        const value = parseBulkFlagValue(form.getRaw('value'));
 
         if (
-            !videoId ||
-            Number.isNaN(videoId) ||
-            (kind !== 'watched' && kind !== 'favorite' && kind !== 'ignored') ||
-            Number.isNaN(value)
+            videoId === null ||
+            !kind ||
+            value === null
         ) {
             return fail(400, { message: 'Invalid toggle parameters' });
         }
@@ -275,11 +261,11 @@ export const actions = {
 
             const flags = new FlagsDAO(db);
             if (kind === 'watched') {
-                flags.set(videoId, profileContext.activeProfileId, { watched: value as 0 | 1 });
+                flags.set(videoId, profileContext.activeProfileId, { watched: value });
             } else if (kind === 'favorite') {
-                flags.set(videoId, profileContext.activeProfileId, { favorite: value as 0 | 1 });
+                flags.set(videoId, profileContext.activeProfileId, { favorite: value });
             } else if (kind === 'ignored') {
-                flags.set(videoId, profileContext.activeProfileId, { ignored: value as 0 | 1 });
+                flags.set(videoId, profileContext.activeProfileId, { ignored: value });
             }
             return {
                 ok: true,
@@ -292,16 +278,16 @@ export const actions = {
 
     async bulkUpdateFlags({ request, cookies }: { request: Request; cookies: any })
     {
-        const form = await request.formData();
-        const kind = parseBulkFlagKind(form.get('kind'));
-        const value = parseBulkFlagValue(form.get('value'));
-        const requestedVideoIds = parseVideoIds(form.get('videoIds'));
-        const selectionContextKey = String(form.get('selectionContextKey') || '').trim() || null;
-        const selectedCountHintRaw = Number(form.get('selectedCount') || requestedVideoIds.length);
+        const form = await ServerActionForm.fromRequest(request);
+        const kind = parseBulkFlagKind(form.getRaw('kind'));
+        const value = parseBulkFlagValue(form.getRaw('value'));
+        const requestedVideoIds = form.getPositiveIntegerList({ csvField: 'videoIds' });
+        const selectionContextKey = form.getNullableTrimmedString('selectionContextKey');
+        const selectedCountHintRaw = form.getNumber('selectedCount', requestedVideoIds.length);
         const selectedCountHint = Number.isInteger(selectedCountHintRaw) && selectedCountHintRaw >= 0
             ? selectedCountHintRaw
             : requestedVideoIds.length;
-        const spansMultiplePages = String(form.get('spansMultiplePages') || '').trim() === '1';
+        const spansMultiplePages = form.isEnabled('spansMultiplePages');
 
         if (!kind || value === null || requestedVideoIds.length === 0) {
             return fail(400, { message: 'Invalid bulk flag parameters' });
@@ -357,11 +343,11 @@ export const actions = {
 
     async undoBulkUpdateFlags({ request, cookies }: { request: Request; cookies: any })
     {
-        const form = await request.formData();
-        const kind = parseBulkFlagKind(form.get('kind'));
-        const requestedVideoIds = parseVideoIds(form.get('videoIds'));
-        const undoStates = parseUndoStates(form.get('originalStates'));
-        const selectionContextKey = String(form.get('selectionContextKey') || '').trim() || null;
+        const form = await ServerActionForm.fromRequest(request);
+        const kind = parseBulkFlagKind(form.getRaw('kind'));
+        const requestedVideoIds = form.getPositiveIntegerList({ csvField: 'videoIds' });
+        const undoStates = parseUndoStates(form.getRaw('originalStates'));
+        const selectionContextKey = form.getNullableTrimmedString('selectionContextKey');
 
         if (!kind || undoStates === null) {
             return fail(400, { message: 'Invalid bulk undo parameters' });
@@ -419,10 +405,10 @@ export const actions = {
 
     async restoreSelectionState({ request, cookies }: { request: Request; cookies: any })
     {
-        const form = await request.formData();
-        const requestedVideoIds = parseVideoIds(form.get('videoIds'));
-        const restoreStates = parseRestoreStates(form.get('originalStates'));
-        const selectionContextKey = String(form.get('selectionContextKey') || '').trim() || null;
+        const form = await ServerActionForm.fromRequest(request);
+        const requestedVideoIds = form.getPositiveIntegerList({ csvField: 'videoIds' });
+        const restoreStates = parseRestoreStates(form.getRaw('originalStates'));
+        const selectionContextKey = form.getNullableTrimmedString('selectionContextKey');
 
         if (restoreStates === null) {
             return fail(400, { message: 'Invalid restore parameters' });

@@ -3,6 +3,7 @@ import { SourceChannelDAO } from '$lib/daos/sourceChannelDAO';
 import { VirtualChannelDAO } from '$lib/daos/virtualChannelDAO';
 import { AssignmentDAO } from '$lib/daos/assignmentDAO';
 import { ServerDatabaseContext } from '$lib/server/ServerDatabaseContext';
+import { ServerActionForm } from '$lib/server/ServerActionForm';
 
 export const load: PageServerLoad = async () =>
 {
@@ -27,10 +28,10 @@ export const load: PageServerLoad = async () =>
 
 export const actions: Actions = {
     add: async ({ request }) => {
-        const form = await request.formData();
-        const channelId = Number(form.get('channel_id'));
-        const groupId = Number(form.get('group_id'));
-        if (!channelId || !groupId) {
+        const form = await ServerActionForm.fromRequest(request);
+        const channelId = form.getPositiveInteger('channel_id');
+        const groupId = form.getPositiveInteger('group_id');
+        if (channelId === null || groupId === null) {
             return { success: false, error: 'Missing channel_id or group_id' };
         }
 
@@ -41,10 +42,10 @@ export const actions: Actions = {
         });
     },
     remove: async ({ request }) => {
-        const form = await request.formData();
-        const channelId = Number(form.get('channel_id'));
-        const groupId = Number(form.get('group_id'));
-        if (!channelId || !groupId) {
+        const form = await ServerActionForm.fromRequest(request);
+        const channelId = form.getPositiveInteger('channel_id');
+        const groupId = form.getPositiveInteger('group_id');
+        if (channelId === null || groupId === null) {
             return { success: false, error: 'Missing channel_id or group_id' };
         }
 

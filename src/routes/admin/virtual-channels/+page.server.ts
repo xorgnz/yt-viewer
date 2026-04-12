@@ -7,6 +7,7 @@ import type Database from 'better-sqlite3';
 import type { SourceChannel } from '$lib/entities/sourceChannel';
 import type { VirtualChannelAssignment } from '$lib/entities/virtualChannelAssignment';
 import { ServerDatabaseContext } from '$lib/server/ServerDatabaseContext';
+import { ServerActionForm } from '$lib/server/ServerActionForm';
 
 type InlineAssociation = {
     assignment: VirtualChannelAssignment;
@@ -19,16 +20,6 @@ type VirtualChannelRow = {
     associatedSourceChannels: InlineAssociation[];
     availableSourceChannels: SourceChannel[];
 };
-
-function parsePositiveInteger(value: FormDataEntryValue | null): number | null
-{
-    const parsed = Number(value);
-    if (!Number.isInteger(parsed) || parsed <= 0) {
-        return null;
-    }
-
-    return parsed;
-}
 
 function buildVirtualChannelRow(
     virtualChannel: { id: number; name: string },
@@ -88,8 +79,8 @@ export const load: PageServerLoad = async () =>
 
 export const actions: Actions = {
     create: async ({ request }) => {
-        const form = await request.formData();
-        const name = String(form.get('name') || '').trim();
+        const form = await ServerActionForm.fromRequest(request);
+        const name = form.getTrimmedString('name');
         if (!name) return fail(400, { message: 'Name is required' });
 
         const result = await ServerDatabaseContext.run(({ db }) => {
@@ -112,10 +103,10 @@ export const actions: Actions = {
     },
 
     rename: async ({ request }) => {
-        const form = await request.formData();
-        const id = Number(form.get('id'));
-        const name = String(form.get('name') || '').trim();
-        if (!id || !name) return fail(400, { message: 'Invalid input' });
+        const form = await ServerActionForm.fromRequest(request);
+        const id = form.getPositiveInteger('id');
+        const name = form.getTrimmedString('name');
+        if (id === null || !name) return fail(400, { message: 'Invalid input' });
 
         const result = await ServerDatabaseContext.run(({ db }) => {
             const dao = new VirtualChannelDAO(db);
@@ -137,9 +128,9 @@ export const actions: Actions = {
     },
 
     delete: async ({ request }) => {
-        const form = await request.formData();
-        const id = Number(form.get('id'));
-        if (!id) return fail(400, { message: 'Invalid id' });
+        const form = await ServerActionForm.fromRequest(request);
+        const id = form.getPositiveInteger('id');
+        if (id === null) return fail(400, { message: 'Invalid id' });
 
         const result = await ServerDatabaseContext.run(({ db }) => {
             const dao = new VirtualChannelDAO(db);
@@ -161,9 +152,9 @@ export const actions: Actions = {
     },
 
     addAssociationInline: async ({ request }) => {
-        const form = await request.formData();
-        const virtualChannelId = parsePositiveInteger(form.get('virtual_channel_id'));
-        const sourceChannelId = parsePositiveInteger(form.get('source_channel_id'));
+        const form = await ServerActionForm.fromRequest(request);
+        const virtualChannelId = form.getPositiveInteger('virtual_channel_id');
+        const sourceChannelId = form.getPositiveInteger('source_channel_id');
 
         if (!virtualChannelId) {
             return fail(400, { message: 'A valid virtual channel is required.', virtualChannelId: null });
@@ -201,9 +192,9 @@ export const actions: Actions = {
     },
 
     removeAssociationInline: async ({ request }) => {
-        const form = await request.formData();
-        const virtualChannelId = parsePositiveInteger(form.get('virtual_channel_id'));
-        const sourceChannelId = parsePositiveInteger(form.get('source_channel_id'));
+        const form = await ServerActionForm.fromRequest(request);
+        const virtualChannelId = form.getPositiveInteger('virtual_channel_id');
+        const sourceChannelId = form.getPositiveInteger('source_channel_id');
 
         if (!virtualChannelId) {
             return fail(400, { message: 'A valid virtual channel is required.', virtualChannelId: null });

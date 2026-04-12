@@ -5,6 +5,7 @@ import { HistoryDAO } from '$lib/daos/historyDAO';
 import { error, fail } from '@sveltejs/kit';
 import { ServerDatabaseContext } from '$lib/server/ServerDatabaseContext';
 import { ServerProfileContext } from '$lib/server/ServerProfileContext';
+import { ServerActionForm } from '$lib/server/ServerActionForm';
 
 const HISTORY_SESSION_GAP_MS = 5 * 60 * 1000;
 
@@ -38,8 +39,8 @@ export const actions = {
         const videoYoutubeId = String(params.videoId || '').trim();
         if (!videoYoutubeId) return fail(400, { message: 'Missing videoId' });
 
-        const form = await request.formData();
-        const watchSeconds = Number(form.get('watchSeconds') || 0);
+        const form = await ServerActionForm.fromRequest(request);
+        const watchSeconds = form.getNumber('watchSeconds', 0);
         if (!Number.isFinite(watchSeconds) || watchSeconds <= 5) {
             return fail(400, { message: 'Insufficient watch time for history session' });
         }
@@ -80,8 +81,8 @@ export const actions = {
         const videoYoutubeId = String(params.videoId || '').trim();
         if (!videoYoutubeId) return fail(400, { message: 'Missing videoId' });
 
-        const form = await request.formData();
-        const watchSeconds = Number(form.get('watchSeconds') || 0);
+        const form = await ServerActionForm.fromRequest(request);
+        const watchSeconds = form.getNumber('watchSeconds', 0);
         if (!Number.isFinite(watchSeconds) || watchSeconds < 0) {
             return fail(400, { message: 'Invalid watch time' });
         }
@@ -114,8 +115,8 @@ export const actions = {
         const videoYoutubeId = String(params.videoId || '').trim();
         if (!videoYoutubeId) return fail(400, { message: 'Missing videoId' });
 
-        const form = await request.formData();
-        const intent = String(form.get('intent') || 'watch'); // 'watch' | 'unwatch'
+        const form = await ServerActionForm.fromRequest(request);
+        const intent = form.getTrimmedString('intent', 'watch');
 
         return ServerDatabaseContext.run(({ db }) => {
             const profileContext = ServerProfileContext.resolve(new ProfileDAO(db), cookies);

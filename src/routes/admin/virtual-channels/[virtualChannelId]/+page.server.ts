@@ -8,6 +8,7 @@ import type { VirtualChannelAssignmentVideoReviewState } from '$lib/entities/vir
 import { VirtualChannelAssignmentVideoSelectionDAO } from '$lib/daos/virtualChannelAssignmentVideoSelectionDAO';
 import { VideoDAO } from '$lib/daos/videoDAO';
 import { ServerDatabaseContext } from '$lib/server/ServerDatabaseContext';
+import { ServerActionForm } from '$lib/server/ServerActionForm';
 
 export const load: PageServerLoad = async ({ params, url }) =>
 {
@@ -110,28 +111,6 @@ function parseReviewState(value: FormDataEntryValue | null): VirtualChannelAssig
     return value === 'included' || value === 'ignored' ? value : 'not_yet_reviewed';
 }
 
-function parseVideoIds(form: FormData): number[]
-{
-    const repeatedValues = form.getAll('video_id');
-    const csvValue = String(form.get('video_ids') || '');
-    const rawValues = [
-        ...repeatedValues.map((value) => String(value)),
-        ...csvValue.split(',').map((value) => value.trim()).filter(Boolean)
-    ];
-
-    const ids = rawValues
-        .map((value) => Number(value))
-        .filter((value, index, array) => Number.isInteger(value) && value > 0 && array.indexOf(value) === index);
-
-    return ids;
-}
-
-function parseReturnQuery(form: FormData): string
-{
-    const value = String(form.get('return_query') || '').trim().replace(/^\?+/, '');
-    return value;
-}
-
 export const actions: Actions = {
     addAssociation: async ({ params, request }) => {
         // Validate the route and submitted source channel reference.
@@ -140,11 +119,11 @@ export const actions: Actions = {
             throw error(404, 'Virtual channel not found');
         }
 
-        const form = await request.formData();
-        const sourceChannelId = Number(form.get('source_channel_id'));
-        const mode = parseAssignmentMode(form.get('mode'));
+        const form = await ServerActionForm.fromRequest(request);
+        const sourceChannelId = form.getPositiveInteger('source_channel_id');
+        const mode = parseAssignmentMode(form.getRaw('mode'));
 
-        if (!Number.isInteger(sourceChannelId) || sourceChannelId <= 0) {
+        if (sourceChannelId === null) {
             return fail(400, { message: 'A valid source channel is required.' });
         }
 
@@ -174,11 +153,11 @@ export const actions: Actions = {
             throw error(404, 'Virtual channel not found');
         }
 
-        const form = await request.formData();
-        const assignmentId = Number(form.get('assignment_id'));
-        const mode = parseAssignmentMode(form.get('mode'));
+        const form = await ServerActionForm.fromRequest(request);
+        const assignmentId = form.getPositiveInteger('assignment_id');
+        const mode = parseAssignmentMode(form.getRaw('mode'));
 
-        if (!Number.isInteger(assignmentId) || assignmentId <= 0) {
+        if (assignmentId === null) {
             return fail(400, { message: 'A valid assignment is required.' });
         }
 
@@ -202,10 +181,10 @@ export const actions: Actions = {
             throw error(404, 'Virtual channel not found');
         }
 
-        const form = await request.formData();
-        const assignmentId = Number(form.get('assignment_id'));
+        const form = await ServerActionForm.fromRequest(request);
+        const assignmentId = form.getPositiveInteger('assignment_id');
 
-        if (!Number.isInteger(assignmentId) || assignmentId <= 0) {
+        if (assignmentId === null) {
             return fail(400, { message: 'A valid assignment is required.' });
         }
 
@@ -229,12 +208,12 @@ export const actions: Actions = {
             throw error(404, 'Virtual channel not found');
         }
 
-        const form = await request.formData();
-        const assignmentId = Number(form.get('assignment_id'));
-        const videoId = Number(form.get('video_id'));
-        const reviewState = parseReviewState(form.get('review_state'));
+        const form = await ServerActionForm.fromRequest(request);
+        const assignmentId = form.getPositiveInteger('assignment_id');
+        const videoId = form.getPositiveInteger('video_id');
+        const reviewState = parseReviewState(form.getRaw('review_state'));
 
-        if (!Number.isInteger(assignmentId) || assignmentId <= 0 || !Number.isInteger(videoId) || videoId <= 0) {
+        if (assignmentId === null || videoId === null) {
             return fail(400, { message: 'A valid assignment and video are required.' });
         }
 
@@ -269,13 +248,16 @@ export const actions: Actions = {
             throw error(404, 'Virtual channel not found');
         }
 
-        const form = await request.formData();
-        const assignmentId = Number(form.get('assignment_id'));
-        const reviewState = parseReviewState(form.get('review_state'));
-        const videoIds = parseVideoIds(form);
-        const returnQuery = parseReturnQuery(form);
+        const form = await ServerActionForm.fromRequest(request);
+        const assignmentId = form.getPositiveInteger('assignment_id');
+        const reviewState = parseReviewState(form.getRaw('review_state'));
+        const videoIds = form.getPositiveIntegerList({
+            repeatedField: 'video_id',
+            csvField: 'video_ids'
+        });
+        const returnQuery = form.getSanitizedQueryString('return_query');
 
-        if (!Number.isInteger(assignmentId) || assignmentId <= 0) {
+        if (assignmentId === null) {
             return fail(400, { message: 'A valid assignment is required.' });
         }
 

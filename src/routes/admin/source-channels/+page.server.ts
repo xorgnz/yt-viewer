@@ -5,6 +5,7 @@ import { YouTubeClient, YouTubeApiError } from '$lib/youtube/youTubeClient';
 import { importChannelFromYouTube } from '$lib/youtube/importer';
 import { resolveChannelReference } from '$lib/youtube/fetch';
 import { ServerDatabaseContext } from '$lib/server/ServerDatabaseContext';
+import { ServerActionForm } from '$lib/server/ServerActionForm';
 
 export const load: PageServerLoad = async () =>
 {
@@ -17,13 +18,13 @@ export const load: PageServerLoad = async () =>
 
 export const actions: Actions = {
     create: async ({ request }) => {
-        const form = await request.formData();
-        const youtubeInput = String(form.get('youtube_id') || '').trim();
-        const title = String(form.get('title') || '').trim();
-        const description = String(form.get('description') || '');
-        const thumbnail_url = String(form.get('thumbnail_url') || '') || null;
-        const published_at_str = String(form.get('published_at') || '').trim();
-        const published_at = published_at_str ? Number(published_at_str) : null;
+        const form = await ServerActionForm.fromRequest(request);
+        const youtubeInput = form.getTrimmedString('youtube_id');
+        const title = form.getTrimmedString('title');
+        const description = form.getString('description');
+        const thumbnail_url = form.getString('thumbnail_url') || null;
+        const publishedAtText = form.getTrimmedString('published_at');
+        const published_at = publishedAtText ? Number(publishedAtText) : null;
 
         if (!youtubeInput || !title) {
             return fail(400, { message: 'youtube_id and title are required.' });
@@ -55,15 +56,15 @@ export const actions: Actions = {
     },
 
     update: async ({ request }) => {
-        const form = await request.formData();
-        const id = Number(form.get('id'));
-        const title = String(form.get('title') || '').trim();
-        const description = String(form.get('description') || '');
-        const thumbnail_url = String(form.get('thumbnail_url') || '') || null;
-        const published_at_str = String(form.get('published_at') || '').trim();
-        const published_at = published_at_str ? Number(published_at_str) : null;
+        const form = await ServerActionForm.fromRequest(request);
+        const id = form.getPositiveInteger('id');
+        const title = form.getTrimmedString('title');
+        const description = form.getString('description');
+        const thumbnail_url = form.getString('thumbnail_url') || null;
+        const publishedAtText = form.getTrimmedString('published_at');
+        const published_at = publishedAtText ? Number(publishedAtText) : null;
 
-        if (!id || !title) {
+        if (id === null || !title) {
             return fail(400, { message: 'id and title are required.' });
         }
 
@@ -91,9 +92,9 @@ export const actions: Actions = {
     },
 
     delete: async ({ request }) => {
-        const form = await request.formData();
-        const id = Number(form.get('id'));
-        if (!id) return fail(400, { message: 'id is required.' });
+        const form = await ServerActionForm.fromRequest(request);
+        const id = form.getPositiveInteger('id');
+        if (id === null) return fail(400, { message: 'id is required.' });
 
         await ServerDatabaseContext.run(({ db }) => {
             const dao = new SourceChannelDAO(db);
@@ -103,9 +104,9 @@ export const actions: Actions = {
     },
 
     refresh: async ({ request }) => {
-        const form = await request.formData();
-        const id = Number(form.get('id'));
-        if (!id) return fail(400, { message: 'id is required.' });
+        const form = await ServerActionForm.fromRequest(request);
+        const id = form.getPositiveInteger('id');
+        if (id === null) return fail(400, { message: 'id is required.' });
 
         const result = await ServerDatabaseContext.run(async ({ db }) => {
             const dao = new SourceChannelDAO(db);
