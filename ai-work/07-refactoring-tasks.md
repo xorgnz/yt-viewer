@@ -43,7 +43,7 @@
   - [x] 1.5 Add or update route-level tests that lock down the shared context behavior before later service extraction changes build on it
 
 - [ ] 2.0 Decompose viewer server workflows into thin route handlers plus explicit services
-  - [ ] 2.1 Split viewer query parsing, filter normalization, and load-model assembly out of `src/routes/viewer/+page.server.ts` into focused modules
+  - [x] 2.1 Split viewer query parsing, filter normalization, and load-model assembly out of `src/routes/viewer/+page.server.ts` into focused modules
   - [ ] 2.2 Introduce viewer service modules for bulk flag updates, selection-aware operations, and result loading so route actions stop owning business workflows
   - [ ] 2.3 Refactor `src/routes/viewer/+page.server.ts` into thin load/action handlers that map request data to service calls and response shaping
   - [ ] 2.4 Align `src/routes/viewer/virtual-channels/+page.server.ts` and `src/routes/viewer/watch/[videoId]/+page.server.ts` with the same shared request-context and viewer-service patterns where responsibilities overlap

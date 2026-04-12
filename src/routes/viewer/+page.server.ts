@@ -1,34 +1,12 @@
 import { VideoDAO } from '$lib/daos/videoDAO';
-import { SourceChannelDAO } from '$lib/daos/sourceChannelDAO';
-import { VirtualChannelDAO } from '$lib/daos/virtualChannelDAO';
 import { ProfileDAO } from '$lib/daos/profileDAO';
 import { FlagsDAO, type BulkFlagKind } from '$lib/daos/flagsDAO';
 import { fail } from '@sveltejs/kit';
 import { ServerDatabaseContext } from '$lib/server/ServerDatabaseContext';
 import { ServerProfileContext } from '$lib/server/ServerProfileContext';
 import { ServerActionForm } from '$lib/server/ServerActionForm';
-
-function parseDateOnly(value: string | null, boundary: 'start' | 'end'): number | null
-{
-    if (!value) {
-        return null;
-    }
-
-    const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value.trim());
-    if (!match) {
-        return null;
-    }
-
-    const year = Number(match[1]);
-    const month = Number(match[2]) - 1;
-    const day = Number(match[3]);
-
-    if (boundary === 'start') {
-        return new Date(year, month, day, 0, 0, 0, 0).getTime();
-    }
-
-    return new Date(year, month, day, 23, 59, 59, 999).getTime();
-}
+import { ViewerQueryParser } from '$lib/server/viewer/ViewerQueryParser';
+import { ViewerPageLoader } from '$lib/server/viewer/ViewerPageLoader';
 
 type BulkFlagValue = 0 | 1;
 
@@ -182,61 +160,13 @@ function getOutcome(succeededCount: number, failedCount: number, skippedCount: n
 
 export const load = async ({ url, cookies }: { url: URL; cookies: any }) =>
 {
-    const term = url.searchParams.get('term') || undefined;
-    const watchedParamRaw = url.searchParams.get('watched');
-    const unwatchedOnly = url.searchParams.get('unwatchedOnly');
-    const showIgnored = url.searchParams.get('showIgnored');
-    const ignoredParam = showIgnored === '1' ? 'show' : (url.searchParams.get('ignored') || 'hide');
-    const ignored = (ignoredParam === 'show') ? 'show' : 'hide';
-    const dateFromInput = url.searchParams.get('dateFrom')?.trim() || '';
-    const dateToInput = url.searchParams.get('dateTo')?.trim() || '';
-    const channelId = url.searchParams.get('channelId');
-    const groupId = url.searchParams.get('groupId');
-    const limit = url.searchParams.get('limit');
-    const offset = url.searchParams.get('offset');
-
     return ServerDatabaseContext.run(({ db }) => {
         // Resolve the site-wide active profile before loading profile-scoped viewer state.
         const profileContext = ServerProfileContext.resolve(new ProfileDAO(db), cookies);
-        const watchedParam = unwatchedOnly === '1'
-            ? 'unwatched'
-            : (watchedParamRaw ?? (profileContext.activeProfileKey === 'child' ? 'unwatched' : 'all'));
-        const watched = (watchedParam === 'watched' || watchedParam === 'unwatched') ? watchedParam : 'all';
-        const filters = {
-            term,
-            watched: watched as 'all' | 'watched' | 'unwatched',
-            ignored: ignored as 'hide' | 'show',
-            dateFrom: parseDateOnly(dateFromInput, 'start'),
-            dateTo: parseDateOnly(dateToInput, 'end'),
-            dateFromInput,
-            dateToInput,
-            channelId: channelId ? Number(channelId) : null,
-            groupId: groupId ? Number(groupId) : null,
-            limit: limit ? Number(limit) : 200,
-            offset: offset ? Number(offset) : 0
-        } as const;
+        const filters = ViewerQueryParser.parse(url, profileContext.activeProfileKey);
+        const pageLoader = new ViewerPageLoader(db);
 
-        const vDao = new VideoDAO(db);
-        const cDao = new SourceChannelDAO(db);
-        const gDao = new VirtualChannelDAO(db);
-
-        const [videos, totalCount, channels, groups] = [
-            vDao.listForViewer(filters as any, profileContext.activeProfileId),
-            vDao.countForViewer(filters as any, profileContext.activeProfileId),
-            cDao.list(),
-            gDao.list()
-        ];
-
-        return {
-            filters,
-            videos,
-            totalCount,
-            channels,
-            groups,
-            profileId: profileContext.activeProfileId,
-            profileKey: profileContext.activeProfileKey,
-            profileName: profileContext.activeProfileName
-        };
+        return pageLoader.load(filters, profileContext);
     });
 };
 
