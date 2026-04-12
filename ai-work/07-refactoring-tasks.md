@@ -44,7 +44,7 @@
 
 - [ ] 2.0 Decompose viewer server workflows into thin route handlers plus explicit services
   - [x] 2.1 Split viewer query parsing, filter normalization, and load-model assembly out of `src/routes/viewer/+page.server.ts` into focused modules
-  - [ ] 2.2 Introduce viewer service modules for bulk flag updates, selection-aware operations, and result loading so route actions stop owning business workflows
+  - [x] 2.2 Introduce viewer service modules for bulk flag updates, selection-aware operations, and result loading so route actions stop owning business workflows
   - [ ] 2.3 Refactor `src/routes/viewer/+page.server.ts` into thin load/action handlers that map request data to service calls and response shaping
   - [ ] 2.4 Align `src/routes/viewer/virtual-channels/+page.server.ts` and `src/routes/viewer/watch/[videoId]/+page.server.ts` with the same shared request-context and viewer-service patterns where responsibilities overlap
   - [ ] 2.5 Update `tests/viewer/` coverage so the extracted services and thinner route handlers preserve current viewer behavior
