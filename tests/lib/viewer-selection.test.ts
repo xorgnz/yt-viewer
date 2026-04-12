@@ -1,12 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import {
-    clearViewerSelectionState,
-    createViewerSelectionContextKey,
-    createViewerSelectionState,
-    reconcileViewerSelectionState,
-    selectSingleViewerSelectionVideo,
-    toggleSingleViewerSelectionVideo,
-    toggleViewerSelectionVideo
+    ViewerSelectionContext,
+    type ViewerSelectionContextInput,
+    viewerSelectionStateManager
 } from '../../src/lib/viewerSelection';
 
 describe('viewerSelection filter-context behavior', () => {
@@ -19,9 +15,9 @@ describe('viewerSelection filter-context behavior', () => {
         { id: 4, watched: 1 as const, favorite: 0 as const, ignored: 1 as const }
     ];
 
-    function createContextKey(overrides: Partial<Parameters<typeof createViewerSelectionContextKey>[0]> = {})
+    function createContextKey(overrides: Partial<ViewerSelectionContextInput> = {})
     {
-        return createViewerSelectionContextKey({
+        return ViewerSelectionContext.createKey({
             profileKey: 'default',
             term: '',
             watched: 'all',
@@ -36,12 +32,12 @@ describe('viewerSelection filter-context behavior', () => {
 
     it('preserves selection when pagination changes inside the same filter context', () => {
         const contextKey = createContextKey();
-        let state = createViewerSelectionState(contextKey, pageOneVideos);
+        let state = viewerSelectionStateManager.create(contextKey, pageOneVideos);
 
-        state = toggleViewerSelectionVideo(state, 1);
-        state = toggleViewerSelectionVideo(state, 2);
+        state = viewerSelectionStateManager.toggle(state, 1);
+        state = viewerSelectionStateManager.toggle(state, 2);
 
-        const nextState = reconcileViewerSelectionState(state, contextKey, pageTwoVideos);
+        const nextState = viewerSelectionStateManager.reconcile(state, contextKey, pageTwoVideos);
 
         expect(nextState.selectedVideoIds).toEqual([1, 2]);
         expect(nextState.anchorVideoId).toBe(2);
@@ -54,13 +50,13 @@ describe('viewerSelection filter-context behavior', () => {
 
     it('clears selection when the filter context changes', () => {
         const originalContextKey = createContextKey();
-        let state = createViewerSelectionState(originalContextKey, pageOneVideos);
+        let state = viewerSelectionStateManager.create(originalContextKey, pageOneVideos);
 
-        state = toggleViewerSelectionVideo(state, 1);
-        state = toggleViewerSelectionVideo(state, 2);
+        state = viewerSelectionStateManager.toggle(state, 1);
+        state = viewerSelectionStateManager.toggle(state, 2);
 
         const filteredContextKey = createContextKey({ watched: 'unwatched', term: 'music' });
-        const nextState = reconcileViewerSelectionState(state, filteredContextKey, pageOneVideos);
+        const nextState = viewerSelectionStateManager.reconcile(state, filteredContextKey, pageOneVideos);
 
         expect(nextState.contextKey).toBe(filteredContextKey);
         expect(nextState.selectedVideoIds).toEqual([]);
@@ -71,12 +67,12 @@ describe('viewerSelection filter-context behavior', () => {
 
     it('clears selected ids, anchor, and stored flag state without changing the page context', () => {
         const contextKey = createContextKey();
-        let state = createViewerSelectionState(contextKey, pageOneVideos);
+        let state = viewerSelectionStateManager.create(contextKey, pageOneVideos);
 
-        state = toggleViewerSelectionVideo(state, 1);
-        state = toggleViewerSelectionVideo(state, 2);
+        state = viewerSelectionStateManager.toggle(state, 1);
+        state = viewerSelectionStateManager.toggle(state, 2);
 
-        const clearedState = clearViewerSelectionState(state);
+        const clearedState = viewerSelectionStateManager.clear(state);
 
         expect(clearedState.contextKey).toBe(contextKey);
         expect(clearedState.currentPageVideoIds).toEqual([1, 2]);
@@ -87,11 +83,11 @@ describe('viewerSelection filter-context behavior', () => {
 
     it('replaces the selection with a single selected card for plain-click behavior', () => {
         const contextKey = createContextKey();
-        let state = createViewerSelectionState(contextKey, pageOneVideos);
+        let state = viewerSelectionStateManager.create(contextKey, pageOneVideos);
 
-        state = toggleViewerSelectionVideo(state, 1);
-        state = toggleViewerSelectionVideo(state, 2);
-        state = selectSingleViewerSelectionVideo(state, 1);
+        state = viewerSelectionStateManager.toggle(state, 1);
+        state = viewerSelectionStateManager.toggle(state, 2);
+        state = viewerSelectionStateManager.selectSingle(state, 1);
 
         expect(state.selectedVideoIds).toEqual([1]);
         expect(state.anchorVideoId).toBe(1);
@@ -102,10 +98,10 @@ describe('viewerSelection filter-context behavior', () => {
 
     it('clears the selection when the already-selected single card is plain-clicked again', () => {
         const contextKey = createContextKey();
-        let state = createViewerSelectionState(contextKey, pageOneVideos);
+        let state = viewerSelectionStateManager.create(contextKey, pageOneVideos);
 
-        state = toggleSingleViewerSelectionVideo(state, 1);
-        state = toggleSingleViewerSelectionVideo(state, 1);
+        state = viewerSelectionStateManager.toggleSingle(state, 1);
+        state = viewerSelectionStateManager.toggleSingle(state, 1);
 
         expect(state.selectedVideoIds).toEqual([]);
         expect(state.anchorVideoId).toBeNull();

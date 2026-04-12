@@ -36,23 +36,14 @@
         ViewerVisiblePage
     } from '$lib/viewer/types';
     import {
-        applyViewerSelectionBulkFlag,
-        clearViewerSelectionState,
-        clearPersistedViewerSelectionState,
-        createViewerSelectionContextKey,
-        createViewerSelectionState,
-        loadPersistedViewerSelectionState,
-        persistViewerSelectionState,
-        reconcileViewerSelectionState,
-        restoreViewerSelectionVideoStates,
-        selectViewerSelectionRange,
-        toggleSingleViewerSelectionVideo,
-        toggleViewerSelectionVideo,
+        ViewerSelectionContext,
         type ViewerSelectionControlState,
         type ViewerSelectionFlagKind,
         type ViewerSelectionFlagValue,
         type ViewerSelectionVideoSnapshot,
-        type ViewerSelectionState
+        type ViewerSelectionState,
+        viewerSelectionSessionStore,
+        viewerSelectionStateManager
     } from '$lib/viewerSelection';
 
     export let data: ViewerPageData;
@@ -71,7 +62,7 @@
     let watchedMode: 'all' | 'watched' | 'unwatched' = 'all';
     let showIgnored = false;
     let debounceTimer: ReturnType<typeof setTimeout> | null = null;
-    let selectionState: ViewerSelectionState = createViewerSelectionState('', []);
+    let selectionState: ViewerSelectionState = viewerSelectionStateManager.create('', []);
     let hydratedSelectionContextKey: string | null = null;
     let hasActiveSelection = false;
     let selectedCount = 0;
@@ -170,17 +161,17 @@
                 event.stopPropagation();
             }
 
-            selectionState = toggleViewerSelectionVideo(selectionState, videoId);
+            selectionState = viewerSelectionStateManager.toggle(selectionState, videoId);
             return;
         }
 
         if (action === 'selectRange') {
             event.stopPropagation();
-            selectionState = selectViewerSelectionRange(selectionState, videoId);
+            selectionState = viewerSelectionStateManager.selectRange(selectionState, videoId);
             return;
         }
 
-        selectionState = toggleSingleViewerSelectionVideo(selectionState, videoId);
+        selectionState = viewerSelectionStateManager.toggleSingle(selectionState, videoId);
     }
 
     function handleCardMouseDown(event: MouseEvent)
@@ -196,7 +187,7 @@
             return;
         }
 
-        selectionState = clearViewerSelectionState(selectionState);
+        selectionState = viewerSelectionStateManager.clear(selectionState);
     }
 
     async function handleCardFlagToggle(videoId: number, kind: ViewerSelectionFlagKind, value: ViewerSelectionFlagValue)
@@ -269,7 +260,7 @@
                 undo
             };
 
-            selectionState = applyViewerSelectionBulkFlag(selectionState, kind, nextValue, succeededIds);
+            selectionState = viewerSelectionStateManager.applyBulkFlag(selectionState, kind, nextValue, succeededIds);
             visibleVideos = applyBulkFlagToVisibleVideos(visibleVideos, kind, nextValue, succeededIds);
         } finally {
             bulkActionPending = false;
@@ -321,7 +312,7 @@
                 ignored: state.ignored
             }));
 
-            selectionState = restoreViewerSelectionVideoStates(selectionState, restoredSnapshots);
+            selectionState = viewerSelectionStateManager.restoreVideoStates(selectionState, restoredSnapshots);
             visibleVideos = restoreVisibleVideoSnapshots(visibleVideos, restoredSnapshots);
 
             bulkActionFeedback = {
@@ -344,7 +335,7 @@
     $: ({ hasActiveSelection, selectedCount, offPageSelectedCount, watchedControlState, favoriteControlState, ignoredControlState } =
         deriveViewerSelectionSummary(selectionState));
     $: {
-        const nextContextKey = createViewerSelectionContextKey({
+        const nextContextKey = ViewerSelectionContext.createKey({
             profileKey: data.profileKey,
             term: f.term,
             watched: f.watched,
@@ -358,7 +349,7 @@
         const contextChanged = selectionState.contextKey !== nextContextKey;
 
         if (browser && selectionState.contextKey && contextChanged) {
-            clearPersistedViewerSelectionState(selectionState.contextKey);
+            viewerSelectionSessionStore.clear(selectionState.contextKey);
             hydratedSelectionContextKey = nextContextKey;
         }
 
@@ -366,12 +357,16 @@
             contextChanged ||
             selectionState.currentPageVideoIds.join(',') !== nextCurrentPageVideoIds.join(',')
         ) {
-            selectionState = reconcileViewerSelectionState(selectionState, nextContextKey, currentPageSelectionVideos);
+            selectionState = viewerSelectionStateManager.reconcile(
+                selectionState,
+                nextContextKey,
+                currentPageSelectionVideos
+            );
         }
     }
 
     $: if (browser && selectionState.contextKey && hydratedSelectionContextKey !== selectionState.contextKey) {
-        const persistedSelectionState = loadPersistedViewerSelectionState(
+        const persistedSelectionState = viewerSelectionSessionStore.load(
             selectionState.contextKey,
             currentPageSelectionVideos
         );
@@ -384,7 +379,7 @@
     }
 
     $: if (browser && selectionState.contextKey && hydratedSelectionContextKey === selectionState.contextKey) {
-        persistViewerSelectionState(selectionState);
+        viewerSelectionSessionStore.persist(selectionState);
     }
 
     $: if (!hasActiveSelection && bulkActionFeedback) {

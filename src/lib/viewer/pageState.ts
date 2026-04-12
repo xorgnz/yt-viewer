@@ -7,12 +7,10 @@ import type {
     ViewerVisiblePage
 } from '$lib/viewer/types';
 import {
-    getCurrentPageSelectedVideoIds,
-    getViewerSelectionControlState,
-    hasSelectionOutsideCurrentPage,
     type ViewerSelectionControlState,
     type ViewerSelectionState,
-    type ViewerSelectionVideoSnapshot
+    type ViewerSelectionVideoSnapshot,
+    viewerSelectionInspector
 } from '$lib/viewerSelection';
 
 export const FILTER_DEBOUNCE_MS = 450;
@@ -150,16 +148,16 @@ export function deriveViewerSelectionSummary(state: ViewerSelectionState): Viewe
 {
     const hasActiveSelection = state.selectedVideoIds.length > 0;
     const selectedCount = state.selectedVideoIds.length;
-    const offPageSelectedCount = hasSelectionOutsideCurrentPage(state)
-        ? selectedCount - getCurrentPageSelectedVideoIds(state).length
+    const offPageSelectedCount = viewerSelectionInspector.hasSelectionOutsideCurrentPage(state)
+        ? selectedCount - viewerSelectionInspector.getCurrentPageSelectedIds(state).length
         : 0;
 
     return {
         hasActiveSelection,
         selectedCount,
         offPageSelectedCount,
-        watchedControlState: getViewerSelectionControlState(state, 'watched'),
-        favoriteControlState: getViewerSelectionControlState(state, 'favorite'),
-        ignoredControlState: getViewerSelectionControlState(state, 'ignored')
+        watchedControlState: viewerSelectionInspector.getControlState(state, 'watched'),
+        favoriteControlState: viewerSelectionInspector.getControlState(state, 'favorite'),
+        ignoredControlState: viewerSelectionInspector.getControlState(state, 'ignored')
     };
 }
