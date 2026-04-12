@@ -1,16 +1,8 @@
-import { DatabaseWrapper, DatabaseMode } from '$lib/daos/shared/DatabaseWrapper';
 import { ProfileDAO } from '$lib/daos/profileDAO';
 import { SourceChannelDAO } from '$lib/daos/sourceChannelDAO';
 import { HistoryDAO } from '$lib/daos/historyDAO';
+import { ServerDatabaseContext } from '$lib/server/ServerDatabaseContext';
 import { ServerProfileContext } from '$lib/server/ServerProfileContext';
-
-function getMode(): DatabaseMode
-{
-    const env = process.env.NODE_ENV || 'development';
-    if (env === 'test') return DatabaseMode.Test;
-    if (env === 'production') return DatabaseMode.Live;
-    return DatabaseMode.Dev;
-}
 
 export const load = async ({ url, cookies }: { url: URL; cookies: any }) =>
 {
@@ -23,9 +15,7 @@ export const load = async ({ url, cookies }: { url: URL; cookies: any }) =>
     const offset = url.searchParams.get('offset');
     const mode = modeRaw === 'videos' ? 'videos' : 'sessions';
 
-    const dbw = new DatabaseWrapper(getMode());
-    const db = dbw.open();
-    try {
+    return ServerDatabaseContext.run(({ db }) => {
         // Resolve history against the active site-wide profile.
         const profileContext = ServerProfileContext.resolve(new ProfileDAO(db), cookies);
         const filters = {
@@ -71,8 +61,5 @@ export const load = async ({ url, cookies }: { url: URL; cookies: any }) =>
             profileId: profileContext.activeProfileId,
             profileName: profileContext.activeProfileName
         };
-    }
-    finally {
-        dbw.close();
-    }
+    });
 };

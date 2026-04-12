@@ -1,6 +1,5 @@
 import { error, fail, redirect } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
-import { DatabaseMode, DatabaseWrapper } from '$lib/daos/shared/DatabaseWrapper';
 import { VirtualChannelDAO } from '$lib/daos/virtualChannelDAO';
 import { AssignmentDAO } from '$lib/daos/assignmentDAO';
 import { SourceChannelDAO } from '$lib/daos/sourceChannelDAO';
@@ -8,14 +7,7 @@ import type { VirtualChannelAssignmentMode } from '$lib/entities/virtualChannelA
 import type { VirtualChannelAssignmentVideoReviewState } from '$lib/entities/virtualChannelAssignmentVideoSelection';
 import { VirtualChannelAssignmentVideoSelectionDAO } from '$lib/daos/virtualChannelAssignmentVideoSelectionDAO';
 import { VideoDAO } from '$lib/daos/videoDAO';
-
-function envToMode(): DatabaseMode
-{
-    const env = process.env.NODE_ENV;
-    if (env === 'test') return DatabaseMode.Test;
-    if (env === 'production') return DatabaseMode.Live;
-    return DatabaseMode.Dev;
-}
+import { ServerDatabaseContext } from '$lib/server/ServerDatabaseContext';
 
 export const load: PageServerLoad = async ({ params, url }) =>
 {
@@ -26,10 +18,7 @@ export const load: PageServerLoad = async ({ params, url }) =>
         throw error(404, 'Virtual channel not found');
     }
 
-    const wrapper = new DatabaseWrapper(envToMode());
-    const db = wrapper.open();
-
-    try {
+    return ServerDatabaseContext.run(({ db }) => {
         // Load the virtual channel record first.
         const virtualChannelDAO = new VirtualChannelDAO(db);
         const virtualChannel = virtualChannelDAO.get(virtualChannelId);
@@ -102,9 +91,7 @@ export const load: PageServerLoad = async ({ params, url }) =>
             associatedSourceChannels,
             availableSourceChannels
         };
-    } finally {
-        wrapper.close();
-    }
+    });
 };
 
 function parseVirtualChannelId(value: string): number | null
@@ -161,10 +148,7 @@ export const actions: Actions = {
             return fail(400, { message: 'A valid source channel is required.' });
         }
 
-        const wrapper = new DatabaseWrapper(envToMode());
-        const db = wrapper.open();
-
-        try {
+        return ServerDatabaseContext.run(({ db }) => {
             // Ensure both sides of the association exist before inserting it.
             const virtualChannelDAO = new VirtualChannelDAO(db);
             const sourceChannelDAO = new SourceChannelDAO(db);
@@ -179,11 +163,8 @@ export const actions: Actions = {
             }
 
             assignmentDAO.add(sourceChannelId, virtualChannelId, mode);
-        } finally {
-            wrapper.close();
-        }
-
-        throw redirect(303, `/admin/virtual-channels/${virtualChannelId}`);
+            throw redirect(303, `/admin/virtual-channels/${virtualChannelId}`);
+        });
     },
 
     updateAssociationMode: async ({ params, request }) => {
@@ -201,10 +182,7 @@ export const actions: Actions = {
             return fail(400, { message: 'A valid assignment is required.' });
         }
 
-        const wrapper = new DatabaseWrapper(envToMode());
-        const db = wrapper.open();
-
-        try {
+        return ServerDatabaseContext.run(({ db }) => {
             const assignmentDAO = new AssignmentDAO(db);
             const assignment = assignmentDAO.get(assignmentId);
 
@@ -213,11 +191,8 @@ export const actions: Actions = {
             }
 
             assignmentDAO.updateMode(assignmentId, mode);
-        } finally {
-            wrapper.close();
-        }
-
-        throw redirect(303, `/admin/virtual-channels/${virtualChannelId}`);
+            throw redirect(303, `/admin/virtual-channels/${virtualChannelId}`);
+        });
     },
 
     removeAssociation: async ({ params, request }) => {
@@ -234,10 +209,7 @@ export const actions: Actions = {
             return fail(400, { message: 'A valid assignment is required.' });
         }
 
-        const wrapper = new DatabaseWrapper(envToMode());
-        const db = wrapper.open();
-
-        try {
+        return ServerDatabaseContext.run(({ db }) => {
             const assignmentDAO = new AssignmentDAO(db);
             const assignment = assignmentDAO.get(assignmentId);
 
@@ -246,11 +218,8 @@ export const actions: Actions = {
             }
 
             assignmentDAO.remove(assignment.source_channel_id, assignment.virtual_channel_id);
-        } finally {
-            wrapper.close();
-        }
-
-        throw redirect(303, `/admin/virtual-channels/${virtualChannelId}`);
+            throw redirect(303, `/admin/virtual-channels/${virtualChannelId}`);
+        });
     },
 
     setVideoReviewState: async ({ params, request }) => {
@@ -269,10 +238,7 @@ export const actions: Actions = {
             return fail(400, { message: 'A valid assignment and video are required.' });
         }
 
-        const wrapper = new DatabaseWrapper(envToMode());
-        const db = wrapper.open();
-
-        try {
+        return ServerDatabaseContext.run(({ db }) => {
             const assignmentDAO = new AssignmentDAO(db);
             const selectionDAO = new VirtualChannelAssignmentVideoSelectionDAO(db);
             const videoDAO = new VideoDAO(db);
@@ -292,11 +258,8 @@ export const actions: Actions = {
             }
 
             selectionDAO.setReviewState(assignmentId, videoId, reviewState);
-        } finally {
-            wrapper.close();
-        }
-
-        throw redirect(303, `/admin/virtual-channels/${virtualChannelId}`);
+            throw redirect(303, `/admin/virtual-channels/${virtualChannelId}`);
+        });
     },
 
     bulkUpdateVideoReviewState: async ({ params, request }) => {
@@ -320,10 +283,7 @@ export const actions: Actions = {
             return fail(400, { message: 'At least one video is required for bulk update.' });
         }
 
-        const wrapper = new DatabaseWrapper(envToMode());
-        const db = wrapper.open();
-
-        try {
+        return ServerDatabaseContext.run(({ db }) => {
             const assignmentDAO = new AssignmentDAO(db);
             const selectionDAO = new VirtualChannelAssignmentVideoSelectionDAO(db);
             const videoDAO = new VideoDAO(db);
@@ -347,10 +307,7 @@ export const actions: Actions = {
             for (const videoId of videoIds) {
                 selectionDAO.setReviewState(assignmentId, videoId, reviewState);
             }
-        } finally {
-            wrapper.close();
-        }
-
-        throw redirect(303, `/admin/virtual-channels/${virtualChannelId}${returnQuery ? `?${returnQuery}` : ''}`);
+            throw redirect(303, `/admin/virtual-channels/${virtualChannelId}${returnQuery ? `?${returnQuery}` : ''}`);
+        });
     }
 };

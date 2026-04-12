@@ -3,7 +3,7 @@ import os from 'node:os';
 import path from 'node:path';
 import Database from 'better-sqlite3';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { ALL_DDL } from '../../src/lib/daos/_schema';
+import { applyLatestSchemaBootstrap } from '../../src/lib/daos/shared/LatestSchemaBootstrap';
 
 type WatchRouteModule = typeof import('../../src/routes/viewer/watch/[videoId]/+page.server');
 
@@ -23,9 +23,7 @@ describe('viewer watch route actions', () => {
 
         dbPath = path.join(tempDir, 'test.db');
         const db = new Database(dbPath);
-        for (const ddl of ALL_DDL) {
-            db.exec(ddl);
-        }
+        applyLatestSchemaBootstrap(db);
 
         db.prepare(`
             INSERT INTO profiles(id, key, name)

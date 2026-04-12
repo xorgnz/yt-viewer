@@ -1,22 +1,12 @@
 import type { Actions, PageServerLoad } from './$types';
-import { DatabaseMode, DatabaseWrapper } from '$lib/daos/shared/DatabaseWrapper';
 import { SourceChannelDAO } from '$lib/daos/sourceChannelDAO';
 import { VirtualChannelDAO } from '$lib/daos/virtualChannelDAO';
 import { AssignmentDAO } from '$lib/daos/assignmentDAO';
-
-function getModeFromEnv(): DatabaseMode
-{
-    const env = (process.env.NODE_ENV || 'development').toLowerCase();
-    if (env === 'test') return DatabaseMode.Test;
-    if (env === 'production') return DatabaseMode.Live;
-    return DatabaseMode.Dev;
-}
+import { ServerDatabaseContext } from '$lib/server/ServerDatabaseContext';
 
 export const load: PageServerLoad = async () =>
 {
-    const wrapper = new DatabaseWrapper(getModeFromEnv());
-    const db = wrapper.open();
-    try {
+    return ServerDatabaseContext.run(({ db }) => {
         const channelDAO = new SourceChannelDAO(db);
         const groupDAO = new VirtualChannelDAO(db);
         const assignDAO = new AssignmentDAO(db);
@@ -32,9 +22,7 @@ export const load: PageServerLoad = async () =>
         }
 
         return { channels, groups, assignments };
-    } finally {
-        wrapper.close();
-    }
+    });
 };
 
 export const actions: Actions = {
@@ -45,15 +33,12 @@ export const actions: Actions = {
         if (!channelId || !groupId) {
             return { success: false, error: 'Missing channel_id or group_id' };
         }
-        const wrapper = new DatabaseWrapper(getModeFromEnv());
-        const db = wrapper.open();
-        try {
+
+        return ServerDatabaseContext.run(({ db }) => {
             const dao = new AssignmentDAO(db);
             dao.add(channelId, groupId);
             return { success: true };
-        } finally {
-            wrapper.close();
-        }
+        });
     },
     remove: async ({ request }) => {
         const form = await request.formData();
@@ -62,14 +47,11 @@ export const actions: Actions = {
         if (!channelId || !groupId) {
             return { success: false, error: 'Missing channel_id or group_id' };
         }
-        const wrapper = new DatabaseWrapper(getModeFromEnv());
-        const db = wrapper.open();
-        try {
+
+        return ServerDatabaseContext.run(({ db }) => {
             const dao = new AssignmentDAO(db);
             dao.remove(channelId, groupId);
             return { success: true };
-        } finally {
-            wrapper.close();
-        }
+        });
     }
 };

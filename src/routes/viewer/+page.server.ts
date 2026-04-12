@@ -1,10 +1,10 @@
-import { DatabaseWrapper, DatabaseMode } from '$lib/daos/shared/DatabaseWrapper';
 import { VideoDAO } from '$lib/daos/videoDAO';
 import { SourceChannelDAO } from '$lib/daos/sourceChannelDAO';
 import { VirtualChannelDAO } from '$lib/daos/virtualChannelDAO';
 import { ProfileDAO } from '$lib/daos/profileDAO';
 import { FlagsDAO, type BulkFlagKind } from '$lib/daos/flagsDAO';
 import { fail } from '@sveltejs/kit';
+import { ServerDatabaseContext } from '$lib/server/ServerDatabaseContext';
 import { ServerProfileContext } from '$lib/server/ServerProfileContext';
 
 function parseDateOnly(value: string | null, boundary: 'start' | 'end'): number | null
@@ -27,14 +27,6 @@ function parseDateOnly(value: string | null, boundary: 'start' | 'end'): number 
     }
 
     return new Date(year, month, day, 23, 59, 59, 999).getTime();
-}
-
-function getMode(): DatabaseMode
-{
-    const env = process.env.NODE_ENV || 'development';
-    if (env === 'test') return DatabaseMode.Test;
-    if (env === 'production') return DatabaseMode.Live;
-    return DatabaseMode.Dev;
 }
 
 type BulkFlagValue = 0 | 1;
@@ -213,9 +205,7 @@ export const load = async ({ url, cookies }: { url: URL; cookies: any }) =>
     const limit = url.searchParams.get('limit');
     const offset = url.searchParams.get('offset');
 
-    const dbw = new DatabaseWrapper(getMode());
-    const db = dbw.open();
-    try {
+    return ServerDatabaseContext.run(({ db }) => {
         // Resolve the site-wide active profile before loading profile-scoped viewer state.
         const profileContext = ServerProfileContext.resolve(new ProfileDAO(db), cookies);
         const watchedParam = unwatchedOnly === '1'
@@ -257,9 +247,7 @@ export const load = async ({ url, cookies }: { url: URL; cookies: any }) =>
             profileKey: profileContext.activeProfileKey,
             profileName: profileContext.activeProfileName
         };
-    } finally {
-        dbw.close();
-    }
+    });
 };
 
 export const actions = {
@@ -282,9 +270,7 @@ export const actions = {
             return fail(400, { message: 'Invalid toggle parameters' });
         }
 
-        const dbw = new DatabaseWrapper(getMode());
-        const db = dbw.open();
-        try {
+        return ServerDatabaseContext.run(({ db }) => {
             const profileContext = ServerProfileContext.resolve(new ProfileDAO(db), cookies);
 
             const flags = new FlagsDAO(db);
@@ -295,16 +281,13 @@ export const actions = {
             } else if (kind === 'ignored') {
                 flags.set(videoId, profileContext.activeProfileId, { ignored: value as 0 | 1 });
             }
-        } finally {
-            dbw.close();
-        }
-
-        return {
-            ok: true,
-            videoId,
-            kind,
-            value
-        };
+            return {
+                ok: true,
+                videoId,
+                kind,
+                value
+            };
+        });
     },
 
     async bulkUpdateFlags({ request, cookies }: { request: Request; cookies: any })
@@ -324,9 +307,7 @@ export const actions = {
             return fail(400, { message: 'Invalid bulk flag parameters' });
         }
 
-        const dbw = new DatabaseWrapper(getMode());
-        const db = dbw.open();
-        try {
+        return ServerDatabaseContext.run(({ db }) => {
             const profileContext = ServerProfileContext.resolve(new ProfileDAO(db), cookies);
 
             const videos = new VideoDAO(db);
@@ -371,9 +352,7 @@ export const actions = {
                     originalStates: undoStates
                 }
             };
-        } finally {
-            dbw.close();
-        }
+        });
     },
 
     async undoBulkUpdateFlags({ request, cookies }: { request: Request; cookies: any })
@@ -388,9 +367,7 @@ export const actions = {
             return fail(400, { message: 'Invalid bulk undo parameters' });
         }
 
-        const dbw = new DatabaseWrapper(getMode());
-        const db = dbw.open();
-        try {
+        return ServerDatabaseContext.run(({ db }) => {
             const profileContext = ServerProfileContext.resolve(new ProfileDAO(db), cookies);
 
             const videos = new VideoDAO(db);
@@ -437,9 +414,7 @@ export const actions = {
                 skippedIds,
                 message
             };
-        } finally {
-            dbw.close();
-        }
+        });
     },
 
     async restoreSelectionState({ request, cookies }: { request: Request; cookies: any })
@@ -453,9 +428,7 @@ export const actions = {
             return fail(400, { message: 'Invalid restore parameters' });
         }
 
-        const dbw = new DatabaseWrapper(getMode());
-        const db = dbw.open();
-        try {
+        return ServerDatabaseContext.run(({ db }) => {
             const profileContext = ServerProfileContext.resolve(new ProfileDAO(db), cookies);
 
             const videos = new VideoDAO(db);
@@ -501,8 +474,6 @@ export const actions = {
                 skippedIds,
                 message
             };
-        } finally {
-            dbw.close();
-        }
+        });
     }
 };

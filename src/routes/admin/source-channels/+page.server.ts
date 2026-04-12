@@ -1,30 +1,18 @@
 import type { Actions, PageServerLoad } from './$types';
-import { DatabaseWrapper, DatabaseMode } from '$lib/daos/shared/DatabaseWrapper';
 import { SourceChannelDAO } from '$lib/daos/sourceChannelDAO';
 import { redirect, fail } from '@sveltejs/kit';
 import { YouTubeClient, YouTubeApiError } from '$lib/youtube/youTubeClient';
 import { importChannelFromYouTube } from '$lib/youtube/importer';
 import { resolveChannelReference } from '$lib/youtube/fetch';
-import { env } from '$env/dynamic/private';
-
-function getMode(): DatabaseMode
-{
-    if (env.NODE_ENV === 'test') return DatabaseMode.Test;
-    if (env.NODE_ENV === 'production') return DatabaseMode.Live;
-    return DatabaseMode.Dev;
-}
+import { ServerDatabaseContext } from '$lib/server/ServerDatabaseContext';
 
 export const load: PageServerLoad = async () =>
 {
-    const dbw = new DatabaseWrapper(getMode());
-    const db = dbw.open();
-    try {
+    return ServerDatabaseContext.run(({ db }) => {
         const dao = new SourceChannelDAO(db);
         const channels = dao.list();
         return { channels };
-    } finally {
-        dbw.close();
-    }
+    });
 };
 
 export const actions: Actions = {
@@ -53,9 +41,7 @@ export const actions: Actions = {
             return fail(400, { message: 'Enter a valid YouTube channel ID, handle, or channel URL.' });
         }
 
-        const dbw = new DatabaseWrapper(getMode());
-        const db = dbw.open();
-        try {
+        await ServerDatabaseContext.run(({ db }) => {
             const dao = new SourceChannelDAO(db);
             dao.upsert({
                 youtube_id: resolved.channelId,
@@ -64,9 +50,7 @@ export const actions: Actions = {
                 thumbnail_url,
                 published_at
             } as any);
-        } finally {
-            dbw.close();
-        }
+        });
         throw redirect(303, '/admin/source-channels');
     },
 
@@ -83,12 +67,13 @@ export const actions: Actions = {
             return fail(400, { message: 'id and title are required.' });
         }
 
-        const dbw = new DatabaseWrapper(getMode());
-        const db = dbw.open();
-        try {
+        const result = await ServerDatabaseContext.run(({ db }) => {
             const dao = new SourceChannelDAO(db);
             const existing = dao.get(id);
-            if (!existing) return fail(404, { message: 'SourceChannel not found.' });
+            if (!existing) {
+                return fail(404, { message: 'SourceChannel not found.' });
+            }
+
             dao.upsert({
                 youtube_id: existing.youtube_id,
                 title,
@@ -96,8 +81,11 @@ export const actions: Actions = {
                 thumbnail_url,
                 published_at
             } as any);
-        } finally {
-            dbw.close();
+            return null;
+        });
+
+        if (result) {
+            return result;
         }
         throw redirect(303, '/admin/source-channels');
     },
@@ -107,14 +95,10 @@ export const actions: Actions = {
         const id = Number(form.get('id'));
         if (!id) return fail(400, { message: 'id is required.' });
 
-        const dbw = new DatabaseWrapper(getMode());
-        const db = dbw.open();
-        try {
+        await ServerDatabaseContext.run(({ db }) => {
             const dao = new SourceChannelDAO(db);
             dao.remove(id);
-        } finally {
-            dbw.close();
-        }
+        });
         throw redirect(303, '/admin/source-channels');
     },
 
@@ -123,12 +107,12 @@ export const actions: Actions = {
         const id = Number(form.get('id'));
         if (!id) return fail(400, { message: 'id is required.' });
 
-        const dbw = new DatabaseWrapper(getMode());
-        const db = dbw.open();
-        try {
+        const result = await ServerDatabaseContext.run(async ({ db }) => {
             const dao = new SourceChannelDAO(db);
             const existing = dao.get(id);
-            if (!existing) return fail(404, { message: 'SourceChannel not found.' });
+            if (!existing) {
+                return fail(404, { message: 'SourceChannel not found.' });
+            }
 
             let yt: YouTubeClient;
             try {
@@ -168,8 +152,11 @@ export const actions: Actions = {
                 }
                 return fail(502, { message: 'Network error contacting YouTube. Please try again later.' });
             }
-        } finally {
-            dbw.close();
+            return null;
+        });
+
+        if (result) {
+            return result;
         }
 
         throw redirect(303, '/admin/source-channels');

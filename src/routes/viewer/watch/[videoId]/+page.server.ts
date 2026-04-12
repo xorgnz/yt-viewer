@@ -1,29 +1,19 @@
-import { DatabaseWrapper, DatabaseMode } from '$lib/daos/shared/DatabaseWrapper';
 import { VideoDAO } from '$lib/daos/videoDAO';
 import { ProfileDAO } from '$lib/daos/profileDAO';
 import { FlagsDAO } from '$lib/daos/flagsDAO';
 import { HistoryDAO } from '$lib/daos/historyDAO';
 import { error, fail } from '@sveltejs/kit';
+import { ServerDatabaseContext } from '$lib/server/ServerDatabaseContext';
 import { ServerProfileContext } from '$lib/server/ServerProfileContext';
 
 const HISTORY_SESSION_GAP_MS = 5 * 60 * 1000;
-
-function getMode(): DatabaseMode
-{
-    const env = process.env.NODE_ENV || 'development';
-    if (env === 'test') return DatabaseMode.Test;
-    if (env === 'production') return DatabaseMode.Live;
-    return DatabaseMode.Dev;
-}
 
 export const load = async ({ params, cookies }: { params: { videoId: string }, cookies: any }) =>
 {
     const videoId = String(params.videoId || '').trim();
     if (!videoId) throw error(400, 'Missing videoId');
 
-    const dbw = new DatabaseWrapper(getMode());
-    const db = dbw.open();
-    try {
+    return ServerDatabaseContext.run(({ db }) => {
         // Load the video in the context of the active site-wide profile.
         const profileContext = ServerProfileContext.resolve(new ProfileDAO(db), cookies);
 
@@ -38,9 +28,7 @@ export const load = async ({ params, cookies }: { params: { videoId: string }, c
             profileKey: profileContext.activeProfileKey,
             profileName: profileContext.activeProfileName
         };
-    } finally {
-        dbw.close();
-    }
+    });
 };
 
 export const actions = {
@@ -56,9 +44,7 @@ export const actions = {
             return fail(400, { message: 'Insufficient watch time for history session' });
         }
 
-        const dbw = new DatabaseWrapper(getMode());
-        const db = dbw.open();
-        try {
+        return ServerDatabaseContext.run(({ db }) => {
             const profileContext = ServerProfileContext.resolve(new ProfileDAO(db), cookies);
 
             const vdao = new VideoDAO(db);
@@ -85,10 +71,7 @@ export const actions = {
             }
 
             return { ok: true };
-        }
-        finally {
-            dbw.close();
-        }
+        });
     },
 
     // Update the active watch-history session independently of watched flags.
@@ -103,9 +86,7 @@ export const actions = {
             return fail(400, { message: 'Invalid watch time' });
         }
 
-        const dbw = new DatabaseWrapper(getMode());
-        const db = dbw.open();
-        try {
+        return ServerDatabaseContext.run(({ db }) => {
             const profileContext = ServerProfileContext.resolve(new ProfileDAO(db), cookies);
 
             const vdao = new VideoDAO(db);
@@ -125,10 +106,7 @@ export const actions = {
             });
 
             return { ok: true };
-        }
-        finally {
-            dbw.close();
-        }
+        });
     },
 
     async markWatched({ request, params, cookies }: { request: Request; params: { videoId: string }, cookies: any })
@@ -139,9 +117,7 @@ export const actions = {
         const form = await request.formData();
         const intent = String(form.get('intent') || 'watch'); // 'watch' | 'unwatch'
 
-        const dbw = new DatabaseWrapper(getMode());
-        const db = dbw.open();
-        try {
+        return ServerDatabaseContext.run(({ db }) => {
             const profileContext = ServerProfileContext.resolve(new ProfileDAO(db), cookies);
 
             const vdao = new VideoDAO(db);
@@ -160,14 +136,10 @@ export const actions = {
                 // Set watched flag without altering watch history.
                 flags.set(video.id, profileContext.activeProfileId, { watched: 1 });
             }
-        }
-        finally {
-            dbw.close();
-        }
-
-        return {
-            ok: true,
-            watched: intent === 'unwatch' ? 0 : 1
-        };
+            return {
+                ok: true,
+                watched: intent === 'unwatch' ? 0 : 1
+            };
+        });
     }
 };

@@ -1,11 +1,12 @@
 import type { Actions, PageServerLoad } from './$types';
-import { DatabaseWrapper, DatabaseMode } from '$lib/daos/shared/DatabaseWrapper';
 import { VirtualChannelDAO } from '$lib/daos/virtualChannelDAO';
 import { AssignmentDAO } from '$lib/daos/assignmentDAO';
 import { SourceChannelDAO } from '$lib/daos/sourceChannelDAO';
 import { redirect, fail } from '@sveltejs/kit';
+import type Database from 'better-sqlite3';
 import type { SourceChannel } from '$lib/entities/sourceChannel';
 import type { VirtualChannelAssignment } from '$lib/entities/virtualChannelAssignment';
+import { ServerDatabaseContext } from '$lib/server/ServerDatabaseContext';
 
 type InlineAssociation = {
     assignment: VirtualChannelAssignment;
@@ -53,7 +54,7 @@ function buildVirtualChannelRow(
     };
 }
 
-function loadVirtualChannelRows(db: ReturnType<DatabaseWrapper['open']>)
+function loadVirtualChannelRows(db: Database.Database)
 {
     // Load the imported source-channel catalog once and reuse it for every row.
     const virtualChannelDAO = new VirtualChannelDAO(db);
@@ -73,29 +74,16 @@ function loadVirtualChannelRows(db: ReturnType<DatabaseWrapper['open']>)
     };
 }
 
-function envToMode(): DatabaseMode
-{
-    const env = process.env.NODE_ENV;
-    if (env === 'test') return DatabaseMode.Test;
-    if (env === 'production') return DatabaseMode.Live;
-    return DatabaseMode.Dev;
-}
-
 export const load: PageServerLoad = async () =>
 {
-    const wrapper = new DatabaseWrapper(envToMode());
-    const db = wrapper.open();
-
-    try {
+    return ServerDatabaseContext.run(({ db }) => {
         const { groups, allSourceChannels } = loadVirtualChannelRows(db);
 
         return {
             groups,
             availableSourceChannels: allSourceChannels
         };
-    } finally {
-        wrapper.close();
-    }
+    });
 };
 
 export const actions: Actions = {
@@ -104,14 +92,22 @@ export const actions: Actions = {
         const name = String(form.get('name') || '').trim();
         if (!name) return fail(400, { message: 'Name is required' });
 
-        const wrapper = new DatabaseWrapper(envToMode());
-        const db = wrapper.open();
-        const dao = new VirtualChannelDAO(db);
-        try {
-            dao.create(name);
-        } catch (e: any) {
-            return fail(400, { message: e?.message || 'Failed to create group' });
+        const result = await ServerDatabaseContext.run(({ db }) => {
+            const dao = new VirtualChannelDAO(db);
+
+            try {
+                dao.create(name);
+            } catch (e: any) {
+                return fail(400, { message: e?.message || 'Failed to create group' });
+            }
+
+            return null;
+        });
+
+        if (result) {
+            return result;
         }
+
         throw redirect(303, '/admin/virtual-channels');
     },
 
@@ -121,14 +117,22 @@ export const actions: Actions = {
         const name = String(form.get('name') || '').trim();
         if (!id || !name) return fail(400, { message: 'Invalid input' });
 
-        const wrapper = new DatabaseWrapper(envToMode());
-        const db = wrapper.open();
-        const dao = new VirtualChannelDAO(db);
-        try {
-            dao.rename(id, name);
-        } catch (e: any) {
-            return fail(400, { message: e?.message || 'Failed to rename group' });
+        const result = await ServerDatabaseContext.run(({ db }) => {
+            const dao = new VirtualChannelDAO(db);
+
+            try {
+                dao.rename(id, name);
+            } catch (e: any) {
+                return fail(400, { message: e?.message || 'Failed to rename group' });
+            }
+
+            return null;
+        });
+
+        if (result) {
+            return result;
         }
+
         throw redirect(303, '/admin/virtual-channels');
     },
 
@@ -137,14 +141,22 @@ export const actions: Actions = {
         const id = Number(form.get('id'));
         if (!id) return fail(400, { message: 'Invalid id' });
 
-        const wrapper = new DatabaseWrapper(envToMode());
-        const db = wrapper.open();
-        const dao = new VirtualChannelDAO(db);
-        try {
-            dao.remove(id);
-        } catch (e: any) {
-            return fail(400, { message: e?.message || 'Failed to delete group' });
+        const result = await ServerDatabaseContext.run(({ db }) => {
+            const dao = new VirtualChannelDAO(db);
+
+            try {
+                dao.remove(id);
+            } catch (e: any) {
+                return fail(400, { message: e?.message || 'Failed to delete group' });
+            }
+
+            return null;
+        });
+
+        if (result) {
+            return result;
         }
+
         throw redirect(303, '/admin/virtual-channels');
     },
 
@@ -161,34 +173,31 @@ export const actions: Actions = {
             return fail(400, { message: 'A valid source channel is required.', virtualChannelId });
         }
 
-        const wrapper = new DatabaseWrapper(envToMode());
-        const db = wrapper.open();
+        return ServerDatabaseContext.run(({ db }) => {
+            try {
+                // Validate the association pair before writing and return the refreshed row state.
+                const { allSourceChannels, virtualChannelDAO, assignmentDAO, sourceChannelDAO } = loadVirtualChannelRows(db);
+                const virtualChannel = virtualChannelDAO.get(virtualChannelId);
 
-        try {
-            // Validate the association pair before writing and return the refreshed row state.
-            const { allSourceChannels, virtualChannelDAO, assignmentDAO, sourceChannelDAO } = loadVirtualChannelRows(db);
-            const virtualChannel = virtualChannelDAO.get(virtualChannelId);
+                if (!virtualChannel) {
+                    return fail(404, { message: 'Virtual channel not found.', virtualChannelId });
+                }
 
-            if (!virtualChannel) {
-                return fail(404, { message: 'Virtual channel not found.', virtualChannelId });
+                if (!sourceChannelDAO.get(sourceChannelId)) {
+                    return fail(404, { message: 'Source channel not found.', virtualChannelId });
+                }
+
+                assignmentDAO.add(sourceChannelId, virtualChannelId);
+
+                return {
+                    group: buildVirtualChannelRow(virtualChannel, allSourceChannels, assignmentDAO),
+                    message: 'Source channel added.',
+                    virtualChannelId
+                };
+            } catch (e: any) {
+                return fail(400, { message: e?.message || 'Failed to add source channel.', virtualChannelId });
             }
-
-            if (!sourceChannelDAO.get(sourceChannelId)) {
-                return fail(404, { message: 'Source channel not found.', virtualChannelId });
-            }
-
-            assignmentDAO.add(sourceChannelId, virtualChannelId);
-
-            return {
-                group: buildVirtualChannelRow(virtualChannel, allSourceChannels, assignmentDAO),
-                message: 'Source channel added.',
-                virtualChannelId
-            };
-        } catch (e: any) {
-            return fail(400, { message: e?.message || 'Failed to add source channel.', virtualChannelId });
-        } finally {
-            wrapper.close();
-        }
+        });
     },
 
     removeAssociationInline: async ({ request }) => {
@@ -204,37 +213,34 @@ export const actions: Actions = {
             return fail(400, { message: 'A valid source channel is required.', virtualChannelId });
         }
 
-        const wrapper = new DatabaseWrapper(envToMode());
-        const db = wrapper.open();
+        return ServerDatabaseContext.run(({ db }) => {
+            try {
+                // Remove only existing row-level assignments and send back the refreshed row state.
+                const { allSourceChannels, virtualChannelDAO, assignmentDAO } = loadVirtualChannelRows(db);
+                const virtualChannel = virtualChannelDAO.get(virtualChannelId);
 
-        try {
-            // Remove only existing row-level assignments and send back the refreshed row state.
-            const { allSourceChannels, virtualChannelDAO, assignmentDAO } = loadVirtualChannelRows(db);
-            const virtualChannel = virtualChannelDAO.get(virtualChannelId);
+                if (!virtualChannel) {
+                    return fail(404, { message: 'Virtual channel not found.', virtualChannelId });
+                }
 
-            if (!virtualChannel) {
-                return fail(404, { message: 'Virtual channel not found.', virtualChannelId });
+                const assignment = assignmentDAO
+                    .listForVirtualChannel(virtualChannelId)
+                    .find((candidate) => candidate.source_channel_id === sourceChannelId);
+
+                if (!assignment) {
+                    return fail(404, { message: 'Assignment not found.', virtualChannelId });
+                }
+
+                assignmentDAO.remove(sourceChannelId, virtualChannelId);
+
+                return {
+                    group: buildVirtualChannelRow(virtualChannel, allSourceChannels, assignmentDAO),
+                    message: 'Source channel removed.',
+                    virtualChannelId
+                };
+            } catch (e: any) {
+                return fail(400, { message: e?.message || 'Failed to remove source channel.', virtualChannelId });
             }
-
-            const assignment = assignmentDAO
-                .listForVirtualChannel(virtualChannelId)
-                .find((candidate) => candidate.source_channel_id === sourceChannelId);
-
-            if (!assignment) {
-                return fail(404, { message: 'Assignment not found.', virtualChannelId });
-            }
-
-            assignmentDAO.remove(sourceChannelId, virtualChannelId);
-
-            return {
-                group: buildVirtualChannelRow(virtualChannel, allSourceChannels, assignmentDAO),
-                message: 'Source channel removed.',
-                virtualChannelId
-            };
-        } catch (e: any) {
-            return fail(400, { message: e?.message || 'Failed to remove source channel.', virtualChannelId });
-        } finally {
-            wrapper.close();
-        }
+        });
     }
 };

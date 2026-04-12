@@ -1,22 +1,12 @@
 import type { PageServerLoad } from './$types';
-import { DatabaseWrapper, DatabaseMode } from '$lib/daos/shared/DatabaseWrapper';
 import { VirtualChannelDAO } from '$lib/daos/virtualChannelDAO';
 import { ProfileDAO } from '$lib/daos/profileDAO';
+import { ServerDatabaseContext } from '$lib/server/ServerDatabaseContext';
 import { ServerProfileContext } from '$lib/server/ServerProfileContext';
-
-function envToMode(): DatabaseMode
-{
-    const env = process.env.NODE_ENV;
-    if (env === 'test') return DatabaseMode.Test;
-    if (env === 'production') return DatabaseMode.Live;
-    return DatabaseMode.Dev;
-}
 
 export const load: PageServerLoad = async ({ cookies }) =>
 {
-    const dbw = new DatabaseWrapper(envToMode());
-    const db = dbw.open();
-    try {
+    return ServerDatabaseContext.run(({ db }) => {
         // Resolve the active profile for viewer navigation context.
         const profileContext = ServerProfileContext.resolve(new ProfileDAO(db), cookies);
 
@@ -27,7 +17,5 @@ export const load: PageServerLoad = async ({ cookies }) =>
             groups,
             profileKey: profileContext.activeProfileKey
         };
-    } finally {
-        dbw.close();
-    }
+    });
 };
