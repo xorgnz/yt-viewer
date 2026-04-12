@@ -77,3 +77,19 @@ export type ViewerBulkActionControl = {
 };
 
 export type ViewerVisiblePage = number | 'ellipsis';
+
+export type ViewerFilterInputState = {
+    termInput: string;
+    dateFromInput: string;
+    dateToInput: string;
+    channelIdInput: string;
+    limitInput: string;
+    watchedMode: ViewerFilters['watched'];
+    showIgnored: boolean;
+};
+
+export type ViewerPaginationState = {
+    totalPages: number;
+    currentPage: number;
+    visiblePages: ViewerVisiblePage[];
+};

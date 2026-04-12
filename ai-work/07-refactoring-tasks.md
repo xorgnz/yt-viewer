@@ -51,7 +51,7 @@
 
 - [ ] 3.0 Split viewer UI and selection state into smaller, reusable modules
   - [x] 3.1 Break `src/routes/viewer/+page.svelte` into focused components for filters, result presentation, bulk actions, and pagination
-  - [ ] 3.2 Move viewer page state derivation and event orchestration into smaller viewer-focused modules so the page component becomes a composition root
+  - [x] 3.2 Move viewer page state derivation and event orchestration into smaller viewer-focused modules so the page component becomes a composition root
   - [ ] 3.3 Split `src/lib/viewerSelection.ts` into a small selection-state core plus persistence/session-storage integration and selection-summary/control helpers
   - [ ] 3.4 Reuse or extract shared viewer-oriented display helpers where page-local UI logic is currently tightly coupled to the route component
   - [ ] 3.5 Add or update viewer state and component-oriented tests for the extracted UI and selection modules
