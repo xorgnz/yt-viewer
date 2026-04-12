@@ -3,7 +3,7 @@ import { ServerDatabaseContext } from '$lib/server/ServerDatabaseContext';
 import { ServerActionForm } from '$lib/server/ServerActionForm';
 import { ViewerLoadService } from '$lib/server/viewer/ViewerLoadService';
 import { ViewerActionParser } from '$lib/server/viewer/ViewerActionParser';
-import { ViewerActionContext } from '$lib/server/viewer/ViewerActionContext';
+import { ViewerServiceContext } from '$lib/server/viewer/ViewerServiceContext';
 
 export const load = async ({ url, cookies }: { url: URL; cookies: any }) =>
 {
@@ -23,7 +23,7 @@ export const actions = {
         }
 
         return ServerDatabaseContext.run(({ db }) => {
-            return ViewerActionContext.resolve(db, cookies).flagService.toggleFlag(
+            return ViewerServiceContext.resolve(db, cookies).flagService.toggleFlag(
                 parsed.videoId,
                 parsed.kind,
                 parsed.value
@@ -41,7 +41,7 @@ export const actions = {
         }
 
         return ServerDatabaseContext.run(({ db }) => {
-            return ViewerActionContext.resolve(db, cookies).flagService.bulkUpdateFlags(parsed);
+            return ViewerServiceContext.resolve(db, cookies).flagService.bulkUpdateFlags(parsed);
         });
     },
 
@@ -55,7 +55,7 @@ export const actions = {
         }
 
         return ServerDatabaseContext.run(({ db }) => {
-            return ViewerActionContext.resolve(db, cookies).flagService.undoBulkUpdateFlags(parsed);
+            return ViewerServiceContext.resolve(db, cookies).flagService.undoBulkUpdateFlags(parsed);
         });
     },
 
@@ -69,7 +69,7 @@ export const actions = {
         }
 
         return ServerDatabaseContext.run(({ db }) => {
-            return ViewerActionContext.resolve(db, cookies).flagService.restoreSelectionState(parsed);
+            return ViewerServiceContext.resolve(db, cookies).flagService.restoreSelectionState(parsed);
         });
     }
 };
