@@ -80,6 +80,61 @@ describe('viewer bulk flag actions', () => {
         };
     }
 
+    it('toggles a single flag through the thin route handler', async () => {
+        const form = new FormData();
+        form.set('videoId', '1');
+        form.set('kind', 'favorite');
+        form.set('value', '1');
+
+        const result = await routeModule.actions.toggleFlag({
+            request: new Request('http://localhost/viewer', {
+                method: 'POST',
+                body: form
+            }),
+            cookies: cookieJar()
+        } as any);
+
+        expect(result).toEqual({
+            ok: true,
+            videoId: 1,
+            kind: 'favorite',
+            value: 1
+        });
+
+        const db = openDb();
+        try {
+            const row = db.prepare(`
+                SELECT favorite
+                FROM video_flags
+                WHERE profile_id = 1 AND video_id = 1
+            `).get() as { favorite: number };
+
+            expect(row.favorite).toBe(1);
+        } finally {
+            db.close();
+        }
+    });
+
+    it('returns a 400 failure when toggle parameters are invalid', async () => {
+        const form = new FormData();
+        form.set('videoId', '0');
+        form.set('kind', 'favorite');
+        form.set('value', '1');
+
+        const result = await routeModule.actions.toggleFlag({
+            request: new Request('http://localhost/viewer', {
+                method: 'POST',
+                body: form
+            }),
+            cookies: cookieJar()
+        } as any);
+
+        expect(result?.status).toBe(400);
+        expect(result?.data).toEqual({
+            message: 'Invalid toggle parameters'
+        });
+    });
+
     it('bulk updates watched flags and returns undo data', async () => {
         const form = new FormData();
         form.set('kind', 'watched');

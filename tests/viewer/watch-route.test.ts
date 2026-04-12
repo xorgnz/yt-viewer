@@ -70,6 +70,27 @@ describe('viewer watch route actions', () => {
         };
     }
 
+    it('loads the selected video with the active profile context', async () => {
+        const result = await routeModule.load({
+            params: { videoId: 'WATCH_ME' },
+            cookies: cookieJar()
+        } as any);
+
+        expect(result.profileId).toBe(1);
+        expect(result.profileKey).toBe('default');
+        expect(result.profileName).toBe('Adult');
+        expect(result.video.youtube_id).toBe('WATCH_ME');
+    });
+
+    it('returns a 404 error when the selected video does not exist', async () => {
+        await expect(routeModule.load({
+            params: { videoId: 'UNKNOWN' },
+            cookies: cookieJar()
+        } as any)).rejects.toMatchObject({
+            status: 404
+        });
+    });
+
     it('manual markWatched sets the watched flag without creating a history row', async () => {
         const form = new FormData();
         form.set('intent', 'watch');
@@ -98,6 +119,40 @@ describe('viewer watch route actions', () => {
         } finally {
             db.close();
         }
+    });
+
+    it('returns a stale-session failure when history progress is no longer active', async () => {
+        const db = openDb();
+        try {
+            db.prepare(`
+                INSERT INTO watch_history(
+                    video_id,
+                    profile_id,
+                    session_started_at,
+                    last_updated_at,
+                    time_watched_seconds
+                ) VALUES (1, 1, 0, 0, 8)
+            `).run();
+        } finally {
+            db.close();
+        }
+
+        const updateForm = new FormData();
+        updateForm.set('watchSeconds', '21');
+
+        const result = await routeModule.actions.updateHistoryProgress({
+            request: new Request('http://localhost/viewer/watch/WATCH_ME', {
+                method: 'POST',
+                body: updateForm
+            }),
+            params: { videoId: 'WATCH_ME' },
+            cookies: cookieJar()
+        } as any);
+
+        expect(result?.status).toBe(409);
+        expect(result?.data).toEqual({
+            message: 'History session is no longer active'
+        });
     });
 
     it('creates and updates history sessions independently of watched state', async () => {

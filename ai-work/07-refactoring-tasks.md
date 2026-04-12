@@ -42,12 +42,12 @@
   - [x] 1.4 Consolidate repeated route-level parsing and validation helpers where the same request-shape handling appears across multiple server files
   - [x] 1.5 Add or update route-level tests that lock down the shared context behavior before later service extraction changes build on it
 
-- [ ] 2.0 Decompose viewer server workflows into thin route handlers plus explicit services
+- [x] 2.0 Decompose viewer server workflows into thin route handlers plus explicit services
   - [x] 2.1 Split viewer query parsing, filter normalization, and load-model assembly out of `src/routes/viewer/+page.server.ts` into focused modules
   - [x] 2.2 Introduce viewer service modules for bulk flag updates, selection-aware operations, and result loading so route actions stop owning business workflows
   - [x] 2.3 Refactor `src/routes/viewer/+page.server.ts` into thin load/action handlers that map request data to service calls and response shaping
   - [x] 2.4 Align `src/routes/viewer/virtual-channels/+page.server.ts` and `src/routes/viewer/watch/[videoId]/+page.server.ts` with the same shared request-context and viewer-service patterns where responsibilities overlap
-  - [ ] 2.5 Update `tests/viewer/` coverage so the extracted services and thinner route handlers preserve current viewer behavior
+  - [x] 2.5 Update `tests/viewer/` coverage so the extracted services and thinner route handlers preserve current viewer behavior
 
 - [ ] 3.0 Split viewer UI and selection state into smaller, reusable modules
   - [ ] 3.1 Break `src/routes/viewer/+page.svelte` into focused components for filters, result presentation, bulk actions, and pagination
