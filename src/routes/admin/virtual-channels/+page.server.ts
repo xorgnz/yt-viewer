@@ -1,79 +1,14 @@
 import type { Actions, PageServerLoad } from './$types';
-import { VirtualChannelDAO } from '$lib/daos/virtualChannelDAO';
-import { AssignmentDAO } from '$lib/daos/assignmentDAO';
-import { SourceChannelDAO } from '$lib/daos/sourceChannelDAO';
 import { redirect, fail } from '@sveltejs/kit';
-import type Database from 'better-sqlite3';
-import type { SourceChannel } from '$lib/entities/sourceChannel';
-import type { VirtualChannelAssignment } from '$lib/entities/virtualChannelAssignment';
 import { ServerDatabaseContext } from '$lib/server/ServerDatabaseContext';
 import { ServerActionForm } from '$lib/server/ServerActionForm';
-
-type InlineAssociation = {
-    assignment: VirtualChannelAssignment;
-    sourceChannel: SourceChannel | null;
-};
-
-type VirtualChannelRow = {
-    id: number;
-    name: string;
-    associatedSourceChannels: InlineAssociation[];
-    availableSourceChannels: SourceChannel[];
-};
-
-function buildVirtualChannelRow(
-    virtualChannel: { id: number; name: string },
-    allSourceChannels: SourceChannel[],
-    assignmentDAO: AssignmentDAO
-): VirtualChannelRow
-{
-    // Shape the current assignments and remaining inline add options for one row.
-    const sourceChannelsById = new Map(allSourceChannels.map((channel) => [channel.id, channel]));
-    const assignments = assignmentDAO.listForVirtualChannel(virtualChannel.id);
-    const associatedSourceChannels = assignments.map((assignment) => ({
-        assignment,
-        sourceChannel: sourceChannelsById.get(assignment.source_channel_id) ?? null
-    }));
-    const associatedSourceChannelIds = new Set(assignments.map((assignment) => assignment.source_channel_id));
-    const availableSourceChannels = allSourceChannels.filter((channel) => !associatedSourceChannelIds.has(channel.id));
-
-    return {
-        id: virtualChannel.id,
-        name: virtualChannel.name,
-        associatedSourceChannels,
-        availableSourceChannels
-    };
-}
-
-function loadVirtualChannelRows(db: Database.Database)
-{
-    // Load the imported source-channel catalog once and reuse it for every row.
-    const virtualChannelDAO = new VirtualChannelDAO(db);
-    const assignmentDAO = new AssignmentDAO(db);
-    const sourceChannelDAO = new SourceChannelDAO(db);
-    const allSourceChannels = sourceChannelDAO.list();
-    const groups = virtualChannelDAO
-        .list()
-        .map((group) => buildVirtualChannelRow(group, allSourceChannels, assignmentDAO));
-
-    return {
-        groups,
-        allSourceChannels,
-        virtualChannelDAO,
-        assignmentDAO,
-        sourceChannelDAO
-    };
-}
+import { AdminVirtualChannelServiceContext } from '$lib/server/admin/AdminVirtualChannelServiceContext';
 
 export const load: PageServerLoad = async () =>
 {
     return ServerDatabaseContext.run(({ db }) => {
-        const { groups, allSourceChannels } = loadVirtualChannelRows(db);
-
-        return {
-            groups,
-            availableSourceChannels: allSourceChannels
-        };
+        const serviceContext = AdminVirtualChannelServiceContext.resolve(db);
+        return serviceContext.indexService.loadPageData();
     });
 };
 
@@ -84,22 +19,15 @@ export const actions: Actions = {
         if (!name) return fail(400, { message: 'Name is required' });
 
         const result = await ServerDatabaseContext.run(({ db }) => {
-            const dao = new VirtualChannelDAO(db);
-
-            try {
-                dao.create(name);
-            } catch (e: any) {
-                return fail(400, { message: e?.message || 'Failed to create group' });
-            }
-
-            return null;
+            const serviceContext = AdminVirtualChannelServiceContext.resolve(db);
+            return serviceContext.indexService.createVirtualChannel({ name });
         });
 
-        if (result) {
-            return result;
+        if (!result.ok) {
+            return fail(result.error.status, { message: result.error.message });
         }
 
-        throw redirect(303, '/admin/virtual-channels');
+        throw redirect(303, result.data.redirectTo);
     },
 
     rename: async ({ request }) => {
@@ -109,22 +37,15 @@ export const actions: Actions = {
         if (id === null || !name) return fail(400, { message: 'Invalid input' });
 
         const result = await ServerDatabaseContext.run(({ db }) => {
-            const dao = new VirtualChannelDAO(db);
-
-            try {
-                dao.rename(id, name);
-            } catch (e: any) {
-                return fail(400, { message: e?.message || 'Failed to rename group' });
-            }
-
-            return null;
+            const serviceContext = AdminVirtualChannelServiceContext.resolve(db);
+            return serviceContext.indexService.renameVirtualChannel({ id, name });
         });
 
-        if (result) {
-            return result;
+        if (!result.ok) {
+            return fail(result.error.status, { message: result.error.message });
         }
 
-        throw redirect(303, '/admin/virtual-channels');
+        throw redirect(303, result.data.redirectTo);
     },
 
     delete: async ({ request }) => {
@@ -133,22 +54,15 @@ export const actions: Actions = {
         if (id === null) return fail(400, { message: 'Invalid id' });
 
         const result = await ServerDatabaseContext.run(({ db }) => {
-            const dao = new VirtualChannelDAO(db);
-
-            try {
-                dao.remove(id);
-            } catch (e: any) {
-                return fail(400, { message: e?.message || 'Failed to delete group' });
-            }
-
-            return null;
+            const serviceContext = AdminVirtualChannelServiceContext.resolve(db);
+            return serviceContext.indexService.deleteVirtualChannel({ id });
         });
 
-        if (result) {
-            return result;
+        if (!result.ok) {
+            return fail(result.error.status, { message: result.error.message });
         }
 
-        throw redirect(303, '/admin/virtual-channels');
+        throw redirect(303, result.data.redirectTo);
     },
 
     addAssociationInline: async ({ request }) => {
@@ -165,29 +79,20 @@ export const actions: Actions = {
         }
 
         return ServerDatabaseContext.run(({ db }) => {
-            try {
-                // Validate the association pair before writing and return the refreshed row state.
-                const { allSourceChannels, virtualChannelDAO, assignmentDAO, sourceChannelDAO } = loadVirtualChannelRows(db);
-                const virtualChannel = virtualChannelDAO.get(virtualChannelId);
+            const serviceContext = AdminVirtualChannelServiceContext.resolve(db);
+            const result = serviceContext.indexService.addInlineAssociation({
+                virtualChannelId,
+                sourceChannelId
+            });
 
-                if (!virtualChannel) {
-                    return fail(404, { message: 'Virtual channel not found.', virtualChannelId });
-                }
-
-                if (!sourceChannelDAO.get(sourceChannelId)) {
-                    return fail(404, { message: 'Source channel not found.', virtualChannelId });
-                }
-
-                assignmentDAO.add(sourceChannelId, virtualChannelId);
-
-                return {
-                    group: buildVirtualChannelRow(virtualChannel, allSourceChannels, assignmentDAO),
-                    message: 'Source channel added.',
-                    virtualChannelId
-                };
-            } catch (e: any) {
-                return fail(400, { message: e?.message || 'Failed to add source channel.', virtualChannelId });
+            if (!result.ok) {
+                return fail(result.error.status, {
+                    message: result.error.message,
+                    virtualChannelId: result.error.virtualChannelId
+                });
             }
+
+            return result.data;
         });
     },
 
@@ -205,33 +110,20 @@ export const actions: Actions = {
         }
 
         return ServerDatabaseContext.run(({ db }) => {
-            try {
-                // Remove only existing row-level assignments and send back the refreshed row state.
-                const { allSourceChannels, virtualChannelDAO, assignmentDAO } = loadVirtualChannelRows(db);
-                const virtualChannel = virtualChannelDAO.get(virtualChannelId);
+            const serviceContext = AdminVirtualChannelServiceContext.resolve(db);
+            const result = serviceContext.indexService.removeInlineAssociation({
+                virtualChannelId,
+                sourceChannelId
+            });
 
-                if (!virtualChannel) {
-                    return fail(404, { message: 'Virtual channel not found.', virtualChannelId });
-                }
-
-                const assignment = assignmentDAO
-                    .listForVirtualChannel(virtualChannelId)
-                    .find((candidate) => candidate.source_channel_id === sourceChannelId);
-
-                if (!assignment) {
-                    return fail(404, { message: 'Assignment not found.', virtualChannelId });
-                }
-
-                assignmentDAO.remove(sourceChannelId, virtualChannelId);
-
-                return {
-                    group: buildVirtualChannelRow(virtualChannel, allSourceChannels, assignmentDAO),
-                    message: 'Source channel removed.',
-                    virtualChannelId
-                };
-            } catch (e: any) {
-                return fail(400, { message: e?.message || 'Failed to remove source channel.', virtualChannelId });
+            if (!result.ok) {
+                return fail(result.error.status, {
+                    message: result.error.message,
+                    virtualChannelId: result.error.virtualChannelId
+                });
             }
+
+            return result.data;
         });
     }
 };

@@ -1,14 +1,10 @@
 import { error, fail, redirect } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
-import { VirtualChannelDAO } from '$lib/daos/virtualChannelDAO';
-import { AssignmentDAO } from '$lib/daos/assignmentDAO';
-import { SourceChannelDAO } from '$lib/daos/sourceChannelDAO';
 import type { VirtualChannelAssignmentMode } from '$lib/entities/virtualChannelAssignment';
 import type { VirtualChannelAssignmentVideoReviewState } from '$lib/entities/virtualChannelAssignmentVideoSelection';
-import { VirtualChannelAssignmentVideoSelectionDAO } from '$lib/daos/virtualChannelAssignmentVideoSelectionDAO';
-import { VideoDAO } from '$lib/daos/videoDAO';
 import { ServerDatabaseContext } from '$lib/server/ServerDatabaseContext';
 import { ServerActionForm } from '$lib/server/ServerActionForm';
+import { AdminVirtualChannelServiceContext } from '$lib/server/admin/AdminVirtualChannelServiceContext';
 
 export const load: PageServerLoad = async ({ params, url }) =>
 {
@@ -20,78 +16,17 @@ export const load: PageServerLoad = async ({ params, url }) =>
     }
 
     return ServerDatabaseContext.run(({ db }) => {
-        // Load the virtual channel record first.
-        const virtualChannelDAO = new VirtualChannelDAO(db);
-        const virtualChannel = virtualChannelDAO.get(virtualChannelId);
-
-        if (!virtualChannel) {
-            throw error(404, 'Virtual channel not found');
-        }
-
-        // Load imported source channels and existing assignments for the page shell.
-        const assignmentDAO = new AssignmentDAO(db);
-        const sourceChannelDAO = new SourceChannelDAO(db);
-        const availableSourceChannels = sourceChannelDAO.list();
-        const sourceChannelsById = new Map(availableSourceChannels.map((channel) => [channel.id, channel]));
-        const assignments = assignmentDAO.listForVirtualChannel(virtualChannelId);
-
-        const videoDAO = new VideoDAO(db);
-        const selectionDAO = new VirtualChannelAssignmentVideoSelectionDAO(db);
-
-        const associatedSourceChannels = assignments.map((assignment) => {
-            const regexFilter = url.searchParams.get(`regexFilter-${assignment.id}`)?.trim() ?? '';
-            const videoTypeFilter = (() => {
-                const value = url.searchParams.get(`videoTypeFilter-${assignment.id}`);
-                return value === 'long' || value === 'short' || value === 'unknown' ? value : 'all';
-            })();
-            const sourceVideos = videoDAO.listByChannel(assignment.source_channel_id);
-            const selectionRows = assignment.mode === 'selected_only'
-                ? selectionDAO.listForAssignment(assignment.id)
-                : [];
-            const selectionByVideoId = new Map(selectionRows.map((row) => [row.video_id, row]));
-            const automaticVideos = assignment.mode === 'selected_only'
-                ? []
-                : sourceVideos.filter((video) => {
-                    if (assignment.mode === 'all') {
-                        return true;
-                    }
-
-                    return video.length_classification === 'long';
-                });
-            const selectedOnlyVideos = assignment.mode !== 'selected_only'
-                ? []
-                : sourceVideos.map((video) => ({
-                    ...video,
-                    review_state: selectionByVideoId.get(video.id)?.review_state ?? 'not_yet_reviewed'
-                }));
-            const selectedOnlyCounts = assignment.mode !== 'selected_only'
-                ? null
-                : {
-                    included: selectedOnlyVideos.filter((video) => video.review_state === 'included').length,
-                    ignored: selectedOnlyVideos.filter((video) => video.review_state === 'ignored').length,
-                    not_yet_reviewed: selectedOnlyVideos.filter((video) => video.review_state === 'not_yet_reviewed').length
-                };
-            const reviewStateFilter = url.searchParams.get(`reviewStateFilter-${assignment.id}`) === 'not_yet_reviewed'
-                ? 'not_yet_reviewed'
-                : 'all';
-
-            return {
-                assignment,
-                sourceChannel: sourceChannelsById.get(assignment.source_channel_id) ?? null,
-                automaticVideos,
-                selectedOnlyVideos,
-                selectedOnlyCounts,
-                reviewStateFilter,
-                regexFilter,
-                videoTypeFilter
-            };
+        const serviceContext = AdminVirtualChannelServiceContext.resolve(db);
+        const result = serviceContext.manageService.loadPageData({
+            virtualChannelId,
+            searchParams: url.searchParams
         });
 
-        return {
-            virtualChannel,
-            associatedSourceChannels,
-            availableSourceChannels
-        };
+        if (!result.ok) {
+            throw error(result.error.status, result.error.message);
+        }
+
+        return result.data;
     });
 };
 
@@ -128,21 +63,22 @@ export const actions: Actions = {
         }
 
         return ServerDatabaseContext.run(({ db }) => {
-            // Ensure both sides of the association exist before inserting it.
-            const virtualChannelDAO = new VirtualChannelDAO(db);
-            const sourceChannelDAO = new SourceChannelDAO(db);
-            const assignmentDAO = new AssignmentDAO(db);
+            const serviceContext = AdminVirtualChannelServiceContext.resolve(db);
+            const result = serviceContext.manageService.addAssociation({
+                virtualChannelId,
+                sourceChannelId,
+                mode
+            });
 
-            if (!virtualChannelDAO.get(virtualChannelId)) {
-                throw error(404, 'Virtual channel not found');
+            if (!result.ok) {
+                if (result.error.code === 'virtual_channel_not_found') {
+                    throw error(result.error.status, result.error.message);
+                }
+
+                return fail(result.error.status, { message: result.error.message });
             }
 
-            if (!sourceChannelDAO.get(sourceChannelId)) {
-                return fail(404, { message: 'Source channel not found.' });
-            }
-
-            assignmentDAO.add(sourceChannelId, virtualChannelId, mode);
-            throw redirect(303, `/admin/virtual-channels/${virtualChannelId}`);
+            throw redirect(303, result.data.redirectTo);
         });
     },
 
@@ -162,15 +98,18 @@ export const actions: Actions = {
         }
 
         return ServerDatabaseContext.run(({ db }) => {
-            const assignmentDAO = new AssignmentDAO(db);
-            const assignment = assignmentDAO.get(assignmentId);
+            const serviceContext = AdminVirtualChannelServiceContext.resolve(db);
+            const result = serviceContext.manageService.updateAssociationMode({
+                virtualChannelId,
+                assignmentId,
+                mode
+            });
 
-            if (!assignment || assignment.virtual_channel_id !== virtualChannelId) {
-                return fail(404, { message: 'Assignment not found.' });
+            if (!result.ok) {
+                return fail(result.error.status, { message: result.error.message });
             }
 
-            assignmentDAO.updateMode(assignmentId, mode);
-            throw redirect(303, `/admin/virtual-channels/${virtualChannelId}`);
+            throw redirect(303, result.data.redirectTo);
         });
     },
 
@@ -189,15 +128,17 @@ export const actions: Actions = {
         }
 
         return ServerDatabaseContext.run(({ db }) => {
-            const assignmentDAO = new AssignmentDAO(db);
-            const assignment = assignmentDAO.get(assignmentId);
+            const serviceContext = AdminVirtualChannelServiceContext.resolve(db);
+            const result = serviceContext.manageService.removeAssociation({
+                virtualChannelId,
+                assignmentId
+            });
 
-            if (!assignment || assignment.virtual_channel_id !== virtualChannelId) {
-                return fail(404, { message: 'Assignment not found.' });
+            if (!result.ok) {
+                return fail(result.error.status, { message: result.error.message });
             }
 
-            assignmentDAO.remove(assignment.source_channel_id, assignment.virtual_channel_id);
-            throw redirect(303, `/admin/virtual-channels/${virtualChannelId}`);
+            throw redirect(303, result.data.redirectTo);
         });
     },
 
@@ -218,26 +159,19 @@ export const actions: Actions = {
         }
 
         return ServerDatabaseContext.run(({ db }) => {
-            const assignmentDAO = new AssignmentDAO(db);
-            const selectionDAO = new VirtualChannelAssignmentVideoSelectionDAO(db);
-            const videoDAO = new VideoDAO(db);
-            const assignment = assignmentDAO.get(assignmentId);
-            const video = videoDAO.get(videoId);
+            const serviceContext = AdminVirtualChannelServiceContext.resolve(db);
+            const result = serviceContext.manageService.setVideoReviewState({
+                virtualChannelId,
+                assignmentId,
+                videoId,
+                reviewState
+            });
 
-            if (!assignment || assignment.virtual_channel_id !== virtualChannelId) {
-                return fail(404, { message: 'Assignment not found.' });
+            if (!result.ok) {
+                return fail(result.error.status, { message: result.error.message });
             }
 
-            if (assignment.mode !== 'selected_only') {
-                return fail(400, { message: 'Video review state is only valid for selected-only assignments.' });
-            }
-
-            if (!video || video.channel_id !== assignment.source_channel_id) {
-                return fail(404, { message: 'Video not found for this assignment.' });
-            }
-
-            selectionDAO.setReviewState(assignmentId, videoId, reviewState);
-            throw redirect(303, `/admin/virtual-channels/${virtualChannelId}`);
+            throw redirect(303, result.data.redirectTo);
         });
     },
 
@@ -266,30 +200,20 @@ export const actions: Actions = {
         }
 
         return ServerDatabaseContext.run(({ db }) => {
-            const assignmentDAO = new AssignmentDAO(db);
-            const selectionDAO = new VirtualChannelAssignmentVideoSelectionDAO(db);
-            const videoDAO = new VideoDAO(db);
-            const assignment = assignmentDAO.get(assignmentId);
+            const serviceContext = AdminVirtualChannelServiceContext.resolve(db);
+            const result = serviceContext.manageService.bulkUpdateVideoReviewState({
+                virtualChannelId,
+                assignmentId,
+                videoIds,
+                reviewState,
+                returnQuery
+            });
 
-            if (!assignment || assignment.virtual_channel_id !== virtualChannelId) {
-                return fail(404, { message: 'Assignment not found.' });
+            if (!result.ok) {
+                return fail(result.error.status, { message: result.error.message });
             }
 
-            if (assignment.mode !== 'selected_only') {
-                return fail(400, { message: 'Bulk review updates are only valid for selected-only assignments.' });
-            }
-
-            for (const videoId of videoIds) {
-                const video = videoDAO.get(videoId);
-                if (!video || video.channel_id !== assignment.source_channel_id) {
-                    return fail(404, { message: `Video ${videoId} is not available for this assignment.` });
-                }
-            }
-
-            for (const videoId of videoIds) {
-                selectionDAO.setReviewState(assignmentId, videoId, reviewState);
-            }
-            throw redirect(303, `/admin/virtual-channels/${virtualChannelId}${returnQuery ? `?${returnQuery}` : ''}`);
+            throw redirect(303, result.data.redirectTo);
         });
     }
 };

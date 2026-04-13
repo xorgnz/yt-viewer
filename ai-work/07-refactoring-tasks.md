@@ -58,7 +58,7 @@
   - [x] 3.5 Add or update viewer state and component-oriented tests for the extracted UI and selection modules
 
 - [ ] 4.0 Expand service-layer boundaries across admin and YouTube integration workflows
-  - [ ] 4.1 Move virtual-channel create/update/delete and assignment-management workflows out of admin route files into explicit services with typed inputs
+  - [x] 4.1 Move virtual-channel create/update/delete and assignment-management workflows out of admin route files into explicit services with typed inputs
   - [ ] 4.2 Move source-channel lookup, refresh, and import orchestration out of `src/routes/admin/source-channels/+page.server.ts` into services with narrower dependencies
   - [ ] 4.3 Refactor `src/lib/youtube/importer.ts` and `src/lib/youtube/fetch.ts` so transport, reference resolution, and import orchestration move behind narrower typed service objects instead of exported free-function collections
   - [ ] 4.4 Review `src/lib/youtube/mapper.ts` and related YouTube policy helpers to keep trivial stateless parsing local while moving coordinated mapping behavior behind typed collaborators where that improves boundaries
