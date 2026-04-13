@@ -37,6 +37,8 @@ The refactor should preserve user-facing behavior as closely as practical, but m
 10. Each refactor slice must include the test updates needed to validate the affected behavior and architecture boundaries.
 11. Obsolete code paths may be removed once the replacement path is complete and verified.
 12. The feature must not rely on silent behavior changes as a substitute for architectural clarity.
+13. Where application-domain behavior spans multiple operations or shared dependencies, prefer typed classes or explicit service objects over exported bags of free functions.
+14. Internal application modules should not preserve library-style public APIs unless multiple concrete callers require that boundary.
 
 ## 5. Non-Goals
 
@@ -76,6 +78,8 @@ The refactor should preserve user-facing behavior as closely as practical, but m
 - Preserve current behavior unless a restructuring improvement clearly justifies a small compatible cleanup.
 - Favor explicit boundaries and naming over clever abstractions.
 - Keep new shared modules reusable by multiple route families where that reuse is real rather than speculative.
+- Use object-oriented boundaries selectively for workflow, policy, and integration modules that own stateful or coordinated behavior.
+- Avoid retaining broad export-oriented helper surfaces in application code when the same behavior can live behind a narrower service, presenter, policy, or context object.
 
 ## 8. Technical Considerations
 
@@ -84,6 +88,8 @@ The refactor should preserve user-facing behavior as closely as practical, but m
 - Some business workflows currently couple route handlers directly to DAO orchestration.
 - Some complex read/query behavior is embedded inside DAOs, which makes reuse and testing harder.
 - Migration and bootstrap work introduced new shared infrastructure that should be aligned with the broader repository architecture rather than left as a parallel pattern.
+- Several application modules still expose free-function collections even when they already share concrete dependencies or are immediately wrapped by higher-level classes.
+- Current follow-up hotspots include YouTube import/fetch orchestration, admin session helpers, and profile resolution utilities that should converge on narrower object-oriented boundaries.
 
 ## 9. Success Metrics
 
@@ -104,3 +110,4 @@ The refactor should preserve user-facing behavior as closely as practical, but m
 - Viewer refactoring should include component splitting where warranted.
 - Moderate restructuring is acceptable as long as user-facing behavior remains effectively equivalent.
 - Obsolete code may be removed once replacement behavior is complete and verified.
+- Application code should favor narrower object-oriented boundaries over export-heavy helper modules when the code represents coordinated domain behavior rather than trivial stateless utility logic.

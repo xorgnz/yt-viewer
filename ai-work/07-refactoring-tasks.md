@@ -16,6 +16,7 @@
 - `src/lib/daos/shared/` - Existing database bootstrap and migration utilities that should align with the broader shared server and persistence architecture.
 - `src/lib/youtube/fetch.ts` - Transport-layer YouTube logic that should stay separate from orchestration and persistence application.
 - `src/lib/youtube/importer.ts` - Current YouTube import orchestration hotspot that should be decomposed into smaller service collaborators.
+- `src/lib/youtube/mapper.ts` - YouTube mapping and classification helpers that should be reviewed for consolidation behind narrower typed collaborators where they represent domain policy rather than generic utilities.
 - `src/lib/youtube/youTubeClient.ts` - API client boundary that should remain narrow and reusable beneath higher-level services.
 - `tests/viewer/` - Route and query tests that must be updated as viewer server and UI responsibilities move.
 - `tests/admin/` - Route tests that should be expanded as admin workflows move behind explicit services.
@@ -59,9 +60,11 @@
 - [ ] 4.0 Expand service-layer boundaries across admin and YouTube integration workflows
   - [ ] 4.1 Move virtual-channel create/update/delete and assignment-management workflows out of admin route files into explicit services with typed inputs
   - [ ] 4.2 Move source-channel lookup, refresh, and import orchestration out of `src/routes/admin/source-channels/+page.server.ts` into services with narrower dependencies
-  - [ ] 4.3 Refactor `src/lib/youtube/importer.ts` so transport, reference resolution, mapping, and persistence application are separated into smaller collaborators
-  - [ ] 4.4 Tighten admin action typing and shared form parsing, including removal of remaining `any`-style escape hatches where practical
-  - [ ] 4.5 Update `tests/admin/` and `tests/lib/youtube/` coverage to validate the new service boundaries while preserving route behavior
+  - [ ] 4.3 Refactor `src/lib/youtube/importer.ts` and `src/lib/youtube/fetch.ts` so transport, reference resolution, and import orchestration move behind narrower typed service objects instead of exported free-function collections
+  - [ ] 4.4 Review `src/lib/youtube/mapper.ts` and related YouTube policy helpers to keep trivial stateless parsing local while moving coordinated mapping behavior behind typed collaborators where that improves boundaries
+  - [ ] 4.5 Fold `src/lib/auth/admin.ts` and `src/lib/profiles.ts` into clearer server-side object boundaries so admin/session and profile resolution stop depending on export-heavy helper bags
+  - [ ] 4.6 Tighten admin action typing and shared form parsing, including removal of remaining `any`-style escape hatches where practical
+  - [ ] 4.7 Update `tests/admin/` and `tests/lib/youtube/` coverage to validate the new service boundaries while preserving route behavior
 
 - [ ] 5.0 Separate query specification, read-model shaping, and persistence execution in the data layer
   - [ ] 5.1 Introduce explicit query-spec or read-model helpers for viewer and history filtering so DAOs stop mixing workflow semantics with SQL execution
@@ -80,5 +83,5 @@
 - [ ] 7.0 Remove obsolete code paths and finish repository-wide consistency cleanup
   - [ ] 7.1 Delete superseded route-local helpers, duplicated setup code, and obsolete workflow paths once replacement behavior is verified
   - [ ] 7.2 Normalize naming and placement for new shared server, service, viewer, and persistence modules so future work has a clear home
-  - [ ] 7.3 Tighten exported types and public interfaces for new modules to improve encapsulation and reduce implicit cross-layer coupling
+  - [ ] 7.3 Tighten exported types and public interfaces for new modules to improve encapsulation and reduce implicit cross-layer coupling, with follow-up passes to remove unnecessary free-function exports in application code
   - [ ] 7.4 Run final repo-wide validation and resolve any import, typing, dead-code, or test regressions introduced by the refactor
