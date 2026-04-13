@@ -85,3 +85,10 @@
   - [x] 7.2 Normalize naming and placement for new shared server, service, viewer, and persistence modules so future work has a clear home
   - [x] 7.3 Tighten exported types and public interfaces for new modules to improve encapsulation and reduce implicit cross-layer coupling, with follow-up passes to remove unnecessary free-function exports in application code
   - [x] 7.4 Run final repo-wide validation and resolve any import, typing, dead-code, or test regressions introduced by the refactor
+
+- [ ] 8.0 Harden remaining refactor boundaries discovered during post-completion review
+  - [x] 8.1 Decouple admin source-channel lookup flow from database context where lookup behavior does not require persistence dependencies
+  - [x] 8.2 Introduce typed viewer action-result contracts in `src/routes/viewer/+page.svelte` bulk-action orchestration to remove remaining `any`-style casts
+  - [ ] 8.3 Reduce repeated source-channel route context resolution by introducing a thin request-scoped helper pattern for service access
+  - [ ] 8.4 Add or update focused tests that validate lookup decoupling and viewer action-result contract behavior
+  - [ ] 8.5 Run repo-wide validation (`npm run check`, `npm run test`) and resolve regressions before marking the hardening slice complete

@@ -62,6 +62,69 @@
     let bulkActionPending = false;
     let bulkActionFeedback: BulkActionFeedback | null = null;
 
+    type ViewerBulkActionOutcome = 'full_success' | 'partial_success' | 'failed';
+
+    type ViewerBulkActionResultData = {
+        ok: boolean;
+        outcome: ViewerBulkActionOutcome;
+        message: string;
+        succeededIds: number[];
+    };
+
+    function isRecord(value: unknown): value is Record<string, unknown>
+    {
+        return typeof value === 'object' && value !== null;
+    }
+
+    function readViewerActionFailureMessage(result: unknown, fallback: string): string
+    {
+        if (!isRecord(result)) {
+            return fallback;
+        }
+
+        const data = result.data;
+        if (!isRecord(data)) {
+            return fallback;
+        }
+
+        if (typeof data.message !== 'string' || data.message.trim().length === 0) {
+            return fallback;
+        }
+
+        return data.message;
+    }
+
+    function parseViewerBulkActionResultData(value: unknown): ViewerBulkActionResultData | null
+    {
+        if (!isRecord(value)) {
+            return null;
+        }
+
+        const { ok, outcome, message, succeededIds } = value;
+        if (typeof ok !== 'boolean') {
+            return null;
+        }
+
+        if (outcome !== 'full_success' && outcome !== 'partial_success' && outcome !== 'failed') {
+            return null;
+        }
+
+        if (typeof message !== 'string') {
+            return null;
+        }
+
+        if (!Array.isArray(succeededIds) || succeededIds.some((id) => typeof id !== 'number')) {
+            return null;
+        }
+
+        return {
+            ok,
+            outcome,
+            message,
+            succeededIds
+        };
+    }
+
     function buildPageHref(page: number): string
     {
         return viewerPageState.buildViewerPageHref(f, page);
@@ -224,9 +287,12 @@
                 body: form
             });
             const result = deserialize(await response.text());
-            const failureMessage = (result as any)?.data?.message || 'Bulk update failed.';
+            const failureMessage = readViewerActionFailureMessage(result, 'Bulk update failed.');
+            const actionResult = result.type === 'success'
+                ? parseViewerBulkActionResultData(result.data)
+                : null;
 
-            if (result.type !== 'success' || !result.data) {
+            if (!actionResult) {
                 bulkActionFeedback = {
                     message: failureMessage,
                     tone: 'error',
@@ -235,10 +301,6 @@
                 return;
             }
 
-            const actionResult = result.data as any;
-            const succeededIds = Array.isArray(actionResult.succeededIds)
-                ? actionResult.succeededIds as number[]
-                : [];
             const undo = viewerBulkActions.buildViewerSelectionUndoPayload(selectionState);
 
             bulkActionFeedback = {
@@ -247,8 +309,18 @@
                 undo
             };
 
-            selectionState = viewerSelectionStateManager.applyBulkFlag(selectionState, kind, nextValue, succeededIds);
-            visibleVideos = viewerBulkActions.applyBulkFlagToVisibleVideos(visibleVideos, kind, nextValue, succeededIds);
+            selectionState = viewerSelectionStateManager.applyBulkFlag(
+                selectionState,
+                kind,
+                nextValue,
+                actionResult.succeededIds
+            );
+            visibleVideos = viewerBulkActions.applyBulkFlagToVisibleVideos(
+                visibleVideos,
+                kind,
+                nextValue,
+                actionResult.succeededIds
+            );
         } finally {
             bulkActionPending = false;
         }
@@ -274,9 +346,12 @@
                 body: form
             });
             const result = deserialize(await response.text());
-            const failureMessage = (result as any)?.data?.message || 'Bulk undo failed.';
+            const failureMessage = readViewerActionFailureMessage(result, 'Bulk undo failed.');
+            const actionResult = result.type === 'success'
+                ? parseViewerBulkActionResultData(result.data)
+                : null;
 
-            if (result.type !== 'success' || !result.data) {
+            if (!actionResult) {
                 bulkActionFeedback = {
                     message: failureMessage,
                     tone: 'error',
@@ -285,12 +360,7 @@
                 return;
             }
 
-            const actionResult = result.data as any;
-            const succeededIdSet = new Set(
-                Array.isArray(actionResult.succeededIds)
-                    ? actionResult.succeededIds as number[]
-                    : []
-            );
+            const succeededIdSet = new Set(actionResult.succeededIds);
             const restoredStates = undo.originalStates.filter((state) => succeededIdSet.has(state.videoId));
             const restoredSnapshots = restoredStates.map((state) => ({
                 id: state.videoId,
