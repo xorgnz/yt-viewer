@@ -19,6 +19,7 @@ const resolveServiceContextMock = vi.fn(() => ({
     pageService,
     lookupService
 }));
+const resolveLookupServiceMock = vi.fn(() => lookupService);
 
 vi.mock('$lib/server/ServerDatabaseContext', () => ({
     ServerDatabaseContext: {
@@ -28,7 +29,8 @@ vi.mock('$lib/server/ServerDatabaseContext', () => ({
 
 vi.mock('$lib/server/admin/AdminSourceChannelServiceContext', () => ({
     AdminSourceChannelServiceContext: {
-        resolve: resolveServiceContextMock
+        resolve: resolveServiceContextMock,
+        resolveLookupService: resolveLookupServiceMock
     }
 }));
 
@@ -44,6 +46,7 @@ describe('admin source channel routes', () => {
     beforeEach(() => {
         runMock.mockClear();
         resolveServiceContextMock.mockClear();
+        resolveLookupServiceMock.mockClear();
         pageService.loadPageData.mockReset();
         pageService.createSourceChannel.mockReset();
         pageService.updateSourceChannel.mockReset();
@@ -168,7 +171,9 @@ describe('admin source channel routes', () => {
                 published_at: 1704153600000
             }
         });
-        expect(resolveServiceContextMock).toHaveBeenCalledWith(fakeDb);
+        expect(runMock).not.toHaveBeenCalled();
+        expect(resolveServiceContextMock).not.toHaveBeenCalled();
+        expect(resolveLookupServiceMock).toHaveBeenCalledTimes(1);
         expect(lookupService.lookupSourceChannel).toHaveBeenCalledWith({
             youtubeInput: '@lookup'
         });
@@ -192,5 +197,7 @@ describe('admin source channel routes', () => {
             ok: false,
             error: 'No YouTube channel could be resolved from that input.'
         });
+        expect(runMock).not.toHaveBeenCalled();
+        expect(resolveLookupServiceMock).toHaveBeenCalledTimes(1);
     });
 });

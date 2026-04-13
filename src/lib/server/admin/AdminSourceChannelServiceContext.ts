@@ -37,4 +37,12 @@ export class AdminSourceChannelServiceContext
             )
         );
     }
+
+    static resolveLookupService(): AdminSourceChannelLookupService
+    {
+        return new AdminSourceChannelLookupService(
+            new AdminYouTubeClientProvider(),
+            new AdminSourceChannelYouTubeCoordinator()
+        );
+    }
 }
