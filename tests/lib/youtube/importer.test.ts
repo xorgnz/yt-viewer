@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import Database from 'better-sqlite3';
 import { ALL_DDL } from '../../../src/lib/daos/_schema';
 import { AssignmentDAO } from '../../../src/lib/daos/assignmentDAO';
-import { importChannelFromYouTube } from '../../../src/lib/youtube/importer';
+import { YouTubeChannelImportService } from '../../../src/lib/youtube/importer';
 import type { YouTubeClient } from '$lib/youtube/youTubeClient';
 import { ProfileDAO } from '$lib/daos/profileDAO';
 import { SourceChannelDAO } from '$lib/daos/sourceChannelDAO';
@@ -92,7 +92,8 @@ describe('youtube importer (task 3.3)', () => {
 
     it('imports channel and videos, then is idempotent on re-run', async () => {
         const yt = fakeClient();
-        const res1 = await importChannelFromYouTube(db, yt, 'UC_DEMO');
+        const importer = new YouTubeChannelImportService(db, yt);
+        const res1 = await importer.importChannel('UC_DEMO');
         expect(res1.channelId).toBeGreaterThan(0);
         expect(res1.videosUpserted).toBe(2);
 
@@ -108,7 +109,7 @@ describe('youtube importer (task 3.3)', () => {
         expect(vids.find(v => v.youtube_id === 'V2')?.duration_seconds).toBe(600);
 
         // Run again; upserts should not duplicate
-        const res2 = await importChannelFromYouTube(db, yt, 'UC_DEMO');
+        const res2 = await importer.importChannel('UC_DEMO');
         expect(res2.channelId).toBe(res1.channelId);
         const vids2 = vDao.listByChannel(ch!.id);
         expect(vids2.length).toBe(2);
@@ -177,7 +178,8 @@ describe('youtube importer (task 3.3)', () => {
             }
         };
 
-        await importChannelFromYouTube(db, client as YouTubeClient, 'UC_DEMO');
+        const importer = new YouTubeChannelImportService(db, client as YouTubeClient);
+        await importer.importChannel('UC_DEMO');
 
         const sourceChannelDao = new SourceChannelDAO(db);
         const virtualChannelDao = new VirtualChannelDAO(db);
@@ -192,7 +194,7 @@ describe('youtube importer (task 3.3)', () => {
         const virtualChannel = virtualChannelDao.create('Selected only channel');
         assignmentDao.add(sourceChannel.id, virtualChannel.id, 'selected_only');
 
-        await importChannelFromYouTube(db, client as YouTubeClient, 'UC_DEMO');
+        await importer.importChannel('UC_DEMO');
 
         const beforeReview = videoDao.listForViewer({ groupId: virtualChannel.id, ignored: 'show' } as any, profile.id);
         expect(beforeReview).toEqual([]);
@@ -244,7 +246,8 @@ describe('youtube importer (task 3.3)', () => {
             }
         };
 
-        await importChannelFromYouTube(db, client as YouTubeClient, 'UC_DEMO');
+        const importer = new YouTubeChannelImportService(db, client as YouTubeClient);
+        await importer.importChannel('UC_DEMO');
 
         const sourceChannelDao = new SourceChannelDAO(db);
         const videoDao = new VideoDAO(db);

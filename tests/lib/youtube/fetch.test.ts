@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { YouTubeClient } from '$lib/youtube/youTubeClient';
-import { fetchChannelMetadata, fetchChannelWithUploads } from '../../../src/lib/youtube/fetch';
+import { YouTubeChannelDataService } from '../../../src/lib/youtube/fetch';
 
 const okJson = (body: unknown) => new Response(JSON.stringify(body), { status: 200, headers: { 'content-type': 'application/json' } });
 
@@ -15,7 +15,8 @@ describe('YouTube fetch helpers (task 3.2)', () => {
             okJson({ items: [{ id: 'UC123', contentDetails: { relatedPlaylists: { uploads: 'UU123' } } }] })
         );
         const yt = new YouTubeClient({ apiKey: 'KEY', fetchImpl: fetchMock });
-        const ch = await fetchChannelMetadata(yt, 'UC123');
+        const service = new YouTubeChannelDataService(yt);
+        const ch = await service.fetchChannelMetadata('UC123');
         expect(ch?.id).toBe('UC123');
     });
 
@@ -34,7 +35,8 @@ describe('YouTube fetch helpers (task 3.2)', () => {
             .mockResolvedValueOnce(okJson({ items: [{ id: 'p3' }] }));
 
         const yt = new YouTubeClient({ apiKey: 'KEY', fetchImpl: fetchMock });
-        const out = await fetchChannelWithUploads(yt, 'UC123');
+        const service = new YouTubeChannelDataService(yt);
+        const out = await service.fetchChannelWithUploads('UC123');
 
         expect(out.uploadsPlaylistId).toBe('UU123');
         expect(out.videos.map((v: any) => v.id)).toEqual(['p1', 'p2', 'p3']);
@@ -45,7 +47,8 @@ describe('YouTube fetch helpers (task 3.2)', () => {
     it('fetchChannelWithUploads returns empty when channel not found', async () => {
         const fetchMock = vi.fn(async () => okJson({ items: [] }));
         const yt = new YouTubeClient({ apiKey: 'KEY', fetchImpl: fetchMock });
-        const out = await fetchChannelWithUploads(yt, 'UC_NOPE');
+        const service = new YouTubeChannelDataService(yt);
+        const out = await service.fetchChannelWithUploads('UC_NOPE');
         expect(out.channel).toBeNull();
         expect(out.uploadsPlaylistId).toBeNull();
         expect(out.videos).toEqual([]);

@@ -1,26 +1,40 @@
-import Database from 'better-sqlite3';
+import type Database from 'better-sqlite3';
 import { SourceChannelDAO } from '../daos/sourceChannelDAO';
 import { VideoDAO } from '../daos/videoDAO';
-import type { YouTubeClient } from './youTubeClient';
-import { fetchChannelWithUploads, fetchVideosMetadata } from './fetch';
+import { YouTubeChannelDataService } from './fetch';
 import { mapChannelItemToUpsert, mapPlaylistItemToVideoUpsert } from './mapper';
+import type { YouTubeClient } from './youTubeClient';
 
 export interface ImportResult
 {
-    channelId: number | null; // internal channel id (if channel existed/created)
+    channelId: number | null;
     videosUpserted: number;
 }
 
-/**
- * Import a channel by YouTube channel ID:
- * - Fetch channel metadata + uploads playlist items
- * - Upsert channel
- * - Map and upsert videos
- */
-export function importChannelFromYouTube(db: Database.Database, yt: YouTubeClient, channelExternalId: string): Promise<ImportResult>
+export class YouTubeChannelImportService
 {
-    return (async () => {
-        const { channel, videos } = await fetchChannelWithUploads(yt, channelExternalId);
+    private readonly db: Database.Database;
+    private readonly channelDataService: YouTubeChannelDataService;
+    private readonly sourceChannelDAO: SourceChannelDAO;
+    private readonly videoDAO: VideoDAO;
+
+    constructor(
+        db: Database.Database,
+        client: YouTubeClient,
+        channelDataService: YouTubeChannelDataService = new YouTubeChannelDataService(client),
+        sourceChannelDAO: SourceChannelDAO = new SourceChannelDAO(db),
+        videoDAO: VideoDAO = new VideoDAO(db)
+    )
+    {
+        this.db = db;
+        this.channelDataService = channelDataService;
+        this.sourceChannelDAO = sourceChannelDAO;
+        this.videoDAO = videoDAO;
+    }
+
+    async importChannel(channelExternalId: string): Promise<ImportResult>
+    {
+        const { channel, videos } = await this.channelDataService.fetchChannelWithUploads(channelExternalId);
         if (!channel) {
             return { channelId: null, videosUpserted: 0 };
         }
@@ -28,30 +42,45 @@ export function importChannelFromYouTube(db: Database.Database, yt: YouTubeClien
         const videoIds = videos
             .map((item) => item.contentDetails?.videoId || item.snippet?.resourceId?.videoId || '')
             .filter(Boolean);
-        const videoMetadataItems = await fetchVideosMetadata(yt, videoIds, ['snippet', 'contentDetails']);
+        const videoMetadataItems = await this.channelDataService.fetchVideosMetadata(
+            videoIds,
+            ['snippet', 'contentDetails']
+        );
         const videoMetadataById = new Map(videoMetadataItems.map((item) => [item.id, item]));
 
-        const chDao = new SourceChannelDAO(db);
-        const vDao = new VideoDAO(db);
+        // Run inside a transaction for consistency.
+        const transaction = this.db.transaction(() => {
+            const channelUpsert = mapChannelItemToUpsert(channel);
+            this.sourceChannelDAO.upsert(channelUpsert);
 
-        // Run inside a transaction for consistency
-        const trx = db.transaction(() => {
-            // Upsert channel and obtain internal id
-            const chUpsert = mapChannelItemToUpsert(channel);
-            chDao.upsert(chUpsert as any);
-            const ch = chDao.getByExternalId(chUpsert.youtube_id)!;
+            const sourceChannel = this.sourceChannelDAO.getByExternalId(channelUpsert.youtube_id);
+            if (!sourceChannel) {
+                throw new Error(`Failed to resolve imported channel ${channelUpsert.youtube_id}.`);
+            }
 
-            let count = 0;
+            let videosUpserted = 0;
             for (const item of videos) {
                 const videoId = item.contentDetails?.videoId || item.snippet?.resourceId?.videoId || '';
-                const up = mapPlaylistItemToVideoUpsert(item, ch.id, videoMetadataById.get(videoId));
-                if (!up.youtube_id) continue; // skip malformed entries
-                vDao.upsert(up as any);
-                count++;
+                const videoUpsert = mapPlaylistItemToVideoUpsert(
+                    item,
+                    sourceChannel.id,
+                    videoMetadataById.get(videoId)
+                );
+
+                if (!videoUpsert.youtube_id) {
+                    continue;
+                }
+
+                this.videoDAO.upsert(videoUpsert);
+                videosUpserted++;
             }
-            return { channelId: ch.id, videosUpserted: count } as ImportResult;
+
+            return {
+                channelId: sourceChannel.id,
+                videosUpserted
+            };
         });
 
-        return trx();
-    })();
+        return transaction();
+    }
 }

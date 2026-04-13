@@ -1,13 +1,17 @@
 import type Database from 'better-sqlite3';
-import { fetchChannelMetadata, type ResolvedChannelReference, resolveChannelReference } from '$lib/youtube/fetch';
-import { importChannelFromYouTube, type ImportResult } from '$lib/youtube/importer';
+import {
+    type ResolvedChannelReference,
+    YouTubeChannelDataService,
+    YouTubeChannelReferenceResolver
+} from '$lib/youtube/fetch';
+import { type ImportResult, YouTubeChannelImportService } from '$lib/youtube/importer';
 import type { ChannelsListResponse, YouTubeClient } from '$lib/youtube/youTubeClient';
 
 export class AdminSourceChannelYouTubeCoordinator
 {
     async resolveChannelReference(client: YouTubeClient, input: string): Promise<ResolvedChannelReference>
     {
-        return resolveChannelReference(client, input);
+        return new YouTubeChannelReferenceResolver(client).resolveChannelReference(input);
     }
 
     async fetchChannelMetadata(
@@ -15,7 +19,7 @@ export class AdminSourceChannelYouTubeCoordinator
         channelId: string
     ): Promise<ChannelsListResponse['items'][number] | null>
     {
-        return fetchChannelMetadata(client, channelId);
+        return new YouTubeChannelDataService(client).fetchChannelMetadata(channelId);
     }
 
     async importChannelFromYouTube(
@@ -24,6 +28,6 @@ export class AdminSourceChannelYouTubeCoordinator
         channelExternalId: string
     ): Promise<ImportResult>
     {
-        return importChannelFromYouTube(db, client, channelExternalId);
+        return new YouTubeChannelImportService(db, client).importChannel(channelExternalId);
     }
 }
