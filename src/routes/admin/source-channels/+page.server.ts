@@ -7,8 +7,7 @@ import { AdminSourceChannelServiceContext } from '$lib/server/admin/AdminSourceC
 export const load: PageServerLoad = async () =>
 {
     return ServerDatabaseContext.run(({ db }) => {
-        const pageService = AdminSourceChannelServiceContext.createPageService(db);
-        return pageService.loadPageData();
+        return AdminSourceChannelServiceContext.resolve(db).pageService.loadPageData();
     });
 };
 
@@ -27,8 +26,7 @@ export const actions: Actions = {
         }
 
         const result = await ServerDatabaseContext.run(async ({ db }) => {
-            const pageService = AdminSourceChannelServiceContext.createPageService(db);
-            return pageService.createSourceChannel({
+            return AdminSourceChannelServiceContext.resolve(db).pageService.createSourceChannel({
                 youtubeInput,
                 title,
                 description,
@@ -58,8 +56,7 @@ export const actions: Actions = {
         }
 
         const result = await ServerDatabaseContext.run(({ db }) => {
-            const pageService = AdminSourceChannelServiceContext.createPageService(db);
-            return pageService.updateSourceChannel({
+            return AdminSourceChannelServiceContext.resolve(db).pageService.updateSourceChannel({
                 id,
                 title,
                 description,
@@ -81,8 +78,7 @@ export const actions: Actions = {
         if (id === null) return fail(400, { message: 'id is required.' });
 
         const result = await ServerDatabaseContext.run(({ db }) => {
-            const pageService = AdminSourceChannelServiceContext.createPageService(db);
-            return pageService.deleteSourceChannel({ id });
+            return AdminSourceChannelServiceContext.resolve(db).pageService.deleteSourceChannel({ id });
         });
 
         throw redirect(303, result.redirectTo);
@@ -94,8 +90,7 @@ export const actions: Actions = {
         if (id === null) return fail(400, { message: 'id is required.' });
 
         const result = await ServerDatabaseContext.run(async ({ db }) => {
-            const pageService = AdminSourceChannelServiceContext.createPageService(db);
-            return pageService.refreshSourceChannel({ id });
+            return AdminSourceChannelServiceContext.resolve(db).pageService.refreshSourceChannel({ id });
         });
 
         if (!result.ok) {

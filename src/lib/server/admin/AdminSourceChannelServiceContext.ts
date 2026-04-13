@@ -7,21 +7,34 @@ import { AdminYouTubeClientProvider } from '$lib/server/admin/AdminYouTubeClient
 
 export class AdminSourceChannelServiceContext
 {
-    static createPageService(db: Database.Database): AdminSourceChannelPageService
+    readonly pageService: AdminSourceChannelPageService;
+    readonly lookupService: AdminSourceChannelLookupService;
+
+    private constructor(
+        pageService: AdminSourceChannelPageService,
+        lookupService: AdminSourceChannelLookupService
+    )
     {
-        return new AdminSourceChannelPageService(
-            db,
-            new SourceChannelDAO(db),
-            new AdminYouTubeClientProvider(),
-            new AdminSourceChannelYouTubeCoordinator()
-        );
+        this.pageService = pageService;
+        this.lookupService = lookupService;
     }
 
-    static createLookupService(): AdminSourceChannelLookupService
+    static resolve(db: Database.Database): AdminSourceChannelServiceContext
     {
-        return new AdminSourceChannelLookupService(
-            new AdminYouTubeClientProvider(),
-            new AdminSourceChannelYouTubeCoordinator()
+        const clientProvider = new AdminYouTubeClientProvider();
+        const coordinator = new AdminSourceChannelYouTubeCoordinator();
+
+        return new AdminSourceChannelServiceContext(
+            new AdminSourceChannelPageService(
+                db,
+                new SourceChannelDAO(db),
+                clientProvider,
+                coordinator
+            ),
+            new AdminSourceChannelLookupService(
+                clientProvider,
+                coordinator
+            )
         );
     }
 }

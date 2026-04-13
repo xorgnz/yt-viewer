@@ -15,8 +15,10 @@ const pageService = {
 const lookupService = {
     lookupSourceChannel: vi.fn()
 };
-const createPageServiceMock = vi.fn(() => pageService);
-const createLookupServiceMock = vi.fn(() => lookupService);
+const resolveServiceContextMock = vi.fn(() => ({
+    pageService,
+    lookupService
+}));
 
 vi.mock('$lib/server/ServerDatabaseContext', () => ({
     ServerDatabaseContext: {
@@ -26,8 +28,7 @@ vi.mock('$lib/server/ServerDatabaseContext', () => ({
 
 vi.mock('$lib/server/admin/AdminSourceChannelServiceContext', () => ({
     AdminSourceChannelServiceContext: {
-        createPageService: createPageServiceMock,
-        createLookupService: createLookupServiceMock
+        resolve: resolveServiceContextMock
     }
 }));
 
@@ -42,8 +43,7 @@ describe('admin source channel routes', () => {
 
     beforeEach(() => {
         runMock.mockClear();
-        createPageServiceMock.mockClear();
-        createLookupServiceMock.mockClear();
+        resolveServiceContextMock.mockClear();
         pageService.loadPageData.mockReset();
         pageService.createSourceChannel.mockReset();
         pageService.updateSourceChannel.mockReset();
@@ -75,7 +75,7 @@ describe('admin source channel routes', () => {
             ]
         });
         expect(runMock).toHaveBeenCalledTimes(1);
-        expect(createPageServiceMock).toHaveBeenCalledWith(fakeDb);
+        expect(resolveServiceContextMock).toHaveBeenCalledWith(fakeDb);
         expect(pageService.loadPageData).toHaveBeenCalledTimes(1);
     });
 
@@ -168,7 +168,7 @@ describe('admin source channel routes', () => {
                 published_at: 1704153600000
             }
         });
-        expect(createLookupServiceMock).toHaveBeenCalledTimes(1);
+        expect(resolveServiceContextMock).toHaveBeenCalledWith(fakeDb);
         expect(lookupService.lookupSourceChannel).toHaveBeenCalledWith({
             youtubeInput: '@lookup'
         });
