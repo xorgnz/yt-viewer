@@ -62,7 +62,7 @@
   - [x] 4.2 Move source-channel lookup, refresh, and import orchestration out of `src/routes/admin/source-channels/+page.server.ts` into services with narrower dependencies
   - [x] 4.3 Refactor `src/lib/youtube/importer.ts` and `src/lib/youtube/fetch.ts` so transport, reference resolution, and import orchestration move behind narrower typed service objects instead of exported free-function collections
   - [x] 4.4 Review `src/lib/youtube/mapper.ts` and related YouTube policy helpers to keep trivial stateless parsing local while moving coordinated mapping behavior behind typed collaborators where that improves boundaries
-  - [ ] 4.5 Fold `src/lib/auth/admin.ts` and `src/lib/profiles.ts` into clearer server-side object boundaries so admin/session and profile resolution stop depending on export-heavy helper bags
+  - [x] 4.5 Fold `src/lib/auth/admin.ts` and `src/lib/profiles.ts` into clearer server-side object boundaries so admin/session and profile resolution stop depending on export-heavy helper bags
   - [ ] 4.6 Tighten admin action typing and shared form parsing, including removal of remaining `any`-style escape hatches where practical
   - [ ] 4.7 Update `tests/admin/` and `tests/lib/youtube/` coverage to validate the new service boundaries while preserving route behavior
 

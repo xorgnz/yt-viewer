@@ -1,36 +1,59 @@
-// Simple hard-coded admin auth utilities
-// Note: For development/demo purposes only. Do not use in production as-is.
+import type { Cookies } from '@sveltejs/kit';
 
-export const ADMIN_COOKIE = 'ytcw_admin';
+type AdminSessionCookies = Partial<Pick<Cookies, 'get' | 'set' | 'delete'>>;
 
-// Hard-coded password with optional env override
-const DEFAULT_PASSWORD = 'admin';
-export const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || DEFAULT_PASSWORD;
-
-export function verifyAdminPassword(password: string): boolean
+export class AdminPasswordPolicy
 {
-    return String(password) === String(ADMIN_PASSWORD);
+    private static readonly DEFAULT_PASSWORD = 'admin';
+
+    static get configuredPassword(): string
+    {
+        return process.env.ADMIN_PASSWORD || AdminPasswordPolicy.DEFAULT_PASSWORD;
+    }
+
+    static verify(password: string): boolean
+    {
+        return String(password) === String(AdminPasswordPolicy.configuredPassword);
+    }
 }
 
-// Minimal cookie-based session helpers
-export function setAdminSession(cookies: any): void
+export class AdminSessionCookieStore
 {
-    cookies.set(ADMIN_COOKIE, '1', {
-        path: '/',
-        httpOnly: true,
-        sameSite: 'lax',
-        // Non-secure in dev; consider secure: true behind HTTPS
-        secure: false,
-        maxAge: 60 * 60 * 8 // 8 hours
-    });
-}
+    static readonly COOKIE_NAME = 'ytcw_admin';
 
-export function clearAdminSession(cookies: any): void
-{
-    cookies.delete(ADMIN_COOKIE, { path: '/' });
-}
+    private readonly cookies: AdminSessionCookies;
 
-export function hasAdminSession(cookies: any): boolean
-{
-    return cookies.get(ADMIN_COOKIE) === '1';
+    constructor(cookies: AdminSessionCookies)
+    {
+        this.cookies = cookies;
+    }
+
+    hasSession(): boolean
+    {
+        return this.cookies.get?.(AdminSessionCookieStore.COOKIE_NAME) === '1';
+    }
+
+    setSession(): void
+    {
+        if (!this.cookies.set) {
+            throw new Error('Admin session cookie writer is not available.');
+        }
+
+        this.cookies.set(AdminSessionCookieStore.COOKIE_NAME, '1', {
+            path: '/',
+            httpOnly: true,
+            sameSite: 'lax',
+            secure: false,
+            maxAge: 60 * 60 * 8
+        });
+    }
+
+    clearSession(): void
+    {
+        if (!this.cookies.delete) {
+            throw new Error('Admin session cookie deleter is not available.');
+        }
+
+        this.cookies.delete(AdminSessionCookieStore.COOKIE_NAME, { path: '/' });
+    }
 }

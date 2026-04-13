@@ -1,7 +1,11 @@
 import type { Cookies } from '@sveltejs/kit';
 import { ProfileDAO } from '$lib/daos/profileDAO';
 import type { Profile } from '$lib/entities/profile';
-import { DEFAULT_PROFILE_KEY, ensureProfiles, getActiveProfileKey, type ProfileKey } from '$lib/profiles';
+import {
+    ProfileCatalog,
+    ProfileSelectionCookieStore,
+    type ProfileKey
+} from '$lib/profiles';
 
 export class ServerProfileContext
 {
@@ -16,10 +20,10 @@ export class ServerProfileContext
 
     static resolve(profileDAO: ProfileDAO, cookies: Pick<Cookies, 'get'>): ServerProfileContext
     {
-        ensureProfiles(profileDAO);
+        ProfileCatalog.ensureProfiles(profileDAO);
 
-        const requestedProfileKey = getActiveProfileKey(cookies);
-        const activeProfile = profileDAO.getByKey(requestedProfileKey) || profileDAO.getByKey(DEFAULT_PROFILE_KEY);
+        const requestedProfileKey = new ProfileSelectionCookieStore(cookies).getActiveProfileKey();
+        const activeProfile = profileDAO.getByKey(requestedProfileKey) || profileDAO.getByKey(ProfileCatalog.DEFAULT_KEY);
 
         if (!activeProfile) {
             throw new Error('Failed to resolve a supported active profile.');

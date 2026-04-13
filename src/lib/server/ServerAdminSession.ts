@@ -1,6 +1,6 @@
 import type { Cookies } from '@sveltejs/kit';
 import { redirect } from '@sveltejs/kit';
-import { clearAdminSession, hasAdminSession, setAdminSession, verifyAdminPassword } from '$lib/auth/admin';
+import { AdminPasswordPolicy, AdminSessionCookieStore } from '$lib/auth/admin';
 
 export class ServerAdminSession
 {
@@ -13,22 +13,22 @@ export class ServerAdminSession
 
     static resolve(cookies: Pick<Cookies, 'get'>): ServerAdminSession
     {
-        return new ServerAdminSession(hasAdminSession(cookies));
+        return new ServerAdminSession(new AdminSessionCookieStore(cookies).hasSession());
     }
 
     static authenticate(cookies: Pick<Cookies, 'set'>, password: string): boolean
     {
-        if (!verifyAdminPassword(password)) {
+        if (!AdminPasswordPolicy.verify(password)) {
             return false;
         }
 
-        setAdminSession(cookies);
+        new AdminSessionCookieStore(cookies).setSession();
         return true;
     }
 
     static clear(cookies: Pick<Cookies, 'delete'>): void
     {
-        clearAdminSession(cookies);
+        new AdminSessionCookieStore(cookies).clearSession();
     }
 
     requireRouteAccess(pathname: string): void

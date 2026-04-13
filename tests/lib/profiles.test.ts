@@ -3,10 +3,9 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { ALL_DDL } from '../../src/lib/daos/_schema';
 import { ProfileDAO } from '../../src/lib/daos/profileDAO';
 import {
-    DEFAULT_PROFILE_KEY,
-    ensureProfiles,
-    getActiveProfileKey,
-    sanitizeReturnTo
+    ProfileCatalog,
+    ProfileReturnPathPolicy,
+    ProfileSelectionCookieStore
 } from '../../src/lib/profiles';
 
 describe('profile helpers', () => {
@@ -22,7 +21,7 @@ describe('profile helpers', () => {
     it('ensures the hard-coded profile records exist', () => {
         const profileDAO = new ProfileDAO(db);
 
-        ensureProfiles(profileDAO);
+        ProfileCatalog.ensureProfiles(profileDAO);
 
         const profiles = profileDAO.list().map((profile) => ({ key: profile.key, name: profile.name }));
         expect(profiles).toEqual([
@@ -32,15 +31,15 @@ describe('profile helpers', () => {
     });
 
     it('falls back to the default profile key when the cookie is missing or invalid', () => {
-        expect(getActiveProfileKey({ get: () => undefined } as any)).toBe(DEFAULT_PROFILE_KEY);
-        expect(getActiveProfileKey({ get: () => 'mystery' } as any)).toBe(DEFAULT_PROFILE_KEY);
-        expect(getActiveProfileKey({ get: () => 'child' } as any)).toBe('child');
+        expect(new ProfileSelectionCookieStore({ get: () => undefined } as any).getActiveProfileKey()).toBe(ProfileCatalog.DEFAULT_KEY);
+        expect(new ProfileSelectionCookieStore({ get: () => 'mystery' } as any).getActiveProfileKey()).toBe(ProfileCatalog.DEFAULT_KEY);
+        expect(new ProfileSelectionCookieStore({ get: () => 'child' } as any).getActiveProfileKey()).toBe('child');
     });
 
     it('sanitizes return paths to internal routes only', () => {
-        expect(sanitizeReturnTo('/viewer?groupId=1')).toBe('/viewer?groupId=1');
-        expect(sanitizeReturnTo('https://example.com')).toBe('/viewer');
-        expect(sanitizeReturnTo('//example.com')).toBe('/viewer');
-        expect(sanitizeReturnTo('')).toBe('/viewer');
+        expect(ProfileReturnPathPolicy.sanitize('/viewer?groupId=1')).toBe('/viewer?groupId=1');
+        expect(ProfileReturnPathPolicy.sanitize('https://example.com')).toBe('/viewer');
+        expect(ProfileReturnPathPolicy.sanitize('//example.com')).toBe('/viewer');
+        expect(ProfileReturnPathPolicy.sanitize('')).toBe('/viewer');
     });
 });

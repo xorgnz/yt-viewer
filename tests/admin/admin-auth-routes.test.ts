@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { ADMIN_PASSWORD } from '../../src/lib/auth/admin';
+import { AdminPasswordPolicy } from '../../src/lib/auth/admin';
 
 type AdminLoginRouteModule = typeof import('../../src/routes/admin/login/+page.server');
 type AdminLogoutRouteModule = typeof import('../../src/routes/admin/logout/+server');
@@ -9,7 +9,7 @@ describe('admin auth routes', () => {
         const routeModule: AdminLoginRouteModule = await import('../../src/routes/admin/login/+page.server');
         const cookieCalls: Array<{ name: string; value: string; options: Record<string, any> }> = [];
         const form = new FormData();
-        form.set('password', ADMIN_PASSWORD);
+        form.set('password', AdminPasswordPolicy.configuredPassword);
 
         await expect(routeModule.actions.default({
             request: new Request('http://localhost/admin/login', {

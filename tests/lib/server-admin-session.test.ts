@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { ADMIN_PASSWORD } from '../../src/lib/auth/admin';
+import { AdminPasswordPolicy } from '../../src/lib/auth/admin';
 import { ServerAdminSession } from '../../src/lib/server/ServerAdminSession';
 
 describe('ServerAdminSession', () => {
@@ -24,7 +24,7 @@ describe('ServerAdminSession', () => {
         };
 
         expect(ServerAdminSession.authenticate(cookies as any, 'wrong')).toBe(false);
-        expect(ServerAdminSession.authenticate(cookies as any, ADMIN_PASSWORD)).toBe(true);
+        expect(ServerAdminSession.authenticate(cookies as any, AdminPasswordPolicy.configuredPassword)).toBe(true);
         expect(cookieCalls).toEqual([
             {
                 name: 'ytcw_admin',
