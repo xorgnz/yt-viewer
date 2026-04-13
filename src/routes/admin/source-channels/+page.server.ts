@@ -3,11 +3,19 @@ import { redirect, fail } from '@sveltejs/kit';
 import { ServerDatabaseContext } from '$lib/server/ServerDatabaseContext';
 import { ServerActionForm } from '$lib/server/ServerActionForm';
 import { AdminSourceChannelServiceContext } from '$lib/server/admin/AdminSourceChannelServiceContext';
+import type { AdminSourceChannelPageService } from '$lib/server/admin/AdminSourceChannelPageService';
+
+function withPageService<T>(work: (pageService: AdminSourceChannelPageService) => T | Promise<T>): Promise<T>
+{
+    return ServerDatabaseContext.run(({ db }) => {
+        return work(AdminSourceChannelServiceContext.resolve(db).pageService);
+    });
+}
 
 export const load: PageServerLoad = async () =>
 {
-    return ServerDatabaseContext.run(({ db }) => {
-        return AdminSourceChannelServiceContext.resolve(db).pageService.loadPageData();
+    return withPageService((pageService) => {
+        return pageService.loadPageData();
     });
 };
 
@@ -25,8 +33,8 @@ export const actions: Actions = {
             return fail(400, { message: 'youtube_id and title are required.' });
         }
 
-        const result = await ServerDatabaseContext.run(async ({ db }) => {
-            return AdminSourceChannelServiceContext.resolve(db).pageService.createSourceChannel({
+        const result = await withPageService((pageService) => {
+            return pageService.createSourceChannel({
                 youtubeInput,
                 title,
                 description,
@@ -55,8 +63,8 @@ export const actions: Actions = {
             return fail(400, { message: 'id and title are required.' });
         }
 
-        const result = await ServerDatabaseContext.run(({ db }) => {
-            return AdminSourceChannelServiceContext.resolve(db).pageService.updateSourceChannel({
+        const result = await withPageService((pageService) => {
+            return pageService.updateSourceChannel({
                 id,
                 title,
                 description,
@@ -77,8 +85,8 @@ export const actions: Actions = {
         const id = form.getPositiveInteger('id');
         if (id === null) return fail(400, { message: 'id is required.' });
 
-        const result = await ServerDatabaseContext.run(({ db }) => {
-            return AdminSourceChannelServiceContext.resolve(db).pageService.deleteSourceChannel({ id });
+        const result = await withPageService((pageService) => {
+            return pageService.deleteSourceChannel({ id });
         });
 
         throw redirect(303, result.redirectTo);
@@ -89,8 +97,8 @@ export const actions: Actions = {
         const id = form.getPositiveInteger('id');
         if (id === null) return fail(400, { message: 'id is required.' });
 
-        const result = await ServerDatabaseContext.run(async ({ db }) => {
-            return AdminSourceChannelServiceContext.resolve(db).pageService.refreshSourceChannel({ id });
+        const result = await withPageService((pageService) => {
+            return pageService.refreshSourceChannel({ id });
         });
 
         if (!result.ok) {
