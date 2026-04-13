@@ -10,13 +10,12 @@ export const load: LayoutServerLoad = async ({ cookies }) =>
         // Resolve the site-wide active profile once so pages can treat it as current identity.
         const profileDAO = new ProfileDAO(db);
         const profileContext = ServerProfileContext.resolve(profileDAO, cookies);
-        const adminSession = ServerAdminSession.resolve(cookies);
 
         return {
             profiles: profileDAO.list(),
             activeProfileKey: profileContext.activeProfileKey,
             activeProfileName: profileContext.activeProfileName,
-            isAdminLoggedIn: adminSession.isLoggedIn
+            isAdminLoggedIn: ServerAdminSession.isLoggedIn(cookies)
         };
     });
 };

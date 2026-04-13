@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { AdminPasswordPolicy } from '../../src/lib/auth/admin';
+import { AdminPasswordPolicy } from '../../src/lib/auth/AdminPasswordPolicy';
 
 type AdminLoginRouteModule = typeof import('../../src/routes/admin/login/+page.server');
 type AdminLogoutRouteModule = typeof import('../../src/routes/admin/logout/+server');

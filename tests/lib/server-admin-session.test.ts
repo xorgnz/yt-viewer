@@ -1,18 +1,18 @@
 import { describe, expect, it } from 'vitest';
-import { AdminPasswordPolicy } from '../../src/lib/auth/admin';
+import { AdminPasswordPolicy } from '../../src/lib/auth/AdminPasswordPolicy';
 import { ServerAdminSession } from '../../src/lib/server/ServerAdminSession';
 
 describe('ServerAdminSession', () => {
     it('resolves login state from cookies', () => {
-        const loggedOutSession = ServerAdminSession.resolve({
+        const loggedOut = ServerAdminSession.isLoggedIn({
             get: () => undefined
         } as any);
-        const loggedInSession = ServerAdminSession.resolve({
+        const loggedIn = ServerAdminSession.isLoggedIn({
             get: () => '1'
         } as any);
 
-        expect(loggedOutSession.isLoggedIn).toBe(false);
-        expect(loggedInSession.isLoggedIn).toBe(true);
+        expect(loggedOut).toBe(false);
+        expect(loggedIn).toBe(true);
     });
 
     it('rejects invalid passwords and sets the admin session on success', () => {
@@ -39,15 +39,15 @@ describe('ServerAdminSession', () => {
     });
 
     it('redirects unauthenticated admin requests and allows login and non-admin paths', () => {
-        const loggedOutSession = ServerAdminSession.resolve({
+        const isLoggedIn = ServerAdminSession.isLoggedIn({
             get: () => undefined
         } as any);
 
-        expect(() => loggedOutSession.requireRouteAccess('/admin/login')).not.toThrow();
-        expect(() => loggedOutSession.requireRouteAccess('/viewer')).not.toThrow();
+        expect(() => ServerAdminSession.requireRouteAccess('/admin/login', isLoggedIn)).not.toThrow();
+        expect(() => ServerAdminSession.requireRouteAccess('/viewer', isLoggedIn)).not.toThrow();
 
         try {
-            loggedOutSession.requireRouteAccess('/admin/source-channels');
+            ServerAdminSession.requireRouteAccess('/admin/source-channels', isLoggedIn);
             throw new Error('expected redirect');
         } catch (error: any) {
             expect(error.status).toBe(302);

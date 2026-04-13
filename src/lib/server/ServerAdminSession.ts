@@ -1,39 +1,40 @@
 import type { Cookies } from '@sveltejs/kit';
 import { redirect } from '@sveltejs/kit';
-import { AdminPasswordPolicy, AdminSessionCookieStore } from '$lib/auth/admin';
+import { AdminPasswordPolicy } from '$lib/auth/AdminPasswordPolicy';
 
 export class ServerAdminSession
 {
-    readonly isLoggedIn: boolean;
+    private static readonly COOKIE_NAME = 'ytcw_admin';
 
-    private constructor(isLoggedIn: boolean)
+    static isLoggedIn(cookies: Cookies): boolean
     {
-        this.isLoggedIn = isLoggedIn;
+        return cookies.get(ServerAdminSession.COOKIE_NAME) === '1';
     }
 
-    static resolve(cookies: Pick<Cookies, 'get'>): ServerAdminSession
-    {
-        return new ServerAdminSession(new AdminSessionCookieStore(cookies).hasSession());
-    }
-
-    static authenticate(cookies: Pick<Cookies, 'set'>, password: string): boolean
+    static authenticate(cookies: Cookies, password: string): boolean
     {
         if (!AdminPasswordPolicy.verify(password)) {
             return false;
         }
 
-        new AdminSessionCookieStore(cookies).setSession();
+        cookies.set(ServerAdminSession.COOKIE_NAME, '1', {
+            path: '/',
+            httpOnly: true,
+            sameSite: 'lax',
+            secure: false,
+            maxAge: 60 * 60 * 8
+        });
         return true;
     }
 
-    static clear(cookies: Pick<Cookies, 'delete'>): void
+    static clear(cookies: Cookies): void
     {
-        new AdminSessionCookieStore(cookies).clearSession();
+        cookies.delete(ServerAdminSession.COOKIE_NAME, { path: '/' });
     }
 
-    requireRouteAccess(pathname: string): void
+    static requireRouteAccess(pathname: string, isLoggedIn: boolean): void
     {
-        if (pathname.startsWith('/admin') && !pathname.startsWith('/admin/login') && !this.isLoggedIn) {
+        if (pathname.startsWith('/admin') && !pathname.startsWith('/admin/login') && !isLoggedIn) {
             throw redirect(302, '/admin/login');
         }
     }
