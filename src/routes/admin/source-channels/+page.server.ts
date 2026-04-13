@@ -1,18 +1,14 @@
 import type { Actions, PageServerLoad } from './$types';
-import { SourceChannelDAO } from '$lib/daos/sourceChannelDAO';
 import { redirect, fail } from '@sveltejs/kit';
-import { YouTubeClient, YouTubeApiError } from '$lib/youtube/youTubeClient';
-import { importChannelFromYouTube } from '$lib/youtube/importer';
-import { resolveChannelReference } from '$lib/youtube/fetch';
 import { ServerDatabaseContext } from '$lib/server/ServerDatabaseContext';
 import { ServerActionForm } from '$lib/server/ServerActionForm';
+import { AdminSourceChannelServiceContext } from '$lib/server/admin/AdminSourceChannelServiceContext';
 
 export const load: PageServerLoad = async () =>
 {
     return ServerDatabaseContext.run(({ db }) => {
-        const dao = new SourceChannelDAO(db);
-        const channels = dao.list();
-        return { channels };
+        const pageService = AdminSourceChannelServiceContext.createPageService(db);
+        return pageService.loadPageData();
     });
 };
 
@@ -30,29 +26,22 @@ export const actions: Actions = {
             return fail(400, { message: 'youtube_id and title are required.' });
         }
 
-        let yt: YouTubeClient;
-        try {
-            yt = new YouTubeClient();
-        } catch (e: any) {
-            return fail(500, { message: e?.message || 'YouTube API key not configured.' });
-        }
-
-        const resolved = await resolveChannelReference(yt, youtubeInput);
-        if (!resolved.channelId) {
-            return fail(400, { message: 'Enter a valid YouTube channel ID, handle, or channel URL.' });
-        }
-
-        await ServerDatabaseContext.run(({ db }) => {
-            const dao = new SourceChannelDAO(db);
-            dao.upsert({
-                youtube_id: resolved.channelId,
+        const result = await ServerDatabaseContext.run(async ({ db }) => {
+            const pageService = AdminSourceChannelServiceContext.createPageService(db);
+            return pageService.createSourceChannel({
+                youtubeInput,
                 title,
                 description,
                 thumbnail_url,
                 published_at
-            } as any);
+            });
         });
-        throw redirect(303, '/admin/source-channels');
+
+        if (!result.ok) {
+            return fail(result.error.status, { message: result.error.message });
+        }
+
+        throw redirect(303, result.data.redirectTo);
     },
 
     update: async ({ request }) => {
@@ -69,26 +58,21 @@ export const actions: Actions = {
         }
 
         const result = await ServerDatabaseContext.run(({ db }) => {
-            const dao = new SourceChannelDAO(db);
-            const existing = dao.get(id);
-            if (!existing) {
-                return fail(404, { message: 'SourceChannel not found.' });
-            }
-
-            dao.upsert({
-                youtube_id: existing.youtube_id,
+            const pageService = AdminSourceChannelServiceContext.createPageService(db);
+            return pageService.updateSourceChannel({
+                id,
                 title,
                 description,
                 thumbnail_url,
                 published_at
-            } as any);
-            return null;
+            });
         });
 
-        if (result) {
-            return result;
+        if (!result.ok) {
+            return fail(result.error.status, { message: result.error.message });
         }
-        throw redirect(303, '/admin/source-channels');
+
+        throw redirect(303, result.data.redirectTo);
     },
 
     delete: async ({ request }) => {
@@ -96,11 +80,12 @@ export const actions: Actions = {
         const id = form.getPositiveInteger('id');
         if (id === null) return fail(400, { message: 'id is required.' });
 
-        await ServerDatabaseContext.run(({ db }) => {
-            const dao = new SourceChannelDAO(db);
-            dao.remove(id);
+        const result = await ServerDatabaseContext.run(({ db }) => {
+            const pageService = AdminSourceChannelServiceContext.createPageService(db);
+            return pageService.deleteSourceChannel({ id });
         });
-        throw redirect(303, '/admin/source-channels');
+
+        throw redirect(303, result.redirectTo);
     },
 
     refresh: async ({ request }) => {
@@ -109,57 +94,14 @@ export const actions: Actions = {
         if (id === null) return fail(400, { message: 'id is required.' });
 
         const result = await ServerDatabaseContext.run(async ({ db }) => {
-            const dao = new SourceChannelDAO(db);
-            const existing = dao.get(id);
-            if (!existing) {
-                return fail(404, { message: 'SourceChannel not found.' });
-            }
-
-            let yt: YouTubeClient;
-            try {
-                yt = new YouTubeClient();
-            } catch (e: any) {
-                return fail(500, { message: e?.message || 'YouTube API key not configured.' });
-            }
-
-            try {
-                const result = await importChannelFromYouTube(db, yt, existing.youtube_id);
-                if (result.channelId === null) {
-                    return fail(400, { message: 'Invalid or unknown YouTube channel ID. Please verify the ID starts with "UC" and is correct.' });
-                }
-                dao.markRefreshed(id, Date.now());
-            } catch (e: any) {
-                console.error('Refresh failed for channel', existing.youtube_id, e);
-
-                if (e instanceof YouTubeApiError) {
-                    const reasons = (e.errors || []).map(x => x.reason || '').join(',');
-                    const blob = `${e.code}:${reasons}:${e.message}`;
-                    const isQuota = /rateLimitExceeded|quotaExceeded/i.test(blob) || e.status === 429;
-                    if (isQuota) {
-                        return fail(429, { message: 'YouTube quota exceeded or rate limited. Please try again later.' });
-                    }
-                    if (e.status === 400 || e.status === 404) {
-                        return fail(400, { message: 'Invalid request to YouTube. Please verify the channel ID and try again.' });
-                    }
-                    if (e.status >= 500) {
-                        return fail(502, { message: 'YouTube service is temporarily unavailable. Please try again later.' });
-                    }
-                    return fail(502, { message: e.message || 'Failed to refresh from YouTube.' });
-                }
-
-                const name = (e && e.name) || '';
-                if (name === 'AbortError') {
-                    return fail(504, { message: 'Timed out contacting YouTube. Please try again.' });
-                }
-                return fail(502, { message: 'Network error contacting YouTube. Please try again later.' });
-            }
-            return null;
+            const pageService = AdminSourceChannelServiceContext.createPageService(db);
+            return pageService.refreshSourceChannel({ id });
         });
 
-        if (result) {
-            return result;
+        if (!result.ok) {
+            return fail(result.error.status, { message: result.error.message });
         }
 
-        throw redirect(303, '/admin/source-channels');
+        throw redirect(303, result.data.redirectTo);
     }
 };
