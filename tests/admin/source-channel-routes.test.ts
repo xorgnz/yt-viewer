@@ -179,6 +179,22 @@ describe('admin source channel routes', () => {
         });
     });
 
+    it('returns 400 for missing lookup input without touching lookup service dependencies', async () => {
+        const response = await lookupRoute.GET({
+            url: new URL('http://localhost/admin/source-channels/lookup')
+        } as never);
+
+        expect(response.status).toBe(400);
+        await expect(response.json()).resolves.toEqual({
+            ok: false,
+            error: 'youtube_id is required'
+        });
+        expect(runMock).not.toHaveBeenCalled();
+        expect(resolveServiceContextMock).not.toHaveBeenCalled();
+        expect(resolveLookupServiceMock).not.toHaveBeenCalled();
+        expect(lookupService.lookupSourceChannel).not.toHaveBeenCalled();
+    });
+
     it('maps lookup service failures to JSON error responses', async () => {
         lookupService.lookupSourceChannel.mockResolvedValue({
             ok: false,

@@ -90,5 +90,5 @@
   - [x] 8.1 Decouple admin source-channel lookup flow from database context where lookup behavior does not require persistence dependencies
   - [x] 8.2 Introduce typed viewer action-result contracts in `src/routes/viewer/+page.svelte` bulk-action orchestration to remove remaining `any`-style casts
   - [x] 8.3 Reduce repeated source-channel route context resolution by introducing a thin request-scoped helper pattern for service access
-  - [ ] 8.4 Add or update focused tests that validate lookup decoupling and viewer action-result contract behavior
+  - [x] 8.4 Add or update focused tests that validate lookup decoupling and viewer action-result contract behavior
   - [ ] 8.5 Run repo-wide validation (`npm run check`, `npm run test`) and resolve regressions before marking the hardening slice complete

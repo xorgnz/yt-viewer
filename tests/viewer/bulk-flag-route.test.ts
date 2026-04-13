@@ -88,6 +88,16 @@ describe('viewer bulk flag actions', () => {
         };
     }
 
+    function expectViewerBulkContract(result: unknown)
+    {
+        expect(result).toEqual(expect.objectContaining({
+            ok: expect.any(Boolean),
+            outcome: expect.stringMatching(/^(full_success|partial_success|failed)$/),
+            message: expect.any(String),
+            succeededIds: expect.arrayContaining([])
+        }));
+    }
+
     it('toggles a single flag through the thin route handler', async () => {
         const form = new FormData();
         form.set('videoId', '1');
@@ -163,6 +173,7 @@ describe('viewer bulk flag actions', () => {
             }),
             cookies: cookieJar()
         } as any);
+        expectViewerBulkContract(result);
 
         expect(result).toMatchObject({
             ok: true,
@@ -635,6 +646,7 @@ describe('viewer bulk flag actions', () => {
             }),
             cookies: cookieJar()
         } as any);
+        expectViewerBulkContract(restoreResult);
 
         expect(restoreResult).toMatchObject({
             ok: true,
