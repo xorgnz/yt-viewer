@@ -39,6 +39,9 @@ The refactor should preserve user-facing behavior as closely as practical, but m
 12. The feature must not rely on silent behavior changes as a substitute for architectural clarity.
 13. Where application-domain behavior spans multiple operations or shared dependencies, prefer typed classes or explicit service objects over exported bags of free functions.
 14. Internal application modules should not preserve library-style public APIs unless multiple concrete callers require that boundary.
+15. Admin source-channel lookup should not require database initialization when the workflow only depends on YouTube lookup services.
+16. Viewer route UI orchestration should avoid `any`-typed action payload handling where typed result contracts are practical.
+17. Route handlers should minimize repeated service-context resolution boilerplate when a per-request context helper can keep orchestration thin.
 
 ## 5. Non-Goals
 
@@ -71,6 +74,13 @@ The refactor should preserve user-facing behavior as closely as practical, but m
 - Remove obsolete code paths once replacements are proven
 - Close remaining high-value architectural duplication
 
+### Phase 4: Post-Refactor Boundary Hardening
+
+- Decouple admin source-channel lookup from unnecessary database context dependencies
+- Tighten typed route/UI action-result boundaries for viewer bulk workflows
+- Reduce route-level service-context repetition where thin orchestration helpers improve clarity
+- Add focused tests that lock down these narrower boundaries
+
 ## 7. Design Considerations
 
 - Prefer incremental module extraction over wholesale rewrites.
@@ -90,6 +100,7 @@ The refactor should preserve user-facing behavior as closely as practical, but m
 - Migration and bootstrap work introduced new shared infrastructure that should be aligned with the broader repository architecture rather than left as a parallel pattern.
 - Several application modules still expose free-function collections even when they already share concrete dependencies or are immediately wrapped by higher-level classes.
 - Current follow-up hotspots include YouTube import/fetch orchestration, admin session helpers, and profile resolution utilities that should converge on narrower object-oriented boundaries.
+- Current follow-up hotspots also include lookup-only admin workflows that still run through DB context, viewer page action-result typing in UI orchestration, and repeated service-context resolution patterns in admin routes.
 
 ## 9. Success Metrics
 
@@ -111,3 +122,4 @@ The refactor should preserve user-facing behavior as closely as practical, but m
 - Moderate restructuring is acceptable as long as user-facing behavior remains effectively equivalent.
 - Obsolete code may be removed once replacement behavior is complete and verified.
 - Application code should favor narrower object-oriented boundaries over export-heavy helper modules when the code represents coordinated domain behavior rather than trivial stateless utility logic.
+- Post-refactor follow-up should prioritize removing unnecessary DB coupling from lookup-only paths and reducing `any`-typed route/UI payload handling in high-traffic viewer flows.
