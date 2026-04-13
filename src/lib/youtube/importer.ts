@@ -2,7 +2,7 @@ import type Database from 'better-sqlite3';
 import { SourceChannelDAO } from '../daos/sourceChannelDAO';
 import { VideoDAO } from '../daos/videoDAO';
 import { YouTubeChannelDataService } from './fetch';
-import { mapChannelItemToUpsert, mapPlaylistItemToVideoUpsert } from './mapper';
+import { YouTubeChannelUpsertMapper, YouTubeVideoUpsertMapper } from './mapper';
 import type { YouTubeClient } from './youTubeClient';
 
 export interface ImportResult
@@ -17,19 +17,25 @@ export class YouTubeChannelImportService
     private readonly channelDataService: YouTubeChannelDataService;
     private readonly sourceChannelDAO: SourceChannelDAO;
     private readonly videoDAO: VideoDAO;
+    private readonly channelMapper: YouTubeChannelUpsertMapper;
+    private readonly videoMapper: YouTubeVideoUpsertMapper;
 
     constructor(
         db: Database.Database,
         client: YouTubeClient,
         channelDataService: YouTubeChannelDataService = new YouTubeChannelDataService(client),
         sourceChannelDAO: SourceChannelDAO = new SourceChannelDAO(db),
-        videoDAO: VideoDAO = new VideoDAO(db)
+        videoDAO: VideoDAO = new VideoDAO(db),
+        channelMapper: YouTubeChannelUpsertMapper = new YouTubeChannelUpsertMapper(),
+        videoMapper: YouTubeVideoUpsertMapper = new YouTubeVideoUpsertMapper()
     )
     {
         this.db = db;
         this.channelDataService = channelDataService;
         this.sourceChannelDAO = sourceChannelDAO;
         this.videoDAO = videoDAO;
+        this.channelMapper = channelMapper;
+        this.videoMapper = videoMapper;
     }
 
     async importChannel(channelExternalId: string): Promise<ImportResult>
@@ -50,7 +56,7 @@ export class YouTubeChannelImportService
 
         // Run inside a transaction for consistency.
         const transaction = this.db.transaction(() => {
-            const channelUpsert = mapChannelItemToUpsert(channel);
+            const channelUpsert = this.channelMapper.toChannelUpsert(channel);
             this.sourceChannelDAO.upsert(channelUpsert);
 
             const sourceChannel = this.sourceChannelDAO.getByExternalId(channelUpsert.youtube_id);
@@ -61,7 +67,7 @@ export class YouTubeChannelImportService
             let videosUpserted = 0;
             for (const item of videos) {
                 const videoId = item.contentDetails?.videoId || item.snippet?.resourceId?.videoId || '';
-                const videoUpsert = mapPlaylistItemToVideoUpsert(
+                const videoUpsert = this.videoMapper.toVideoUpsert(
                     item,
                     sourceChannel.id,
                     videoMetadataById.get(videoId)

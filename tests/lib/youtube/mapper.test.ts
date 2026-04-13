@@ -1,13 +1,12 @@
 import { describe, it, expect } from 'vitest';
 import {
-    classifyVideoLength,
-    mapChannelItemToUpsert,
-    mapPlaylistItemToVideoUpsert,
-    parseIso8601DurationSeconds
+    YouTubeChannelUpsertMapper,
+    YouTubeVideoUpsertMapper
 } from '../../../src/lib/youtube/mapper';
 
 describe('youtube mapper (task 3.3)', () => {
     it('maps channel item to channel upsert payload', () => {
+        const mapper = new YouTubeChannelUpsertMapper();
         const item: any = {
             id: 'UC_123',
             snippet: {
@@ -21,7 +20,7 @@ describe('youtube mapper (task 3.3)', () => {
                 }
             }
         };
-        const up = mapChannelItemToUpsert(item);
+        const up = mapper.toChannelUpsert(item);
         expect(up).toMatchObject({
             youtube_id: 'UC_123',
             title: 'SourceChannel Title',
@@ -32,6 +31,7 @@ describe('youtube mapper (task 3.3)', () => {
     });
 
     it('maps playlistItems item to video upsert payload with video metadata classification', () => {
+        const mapper = new YouTubeVideoUpsertMapper();
         const item: any = {
             snippet: {
                 title: 'Video A',
@@ -56,7 +56,7 @@ describe('youtube mapper (task 3.3)', () => {
                 duration: 'PT59S'
             }
         };
-        const up = mapPlaylistItemToVideoUpsert(item, 42, videoMetadata);
+        const up = mapper.toVideoUpsert(item, 42, videoMetadata);
         expect(up).toMatchObject({
             youtube_id: 'vid123',
             channel_id: 42,
@@ -69,18 +69,47 @@ describe('youtube mapper (task 3.3)', () => {
         expect(up.duration_seconds).toBe(59);
     });
 
-    it('parses ISO-8601 durations and classifies length', () => {
-        expect(parseIso8601DurationSeconds('PT59S')).toBe(59);
-        expect(parseIso8601DurationSeconds('PT1M1S')).toBe(61);
-        expect(parseIso8601DurationSeconds('PT2H3M4S')).toBe(7384);
-        expect(parseIso8601DurationSeconds('bad')).toBeNull();
+    it('derives long and unknown classifications through the video mapper boundary', () => {
+        const mapper = new YouTubeVideoUpsertMapper();
 
-        expect(classifyVideoLength(59)).toBe('short');
-        expect(classifyVideoLength(61)).toBe('long');
-        expect(classifyVideoLength(null)).toBe('unknown');
+        const longVideo = mapper.toVideoUpsert({
+            snippet: {
+                title: 'Long video',
+                resourceId: { videoId: 'long-video' }
+            },
+            contentDetails: {
+                videoId: 'long-video'
+            }
+        } as any, 5, {
+            id: 'long-video',
+            contentDetails: {
+                duration: 'PT2H3M4S'
+            }
+        } as any);
+
+        const unknownVideo = mapper.toVideoUpsert({
+            snippet: {
+                title: 'Unknown video',
+                resourceId: { videoId: 'unknown-video' }
+            },
+            contentDetails: {
+                videoId: 'unknown-video'
+            }
+        } as any, 5, {
+            id: 'unknown-video',
+            contentDetails: {
+                duration: 'bad'
+            }
+        } as any);
+
+        expect(longVideo.duration_seconds).toBe(7384);
+        expect(longVideo.length_classification).toBe('long');
+        expect(unknownVideo.duration_seconds).toBeNull();
+        expect(unknownVideo.length_classification).toBe('unknown');
     });
 
     it('falls back to unknown classification when video metadata is missing', () => {
+        const mapper = new YouTubeVideoUpsertMapper();
         const item: any = {
             snippet: {
                 title: 'Playlist fallback title',
@@ -95,7 +124,7 @@ describe('youtube mapper (task 3.3)', () => {
             }
         };
 
-        const up = mapPlaylistItemToVideoUpsert(item, 7);
+        const up = mapper.toVideoUpsert(item, 7);
         expect(up).toMatchObject({
             youtube_id: 'vid-missing-metadata',
             channel_id: 7,
