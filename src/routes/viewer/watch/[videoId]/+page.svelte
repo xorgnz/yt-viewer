@@ -308,8 +308,8 @@
     });
 </script>
 
-<div class="page stack">
-    <section class="panel">
+<div class="page stack watch-page">
+    <section class="panel watch-panel">
         <a class="back" href="/viewer">Back to video list</a>
 
         <h1 class="title">{data.video.title}</h1>
@@ -338,8 +338,10 @@
             <a class="yt-link" target="_blank" rel="noopener" href={`https://www.youtube.com/watch?v=${data.video.youtube_id}`}>Open on YouTube</a>
         </div>
 
-        <div class="player-wrap">
-            <div id="player" class="player" title={data.video.title}></div>
+        <div class="player-slot">
+            <div class="player-wrap">
+                <div id="player" class="player" title={data.video.title}></div>
+            </div>
         </div>
 
         <div class="inline-actions action-bar">
@@ -371,6 +373,23 @@
 </div>
 
 <style>
+    :global(.app-content) {
+        display: flex;
+        min-height: 100vh;
+    }
+
+    .watch-page {
+        flex: 1;
+        min-height: 0;
+    }
+
+    .watch-panel {
+        display: flex;
+        flex: 1;
+        flex-direction: column;
+        min-height: 0;
+    }
+
     .back {
         display: inline-block;
         margin-bottom: 1rem;
@@ -426,12 +445,26 @@
         color: var(--text-muted);
     }
 
+    .player-slot {
+        display: grid;
+        flex: 1;
+        min-height: 0;
+        place-items: center;
+        margin: 1rem 0;
+        container-type: size;
+    }
+
     .player-wrap {
         position: relative;
         width: 100%;
-        max-width: 960px;
+        max-height: 100%;
         aspect-ratio: 16 / 9;
-        margin: 1rem 0;
+    }
+
+    @supports (width: 1cqw) {
+        .player-wrap {
+            width: min(100cqw, calc(100cqh * 16 / 9));
+        }
     }
 
     .player {
@@ -455,5 +488,15 @@
         font-family: var(--font-body);
         font-size: 0.95rem;
         color: var(--text-muted);
+    }
+
+    @media (max-width: 900px) {
+        :global(.app-content) {
+            min-height: auto;
+        }
+
+        .player-wrap {
+            width: 100%;
+        }
     }
 </style>
