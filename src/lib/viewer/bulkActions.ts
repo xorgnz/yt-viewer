@@ -10,12 +10,12 @@ import type {
     ViewerSelectionVideoSnapshot
 } from '$lib/viewer/selection/types';
 
-export function getNextBulkFlagValue(controlState: ViewerSelectionControlState): ViewerSelectionFlagValue
+function getNextBulkFlagValue(controlState: ViewerSelectionControlState): ViewerSelectionFlagValue
 {
     return controlState === 'checked' ? 0 : 1;
 }
 
-export function getBulkActionFeedbackTone(outcome: unknown, ok: unknown): 'success' | 'warning' | 'error'
+function getBulkActionFeedbackTone(outcome: unknown, ok: unknown): 'success' | 'warning' | 'error'
 {
     if (outcome === 'partial_success') {
         return 'warning';
@@ -28,7 +28,7 @@ export function getBulkActionFeedbackTone(outcome: unknown, ok: unknown): 'succe
     return 'error';
 }
 
-export function buildViewerSelectionUndoPayload(state: ViewerSelectionState): BulkActionUndoState | null
+function buildViewerSelectionUndoPayload(state: ViewerSelectionState): BulkActionUndoState | null
 {
     const requestedVideoIds = [...state.selectedVideoIds];
     const originalStates = requestedVideoIds
@@ -57,7 +57,7 @@ export function buildViewerSelectionUndoPayload(state: ViewerSelectionState): Bu
     };
 }
 
-export function applyBulkFlagToVisibleVideos(
+function applyBulkFlagToVisibleVideos(
     videos: ViewerVideo[],
     kind: ViewerSelectionFlagKind,
     value: ViewerSelectionFlagValue,
@@ -81,7 +81,7 @@ export function applyBulkFlagToVisibleVideos(
     });
 }
 
-export function restoreVisibleVideoSnapshots(
+function restoreVisibleVideoSnapshots(
     videos: ViewerVideo[],
     restoredStates: ViewerSelectionVideoSnapshot[]
 ): ViewerVideo[]
@@ -112,7 +112,7 @@ export function restoreVisibleVideoSnapshots(
     });
 }
 
-export function updateVisibleVideoFlag(
+function updateVisibleVideoFlag(
     videos: ViewerVideo[],
     videoId: number,
     kind: ViewerSelectionFlagKind,
@@ -130,3 +130,12 @@ export function updateVisibleVideoFlag(
         };
     });
 }
+
+export const viewerBulkActions = {
+    getNextBulkFlagValue,
+    getBulkActionFeedbackTone,
+    buildViewerSelectionUndoPayload,
+    applyBulkFlagToVisibleVideos,
+    restoreVisibleVideoSnapshots,
+    updateVisibleVideoFlag
+};

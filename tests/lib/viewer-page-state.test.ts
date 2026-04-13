@@ -1,9 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
-    buildViewerFilterQuery,
-    deriveViewerFilterInputState,
-    deriveViewerPaginationState,
-    deriveViewerSelectionSummary
+    viewerPageState
 } from '../../src/lib/viewer/pageState';
 import { ViewerSelectionContext } from '../../src/lib/viewer/selection/context';
 import { viewerSelectionStateManager } from '../../src/lib/viewer/selection/core';
@@ -30,7 +27,7 @@ describe('viewer page state helpers', () => {
 
     it('builds filter query flags from input state', () => {
         const filters = createFilters({ groupId: 4 });
-        const inputState = deriveViewerFilterInputState({
+        const inputState = viewerPageState.deriveViewerFilterInputState({
             ...filters,
             term: 'space',
             watched: 'unwatched',
@@ -41,7 +38,7 @@ describe('viewer page state helpers', () => {
             limit: 25
         });
 
-        const query = new URLSearchParams(buildViewerFilterQuery(filters, inputState));
+        const query = new URLSearchParams(viewerPageState.buildViewerFilterQuery(filters, inputState));
 
         expect(query.get('term')).toBe('space');
         expect(query.get('watched')).toBe('all');
@@ -54,7 +51,7 @@ describe('viewer page state helpers', () => {
     });
 
     it('derives visible pagination state for large result sets', () => {
-        const pagination = deriveViewerPaginationState(createFilters({
+        const pagination = viewerPageState.deriveViewerPaginationState(createFilters({
             limit: 10,
             offset: 110
         }), 250);
@@ -90,7 +87,7 @@ describe('viewer page state helpers', () => {
         state = viewerSelectionStateManager.toggle(state, 2);
         state = viewerSelectionStateManager.reconcile(state, contextKey, pageTwoVideos);
 
-        const summary = deriveViewerSelectionSummary(state);
+        const summary = viewerPageState.deriveViewerSelectionSummary(state);
 
         expect(summary.hasActiveSelection).toBe(true);
         expect(summary.selectedCount).toBe(2);

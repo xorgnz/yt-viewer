@@ -3,31 +3,18 @@
     import { deserialize } from '$app/forms';
     import { goto } from '$app/navigation';
     import {
-        applyBulkFlagToVisibleVideos,
-        buildViewerSelectionUndoPayload,
-        getBulkActionFeedbackTone,
-        getNextBulkFlagValue,
-        restoreVisibleVideoSnapshots,
-        updateVisibleVideoFlag
+        viewerBulkActions
     } from '$lib/viewer/bulkActions';
     import ViewerBulkActionBar from '$lib/viewer/components/ViewerBulkActionBar.svelte';
     import ViewerFilterPanel from '$lib/viewer/components/ViewerFilterPanel.svelte';
     import ViewerPagination from '$lib/viewer/components/ViewerPagination.svelte';
     import ViewerResultsGrid from '$lib/viewer/components/ViewerResultsGrid.svelte';
     import {
-        buildViewerFilterQuery,
-        buildViewerPageHref,
-        createViewerSelectionSnapshots,
-        deriveViewerFilterInputState,
-        deriveViewerPaginationState,
-        deriveViewerSelectionSummary,
         FILTER_DEBOUNCE_MS,
-        findActiveViewerGroup
+        viewerPageState
     } from '$lib/viewer/pageState';
     import {
-        getViewerCardSelectionAction,
-        shouldClearViewerSelectionFromBackground,
-        shouldPreventViewerCardMouseDown
+        viewerSelectionInteractions
     } from '$lib/viewer/selectionInteractions';
     import type {
         BulkActionFeedback,
@@ -49,7 +36,7 @@
     export let data: ViewerPageData;
 
     let f = data.filters;
-    let activeVirtualChannel = findActiveViewerGroup(data.groups, f.groupId);
+    let activeVirtualChannel = viewerPageState.findActiveViewerGroup(data.groups, f.groupId);
     const today = new Date().toISOString().slice(0, 10);
     let totalPages = 1;
     let currentPage = 1;
@@ -77,7 +64,7 @@
 
     function buildPageHref(page: number): string
     {
-        return buildViewerPageHref(f, page);
+        return viewerPageState.buildViewerPageHref(f, page);
     }
 
     function clearPendingApply()
@@ -90,7 +77,7 @@
 
     function buildFilterQuery(): string
     {
-        return buildViewerFilterQuery(f, {
+        return viewerPageState.buildViewerFilterQuery(f, {
             termInput,
             dateFromInput,
             dateToInput,
@@ -148,7 +135,7 @@
 
     function handleCardClick(event: MouseEvent | KeyboardEvent, videoId: number)
     {
-        const action = getViewerCardSelectionAction(event, bulkActionPending);
+        const action = viewerSelectionInteractions.getViewerCardSelectionAction(event, bulkActionPending);
 
         if (action === 'none') {
             return;
@@ -176,14 +163,14 @@
 
     function handleCardMouseDown(event: MouseEvent)
     {
-        if (shouldPreventViewerCardMouseDown(event, bulkActionPending)) {
+        if (viewerSelectionInteractions.shouldPreventViewerCardMouseDown(event, bulkActionPending)) {
             event.preventDefault();
         }
     }
 
     function handleViewerBackgroundClick(event: MouseEvent)
     {
-        if (!shouldClearViewerSelectionFromBackground(event, hasActiveSelection, bulkActionPending)) {
+        if (!viewerSelectionInteractions.shouldClearViewerSelectionFromBackground(event, hasActiveSelection, bulkActionPending)) {
             return;
         }
 
@@ -211,7 +198,7 @@
             return;
         }
 
-        visibleVideos = updateVisibleVideoFlag(visibleVideos, videoId, kind, value);
+        visibleVideos = viewerBulkActions.updateVisibleVideoFlag(visibleVideos, videoId, kind, value);
     }
 
     async function handleBulkFlagToggle(kind: ViewerSelectionFlagKind, controlState: ViewerSelectionControlState)
@@ -223,7 +210,7 @@
         bulkActionPending = true;
 
         try {
-            const nextValue = getNextBulkFlagValue(controlState);
+            const nextValue = viewerBulkActions.getNextBulkFlagValue(controlState);
             const form = new FormData();
             form.set('kind', kind);
             form.set('value', String(nextValue));
@@ -252,16 +239,16 @@
             const succeededIds = Array.isArray(actionResult.succeededIds)
                 ? actionResult.succeededIds as number[]
                 : [];
-            const undo = buildViewerSelectionUndoPayload(selectionState);
+            const undo = viewerBulkActions.buildViewerSelectionUndoPayload(selectionState);
 
             bulkActionFeedback = {
                 message: String(actionResult.message || failureMessage),
-                tone: getBulkActionFeedbackTone(actionResult.outcome, actionResult.ok),
+                tone: viewerBulkActions.getBulkActionFeedbackTone(actionResult.outcome, actionResult.ok),
                 undo
             };
 
             selectionState = viewerSelectionStateManager.applyBulkFlag(selectionState, kind, nextValue, succeededIds);
-            visibleVideos = applyBulkFlagToVisibleVideos(visibleVideos, kind, nextValue, succeededIds);
+            visibleVideos = viewerBulkActions.applyBulkFlagToVisibleVideos(visibleVideos, kind, nextValue, succeededIds);
         } finally {
             bulkActionPending = false;
         }
@@ -313,11 +300,11 @@
             }));
 
             selectionState = viewerSelectionStateManager.restoreVideoStates(selectionState, restoredSnapshots);
-            visibleVideos = restoreVisibleVideoSnapshots(visibleVideos, restoredSnapshots);
+            visibleVideos = viewerBulkActions.restoreVisibleVideoSnapshots(visibleVideos, restoredSnapshots);
 
             bulkActionFeedback = {
                 message: String(actionResult.message || failureMessage),
-                tone: getBulkActionFeedbackTone(actionResult.outcome, actionResult.ok),
+                tone: viewerBulkActions.getBulkActionFeedbackTone(actionResult.outcome, actionResult.ok),
                 undo: actionResult.outcome === 'full_success' ? null : undo
             };
         } finally {
@@ -327,13 +314,13 @@
 
     $: f = data.filters;
     $: visibleVideos = data.videos;
-    $: currentPageSelectionVideos = createViewerSelectionSnapshots(visibleVideos);
+    $: currentPageSelectionVideos = viewerPageState.createViewerSelectionSnapshots(visibleVideos);
     $: ({ termInput, dateFromInput, dateToInput, channelIdInput, limitInput, watchedMode, showIgnored } =
-        deriveViewerFilterInputState(f));
-    $: activeVirtualChannel = findActiveViewerGroup(data.groups, f.groupId);
-    $: ({ totalPages, currentPage, visiblePages } = deriveViewerPaginationState(f, data.totalCount));
+        viewerPageState.deriveViewerFilterInputState(f));
+    $: activeVirtualChannel = viewerPageState.findActiveViewerGroup(data.groups, f.groupId);
+    $: ({ totalPages, currentPage, visiblePages } = viewerPageState.deriveViewerPaginationState(f, data.totalCount));
     $: ({ hasActiveSelection, selectedCount, offPageSelectedCount, watchedControlState, favoriteControlState, ignoredControlState } =
-        deriveViewerSelectionSummary(selectionState));
+        viewerPageState.deriveViewerSelectionSummary(selectionState));
     $: {
         const nextContextKey = ViewerSelectionContext.createKey({
             profileKey: data.profileKey,

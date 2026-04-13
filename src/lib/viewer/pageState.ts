@@ -24,7 +24,7 @@ type ViewerSelectionSummary = {
     ignoredControlState: ViewerSelectionControlState;
 };
 
-export function buildViewerPageHref(filters: ViewerFilters, page: number): string
+function buildViewerPageHref(filters: ViewerFilters, page: number): string
 {
     return `?${new URLSearchParams({
         term: filters.term || '',
@@ -76,7 +76,7 @@ function getViewerVisiblePages(current: number, total: number): ViewerVisiblePag
     return pages;
 }
 
-export function deriveViewerPaginationState(filters: ViewerFilters, totalCount: number): ViewerPaginationState
+function deriveViewerPaginationState(filters: ViewerFilters, totalCount: number): ViewerPaginationState
 {
     const totalPages = Math.max(1, Math.ceil(totalCount / filters.limit));
     const currentPage = Math.min(totalPages, Math.floor(filters.offset / filters.limit) + 1);
@@ -88,7 +88,7 @@ export function deriveViewerPaginationState(filters: ViewerFilters, totalCount: 
     };
 }
 
-export function deriveViewerFilterInputState(filters: ViewerFilters): ViewerFilterInputState
+function deriveViewerFilterInputState(filters: ViewerFilters): ViewerFilterInputState
 {
     return {
         termInput: filters.term || '',
@@ -101,7 +101,7 @@ export function deriveViewerFilterInputState(filters: ViewerFilters): ViewerFilt
     };
 }
 
-export function buildViewerFilterQuery(
+function buildViewerFilterQuery(
     filters: ViewerFilters,
     inputState: ViewerFilterInputState
 ): string
@@ -129,12 +129,12 @@ export function buildViewerFilterQuery(
     return params.toString();
 }
 
-export function findActiveViewerGroup(groups: ViewerGroup[], groupId: number | null): ViewerGroup | null
+function findActiveViewerGroup(groups: ViewerGroup[], groupId: number | null): ViewerGroup | null
 {
     return groups.find((group) => group.id === groupId) ?? null;
 }
 
-export function createViewerSelectionSnapshots(videos: ViewerVideo[]): ViewerSelectionVideoSnapshot[]
+function createViewerSelectionSnapshots(videos: ViewerVideo[]): ViewerSelectionVideoSnapshot[]
 {
     return videos.map((video) => ({
         id: video.id,
@@ -144,7 +144,7 @@ export function createViewerSelectionSnapshots(videos: ViewerVideo[]): ViewerSel
     }));
 }
 
-export function deriveViewerSelectionSummary(state: ViewerSelectionState): ViewerSelectionSummary
+function deriveViewerSelectionSummary(state: ViewerSelectionState): ViewerSelectionSummary
 {
     const hasActiveSelection = state.selectedVideoIds.length > 0;
     const selectedCount = state.selectedVideoIds.length;
@@ -161,3 +161,13 @@ export function deriveViewerSelectionSummary(state: ViewerSelectionState): Viewe
         ignoredControlState: viewerSelectionInspector.getControlState(state, 'ignored')
     };
 }
+
+export const viewerPageState = {
+    buildViewerPageHref,
+    deriveViewerPaginationState,
+    deriveViewerFilterInputState,
+    buildViewerFilterQuery,
+    findActiveViewerGroup,
+    createViewerSelectionSnapshots,
+    deriveViewerSelectionSummary
+};

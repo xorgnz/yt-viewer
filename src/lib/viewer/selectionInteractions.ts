@@ -1,6 +1,6 @@
 type ViewerCardSelectionAction = 'none' | 'toggle' | 'toggleSingle' | 'selectRange';
 
-export function getViewerCardSelectionAction(
+function getViewerCardSelectionAction(
     event: MouseEvent | KeyboardEvent,
     isBusy: boolean
 ): ViewerCardSelectionAction
@@ -37,7 +37,7 @@ export function getViewerCardSelectionAction(
     return 'toggle';
 }
 
-export function shouldPreventViewerCardMouseDown(event: MouseEvent, isBusy: boolean): boolean
+function shouldPreventViewerCardMouseDown(event: MouseEvent, isBusy: boolean): boolean
 {
     if (isBusy) {
         return false;
@@ -51,7 +51,7 @@ export function shouldPreventViewerCardMouseDown(event: MouseEvent, isBusy: bool
     return event.shiftKey || event.ctrlKey || event.metaKey;
 }
 
-export function shouldClearViewerSelectionFromBackground(
+function shouldClearViewerSelectionFromBackground(
     event: MouseEvent,
     hasActiveSelection: boolean,
     isBusy: boolean
@@ -75,3 +75,9 @@ export function shouldClearViewerSelectionFromBackground(
 
     return !target.closest('.card, .bulk-action-bar, .pager, .panel');
 }
+
+export const viewerSelectionInteractions = {
+    getViewerCardSelectionAction,
+    shouldPreventViewerCardMouseDown,
+    shouldClearViewerSelectionFromBackground
+};
