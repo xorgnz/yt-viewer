@@ -45,7 +45,13 @@
         if (!ms) return '';
         try {
             const d = new Date(ms);
-            return d.toLocaleString();
+            const year = d.getFullYear();
+            const month = String(d.getMonth() + 1).padStart(2, '0');
+            const day = String(d.getDate()).padStart(2, '0');
+            const hours = String(d.getHours()).padStart(2, '0');
+            const minutes = String(d.getMinutes()).padStart(2, '0');
+            const seconds = String(d.getSeconds()).padStart(2, '0');
+            return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
         } catch {
             return '';
         }
@@ -310,17 +316,17 @@
 
 <div class="page stack watch-page">
     <section class="panel watch-panel">
-        <a class="back" href="/viewer">Back to video list</a>
-
-        <h1 class="title">{data.video.title}</h1>
+        <div class="title-row">
+            <h1 class="title">{data.video.title}</h1>
+            <div class="title-meta">
+                <a class="channel-link" href={`/viewer?channelId=${data.video.channel_id}`}>{data.video.channel_title}</a>
+                {#if data.video.published_at}
+                    <span class="dot">|</span>
+                    <span class="date">{formatDate(data.video.published_at)}</span>
+                {/if}
+            </div>
+        </div>
         <div class="meta">
-            <span class="channel">Profile: {data.profileName}</span>
-            <span class="dot">|</span>
-            <span class="channel">{data.video.channel_title}</span>
-            {#if data.video.published_at}
-                <span class="dot">|</span>
-                <span class="date">{formatDate(data.video.published_at)}</span>
-            {/if}
             <span class="badges">
                 {#if data.video.favorite}
                     <span class="badge favorite">Favorite</span>
@@ -332,10 +338,6 @@
                     <span class="badge ignored">Ignored</span>
                 {/if}
             </span>
-            <span class="dot">|</span>
-            <a class="channel-link" href={`/viewer?channelId=${data.video.channel_id}`}>More from this channel</a>
-            <span class="dot">|</span>
-            <a class="yt-link" target="_blank" rel="noopener" href={`https://www.youtube.com/watch?v=${data.video.youtube_id}`}>Open on YouTube</a>
         </div>
 
         <div class="player-slot">
@@ -390,14 +392,33 @@
         min-height: 0;
     }
 
-    .back {
-        display: inline-block;
-        margin-bottom: 1rem;
+    .title {
+        margin-bottom: 0;
+        font-size: 32px;
     }
 
-    .title {
-        margin-bottom: 0.5rem;
-        font-size: 1.5rem;
+    .channel-link {
+        color: inherit;
+    }
+
+    .title-row {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 1rem;
+    }
+
+    .title-meta {
+        display: inline-flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 0.25rem 0.5rem;
+        color: var(--text);
+        font-size: 32px;
+        font-weight: 700;
+        line-height: 1.2;
+        text-align: right;
     }
 
     .meta {
@@ -406,10 +427,15 @@
         gap: 0.25rem 0.5rem;
         color: var(--text-muted);
         font-size: 0.95rem;
+        margin-top: 0.4rem;
     }
 
     .dot {
         opacity: 0.6;
+    }
+
+    .date {
+        font-weight: 400;
     }
 
     .badges {
@@ -493,6 +519,16 @@
     @media (max-width: 900px) {
         :global(.app-content) {
             min-height: auto;
+        }
+
+        .title-row {
+            flex-wrap: wrap;
+        }
+
+        .title-meta {
+            width: 100%;
+            justify-content: flex-start;
+            text-align: left;
         }
 
         .player-wrap {
