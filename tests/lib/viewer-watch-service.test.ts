@@ -4,6 +4,7 @@ import { applyLatestSchemaBootstrap } from '../../src/lib/daos/shared/LatestSche
 import { FlagsDAO } from '../../src/lib/daos/flagsDAO';
 import { HistoryDAO } from '../../src/lib/daos/historyDAO';
 import { ProfileDAO } from '../../src/lib/daos/profileDAO';
+import { ViewerVideoReadRepository } from '../../src/lib/daos/readers/ViewerVideoReadRepository';
 import { SourceChannelDAO } from '../../src/lib/daos/sourceChannelDAO';
 import { VideoDAO } from '../../src/lib/daos/videoDAO';
 import { ServerProfileContext } from '../../src/lib/server/ServerProfileContext';
@@ -19,6 +20,7 @@ describe('ViewerWatchService', () => {
         const profileDAO = new ProfileDAO(db);
         const sourceChannelDAO = new SourceChannelDAO(db);
         const videoDAO = new VideoDAO(db);
+        const viewerVideoReadRepository = new ViewerVideoReadRepository(db);
         const flagsDAO = new FlagsDAO(db);
         const historyDAO = new HistoryDAO(db);
 
@@ -57,7 +59,7 @@ describe('ViewerWatchService', () => {
             flagsDAO,
             historyDAO,
             service: new ViewerWatchService(
-                videoDAO,
+                viewerVideoReadRepository,
                 flagsDAO,
                 historyDAO,
                 profileContext

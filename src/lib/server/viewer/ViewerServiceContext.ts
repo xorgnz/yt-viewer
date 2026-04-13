@@ -1,6 +1,7 @@
 import type Database from 'better-sqlite3';
 import { HistoryDAO } from '$lib/daos/historyDAO';
 import { ProfileDAO } from '$lib/daos/profileDAO';
+import { ViewerVideoReadRepository } from '$lib/daos/readers/ViewerVideoReadRepository';
 import { VideoDAO } from '$lib/daos/videoDAO';
 import { FlagsDAO } from '$lib/daos/flagsDAO';
 import { VirtualChannelDAO } from '$lib/daos/virtualChannelDAO';
@@ -33,6 +34,7 @@ export class ViewerServiceContext
     {
         const profileContext = ServerProfileContext.resolve(new ProfileDAO(db), cookies);
         const videoDAO = new VideoDAO(db);
+        const viewerVideoReadRepository = new ViewerVideoReadRepository(db);
         const flagsDAO = new FlagsDAO(db);
         const flagService = new ViewerFlagService(
             videoDAO,
@@ -40,7 +42,7 @@ export class ViewerServiceContext
             profileContext.activeProfileId
         );
         const watchService = new ViewerWatchService(
-            videoDAO,
+            viewerVideoReadRepository,
             flagsDAO,
             new HistoryDAO(db),
             profileContext

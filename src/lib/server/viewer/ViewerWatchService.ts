@@ -1,11 +1,14 @@
 import { FlagsDAO } from '$lib/daos/flagsDAO';
 import { HistoryDAO } from '$lib/daos/historyDAO';
-import { VideoDAO } from '$lib/daos/videoDAO';
+import {
+    ViewerVideoReadRepository,
+    type ViewerVideoRecord
+} from '$lib/daos/readers/ViewerVideoReadRepository';
 import type { ServerProfileContext } from '$lib/server/ServerProfileContext';
 
 const HISTORY_SESSION_GAP_MS = 5 * 60 * 1000;
 
-type ViewerWatchVideo = NonNullable<ReturnType<VideoDAO['getForViewerByYoutubeId']>>;
+type ViewerWatchVideo = ViewerVideoRecord;
 
 export type ViewerWatchLoadModel = {
     video: ViewerWatchVideo;
@@ -24,19 +27,19 @@ export type ViewerWatchFlagResult =
 
 export class ViewerWatchService
 {
-    private readonly videoDAO: VideoDAO;
+    private readonly viewerVideoReadRepository: ViewerVideoReadRepository;
     private readonly flagsDAO: FlagsDAO;
     private readonly historyDAO: HistoryDAO;
     private readonly profileContext: ServerProfileContext;
 
     constructor(
-        videoDAO: VideoDAO,
+        viewerVideoReadRepository: ViewerVideoReadRepository,
         flagsDAO: FlagsDAO,
         historyDAO: HistoryDAO,
         profileContext: ServerProfileContext
     )
     {
-        this.videoDAO = videoDAO;
+        this.viewerVideoReadRepository = viewerVideoReadRepository;
         this.flagsDAO = flagsDAO;
         this.historyDAO = historyDAO;
         this.profileContext = profileContext;
@@ -131,6 +134,6 @@ export class ViewerWatchService
 
     private loadVideo(videoYoutubeId: string): ViewerWatchVideo | null
     {
-        return this.videoDAO.getForViewerByYoutubeId(videoYoutubeId, this.profileContext.activeProfileId) || null;
+        return this.viewerVideoReadRepository.getByYoutubeId(videoYoutubeId, this.profileContext.activeProfileId) || null;
     }
 }

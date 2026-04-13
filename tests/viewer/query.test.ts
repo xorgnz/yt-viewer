@@ -1,6 +1,7 @@
 import Database from 'better-sqlite3';
 import { describe, it, expect, beforeEach } from 'vitest';
 import { ALL_DDL } from '$lib/daos/_schema';
+import { ViewerVideoReadRepository } from '$lib/daos/readers/ViewerVideoReadRepository';
 import { SourceChannelDAO } from '$lib/daos/sourceChannelDAO';
 import { VideoDAO } from '$lib/daos/videoDAO';
 import { ProfileDAO } from '$lib/daos/profileDAO';
@@ -9,7 +10,7 @@ import { HistoryDAO } from '$lib/daos/historyDAO';
 import { VirtualChannelDAO } from '$lib/daos/virtualChannelDAO';
 import { AssignmentDAO } from '$lib/daos/assignmentDAO';
 
-describe('VideoDAO.listForViewer filters (task 4.1)', () => {
+describe('ViewerVideoReadRepository filters', () => {
     let db: Database.Database;
     let profileId: number;
     let ch1Id: number;
@@ -51,8 +52,8 @@ describe('VideoDAO.listForViewer filters (task 4.1)', () => {
     });
 
     it('filters by term (title or description)', () => {
-        const vDao = new VideoDAO(db);
-        const out = vDao.listForViewer({ term: 'news' }, profileId);
+        const repository = new ViewerVideoReadRepository(db);
+        const out = repository.list({ term: 'news' }, profileId);
         const ids = out.map(v => v.youtube_id);
         expect(ids).toContain('V1');
         expect(ids).toContain('V3');
@@ -60,9 +61,9 @@ describe('VideoDAO.listForViewer filters (task 4.1)', () => {
     });
 
     it('filters by date range (published_at)', () => {
-        const vDao = new VideoDAO(db);
+        const repository = new ViewerVideoReadRepository(db);
         const twoDaysAgo = baseNow - 2 * 86400000 - 1; // include V2 and V3, exclude V1
-        const out = vDao.listForViewer({ dateFrom: twoDaysAgo }, profileId);
+        const out = repository.list({ dateFrom: twoDaysAgo }, profileId);
         const ids = out.map(v => v.youtube_id);
         expect(ids).toContain('V2');
         expect(ids).toContain('V3');
@@ -72,10 +73,10 @@ describe('VideoDAO.listForViewer filters (task 4.1)', () => {
     });
 
     it('filters by watched status', () => {
-        const vDao = new VideoDAO(db);
-        const watched = vDao.listForViewer({ watched: 'watched' }, profileId).map(v => v.youtube_id);
+        const repository = new ViewerVideoReadRepository(db);
+        const watched = repository.list({ watched: 'watched' }, profileId).map(v => v.youtube_id);
         expect(watched).toEqual(['V2']);
-        const unwatched = vDao.listForViewer({ watched: 'unwatched' }, profileId).map(v => v.youtube_id);
+        const unwatched = repository.list({ watched: 'unwatched' }, profileId).map(v => v.youtube_id);
         expect(unwatched).toContain('V1');
         expect(unwatched).toContain('V3');
         expect(unwatched).toContain('V4');
@@ -84,6 +85,7 @@ describe('VideoDAO.listForViewer filters (task 4.1)', () => {
 
     it('does not treat watch-history rows as watched-filter state', () => {
         const vDao = new VideoDAO(db);
+        const repository = new ViewerVideoReadRepository(db);
         const history = new HistoryDAO(db);
         const v1 = vDao.getByExternalId('V1')!;
 
@@ -95,8 +97,8 @@ describe('VideoDAO.listForViewer filters (task 4.1)', () => {
             time_watched_seconds: 25
         });
 
-        const watched = vDao.listForViewer({ watched: 'watched' }, profileId).map(v => v.youtube_id);
-        const unwatched = vDao.listForViewer({ watched: 'unwatched' }, profileId).map(v => v.youtube_id);
+        const watched = repository.list({ watched: 'watched' }, profileId).map(v => v.youtube_id);
+        const unwatched = repository.list({ watched: 'unwatched' }, profileId).map(v => v.youtube_id);
 
         expect(watched).toEqual(['V2']);
         expect(unwatched).toContain('V1');
@@ -104,15 +106,15 @@ describe('VideoDAO.listForViewer filters (task 4.1)', () => {
     });
 
     it('filters by channelId', () => {
-        const vDao = new VideoDAO(db);
-        const out = vDao.listForViewer({ channelId: ch1Id }, profileId);
+        const repository = new ViewerVideoReadRepository(db);
+        const out = repository.list({ channelId: ch1Id }, profileId);
         const ids = out.map(v => v.youtube_id);
         expect(ids.sort()).toEqual(['V1', 'V2'].sort());
     });
 
     it('filters by groupId (channels assigned to group)', () => {
-        const vDao = new VideoDAO(db);
-        const out = vDao.listForViewer({ groupId: gNewsId }, profileId);
+        const repository = new ViewerVideoReadRepository(db);
+        const out = repository.list({ groupId: gNewsId }, profileId);
         const ids = out.map(v => v.youtube_id);
         // Only channel 2 is in the News group => V3 and V4
         expect(ids.sort()).toEqual(['V3', 'V4'].sort());

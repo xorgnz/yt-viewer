@@ -68,7 +68,7 @@
 
 - [ ] 5.0 Separate query specification, read-model shaping, and persistence execution in the data layer
   - [x] 5.1 Introduce explicit query-spec or read-model helpers for viewer and history filtering so DAOs stop mixing workflow semantics with SQL execution
-  - [ ] 5.2 Refactor `src/lib/daos/videoDAO.ts` to narrow its responsibility to persistence and mapping while moving query construction into shared collaborators
+  - [x] 5.2 Refactor `src/lib/daos/videoDAO.ts` to narrow its responsibility to persistence and mapping while moving query construction into shared collaborators
   - [ ] 5.3 Refactor `src/lib/daos/historyDAO.ts` using the same boundary conventions and update affected service or route callers
   - [ ] 5.4 Align shared database bootstrap and migration utilities under `src/lib/daos/shared/` with the same boundary conventions so infrastructure code does not diverge
   - [ ] 5.5 Update DAO-focused tests to cover the extracted query helpers directly as well as the narrower DAO behavior

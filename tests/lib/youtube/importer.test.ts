@@ -5,6 +5,7 @@ import { AssignmentDAO } from '../../../src/lib/daos/assignmentDAO';
 import { YouTubeChannelImportService } from '../../../src/lib/youtube/importer';
 import type { YouTubeClient } from '$lib/youtube/youTubeClient';
 import { ProfileDAO } from '$lib/daos/profileDAO';
+import { ViewerVideoReadRepository } from '$lib/daos/readers/ViewerVideoReadRepository';
 import { SourceChannelDAO } from '$lib/daos/sourceChannelDAO';
 import { VideoDAO } from '../../../src/lib/daos/videoDAO';
 import { VirtualChannelAssignmentVideoSelectionDAO } from '../../../src/lib/daos/virtualChannelAssignmentVideoSelectionDAO';
@@ -186,6 +187,7 @@ describe('youtube importer (task 3.3)', () => {
         const assignmentDao = new AssignmentDAO(db);
         const selectionDao = new VirtualChannelAssignmentVideoSelectionDAO(db);
         const videoDao = new VideoDAO(db);
+        const viewerVideoReadRepository = new ViewerVideoReadRepository(db);
         const profileDao = new ProfileDAO(db);
 
         profileDao.upsertByKey('default', 'Default');
@@ -196,14 +198,14 @@ describe('youtube importer (task 3.3)', () => {
 
         await importer.importChannel('UC_DEMO');
 
-        const beforeReview = videoDao.listForViewer({ groupId: virtualChannel.id, ignored: 'show' } as any, profile.id);
+        const beforeReview = viewerVideoReadRepository.list({ groupId: virtualChannel.id, ignored: 'show' }, profile.id);
         expect(beforeReview).toEqual([]);
 
         const assignment = assignmentDao.listForVirtualChannel(virtualChannel.id)[0];
         const newVideo = videoDao.getByExternalId('V2')!;
         selectionDao.setReviewState(assignment.id, newVideo.id, 'included');
 
-        const afterReview = videoDao.listForViewer({ groupId: virtualChannel.id, ignored: 'show' } as any, profile.id);
+        const afterReview = viewerVideoReadRepository.list({ groupId: virtualChannel.id, ignored: 'show' }, profile.id);
         expect(afterReview.map((video) => video.youtube_id)).toEqual(['V2']);
     });
 
