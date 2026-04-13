@@ -26,7 +26,6 @@
             <a href="/admin">Admin Home</a>
             <a href="/admin/source-channels">Source Channels</a>
             <a href="/admin/virtual-channels">Virtual Channels</a>
-            <a href="/admin/assignments">Assignments</a>
             <form method="POST" action="/admin/logout" class="nav-logout">
                 <button type="submit" class="btn btn-secondary">Logout</button>
             </form>

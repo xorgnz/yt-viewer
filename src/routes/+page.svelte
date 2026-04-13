@@ -17,7 +17,6 @@
             <li><a href="/admin">Admin Home</a> (requires login)</li>
             <li><a href="/admin/source-channels">Admin: Source Channels</a></li>
             <li><a href="/admin/virtual-channels">Admin: Virtual Channels</a></li>
-            <li><a href="/admin/assignments">Admin: Assignments</a></li>
             <li><a href="/admin/login">Admin: Login</a></li>
         </ul>
     </section>

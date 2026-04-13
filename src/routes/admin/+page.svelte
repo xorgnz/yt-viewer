@@ -3,4 +3,4 @@
 </script>
 
 <h1>Admin</h1>
-<p>Use the navigation above to manage channels, groups, and assignments.</p>
+<p>Use the navigation above to manage source channels and virtual-channel associations.</p>
