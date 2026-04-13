@@ -78,13 +78,13 @@ export class AdminVirtualChannelIndexService
                 ok: true,
                 data: { redirectTo: AdminVirtualChannelIndexService.INDEX_PATH }
             };
-        } catch (error: any) {
+        } catch (error: unknown) {
             return {
                 ok: false,
                 error: {
                     code: 'create_virtual_channel_failed',
                     status: 400,
-                    message: error?.message || 'Failed to create group'
+                    message: this.getErrorMessage(error, 'Failed to create group')
                 }
             };
         }
@@ -102,13 +102,13 @@ export class AdminVirtualChannelIndexService
                 ok: true,
                 data: { redirectTo: AdminVirtualChannelIndexService.INDEX_PATH }
             };
-        } catch (error: any) {
+        } catch (error: unknown) {
             return {
                 ok: false,
                 error: {
                     code: 'rename_virtual_channel_failed',
                     status: 400,
-                    message: error?.message || 'Failed to rename group'
+                    message: this.getErrorMessage(error, 'Failed to rename group')
                 }
             };
         }
@@ -126,13 +126,13 @@ export class AdminVirtualChannelIndexService
                 ok: true,
                 data: { redirectTo: AdminVirtualChannelIndexService.INDEX_PATH }
             };
-        } catch (error: any) {
+        } catch (error: unknown) {
             return {
                 ok: false,
                 error: {
                     code: 'delete_virtual_channel_failed',
                     status: 400,
-                    message: error?.message || 'Failed to delete group'
+                    message: this.getErrorMessage(error, 'Failed to delete group')
                 }
             };
         }
@@ -179,11 +179,11 @@ export class AdminVirtualChannelIndexService
                     virtualChannelId: input.virtualChannelId
                 }
             };
-        } catch (error: any) {
+        } catch (error: unknown) {
             return this.buildInlineError(
                 'add_inline_association_failed',
                 400,
-                error?.message || 'Failed to add source channel.',
+                this.getErrorMessage(error, 'Failed to add source channel.'),
                 input.virtualChannelId
             );
         }
@@ -234,11 +234,11 @@ export class AdminVirtualChannelIndexService
                     virtualChannelId: input.virtualChannelId
                 }
             };
-        } catch (error: any) {
+        } catch (error: unknown) {
             return this.buildInlineError(
                 'remove_inline_association_failed',
                 400,
-                error?.message || 'Failed to remove source channel.',
+                this.getErrorMessage(error, 'Failed to remove source channel.'),
                 input.virtualChannelId
             );
         }
@@ -283,5 +283,10 @@ export class AdminVirtualChannelIndexService
                 virtualChannelId
             }
         };
+    }
+
+    private getErrorMessage(error: unknown, fallback: string): string
+    {
+        return error instanceof Error ? error.message : fallback;
     }
 }

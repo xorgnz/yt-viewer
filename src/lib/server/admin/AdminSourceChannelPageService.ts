@@ -51,11 +51,11 @@ export class AdminSourceChannelPageService
         let client;
         try {
             client = this.clientProvider.createClient();
-        } catch (error: any) {
+        } catch (error: unknown) {
             return this.buildError(
                 'youtube_not_configured',
                 500,
-                error?.message || 'YouTube API key not configured.'
+                this.getErrorMessage(error, 'YouTube API key not configured.')
             );
         }
 
@@ -81,7 +81,7 @@ export class AdminSourceChannelPageService
                 ok: true,
                 data: { redirectTo: AdminSourceChannelPageService.INDEX_PATH }
             };
-        } catch (error: any) {
+        } catch (error: unknown) {
             return this.mapYouTubeRequestFailure(
                 error,
                 'Invalid request to YouTube. Please verify the channel reference and try again.'
@@ -134,11 +134,11 @@ export class AdminSourceChannelPageService
         let client;
         try {
             client = this.clientProvider.createClient();
-        } catch (error: any) {
+        } catch (error: unknown) {
             return this.buildError(
                 'youtube_not_configured',
                 500,
-                error?.message || 'YouTube API key not configured.'
+                this.getErrorMessage(error, 'YouTube API key not configured.')
             );
         }
 
@@ -162,7 +162,7 @@ export class AdminSourceChannelPageService
                 ok: true,
                 data: { redirectTo: AdminSourceChannelPageService.INDEX_PATH }
             };
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.error('Refresh failed for channel', existing.youtube_id, error);
             return this.mapYouTubeRequestFailure(
                 error,
@@ -208,7 +208,7 @@ export class AdminSourceChannelPageService
             );
         }
 
-        const name = (error && typeof error === 'object' && 'name' in error) ? String((error as any).name) : '';
+        const name = this.getErrorName(error);
         if (name === 'AbortError') {
             return this.buildError(
                 'youtube_timeout',
@@ -238,5 +238,15 @@ export class AdminSourceChannelPageService
                 message
             }
         };
+    }
+
+    private getErrorMessage(error: unknown, fallback: string): string
+    {
+        return error instanceof Error ? error.message : fallback;
+    }
+
+    private getErrorName(error: unknown): string
+    {
+        return error instanceof Error ? error.name : '';
     }
 }

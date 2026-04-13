@@ -1,46 +1,54 @@
 <script lang="ts">
     import { enhance } from '$app/forms';
+    import type { PageData, SubmitFunction } from './$types';
 
-    export let data: {
-        groups: Array<{
-            id: number;
-            name: string;
-            associatedSourceChannels: Array<{
-                assignment: {
-                    id: number;
-                    source_channel_id: number;
-                    virtual_channel_id: number;
-                    mode: 'all' | 'long_only' | 'selected_only';
-                    created_at: number;
-                    updated_at: number;
-                };
-                sourceChannel: {
-                    id: number;
-                    youtube_id: string;
-                    title: string;
-                    description?: string;
-                    thumbnail_url?: string | null;
-                    published_at?: number | null;
-                    last_refreshed_at?: number | null;
-                } | null;
-            }>;
-            availableSourceChannels: Array<{
-                id: number;
-                youtube_id: string;
-                title: string;
-                description?: string;
-                thumbnail_url?: string | null;
-                published_at?: number | null;
-                last_refreshed_at?: number | null;
-            }>;
-        }>;
-    };
+    export let data: PageData;
 
     type VirtualChannelGroup = (typeof data.groups)[number];
+    type InlineStatus = { type: 'success' | 'error'; text: string };
+    type InlineAssociationActionData = {
+        group: VirtualChannelGroup;
+        message?: string;
+        virtualChannelId?: number | null;
+    };
+    type InlineAssociationFailureData = {
+        message?: string;
+        virtualChannelId?: number | null;
+    };
+
+    function isInlineAssociationActionData(value: unknown): value is InlineAssociationActionData
+    {
+        if (!value || typeof value !== 'object' || !('group' in value)) {
+            return false;
+        }
+
+        const group = value.group;
+        return Boolean(group && typeof group === 'object' && 'id' in group && 'name' in group);
+    }
+
+    function readFailureGroupId(value: unknown, fallbackGroupId: number): number
+    {
+        if (!value || typeof value !== 'object' || !('virtualChannelId' in value)) {
+            return fallbackGroupId;
+        }
+
+        const failureData = value as InlineAssociationFailureData;
+        return Number(failureData.virtualChannelId ?? fallbackGroupId);
+    }
+
+    function readFailureMessage(value: unknown, fallbackMessage: string): string
+    {
+        if (!value || typeof value !== 'object' || !('message' in value)) {
+            return fallbackMessage;
+        }
+
+        const failureData = value as InlineAssociationFailureData;
+        return String(failureData.message || fallbackMessage);
+    }
 
     let groups = data.groups;
     let newName = '';
-    let inlineStatusByGroupId: Record<number, { type: 'success' | 'error'; text: string }> = {};
+    let inlineStatusByGroupId: Record<number, InlineStatus> = {};
 
     function updateInlineGroup(nextGroup: VirtualChannelGroup)
     {
@@ -67,47 +75,47 @@
         inlineStatusByGroupId = nextStatus;
     }
 
-    function enhanceInlineAdd(groupId: number)
+    function enhanceInlineAdd(groupId: number): SubmitFunction
     {
         return ({ formElement }: { formElement: HTMLFormElement }) => {
             clearInlineStatus(groupId);
 
-            return async ({ result }: { result: { type: string; data?: Record<string, any> } }) => {
-                if (result.type === 'success' && result.data?.group) {
-                    updateInlineGroup(result.data.group as VirtualChannelGroup);
+            return async ({ result }) => {
+                if (result.type === 'success' && isInlineAssociationActionData(result.data)) {
+                    updateInlineGroup(result.data.group);
                     setInlineStatus(groupId, 'success', String(result.data.message || 'Source channel added.'));
                     formElement.reset();
                     return;
                 }
 
-                if (result.type === 'failure') {
+                if (result.type === 'failure' && result.data) {
                     setInlineStatus(
-                        Number(result.data?.virtualChannelId ?? groupId),
+                        readFailureGroupId(result.data, groupId),
                         'error',
-                        String(result.data?.message || 'Failed to add source channel.')
+                        readFailureMessage(result.data, 'Failed to add source channel.')
                     );
                 }
             };
         };
     }
 
-    function enhanceInlineRemove(groupId: number)
+    function enhanceInlineRemove(groupId: number): SubmitFunction
     {
         return () => {
             clearInlineStatus(groupId);
 
-            return async ({ result }: { result: { type: string; data?: Record<string, any> } }) => {
-                if (result.type === 'success' && result.data?.group) {
-                    updateInlineGroup(result.data.group as VirtualChannelGroup);
+            return async ({ result }) => {
+                if (result.type === 'success' && isInlineAssociationActionData(result.data)) {
+                    updateInlineGroup(result.data.group);
                     setInlineStatus(groupId, 'success', String(result.data.message || 'Source channel removed.'));
                     return;
                 }
 
-                if (result.type === 'failure') {
+                if (result.type === 'failure' && result.data) {
                     setInlineStatus(
-                        Number(result.data?.virtualChannelId ?? groupId),
+                        readFailureGroupId(result.data, groupId),
                         'error',
-                        String(result.data?.message || 'Failed to remove source channel.')
+                        readFailureMessage(result.data, 'Failed to remove source channel.')
                     );
                 }
             };

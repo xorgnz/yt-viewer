@@ -136,11 +136,11 @@ export class AdminVirtualChannelManageService
                 ok: true,
                 data: { redirectTo: this.buildManagePath(input.virtualChannelId) }
             };
-        } catch (error: any) {
+        } catch (error: unknown) {
             return this.buildError(
                 'add_association_failed',
                 400,
-                error?.message || 'Failed to add source channel.'
+                this.getErrorMessage(error, 'Failed to add source channel.')
             );
         }
     }
@@ -339,5 +339,10 @@ export class AdminVirtualChannelManageService
                 message
             }
         };
+    }
+
+    private getErrorMessage(error: unknown, fallback: string): string
+    {
+        return error instanceof Error ? error.message : fallback;
     }
 }

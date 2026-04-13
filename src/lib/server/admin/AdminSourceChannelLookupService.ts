@@ -30,11 +30,11 @@ export class AdminSourceChannelLookupService
         let client;
         try {
             client = this.clientProvider.createClient();
-        } catch (error: any) {
+        } catch (error: unknown) {
             return this.buildError(
                 'youtube_not_configured',
                 500,
-                error?.message || 'YouTube API key not configured.'
+                this.getErrorMessage(error, 'YouTube API key not configured.')
             );
         }
 
@@ -61,7 +61,7 @@ export class AdminSourceChannelLookupService
                 ok: true,
                 data: this.buildLookupData(item)
             };
-        } catch (error: any) {
+        } catch (error: unknown) {
             return this.mapLookupFailure(error);
         }
     }
@@ -69,8 +69,8 @@ export class AdminSourceChannelLookupService
     private buildLookupData(item: Awaited<ReturnType<AdminSourceChannelYouTubeCoordinator['fetchChannelMetadata']>> extends infer TItem ? Exclude<TItem, null> : never): AdminSourceChannelLookupData
     {
         const snippet = item.snippet || {};
-        const thumbs = snippet.thumbnails || {} as any;
-        const thumbUrl = thumbs.high?.url || thumbs.medium?.url || thumbs.default?.url || null;
+        const thumbs = snippet.thumbnails;
+        const thumbUrl = thumbs?.high?.url || thumbs?.medium?.url || thumbs?.default?.url || null;
         const publishedAtMs = snippet.publishedAt ? Date.parse(snippet.publishedAt) : null;
 
         return {
@@ -78,7 +78,7 @@ export class AdminSourceChannelLookupService
             title: snippet.title || '',
             description: snippet.description || '',
             thumbnail_url: thumbUrl,
-            published_at: Number.isFinite(publishedAtMs as any) ? publishedAtMs : null
+            published_at: typeof publishedAtMs === 'number' && Number.isFinite(publishedAtMs) ? publishedAtMs : null
         };
     }
 
@@ -97,7 +97,7 @@ export class AdminSourceChannelLookupService
             );
         }
 
-        const name = (error && typeof error === 'object' && 'name' in error) ? String((error as any).name) : '';
+        const name = this.getErrorName(error);
         if (name === 'AbortError') {
             return this.buildError('youtube_timeout', 504, 'Timed out contacting YouTube.');
         }
@@ -119,5 +119,15 @@ export class AdminSourceChannelLookupService
                 message
             }
         };
+    }
+
+    private getErrorMessage(error: unknown, fallback: string): string
+    {
+        return error instanceof Error ? error.message : fallback;
+    }
+
+    private getErrorName(error: unknown): string
+    {
+        return error instanceof Error ? error.name : '';
     }
 }
