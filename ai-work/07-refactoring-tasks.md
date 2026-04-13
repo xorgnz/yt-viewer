@@ -66,12 +66,12 @@
   - [x] 4.6 Tighten admin action typing and shared form parsing, including removal of remaining `any`-style escape hatches where practical
   - [x] 4.7 Update `tests/admin/` and `tests/lib/youtube/` coverage to validate the new service boundaries while preserving route behavior
 
-- [ ] 5.0 Separate query specification, read-model shaping, and persistence execution in the data layer
+- [x] 5.0 Separate query specification, read-model shaping, and persistence execution in the data layer
   - [x] 5.1 Introduce explicit query-spec or read-model helpers for viewer and history filtering so DAOs stop mixing workflow semantics with SQL execution
   - [x] 5.2 Refactor `src/lib/daos/videoDAO.ts` to narrow its responsibility to persistence and mapping while moving query construction into shared collaborators
   - [x] 5.3 Refactor `src/lib/daos/historyDAO.ts` using the same boundary conventions and update affected service or route callers
   - [x] 5.4 Align shared database bootstrap and migration utilities under `src/lib/daos/shared/` with the same boundary conventions so infrastructure code does not diverge
-  - [ ] 5.5 Update DAO-focused tests to cover the extracted query helpers directly as well as the narrower DAO behavior
+  - [x] 5.5 Update DAO-focused tests to cover the extracted query helpers directly as well as the narrower DAO behavior
 
 - [ ] 6.0 Consolidate shared test harnesses and fixture builders across refactor slices
   - [ ] 6.1 Extract reusable in-memory database/bootstrap helpers from viewer, admin, DAO, and migration tests

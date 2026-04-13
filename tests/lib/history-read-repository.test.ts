@@ -125,4 +125,34 @@ describe('HistoryReadRepository', () => {
             latest_session_started_at: baseNow + 400_000
         });
     });
+
+    it('filters summary rows by date range when the history page narrows the visible sessions', () => {
+        const repository = new HistoryReadRepository(db);
+
+        history.createSession({
+            video_id: videoId,
+            profile_id: profileId,
+            session_started_at: baseNow,
+            last_updated_at: baseNow + 10_000,
+            time_watched_seconds: 15
+        });
+        history.createSession({
+            video_id: secondVideoId,
+            profile_id: profileId,
+            session_started_at: baseNow + 200_000,
+            last_updated_at: baseNow + 205_000,
+            time_watched_seconds: 9
+        });
+
+        const summaries = repository.listVideoSummaries({
+            profileId,
+            dateFrom: baseNow + 100_000
+        });
+
+        expect(summaries).toHaveLength(1);
+        expect(summaries[0]).toMatchObject({
+            video_id: secondVideoId,
+            total_time_watched_seconds: 9
+        });
+    });
 });

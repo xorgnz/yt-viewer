@@ -171,4 +171,36 @@ describe('ViewerVideoReadRepository', () => {
             ignored: 0
         });
     });
+
+    it('counts the filtered viewer result set without re-running mapping logic in the DAO layer', () => {
+        const videoDAO = new VideoDAO(db);
+        const profileDAO = new ProfileDAO(db);
+        const repository = new ViewerVideoReadRepository(db);
+
+        profileDAO.upsertByKey('default', 'Default');
+        const profile = profileDAO.getByKey('default')!;
+        videoDAO.upsert({
+            youtube_id: 'V_COUNT_1',
+            channel_id: 1,
+            title: 'Count one',
+            description: '',
+            published_at: 1000,
+            duration_seconds: 60,
+            thumbnail_url: null,
+            length_classification: 'short'
+        } as any);
+        videoDAO.upsert({
+            youtube_id: 'V_COUNT_2',
+            channel_id: 2,
+            title: 'Count two',
+            description: '',
+            published_at: 2000,
+            duration_seconds: 120,
+            thumbnail_url: null,
+            length_classification: 'long'
+        } as any);
+
+        expect(repository.count({ channelId: 1 }, profile.id)).toBe(1);
+        expect(repository.count({ ignored: 'show' }, profile.id)).toBe(2);
+    });
 });

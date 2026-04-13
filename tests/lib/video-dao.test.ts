@@ -52,4 +52,30 @@ describe('VideoDAO length classification persistence', () => {
         const video = dao.getByExternalId('V_SHORT');
         expect(video?.length_classification).toBe('short');
     });
+
+    it('lists existing ids and removes persisted rows cleanly', () => {
+        const dao = new VideoDAO(db);
+
+        dao.upsert({
+            youtube_id: 'V_REMOVE',
+            channel_id: 1,
+            title: 'Video Remove',
+            description: '',
+            published_at: null,
+            duration_seconds: 45,
+            thumbnail_url: null,
+            length_classification: 'short'
+        } as any);
+
+        const video = dao.getByExternalId('V_REMOVE');
+        if (!video) {
+            throw new Error('Expected seeded video to exist.');
+        }
+
+        expect(dao.listExistingIds([video.id, 9999])).toEqual([video.id]);
+
+        dao.remove(video.id);
+
+        expect(dao.get(video.id)).toBeUndefined();
+    });
 });
