@@ -5,7 +5,8 @@ import {
     deriveViewerPaginationState,
     deriveViewerSelectionSummary
 } from '../../src/lib/viewer/pageState';
-import { ViewerSelectionContext, viewerSelectionStateManager } from '../../src/lib/viewerSelection';
+import { ViewerSelectionContext } from '../../src/lib/viewer/selection/context';
+import { viewerSelectionStateManager } from '../../src/lib/viewer/selection/core';
 import type { ViewerFilters } from '../../src/lib/viewer/types';
 
 describe('viewer page state helpers', () => {

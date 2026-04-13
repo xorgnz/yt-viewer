@@ -1,4 +1,4 @@
-export type ViewerCardSelectionAction = 'none' | 'toggle' | 'toggleSingle' | 'selectRange';
+type ViewerCardSelectionAction = 'none' | 'toggle' | 'toggleSingle' | 'selectRange';
 
 export function getViewerCardSelectionAction(
     event: MouseEvent | KeyboardEvent,

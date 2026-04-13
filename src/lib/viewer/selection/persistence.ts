@@ -1,11 +1,18 @@
 import { ViewerSelectionSupport } from '$lib/viewer/selection/shared';
 import type {
-    PersistedViewerSelectionState,
     ViewerSelectionState,
     ViewerSelectionVideoSnapshot
 } from '$lib/viewer/selection/types';
 
-export class ViewerSelectionSessionStore
+interface PersistedViewerSelectionState
+{
+    selectedVideoIds: number[];
+    anchorVideoId: number | null;
+    selectedVideoState?: ViewerSelectionState['selectedVideoState'];
+    baselineSelectedVideoState?: ViewerSelectionState['baselineSelectedVideoState'];
+}
+
+class ViewerSelectionSessionStore
 {
     private readonly storagePrefix: string;
 

@@ -1,12 +1,8 @@
-import type {
-    ViewerCardClickHandler,
-    ViewerCardMouseDownHandler,
-    ViewerVideo
-} from '$lib/viewer/types';
+import type { ViewerVideo } from '$lib/viewer/types';
 import type {
     ViewerSelectionFlagKind,
     ViewerSelectionFlagValue
-} from '$lib/viewerSelection';
+} from '$lib/viewer/selection/types';
 
 export type ViewerFlagToggleHandler = (
     videoId: number,
@@ -25,15 +21,6 @@ export interface ViewerVideoDisplayState
     publishedDate: string;
     watchHref: string;
     openLabel: string;
-}
-
-export interface ViewerVideoCardProps
-{
-    video: ViewerVideo;
-    isSelected: boolean;
-    onCardClick: ViewerCardClickHandler | null;
-    onCardMouseDown: ViewerCardMouseDownHandler | null;
-    onToggleFlag: ViewerFlagToggleHandler | null;
 }
 
 export class ViewerVideoDisplayPresenter

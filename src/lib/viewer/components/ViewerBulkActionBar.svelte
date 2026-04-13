@@ -5,7 +5,7 @@
     import type {
         ViewerSelectionControlState,
         ViewerSelectionFlagKind
-    } from '$lib/viewerSelection';
+    } from '$lib/viewer/selection/types';
 
     export let hasActiveSelection = false;
     export let selectedCount = 0;

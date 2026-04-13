@@ -1,7 +1,6 @@
 import type {
-    ViewerSelectionControlState,
     ViewerSelectionFlagValue
-} from '$lib/viewerSelection';
+} from '$lib/viewer/selection/types';
 
 export type ViewerFilters = {
     term?: string;
@@ -72,11 +71,6 @@ export type BulkActionFeedback = {
     message: string;
     tone: 'success' | 'warning' | 'error';
     undo: BulkActionUndoState | null;
-};
-
-export type ViewerBulkActionControl = {
-    label: string;
-    state: ViewerSelectionControlState;
 };
 
 export type ViewerVisiblePage = number | 'ellipsis';

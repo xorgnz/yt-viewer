@@ -35,16 +35,16 @@
         ViewerVideo,
         ViewerVisiblePage
     } from '$lib/viewer/types';
-    import {
-        ViewerSelectionContext,
-        type ViewerSelectionControlState,
-        type ViewerSelectionFlagKind,
-        type ViewerSelectionFlagValue,
-        type ViewerSelectionVideoSnapshot,
-        type ViewerSelectionState,
-        viewerSelectionSessionStore,
-        viewerSelectionStateManager
-    } from '$lib/viewerSelection';
+    import { ViewerSelectionContext } from '$lib/viewer/selection/context';
+    import { viewerSelectionStateManager } from '$lib/viewer/selection/core';
+    import { viewerSelectionSessionStore } from '$lib/viewer/selection/persistence';
+    import type {
+        ViewerSelectionControlState,
+        ViewerSelectionFlagKind,
+        ViewerSelectionFlagValue,
+        ViewerSelectionVideoSnapshot,
+        ViewerSelectionState
+    } from '$lib/viewer/selection/types';
 
     export let data: ViewerPageData;
 

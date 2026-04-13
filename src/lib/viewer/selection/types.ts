@@ -28,14 +28,6 @@ export interface ViewerSelectionState
     baselineSelectedVideoState: Record<number, ViewerSelectionVideoState>;
 }
 
-export interface PersistedViewerSelectionState
-{
-    selectedVideoIds: number[];
-    anchorVideoId: number | null;
-    selectedVideoState?: Record<number, ViewerSelectionVideoState>;
-    baselineSelectedVideoState?: Record<number, ViewerSelectionVideoState>;
-}
-
 export interface ViewerSelectionContextInput
 {
     profileKey: string;

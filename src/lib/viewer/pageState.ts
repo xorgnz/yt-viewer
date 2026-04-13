@@ -9,13 +9,13 @@ import type {
 import {
     type ViewerSelectionControlState,
     type ViewerSelectionState,
-    type ViewerSelectionVideoSnapshot,
-    viewerSelectionInspector
-} from '$lib/viewerSelection';
+    type ViewerSelectionVideoSnapshot
+} from '$lib/viewer/selection/types';
+import { viewerSelectionInspector } from '$lib/viewer/selection/summary';
 
 export const FILTER_DEBOUNCE_MS = 450;
 
-export type ViewerSelectionSummary = {
+type ViewerSelectionSummary = {
     hasActiveSelection: boolean;
     selectedCount: number;
     offPageSelectedCount: number;
@@ -39,7 +39,7 @@ export function buildViewerPageHref(filters: ViewerFilters, page: number): strin
     }).toString()}`;
 }
 
-export function getViewerVisiblePages(current: number, total: number): ViewerVisiblePage[]
+function getViewerVisiblePages(current: number, total: number): ViewerVisiblePage[]
 {
     if (total <= 11) {
         return Array.from({ length: total }, (_, index) => index + 1);

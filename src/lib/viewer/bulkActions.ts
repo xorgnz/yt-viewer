@@ -8,7 +8,7 @@ import type {
     ViewerSelectionFlagValue,
     ViewerSelectionState,
     ViewerSelectionVideoSnapshot
-} from '$lib/viewerSelection';
+} from '$lib/viewer/selection/types';
 
 export function getNextBulkFlagValue(controlState: ViewerSelectionControlState): ViewerSelectionFlagValue
 {

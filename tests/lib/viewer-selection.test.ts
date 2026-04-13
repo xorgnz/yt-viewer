@@ -1,11 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import {
-    ViewerSelectionContext,
-    type ViewerSelectionContextInput,
-    viewerSelectionInspector,
-    viewerSelectionSessionStore,
-    viewerSelectionStateManager
-} from '../../src/lib/viewerSelection';
+import { ViewerSelectionContext } from '../../src/lib/viewer/selection/context';
+import { viewerSelectionStateManager } from '../../src/lib/viewer/selection/core';
+import { viewerSelectionSessionStore } from '../../src/lib/viewer/selection/persistence';
+import { viewerSelectionInspector } from '../../src/lib/viewer/selection/summary';
+import type { ViewerSelectionContextInput } from '../../src/lib/viewer/selection/types';
 
 describe('viewerSelection filter-context behavior', () => {
     const pageOneVideos = [

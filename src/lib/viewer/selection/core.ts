@@ -7,7 +7,7 @@ import type {
     ViewerSelectionVideoState
 } from '$lib/viewer/selection/types';
 
-export class ViewerSelectionStateManager
+class ViewerSelectionStateManager
 {
     public create(
         contextKey: string,

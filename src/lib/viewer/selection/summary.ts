@@ -4,7 +4,7 @@ import type {
     ViewerSelectionState
 } from '$lib/viewer/selection/types';
 
-export class ViewerSelectionInspector
+class ViewerSelectionInspector
 {
     public getCurrentPageSelectedIds(state: ViewerSelectionState): number[]
     {
