@@ -1,71 +1,12 @@
 import { SqliteDAO } from '$lib/daos/shared/SqliteDAO';
+import {
+    ViewerVideoQuerySpec,
+    type ViewerVideoQueryFilters
+} from '$lib/daos/queries/ViewerVideoQuerySpec';
 import type { Video } from '$lib/entities/video';
 
 export class VideoDAO extends SqliteDAO
 {
-    private buildViewerQueryParts(filters: {
-        term?: string;
-        dateFrom?: number | null;
-        dateTo?: number | null;
-        watched?: 'all' | 'watched' | 'unwatched';
-        ignored?: 'hide' | 'show';
-        channelId?: number | null;
-        groupId?: number | null;
-    }, profileId: number)
-    {
-        const where: string[] = [];
-        const params: Record<string, any> = { profileId };
-
-        let groupJoin = '';
-        let selectionJoin = '';
-
-        if (filters.term) {
-            where.push('(v.title LIKE :term OR v.description LIKE :term)');
-            params.term = `%${filters.term}%`;
-        }
-        if (filters.dateFrom != null) {
-            where.push('v.published_at IS NOT NULL AND v.published_at >= :dateFrom');
-            params.dateFrom = filters.dateFrom;
-        }
-        if (filters.dateTo != null) {
-            where.push('v.published_at IS NOT NULL AND v.published_at <= :dateTo');
-            params.dateTo = filters.dateTo;
-        }
-        if (filters.channelId != null) {
-            where.push('v.channel_id = :channelId');
-            params.channelId = filters.channelId;
-        }
-        if (filters.groupId != null) {
-            groupJoin = 'JOIN virtual_channel_assignments ga ON ga.source_channel_id = v.channel_id AND ga.virtual_channel_id = :groupId';
-            selectionJoin = 'LEFT JOIN virtual_channel_assignment_video_selections gavs ON (gavs.assignment_id = ga.id AND gavs.video_id = v.id)';
-            params.groupId = filters.groupId;
-
-            where.push(`(
-                ga.mode = 'all'
-                OR (ga.mode = 'long_only' AND v.length_classification = 'long')
-                OR (ga.mode = 'selected_only' AND COALESCE(gavs.review_state, 'not_yet_reviewed') = 'included')
-            )`);
-        }
-
-        const watchedFilter = filters.watched || 'all';
-        if (watchedFilter === 'watched') {
-            where.push('COALESCE(vf.watched, 0) = 1');
-        } else if (watchedFilter === 'unwatched') {
-            where.push('COALESCE(vf.watched, 0) = 0');
-        }
-
-        if ((filters.ignored || 'hide') !== 'show') {
-            where.push('COALESCE(vf.ignored, 0) = 0');
-        }
-
-        return {
-            whereSql: where.length ? `WHERE ${where.join(' AND ')}` : '',
-            groupJoin,
-            selectionJoin,
-            params
-        };
-    }
-
     upsert(video: Omit<Video, 'id'> | Partial<Video> & { youtube_id: string; channel_id: number; title: string })
     {
         const stmt = this.db.prepare(`
@@ -156,17 +97,7 @@ export class VideoDAO extends SqliteDAO
         this.db.prepare(`DELETE FROM videos WHERE id = ?`).run(id);
     }
 
-    listForViewer(filters: {
-        term?: string;
-        dateFrom?: number | null;
-        dateTo?: number | null;
-        watched?: 'all' | 'watched' | 'unwatched';
-        ignored?: 'hide' | 'show';
-        channelId?: number | null;
-        groupId?: number | null;
-        limit?: number;
-        offset?: number;
-    }, profileId: number): Array<{
+    listForViewer(filters: ViewerVideoQueryFilters, profileId: number): Array<{
         id: number;
         youtube_id: string;
         channel_id: number;
@@ -183,11 +114,8 @@ export class VideoDAO extends SqliteDAO
         ignored: number; // 0/1
     }>
     {
-        const { whereSql, groupJoin, selectionJoin, params } = this.buildViewerQueryParts(filters, profileId);
-        const limit = Math.max(0, Math.min(1000, filters.limit ?? 100));
-        const offset = Math.max(0, filters.offset ?? 0);
-        params.limit = limit;
-        params.offset = offset;
+        const querySpec = new ViewerVideoQuerySpec(filters, profileId);
+        const { whereSql, groupJoin, selectionJoin, params, limit, offset } = querySpec.buildListQueryParts();
 
         const sql = `
             SELECT
@@ -207,20 +135,17 @@ export class VideoDAO extends SqliteDAO
             LIMIT :limit OFFSET :offset
         `;
 
-        return this.db.prepare(sql).all(params) as any[];
+        return this.db.prepare(sql).all({
+            ...params,
+            limit,
+            offset
+        }) as any[];
     }
 
-    countForViewer(filters: {
-        term?: string;
-        dateFrom?: number | null;
-        dateTo?: number | null;
-        watched?: 'all' | 'watched' | 'unwatched';
-        ignored?: 'hide' | 'show';
-        channelId?: number | null;
-        groupId?: number | null;
-    }, profileId: number): number
+    countForViewer(filters: ViewerVideoQueryFilters, profileId: number): number
     {
-        const { whereSql, groupJoin, selectionJoin, params } = this.buildViewerQueryParts(filters, profileId);
+        const querySpec = new ViewerVideoQuerySpec(filters, profileId);
+        const { whereSql, groupJoin, selectionJoin, params } = querySpec.buildCountQueryParts();
 
         const sql = `
             SELECT COUNT(DISTINCT v.id) AS count

@@ -1,4 +1,9 @@
 import { SqliteDAO } from '$lib/daos/shared/SqliteDAO';
+import {
+    HistorySessionReadQuerySpec,
+    HistoryVideoSummaryReadQuerySpec,
+    type HistoryReadFilters
+} from '$lib/daos/queries/HistoryReadQuerySpec';
 import type { WatchHistory } from '$lib/entities/watchHistory';
 
 export class HistoryDAO extends SqliteDAO
@@ -91,14 +96,7 @@ export class HistoryDAO extends SqliteDAO
     /**
      * Returns one row per watch session, ordered by newest session first.
      */
-    listSessionsWithFilters(filters: {
-        profileId?: number | null;
-        channelId?: number | null;
-        dateFrom?: number | null; // inclusive, ms epoch
-        dateTo?: number | null;   // inclusive, ms epoch
-        limit?: number;
-        offset?: number;
-    }): Array<{
+    listSessionsWithFilters(filters: HistoryReadFilters): Array<{
         session_started_at: number;
         last_updated_at: number;
         time_watched_seconds: number;
@@ -110,31 +108,8 @@ export class HistoryDAO extends SqliteDAO
         channel_title: string;
     }>
     {
-        const where: string[] = [];
-        const params: Record<string, any> = {};
-
-        if (filters.profileId != null) {
-            where.push('h.profile_id = :profileId');
-            params.profileId = filters.profileId;
-        }
-        if (filters.channelId != null) {
-            where.push('v.channel_id = :channelId');
-            params.channelId = filters.channelId;
-        }
-        if (filters.dateFrom != null) {
-            where.push('h.session_started_at >= :dateFrom');
-            params.dateFrom = filters.dateFrom;
-        }
-        if (filters.dateTo != null) {
-            where.push('h.session_started_at <= :dateTo');
-            params.dateTo = filters.dateTo;
-        }
-
-        const whereSql = where.length ? `WHERE ${where.join(' AND ')}` : '';
-        const limit = Math.max(0, Math.min(1000, filters.limit ?? 100));
-        const offset = Math.max(0, filters.offset ?? 0);
-        params.limit = limit;
-        params.offset = offset;
+        const querySpec = new HistorySessionReadQuerySpec(filters);
+        const { whereSql, params, limit, offset } = querySpec.buildQueryParts();
 
         const sql = `
             SELECT
@@ -155,17 +130,14 @@ export class HistoryDAO extends SqliteDAO
             LIMIT :limit OFFSET :offset
         `;
 
-        return this.db.prepare(sql).all(params) as any[];
+        return this.db.prepare(sql).all({
+            ...params,
+            limit,
+            offset
+        }) as any[];
     }
 
-    listWithFilters(filters: {
-        profileId?: number | null;
-        channelId?: number | null;
-        dateFrom?: number | null;
-        dateTo?: number | null;
-        limit?: number;
-        offset?: number;
-    }): Array<{
+    listWithFilters(filters: HistoryReadFilters): Array<{
         session_started_at: number;
         last_updated_at: number;
         time_watched_seconds: number;
@@ -184,14 +156,7 @@ export class HistoryDAO extends SqliteDAO
      * Returns one row per video with aggregate session data, ordered by latest
      * session start time first, with optional filters.
      */
-    listVideoSummariesWithFilters(filters: {
-        profileId?: number | null;
-        channelId?: number | null;
-        dateFrom?: number | null; // inclusive, ms epoch
-        dateTo?: number | null;   // inclusive, ms epoch
-        limit?: number;
-        offset?: number;
-    }): Array<{
+    listVideoSummariesWithFilters(filters: HistoryReadFilters): Array<{
         profile_id: number;
         video_id: number;
         youtube_id: string;
@@ -204,31 +169,8 @@ export class HistoryDAO extends SqliteDAO
         latest_last_updated_at: number;
     }>
     {
-        const where: string[] = [];
-        const params: Record<string, any> = {};
-
-        if (filters.profileId != null) {
-            where.push('h.profile_id = :profileId');
-            params.profileId = filters.profileId;
-        }
-        if (filters.channelId != null) {
-            where.push('v.channel_id = :channelId');
-            params.channelId = filters.channelId;
-        }
-        if (filters.dateFrom != null) {
-            where.push('h.session_started_at >= :dateFrom');
-            params.dateFrom = filters.dateFrom;
-        }
-        if (filters.dateTo != null) {
-            where.push('h.session_started_at <= :dateTo');
-            params.dateTo = filters.dateTo;
-        }
-
-        const whereSql = where.length ? `WHERE ${where.join(' AND ')}` : '';
-        const limit = Math.max(0, Math.min(1000, filters.limit ?? 100));
-        const offset = Math.max(0, filters.offset ?? 0);
-        params.limit = limit;
-        params.offset = offset;
+        const querySpec = new HistoryVideoSummaryReadQuerySpec(filters);
+        const { whereSql, params, limit, offset } = querySpec.buildQueryParts();
 
         const sql = `
             SELECT
@@ -257,6 +199,10 @@ export class HistoryDAO extends SqliteDAO
             LIMIT :limit OFFSET :offset
         `;
 
-        return this.db.prepare(sql).all(params) as any[];
+        return this.db.prepare(sql).all({
+            ...params,
+            limit,
+            offset
+        }) as any[];
     }
 }
