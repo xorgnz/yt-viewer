@@ -6,6 +6,7 @@ import {
 } from '../helpers/TestFixtureBuilders';
 
 type ViewerVirtualChannelsRouteModule = typeof import('../../src/routes/viewer/virtual-channels/+page.server');
+type ViewerVirtualChannelsLoadResult = Exclude<Awaited<ReturnType<ViewerVirtualChannelsRouteModule['load']>>, void>;
 
 describe('viewer virtual channels route', () => {
     let harness: RouteDatabaseHarness;
@@ -39,7 +40,7 @@ describe('viewer virtual channels route', () => {
     it('loads viewer navigation groups with the active profile key', async () => {
         const result = await routeModule.load({
             cookies: childCookieJar()
-        } as any);
+        } as any) as ViewerVirtualChannelsLoadResult;
 
         expect(result.profileKey).toBe('child');
         expect(result.groups.map((group: { name: string }) => group.name)).toEqual([

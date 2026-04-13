@@ -80,8 +80,8 @@
   - [x] 6.4 Add focused service-layer tests where route tests were previously the only executable coverage for business workflows
   - [x] 6.5 Remove superseded one-off test helpers once the shared harness covers the same behavior
 
-- [ ] 7.0 Remove obsolete code paths and finish repository-wide consistency cleanup
+- [x] 7.0 Remove obsolete code paths and finish repository-wide consistency cleanup
   - [x] 7.1 Delete superseded route-local helpers, duplicated setup code, and obsolete workflow paths once replacement behavior is verified
   - [x] 7.2 Normalize naming and placement for new shared server, service, viewer, and persistence modules so future work has a clear home
   - [x] 7.3 Tighten exported types and public interfaces for new modules to improve encapsulation and reduce implicit cross-layer coupling, with follow-up passes to remove unnecessary free-function exports in application code
-  - [ ] 7.4 Run final repo-wide validation and resolve any import, typing, dead-code, or test regressions introduced by the refactor
+  - [x] 7.4 Run final repo-wide validation and resolve any import, typing, dead-code, or test regressions introduced by the refactor

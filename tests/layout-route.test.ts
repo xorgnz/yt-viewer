@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { RouteDatabaseHarness } from './helpers/RouteDatabaseHarness';
 
 type LayoutRouteModule = typeof import('../src/routes/+layout.server');
+type LayoutLoadResult = Exclude<Awaited<ReturnType<LayoutRouteModule['load']>>, void>;
 
 describe('root layout route', () => {
     let harness: RouteDatabaseHarness;
@@ -32,7 +33,7 @@ describe('root layout route', () => {
                 ytcw_active_profile: 'child',
                 ytcw_admin: '1'
             })
-        } as any);
+        } as any) as LayoutLoadResult;
 
         expect(result.profiles.map((profile: { key: string; name: string }) => ({
             key: profile.key,
@@ -51,7 +52,7 @@ describe('root layout route', () => {
             cookies: cookieJar({
                 ytcw_active_profile: 'unsupported'
             })
-        } as any);
+        } as any) as LayoutLoadResult;
 
         expect(result.activeProfileKey).toBe('default');
         expect(result.activeProfileName).toBe('Adult');

@@ -66,8 +66,8 @@ describe('ServerDatabaseContext', () => {
     });
 
     it('closes the wrapper after successful and failed work', async () => {
-        let successfulWrapper: DatabaseWrapper | null = null;
-        let failingWrapper: DatabaseWrapper | null = null;
+        let successfulWrapper: Pick<DatabaseWrapper, 'instance'> | null = null;
+        let failingWrapper: Pick<DatabaseWrapper, 'instance'> | null = null;
 
         await expect(ServerDatabaseContext.run(({ wrapper, db }) => {
             successfulWrapper = wrapper;
@@ -78,13 +78,15 @@ describe('ServerDatabaseContext', () => {
             return 42;
         })).resolves.toBe(42);
 
-        expect(successfulWrapper?.instance).toBeNull();
+        expect(successfulWrapper).not.toBeNull();
+        expect((successfulWrapper as any).instance).toBeNull();
 
         await expect(ServerDatabaseContext.run(({ wrapper }) => {
             failingWrapper = wrapper;
             throw new Error('request failed');
         })).rejects.toThrow('request failed');
 
-        expect(failingWrapper?.instance).toBeNull();
+        expect(failingWrapper).not.toBeNull();
+        expect((failingWrapper as any).instance).toBeNull();
     });
 });

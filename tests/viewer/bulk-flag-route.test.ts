@@ -137,8 +137,12 @@ describe('viewer bulk flag actions', () => {
             cookies: cookieJar()
         } as any);
 
-        expect(result?.status).toBe(400);
-        expect(result?.data).toEqual({
+        if (!('status' in result)) {
+            throw new Error('Expected action failure for invalid toggle parameters.');
+        }
+
+        expect(result.status).toBe(400);
+        expect(result.data).toEqual({
             message: 'Invalid toggle parameters'
         });
     });

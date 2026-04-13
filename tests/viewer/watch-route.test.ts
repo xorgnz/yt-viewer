@@ -134,8 +134,12 @@ describe('viewer watch route actions', () => {
             cookies: cookieJar()
         } as any);
 
-        expect(result?.status).toBe(409);
-        expect(result?.data).toEqual({
+        if (!('status' in result)) {
+            throw new Error('Expected action failure for stale history session.');
+        }
+
+        expect(result.status).toBe(409);
+        expect(result.data).toEqual({
             message: 'History session is no longer active'
         });
     });
