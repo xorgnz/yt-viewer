@@ -1,20 +1,19 @@
 <script lang="ts">
     import VideoCard from '$lib/components/VideoCard.svelte';
     import type {
+        ViewerFlagToggleHandler
+    } from '$lib/viewer/display';
+    import type {
+        ViewerCardClickHandler,
+        ViewerCardMouseDownHandler,
         ViewerVideo
     } from '$lib/viewer/types';
-    import type {
-        ViewerSelectionFlagKind,
-        ViewerSelectionFlagValue
-    } from '$lib/viewerSelection';
 
     export let videos: ViewerVideo[] = [];
     export let selectedVideoIds: number[] = [];
-    export let onCardMouseDown: ((event: MouseEvent, videoId: number) => void) | null = null;
-    export let onCardClick: ((event: MouseEvent | KeyboardEvent, videoId: number) => void) | null = null;
-    export let onToggleFlag:
-        ((videoId: number, kind: ViewerSelectionFlagKind, value: ViewerSelectionFlagValue) => void | Promise<void>) | null
-        = null;
+    export let onCardMouseDown: ViewerCardMouseDownHandler | null = null;
+    export let onCardClick: ViewerCardClickHandler | null = null;
+    export let onToggleFlag: ViewerFlagToggleHandler | null = null;
 </script>
 
 <section class="panel viewer-results-panel">

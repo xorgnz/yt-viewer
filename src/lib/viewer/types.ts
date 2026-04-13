@@ -33,6 +33,9 @@ export type ViewerVideo = {
     ignored: number;
 };
 
+export type ViewerCardClickHandler = (event: MouseEvent | KeyboardEvent, videoId: number) => void;
+export type ViewerCardMouseDownHandler = (event: MouseEvent, videoId: number) => void;
+
 export type ViewerChannel = {
     id: number;
     youtube_id: string;
