@@ -1,6 +1,4 @@
-import Database from 'better-sqlite3';
 import { describe, expect, it } from 'vitest';
-import { applyLatestSchemaBootstrap } from '../../src/lib/daos/shared/LatestSchemaBootstrap';
 import { ProfileDAO } from '../../src/lib/daos/profileDAO';
 import { SourceChannelDAO } from '../../src/lib/daos/sourceChannelDAO';
 import { VideoDAO } from '../../src/lib/daos/videoDAO';
@@ -8,11 +6,12 @@ import { VirtualChannelDAO } from '../../src/lib/daos/virtualChannelDAO';
 import { ServerProfileContext } from '../../src/lib/server/ServerProfileContext';
 import { ViewerPageLoader } from '../../src/lib/server/viewer/ViewerPageLoader';
 import { ViewerQueryParser } from '../../src/lib/server/viewer/ViewerQueryParser';
+import { InMemoryDatabaseHarness } from '../helpers/InMemoryDatabaseHarness';
 
 describe('ViewerPageLoader', () => {
     it('assembles the viewer load model from normalized filters and the active profile', () => {
-        const db = new Database(':memory:');
-        applyLatestSchemaBootstrap(db);
+        const harness = InMemoryDatabaseHarness.createWithLatestSchema();
+        const { db } = harness;
 
         // Seed the minimum viewer data needed for one assembled load model.
         const profileDAO = new ProfileDAO(db);
@@ -61,6 +60,6 @@ describe('ViewerPageLoader', () => {
         expect(result.groups.map((group) => group.name)).toEqual(['Load Group']);
         expect(result.videos.map((video) => video.youtube_id)).toEqual(['VID_LOAD']);
 
-        db.close();
+        harness.close();
     });
 });

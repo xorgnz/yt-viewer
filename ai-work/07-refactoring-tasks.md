@@ -74,7 +74,7 @@
   - [x] 5.5 Update DAO-focused tests to cover the extracted query helpers directly as well as the narrower DAO behavior
 
 - [ ] 6.0 Consolidate shared test harnesses and fixture builders across refactor slices
-  - [ ] 6.1 Extract reusable in-memory database/bootstrap helpers from viewer, admin, DAO, and migration tests
+  - [x] 6.1 Extract reusable in-memory database/bootstrap helpers from viewer, admin, DAO, and migration tests
   - [ ] 6.2 Add fixture builders for profiles, videos, flags, assignments, and migration-state scenarios that reduce repeated setup
   - [ ] 6.3 Migrate refactored route, service, and DAO tests to the shared harness as each architectural slice lands
   - [ ] 6.4 Add focused service-layer tests where route tests were previously the only executable coverage for business workflows

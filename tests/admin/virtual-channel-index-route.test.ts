@@ -1,27 +1,15 @@
-import fs from 'node:fs';
-import os from 'node:os';
-import path from 'node:path';
-import Database from 'better-sqlite3';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { applyLatestSchemaBootstrap } from '../../src/lib/daos/shared/LatestSchemaBootstrap';
+import { RouteDatabaseHarness } from '../helpers/RouteDatabaseHarness';
 
 type IndexRouteModule = typeof import('../../src/routes/admin/virtual-channels/+page.server');
 
 describe('admin virtual channels index route', () => {
-    let tempDir: string;
-    let previousNodeEnv: string | undefined;
-    let previousDbDir: string | undefined;
+    let harness: RouteDatabaseHarness;
     let routeModule: IndexRouteModule;
 
     beforeEach(async () => {
-        tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'ytcw-index-route-'));
-        previousNodeEnv = process.env.NODE_ENV;
-        previousDbDir = process.env.YTCW_DB_DIR;
-        process.env.NODE_ENV = 'test';
-        process.env.YTCW_DB_DIR = tempDir;
-
-        const db = new Database(path.join(tempDir, 'test.db'));
-        applyLatestSchemaBootstrap(db);
+        harness = RouteDatabaseHarness.create('ytcw-index-route-');
+        const { db } = harness;
 
         db.prepare(`
             INSERT INTO source_channels(id, youtube_id, title, description, thumbnail_url, published_at, last_refreshed_at)
@@ -48,16 +36,7 @@ describe('admin virtual channels index route', () => {
     });
 
     afterEach(() => {
-        process.env.NODE_ENV = previousNodeEnv;
-        if (previousDbDir === undefined) {
-            delete process.env.YTCW_DB_DIR;
-        } else {
-            process.env.YTCW_DB_DIR = previousDbDir;
-        }
-
-        if (tempDir && fs.existsSync(tempDir)) {
-            fs.rmSync(tempDir, { recursive: true, force: true });
-        }
+        harness.dispose();
     });
 
     it('adds an inline association and returns the refreshed row shape', async () => {

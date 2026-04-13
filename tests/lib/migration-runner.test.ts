@@ -1,9 +1,10 @@
-import Database from 'better-sqlite3';
 import { describe, expect, it } from 'vitest';
 import { MIGRATIONS } from '../../src/lib/daos/migrations/registry';
 import { SchemaVersionDAO } from '../../src/lib/daos/schemaVersionDAO';
 import { MigrationRunner } from '../../src/lib/daos/shared/MigrationRunner';
 import { SqliteMigrationAdapter } from '../../src/lib/daos/shared/SqliteMigrationAdapter';
+import { InMemoryDatabaseHarness } from '../helpers/InMemoryDatabaseHarness';
+import Database from 'better-sqlite3';
 
 function createPreV8Database(): Database.Database
 {
@@ -173,12 +174,13 @@ describe('MigrationRunner', () => {
     });
 
     it('refuses to migrate when the schema version is unknown', () => {
-        const db = new Database(':memory:');
+        const harness = InMemoryDatabaseHarness.createEmpty();
+        const { db } = harness;
         const runner = new MigrationRunner(new SqliteMigrationAdapter(db), MIGRATIONS);
 
         expect(() => runner.runToLatest()).toThrow('Database schema version is unknown.');
 
-        db.close();
+        harness.close();
     });
 
     it('refuses to migrate when required migration metadata is inconsistent', () => {
