@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest';
 import {
     ViewerSelectionContext,
     type ViewerSelectionContextInput,
+    viewerSelectionInspector,
+    viewerSelectionSessionStore,
     viewerSelectionStateManager
 } from '../../src/lib/viewerSelection';
 
@@ -106,5 +108,61 @@ describe('viewerSelection filter-context behavior', () => {
         expect(state.selectedVideoIds).toEqual([]);
         expect(state.anchorVideoId).toBeNull();
         expect(state.selectedVideoState).toEqual({});
+    });
+
+    it('reports mixed control state and off-page selection through the inspector', () => {
+        const contextKey = createContextKey();
+        let state = viewerSelectionStateManager.create(contextKey, pageOneVideos);
+
+        state = viewerSelectionStateManager.toggle(state, 1);
+        state = viewerSelectionStateManager.toggle(state, 2);
+        state = viewerSelectionStateManager.reconcile(state, contextKey, pageTwoVideos);
+
+        expect(viewerSelectionInspector.hasSelectionOutsideCurrentPage(state)).toBe(true);
+        expect(viewerSelectionInspector.getCurrentPageSelectedIds(state)).toEqual([]);
+        expect(viewerSelectionInspector.getControlState(state, 'watched')).toBe('mixed');
+    });
+
+    it('persists and restores selection state through the session store', () => {
+        const storage = new Map<string, string>();
+        const originalWindow = globalThis.window;
+
+        Object.defineProperty(globalThis, 'window', {
+            configurable: true,
+            value: {
+                sessionStorage: {
+                    getItem(key: string) {
+                        return storage.get(key) ?? null;
+                    },
+                    setItem(key: string, value: string) {
+                        storage.set(key, value);
+                    },
+                    removeItem(key: string) {
+                        storage.delete(key);
+                    }
+                }
+            }
+        });
+
+        try {
+            const contextKey = createContextKey();
+            let state = viewerSelectionStateManager.create(contextKey, pageOneVideos);
+
+            state = viewerSelectionStateManager.toggle(state, 1);
+            viewerSelectionSessionStore.persist(state);
+
+            const restoredState = viewerSelectionSessionStore.load(contextKey, pageOneVideos);
+
+            expect(restoredState?.selectedVideoIds).toEqual([1]);
+            expect(restoredState?.anchorVideoId).toBe(1);
+            expect(restoredState?.selectedVideoState).toEqual({
+                1: { watched: 0, favorite: 0, ignored: 0 }
+            });
+        } finally {
+            Object.defineProperty(globalThis, 'window', {
+                configurable: true,
+                value: originalWindow
+            });
+        }
     });
 });

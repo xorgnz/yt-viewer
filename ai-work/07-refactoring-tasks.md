@@ -49,12 +49,12 @@
   - [x] 2.4 Align `src/routes/viewer/virtual-channels/+page.server.ts` and `src/routes/viewer/watch/[videoId]/+page.server.ts` with the same shared request-context and viewer-service patterns where responsibilities overlap
   - [x] 2.5 Update `tests/viewer/` coverage so the extracted services and thinner route handlers preserve current viewer behavior
 
-- [ ] 3.0 Split viewer UI and selection state into smaller, reusable modules
+- [x] 3.0 Split viewer UI and selection state into smaller, reusable modules
   - [x] 3.1 Break `src/routes/viewer/+page.svelte` into focused components for filters, result presentation, bulk actions, and pagination
   - [x] 3.2 Move viewer page state derivation and event orchestration into smaller viewer-focused modules so the page component becomes a composition root
   - [x] 3.3 Split `src/lib/viewerSelection.ts` into a small selection-state core plus persistence/session-storage integration and selection-summary/control helpers
   - [x] 3.4 Reuse or extract shared viewer-oriented display helpers where page-local UI logic is currently tightly coupled to the route component
-  - [ ] 3.5 Add or update viewer state and component-oriented tests for the extracted UI and selection modules
+  - [x] 3.5 Add or update viewer state and component-oriented tests for the extracted UI and selection modules
 
 - [ ] 4.0 Expand service-layer boundaries across admin and YouTube integration workflows
   - [ ] 4.1 Move virtual-channel create/update/delete and assignment-management workflows out of admin route files into explicit services with typed inputs
