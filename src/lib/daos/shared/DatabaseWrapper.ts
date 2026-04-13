@@ -1,15 +1,10 @@
 import Database from 'better-sqlite3';
 import fs from 'node:fs';
-import path from 'node:path';
 import { SCHEMA_VERSION } from '$lib/daos/_schema';
 import { SchemaVersionDAO } from '$lib/daos/schemaVersionDAO';
+import { DatabaseFileLayout, DatabaseMode } from '$lib/daos/shared/DatabaseFileLayout';
 
-export enum DatabaseMode
-{
-    Test = 'test',
-    Dev = 'dev',
-    Live = 'live'
-}
+export { DatabaseMode } from '$lib/daos/shared/DatabaseFileLayout';
 
 /**
  * DatabaseWrapper centralizes creating/opening/closing/deleting DB files
@@ -18,30 +13,18 @@ export enum DatabaseMode
 export class DatabaseWrapper
 {
     private readonly mode: DatabaseMode;
-    private readonly baseDir: string;
-    private readonly fileNames: { test: string; dev: string; live: string };
+    private readonly fileLayout: DatabaseFileLayout;
     private db: Database.Database | null = null;
 
     constructor(mode: DatabaseMode, options?: { baseDir?: string; fileNames?: Partial<{ test: string; dev: string; live: string }> })
     {
         this.mode = mode;
-        this.baseDir = options?.baseDir || process.env.YTCW_DB_DIR || '.data';
-        const defaults = { test: 'test.db', dev: 'dev.db', live: process.env.YTCW_DB_FILE || 'app.db' } as const;
-        this.fileNames = {
-            test: options?.fileNames?.test || defaults.test,
-            dev: options?.fileNames?.dev || defaults.dev,
-            live: options?.fileNames?.live || defaults.live,
-        };
+        this.fileLayout = new DatabaseFileLayout(options);
     }
 
     get path(): string
     {
-        const file = this.mode === DatabaseMode.Test
-            ? this.fileNames.test
-            : this.mode === DatabaseMode.Dev
-                ? this.fileNames.dev
-                : this.fileNames.live;
-        return path.resolve(process.cwd(), this.baseDir, file);
+        return this.fileLayout.resolveDatabasePath(this.mode);
     }
 
     /**

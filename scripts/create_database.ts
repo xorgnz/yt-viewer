@@ -5,8 +5,8 @@ import path from 'node:path';
 import fs from 'node:fs';
 import Database from 'better-sqlite3';
 import {SCHEMA_VERSION} from '$lib/daos/_schema';
-import {DatabaseMode} from "$lib/daos/shared/DatabaseWrapper";
-import { applyLatestSchemaBootstrap } from '$lib/daos/shared/LatestSchemaBootstrap';
+import { DatabaseFileLayout, DatabaseMode } from '$lib/daos/shared/DatabaseFileLayout';
+import { LatestSchemaBootstrapper } from '$lib/daos/shared/LatestSchemaBootstrap';
 
 function parseArgs(): { mode: DatabaseMode; reset: boolean }
 {
@@ -61,9 +61,10 @@ function usage(error?: string): never
 async function main()
 {
     const { mode, reset } = parseArgs();
-    const { dbPath } = resolveDbPath(mode);
+    const fileLayout = new DatabaseFileLayout();
+    const dbPath = fileLayout.resolveDatabasePath(mode);
 
-    ensureDir(dbPath);
+    fileLayout.ensureParentDirectory(dbPath);
     if (fs.existsSync(dbPath)) {
         if (mode === DatabaseMode.Test) {
             fs.unlinkSync(dbPath);
@@ -81,7 +82,7 @@ async function main()
     db.pragma('synchronous = NORMAL');
 
     // Fresh-create always applies the latest bootstrap schema in one pass.
-    applyLatestSchemaBootstrap(db);
+    new LatestSchemaBootstrapper().apply(db);
 
     db.close();
 
@@ -92,22 +93,3 @@ main().catch((err) => {
     console.error('Failed to create database:', err);
     exit(1);
 });
-
-function resolveDbPath(mode: DatabaseMode): { dbPath: string }
-{
-    const baseDir = process.env.YTCW_DB_DIR || '.data';
-    const defaults = { test: 'test.db', dev: 'dev.db', live: process.env.YTCW_DB_FILE || 'app.db' } as const;
-    const file = mode === 'test'
-        ? defaults.test
-        : mode === 'dev'
-            ? defaults.dev
-            : defaults.live;
-    const dbPath = path.resolve(process.cwd(), baseDir, file);
-    return { dbPath };
-}
-
-function ensureDir(filePath: string): void
-{
-    const dir = path.dirname(filePath);
-    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-}

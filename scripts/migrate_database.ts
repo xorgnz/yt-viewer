@@ -2,24 +2,14 @@
 import { argv, exit } from 'node:process';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
-import fs from 'node:fs';
-import Database from 'better-sqlite3';
-import { DatabaseMode } from '$lib/daos/shared/DatabaseWrapper';
-import { MigrationRunner } from '$lib/daos/shared/MigrationRunner';
-import { SqliteMigrationAdapter } from '$lib/daos/shared/SqliteMigrationAdapter';
-import { MIGRATIONS } from '$lib/daos/migrations/registry';
-import type { MigrationDefinition, MigrationRunResult } from '$lib/daos/migrations/migrationTypes';
+import { DatabaseFileLayout, DatabaseMode } from '$lib/daos/shared/DatabaseFileLayout';
+import {
+    DatabaseMigrationWorkflow,
+    type DatabaseMigrationWorkflowOptions,
+    type DatabaseMigrationWorkflowResult
+} from '$lib/daos/shared/DatabaseMigrationWorkflow';
 
 type ModeArg = DatabaseMode;
-type MigrationWorkflowOptions = {
-    dbPath: string;
-    migrations?: MigrationDefinition[];
-};
-type MigrationWorkflowResult = {
-    backupPath: string;
-    failedArtifactPath: string | null;
-    migrationResult: MigrationRunResult;
-};
 
 function parseArgs(): { mode: ModeArg }
 {
@@ -71,90 +61,15 @@ function usage(error?: string): never
     exit(error ? 1 : 0);
 }
 
-function resolveDbPath(mode: ModeArg): { dbPath: string }
+export function runMigrationWorkflow(options: DatabaseMigrationWorkflowOptions): DatabaseMigrationWorkflowResult
 {
-    const baseDir = process.env.YTCW_DB_DIR || '.data';
-    const defaults = { test: 'test.db', dev: 'dev.db', live: process.env.YTCW_DB_FILE || 'app.db' } as const;
-    const file = mode === 'test' ? defaults.test : mode === 'dev' ? defaults.dev : defaults.live;
-    const dbPath = path.resolve(process.cwd(), baseDir, file);
-    return { dbPath };
-}
-
-function formatTimestamp(date: Date): string
-{
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    const hours = String(date.getHours()).padStart(2, '0');
-    const minutes = String(date.getMinutes()).padStart(2, '0');
-    const seconds = String(date.getSeconds()).padStart(2, '0');
-
-    return `${year}${month}${day}-${hours}${minutes}${seconds}`;
-}
-
-function createBackupPath(dbPath: string): string
-{
-    const parsedPath = path.parse(dbPath);
-    return path.join(parsedPath.dir, `${parsedPath.name}-${formatTimestamp(new Date())}.bak${parsedPath.ext}`);
-}
-
-function createPreMigrationBackup(dbPath: string): string
-{
-    const backupPath = createBackupPath(dbPath);
-    fs.copyFileSync(dbPath, backupPath);
-    return backupPath;
-}
-
-function createFailedArtifactPath(dbPath: string): string
-{
-    const parsedPath = path.parse(dbPath);
-    return path.join(parsedPath.dir, `${parsedPath.name}-${formatTimestamp(new Date())}.failed${parsedPath.ext}`);
-}
-
-export function runMigrationWorkflow(options: MigrationWorkflowOptions): MigrationWorkflowResult
-{
-    const migrations = options.migrations || MIGRATIONS;
-
-    if (!fs.existsSync(options.dbPath)) {
-        throw new Error(`Database file not found at: ${options.dbPath}.`);
-    }
-
-    const backupPath = createPreMigrationBackup(options.dbPath);
-    let db: Database.Database | null = new Database(options.dbPath);
-
-    try {
-        const runner = new MigrationRunner(new SqliteMigrationAdapter(db), migrations);
-        const migrationResult = runner.runToLatest();
-
-        return {
-            backupPath,
-            failedArtifactPath: null,
-            migrationResult,
-        };
-    } catch (error) {
-        if (db) {
-            db.close();
-            db = null;
-        }
-
-        const failedArtifactPath = createFailedArtifactPath(options.dbPath);
-        fs.copyFileSync(options.dbPath, failedArtifactPath);
-        fs.copyFileSync(backupPath, options.dbPath);
-
-        throw new Error(
-            `Migration failed. Restored database: ${options.dbPath}. Backup: ${backupPath}. Failed artifact: ${failedArtifactPath}. ${error instanceof Error ? error.message : String(error)}`
-        );
-    } finally {
-        if (db) {
-            db.close();
-        }
-    }
+    return new DatabaseMigrationWorkflow().run(options);
 }
 
 async function main()
 {
     const { mode } = parseArgs();
-    const { dbPath } = resolveDbPath(mode);
+    const dbPath = new DatabaseFileLayout().resolveDatabasePath(mode);
 
     try {
         const workflowResult = runMigrationWorkflow({ dbPath });
