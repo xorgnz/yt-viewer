@@ -1,63 +1,53 @@
-import fs from 'node:fs';
-import os from 'node:os';
-import path from 'node:path';
 import Database from 'better-sqlite3';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { applyLatestSchemaBootstrap } from '../../src/lib/daos/shared/LatestSchemaBootstrap';
+import { RouteDatabaseHarness } from '../helpers/RouteDatabaseHarness';
+import {
+    insertProfile,
+    insertSourceChannel,
+    insertVideo
+} from '../helpers/TestFixtureBuilders';
 
 type WatchRouteModule = typeof import('../../src/routes/viewer/watch/[videoId]/+page.server');
 
 describe('viewer watch route actions', () => {
-    let tempDir: string;
-    let previousNodeEnv: string | undefined;
-    let previousDbDir: string | undefined;
+    let harness: RouteDatabaseHarness;
     let routeModule: WatchRouteModule;
-    let dbPath: string;
 
     beforeEach(async () => {
-        tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'ytcw-watch-route-'));
-        previousNodeEnv = process.env.NODE_ENV;
-        previousDbDir = process.env.YTCW_DB_DIR;
-        process.env.NODE_ENV = 'test';
-        process.env.YTCW_DB_DIR = tempDir;
+        harness = RouteDatabaseHarness.create('ytcw-watch-route-');
 
-        dbPath = path.join(tempDir, 'test.db');
-        const db = new Database(dbPath);
-        applyLatestSchemaBootstrap(db);
-
-        db.prepare(`
-            INSERT INTO profiles(id, key, name)
-            VALUES (1, 'default', 'Default')
-        `).run();
-        db.prepare(`
-            INSERT INTO source_channels(id, youtube_id, title, description, thumbnail_url, published_at, last_refreshed_at)
-            VALUES (1, 'UC_WATCH', 'Watch Source', '', NULL, NULL, NULL)
-        `).run();
-        db.prepare(`
-            INSERT INTO videos(id, youtube_id, channel_id, title, description, published_at, duration_seconds, thumbnail_url, length_classification)
-            VALUES (1, 'WATCH_ME', 1, 'Watch Me', '', NULL, 600, NULL, 'long')
-        `).run();
-        db.close();
+        insertProfile(harness.db, { id: 1, key: 'default', name: 'Default' });
+        insertSourceChannel(harness.db, {
+            id: 1,
+            youtubeId: 'UC_WATCH',
+            title: 'Watch Source',
+            description: '',
+            thumbnailUrl: null,
+            publishedAt: null,
+            lastRefreshedAt: null
+        });
+        insertVideo(harness.db, {
+            id: 1,
+            youtubeId: 'WATCH_ME',
+            channelId: 1,
+            title: 'Watch Me',
+            description: '',
+            publishedAt: null,
+            durationSeconds: 600,
+            thumbnailUrl: null,
+            lengthClassification: 'long'
+        });
 
         routeModule = await import('../../src/routes/viewer/watch/[videoId]/+page.server');
     });
 
     afterEach(() => {
-        process.env.NODE_ENV = previousNodeEnv;
-        if (previousDbDir === undefined) {
-            delete process.env.YTCW_DB_DIR;
-        } else {
-            process.env.YTCW_DB_DIR = previousDbDir;
-        }
-
-        if (tempDir && fs.existsSync(tempDir)) {
-            fs.rmSync(tempDir, { recursive: true, force: true });
-        }
+        harness.dispose();
     });
 
     function openDb(): Database.Database
     {
-        return new Database(dbPath);
+        return harness.openReadOnly();
     }
 
     function cookieJar()
@@ -122,20 +112,15 @@ describe('viewer watch route actions', () => {
     });
 
     it('returns a stale-session failure when history progress is no longer active', async () => {
-        const db = openDb();
-        try {
-            db.prepare(`
-                INSERT INTO watch_history(
-                    video_id,
-                    profile_id,
-                    session_started_at,
-                    last_updated_at,
-                    time_watched_seconds
-                ) VALUES (1, 1, 0, 0, 8)
-            `).run();
-        } finally {
-            db.close();
-        }
+        harness.db.prepare(`
+            INSERT INTO watch_history(
+                video_id,
+                profile_id,
+                session_started_at,
+                last_updated_at,
+                time_watched_seconds
+            ) VALUES (1, 1, 0, 0, 8)
+        `).run();
 
         const updateForm = new FormData();
         updateForm.set('watchSeconds', '21');

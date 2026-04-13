@@ -1,6 +1,4 @@
-import Database from 'better-sqlite3';
 import { describe, expect, it } from 'vitest';
-import { applyLatestSchemaBootstrap } from '../../src/lib/daos/shared/LatestSchemaBootstrap';
 import { FlagsDAO } from '../../src/lib/daos/flagsDAO';
 import { HistoryDAO } from '../../src/lib/daos/historyDAO';
 import { ProfileDAO } from '../../src/lib/daos/profileDAO';
@@ -9,12 +7,13 @@ import { SourceChannelDAO } from '../../src/lib/daos/sourceChannelDAO';
 import { VideoDAO } from '../../src/lib/daos/videoDAO';
 import { ServerProfileContext } from '../../src/lib/server/ServerProfileContext';
 import { ViewerWatchService } from '../../src/lib/server/viewer/ViewerWatchService';
+import { InMemoryDatabaseHarness } from '../helpers/InMemoryDatabaseHarness';
 
 describe('ViewerWatchService', () => {
     function createService()
     {
-        const db = new Database(':memory:');
-        applyLatestSchemaBootstrap(db);
+        const harness = InMemoryDatabaseHarness.createWithLatestSchema();
+        const { db } = harness;
 
         // Seed the minimum viewer-watch dataset for service-level tests.
         const profileDAO = new ProfileDAO(db);
@@ -55,7 +54,7 @@ describe('ViewerWatchService', () => {
         } as any);
 
         return {
-            db,
+            harness,
             flagsDAO,
             historyDAO,
             service: new ViewerWatchService(
@@ -68,7 +67,7 @@ describe('ViewerWatchService', () => {
     }
 
     it('loads the viewer watch page model in the active profile context', () => {
-        const { db, service } = createService();
+        const { harness, service } = createService();
 
         const result = service.load('WATCH_ME');
 
@@ -79,11 +78,11 @@ describe('ViewerWatchService', () => {
         });
         expect(result?.video.youtube_id).toBe('WATCH_ME');
 
-        db.close();
+        harness.close();
     });
 
     it('creates and updates watch history independently of watched flags', () => {
-        const { db, flagsDAO, historyDAO, service } = createService();
+        const { harness, flagsDAO, historyDAO, service } = createService();
 
         const createResult = service.createHistorySession('WATCH_ME', 8, 1000);
         const updateResult = service.updateHistoryProgress('WATCH_ME', 21, 2000);
@@ -96,11 +95,11 @@ describe('ViewerWatchService', () => {
         expect(flagValues.get(1)).toBe(0);
         expect(session?.time_watched_seconds).toBe(21);
 
-        db.close();
+        harness.close();
     });
 
     it('returns status-bearing failures for missing videos and stale sessions', () => {
-        const { db, service } = createService();
+        const { harness, service } = createService();
 
         const missingVideoResult = service.setWatched('UNKNOWN', true);
         const sessionCreateResult = service.createHistorySession('WATCH_ME', 8, 1000);
@@ -118,6 +117,6 @@ describe('ViewerWatchService', () => {
             message: 'History session is no longer active'
         });
 
-        db.close();
+        harness.close();
     });
 });

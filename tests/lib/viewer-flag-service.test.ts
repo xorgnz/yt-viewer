@@ -1,17 +1,16 @@
-import Database from 'better-sqlite3';
 import { describe, expect, it } from 'vitest';
-import { applyLatestSchemaBootstrap } from '../../src/lib/daos/shared/LatestSchemaBootstrap';
 import { ProfileDAO } from '../../src/lib/daos/profileDAO';
 import { SourceChannelDAO } from '../../src/lib/daos/sourceChannelDAO';
 import { VideoDAO } from '../../src/lib/daos/videoDAO';
 import { FlagsDAO } from '../../src/lib/daos/flagsDAO';
 import { ViewerFlagService } from '../../src/lib/server/viewer/ViewerFlagService';
+import { InMemoryDatabaseHarness } from '../helpers/InMemoryDatabaseHarness';
 
 describe('ViewerFlagService', () => {
     function createService()
     {
-        const db = new Database(':memory:');
-        applyLatestSchemaBootstrap(db);
+        const harness = InMemoryDatabaseHarness.createWithLatestSchema();
+        const { db } = harness;
 
         // Seed a minimal viewer-flag dataset for service-level workflow tests.
         const profileDAO = new ProfileDAO(db);
@@ -65,7 +64,7 @@ describe('ViewerFlagService', () => {
         flagsDAO.set(video2.id, profile.id, { watched: 1, favorite: 1 });
 
         return {
-            db,
+            harness,
             profileId: profile.id,
             video1,
             video2,
@@ -75,7 +74,7 @@ describe('ViewerFlagService', () => {
     }
 
     it('toggles a single flag through the service boundary', () => {
-        const { db, profileId, video1, flagsDAO, service } = createService();
+        const { harness, profileId, video1, flagsDAO, service } = createService();
 
         const result = service.toggleFlag(video1.id, 'favorite', 1);
         const values = flagsDAO.getValueMap([video1.id], profileId, 'favorite');
@@ -88,11 +87,11 @@ describe('ViewerFlagService', () => {
         });
         expect(values.get(video1.id)).toBe(1);
 
-        db.close();
+        harness.close();
     });
 
     it('returns undo data and partial-success accounting for bulk updates', () => {
-        const { db, video1, video2, service } = createService();
+        const { harness, video1, video2, service } = createService();
 
         const result = service.bulkUpdateFlags({
             kind: 'watched',
@@ -124,11 +123,11 @@ describe('ViewerFlagService', () => {
             { videoId: video2.id, value: 1 }
         ]);
 
-        db.close();
+        harness.close();
     });
 
     it('restores mixed state through undo and selection restore operations', () => {
-        const { db, video1, video2, flagsDAO, profileId, service } = createService();
+        const { harness, video1, video2, flagsDAO, profileId, service } = createService();
 
         const undoResult = service.undoBulkUpdateFlags({
             kind: 'favorite',
@@ -171,6 +170,6 @@ describe('ViewerFlagService', () => {
         expect(ignoredMap.get(video1.id)).toBe(0);
         expect(ignoredMap.get(video2.id)).toBe(1);
 
-        db.close();
+        harness.close();
     });
 });

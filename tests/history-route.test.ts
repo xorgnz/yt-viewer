@@ -1,67 +1,74 @@
-import fs from 'node:fs';
-import os from 'node:os';
-import path from 'node:path';
-import Database from 'better-sqlite3';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { applyLatestSchemaBootstrap } from '../src/lib/daos/shared/LatestSchemaBootstrap';
+import { RouteDatabaseHarness } from './helpers/RouteDatabaseHarness';
+import {
+    insertProfile,
+    insertSourceChannel,
+    insertVideo
+} from './helpers/TestFixtureBuilders';
 
 type HistoryRouteModule = typeof import('../src/routes/history/+page.server');
 
 describe('history page load', () => {
-    let tempDir: string;
-    let previousNodeEnv: string | undefined;
-    let previousDbDir: string | undefined;
+    let harness: RouteDatabaseHarness;
     let routeModule: HistoryRouteModule;
 
     beforeEach(async () => {
-        tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'ytcw-history-route-'));
-        previousNodeEnv = process.env.NODE_ENV;
-        previousDbDir = process.env.YTCW_DB_DIR;
-        process.env.NODE_ENV = 'test';
-        process.env.YTCW_DB_DIR = tempDir;
+        harness = RouteDatabaseHarness.create('ytcw-history-route-');
 
-        const db = new Database(path.join(tempDir, 'test.db'));
-        applyLatestSchemaBootstrap(db);
-
-        db.prepare(`
-            INSERT INTO profiles(id, key, name)
-            VALUES (1, 'default', 'Default')
-        `).run();
-        db.prepare(`
-            INSERT INTO source_channels(id, youtube_id, title, description, thumbnail_url, published_at, last_refreshed_at)
-            VALUES
-                (1, 'UC_H1', 'History Source 1', '', NULL, NULL, NULL),
-                (2, 'UC_H2', 'History Source 2', '', NULL, NULL, NULL)
-        `).run();
-        db.prepare(`
-            INSERT INTO videos(id, youtube_id, channel_id, title, description, published_at, duration_seconds, thumbnail_url, length_classification)
-            VALUES
-                (1, 'VID_H1', 1, 'History Video 1', '', NULL, 200, NULL, 'long'),
-                (2, 'VID_H2', 2, 'History Video 2', '', NULL, 120, NULL, 'long')
-        `).run();
-        db.prepare(`
+        insertProfile(harness.db, { id: 1, key: 'default', name: 'Default' });
+        insertSourceChannel(harness.db, {
+            id: 1,
+            youtubeId: 'UC_H1',
+            title: 'History Source 1',
+            description: '',
+            thumbnailUrl: null,
+            publishedAt: null,
+            lastRefreshedAt: null
+        });
+        insertSourceChannel(harness.db, {
+            id: 2,
+            youtubeId: 'UC_H2',
+            title: 'History Source 2',
+            description: '',
+            thumbnailUrl: null,
+            publishedAt: null,
+            lastRefreshedAt: null
+        });
+        insertVideo(harness.db, {
+            id: 1,
+            youtubeId: 'VID_H1',
+            channelId: 1,
+            title: 'History Video 1',
+            description: '',
+            publishedAt: null,
+            durationSeconds: 200,
+            thumbnailUrl: null,
+            lengthClassification: 'long'
+        });
+        insertVideo(harness.db, {
+            id: 2,
+            youtubeId: 'VID_H2',
+            channelId: 2,
+            title: 'History Video 2',
+            description: '',
+            publishedAt: null,
+            durationSeconds: 120,
+            thumbnailUrl: null,
+            lengthClassification: 'long'
+        });
+        harness.db.prepare(`
             INSERT INTO watch_history(id, video_id, profile_id, session_started_at, last_updated_at, time_watched_seconds)
             VALUES
                 (1, 1, 1, 1700000000000, 1700000009000, 12),
                 (2, 1, 1, 1700000600000, 1700000615000, 30),
                 (3, 2, 1, 1700000300000, 1700000310000, 18)
         `).run();
-        db.close();
 
         routeModule = await import('../src/routes/history/+page.server');
     });
 
     afterEach(() => {
-        process.env.NODE_ENV = previousNodeEnv;
-        if (previousDbDir === undefined) {
-            delete process.env.YTCW_DB_DIR;
-        } else {
-            process.env.YTCW_DB_DIR = previousDbDir;
-        }
-
-        if (tempDir && fs.existsSync(tempDir)) {
-            fs.rmSync(tempDir, { recursive: true, force: true });
-        }
+        harness.dispose();
     });
 
     function cookieJar()

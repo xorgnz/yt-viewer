@@ -1,10 +1,6 @@
-import fs from 'node:fs';
-import os from 'node:os';
-import path from 'node:path';
 import Database from 'better-sqlite3';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { SourceChannelDAO } from '../../src/lib/daos/sourceChannelDAO';
-import { applyLatestSchemaBootstrap } from '../../src/lib/daos/shared/LatestSchemaBootstrap';
 import { AdminSourceChannelLookupService } from '../../src/lib/server/admin/AdminSourceChannelLookupService';
 import { AdminSourceChannelPageService } from '../../src/lib/server/admin/AdminSourceChannelPageService';
 import { AdminSourceChannelYouTubeCoordinator } from '../../src/lib/server/admin/AdminSourceChannelYouTubeCoordinator';
@@ -13,6 +9,8 @@ import type { ResolvedChannelReference } from '../../src/lib/youtube/fetch';
 import type { ImportResult } from '../../src/lib/youtube/importer';
 import type { ChannelsListResponse, YouTubeClient } from '../../src/lib/youtube/youTubeClient';
 import { YouTubeApiError } from '../../src/lib/youtube/youTubeClient';
+import { InMemoryDatabaseHarness } from '../helpers/InMemoryDatabaseHarness';
+import { insertSourceChannel } from '../helpers/TestFixtureBuilders';
 
 class StubClientProvider extends AdminYouTubeClientProvider
 {
@@ -66,21 +64,16 @@ class StubYouTubeCoordinator extends AdminSourceChannelYouTubeCoordinator
 }
 
 describe('admin source channel services', () => {
-    let tempDir: string;
+    let harness: InMemoryDatabaseHarness;
     let db: Database.Database;
 
     beforeEach(() => {
-        tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'ytcw-admin-source-service-'));
-        db = new Database(path.join(tempDir, 'test.db'));
-        applyLatestSchemaBootstrap(db);
+        harness = InMemoryDatabaseHarness.createWithLatestSchema();
+        db = harness.db;
     });
 
     afterEach(() => {
-        db.close();
-
-        if (tempDir && fs.existsSync(tempDir)) {
-            fs.rmSync(tempDir, { recursive: true, force: true });
-        }
+        harness.close();
     });
 
     it('creates a source channel after resolving the submitted YouTube reference', async () => {
@@ -118,10 +111,15 @@ describe('admin source channel services', () => {
     });
 
     it('maps refresh quota errors to a 429 failure result', async () => {
-        db.prepare(`
-            INSERT INTO source_channels(id, youtube_id, title, description, thumbnail_url, published_at, last_refreshed_at)
-            VALUES (1, 'UC_REFRESH', 'Refresh Channel', '', NULL, NULL, NULL)
-        `).run();
+        insertSourceChannel(db, {
+            id: 1,
+            youtubeId: 'UC_REFRESH',
+            title: 'Refresh Channel',
+            description: '',
+            thumbnailUrl: null,
+            publishedAt: null,
+            lastRefreshedAt: null
+        });
 
         const coordinator = new StubYouTubeCoordinator();
         coordinator.importError = new YouTubeApiError(

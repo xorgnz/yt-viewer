@@ -1,12 +1,13 @@
 import Database from 'better-sqlite3';
-import { beforeEach, describe, expect, it } from 'vitest';
-import { ALL_DDL } from '$lib/daos/_schema';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { HistoryDAO } from '$lib/daos/historyDAO';
 import { ProfileDAO } from '$lib/daos/profileDAO';
 import { SourceChannelDAO } from '$lib/daos/sourceChannelDAO';
 import { VideoDAO } from '$lib/daos/videoDAO';
+import { InMemoryDatabaseHarness } from '../helpers/InMemoryDatabaseHarness';
 
 describe('HistoryDAO session behavior', () => {
+    let harness: InMemoryDatabaseHarness;
     let db: Database.Database;
     let history: HistoryDAO;
     let profileId: number;
@@ -15,10 +16,8 @@ describe('HistoryDAO session behavior', () => {
     let baseNow: number;
 
     beforeEach(() => {
-        db = new Database(':memory:');
-        for (const ddl of ALL_DDL) {
-            db.exec(ddl);
-        }
+        harness = InMemoryDatabaseHarness.createWithLatestSchema();
+        db = harness.db;
 
         const profiles = new ProfileDAO(db);
         profiles.upsertByKey('default', 'Default');
@@ -57,6 +56,10 @@ describe('HistoryDAO session behavior', () => {
         videoId = videos.getByExternalId('VID_1')!.id;
         history = new HistoryDAO(db);
         baseNow = 1_700_000_000_000;
+    });
+
+    afterEach(() => {
+        harness.close();
     });
 
     it('creates a session row and returns it as the most recent session', () => {
