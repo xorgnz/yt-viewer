@@ -1,9 +1,5 @@
-import fs from 'node:fs';
-import os from 'node:os';
-import path from 'node:path';
-import Database from 'better-sqlite3';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { applyLatestSchemaBootstrap } from '../../src/lib/daos/shared/LatestSchemaBootstrap';
+import { RouteDatabaseHarness } from '../helpers/RouteDatabaseHarness';
 import {
     insertProfile,
     insertSourceChannel,
@@ -14,20 +10,12 @@ import {
 type ViewerListRouteModule = typeof import('../../src/routes/viewer/+page.server');
 
 describe('viewer list page load', () => {
-    let tempDir: string;
-    let previousNodeEnv: string | undefined;
-    let previousDbDir: string | undefined;
+    let harness: RouteDatabaseHarness;
     let routeModule: ViewerListRouteModule;
 
     beforeEach(async () => {
-        tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'ytcw-viewer-route-'));
-        previousNodeEnv = process.env.NODE_ENV;
-        previousDbDir = process.env.YTCW_DB_DIR;
-        process.env.NODE_ENV = 'test';
-        process.env.YTCW_DB_DIR = tempDir;
-
-        const db = new Database(path.join(tempDir, 'test.db'));
-        applyLatestSchemaBootstrap(db);
+        harness = RouteDatabaseHarness.create('ytcw-viewer-route-');
+        const { db } = harness;
 
         insertProfile(db, { id: 1, key: 'default', name: 'Default' });
         insertProfile(db, { id: 2, key: 'child', name: 'Child' });
@@ -69,16 +57,7 @@ describe('viewer list page load', () => {
     });
 
     afterEach(() => {
-        process.env.NODE_ENV = previousNodeEnv;
-        if (previousDbDir === undefined) {
-            delete process.env.YTCW_DB_DIR;
-        } else {
-            process.env.YTCW_DB_DIR = previousDbDir;
-        }
-
-        if (tempDir && fs.existsSync(tempDir)) {
-            fs.rmSync(tempDir, { recursive: true, force: true });
-        }
+        harness.dispose();
     });
 
     function childCookieJar()

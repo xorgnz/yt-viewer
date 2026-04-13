@@ -73,12 +73,12 @@
   - [x] 5.4 Align shared database bootstrap and migration utilities under `src/lib/daos/shared/` with the same boundary conventions so infrastructure code does not diverge
   - [x] 5.5 Update DAO-focused tests to cover the extracted query helpers directly as well as the narrower DAO behavior
 
-- [ ] 6.0 Consolidate shared test harnesses and fixture builders across refactor slices
+- [x] 6.0 Consolidate shared test harnesses and fixture builders across refactor slices
   - [x] 6.1 Extract reusable in-memory database/bootstrap helpers from viewer, admin, DAO, and migration tests
   - [x] 6.2 Add fixture builders for profiles, videos, flags, assignments, and migration-state scenarios that reduce repeated setup
   - [x] 6.3 Migrate refactored route, service, and DAO tests to the shared harness as each architectural slice lands
   - [x] 6.4 Add focused service-layer tests where route tests were previously the only executable coverage for business workflows
-  - [ ] 6.5 Remove superseded one-off test helpers once the shared harness covers the same behavior
+  - [x] 6.5 Remove superseded one-off test helpers once the shared harness covers the same behavior
 
 - [ ] 7.0 Remove obsolete code paths and finish repository-wide consistency cleanup
   - [ ] 7.1 Delete superseded route-local helpers, duplicated setup code, and obsolete workflow paths once replacement behavior is verified

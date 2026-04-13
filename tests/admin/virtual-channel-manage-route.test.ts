@@ -1,9 +1,5 @@
-import fs from 'node:fs';
-import os from 'node:os';
-import path from 'node:path';
-import Database from 'better-sqlite3';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { applyLatestSchemaBootstrap } from '../../src/lib/daos/shared/LatestSchemaBootstrap';
+import { RouteDatabaseHarness } from '../helpers/RouteDatabaseHarness';
 import {
     insertAssignment,
     insertAssignmentSelection,
@@ -15,20 +11,12 @@ import {
 type ManageRouteModule = typeof import('../../src/routes/admin/virtual-channels/[virtualChannelId]/+page.server');
 
 describe('admin virtual channel manage route', () => {
-    let tempDir: string;
-    let previousNodeEnv: string | undefined;
-    let previousDbDir: string | undefined;
+    let harness: RouteDatabaseHarness;
     let routeModule: ManageRouteModule;
 
     beforeEach(async () => {
-        tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'ytcw-manage-route-'));
-        previousNodeEnv = process.env.NODE_ENV;
-        previousDbDir = process.env.YTCW_DB_DIR;
-        process.env.NODE_ENV = 'test';
-        process.env.YTCW_DB_DIR = tempDir;
-
-        const db = new Database(path.join(tempDir, 'test.db'));
-        applyLatestSchemaBootstrap(db);
+        harness = RouteDatabaseHarness.create('ytcw-manage-route-');
+        const { db } = harness;
 
         insertSourceChannel(db, {
             id: 1,
@@ -83,16 +71,7 @@ describe('admin virtual channel manage route', () => {
     });
 
     afterEach(() => {
-        process.env.NODE_ENV = previousNodeEnv;
-        if (previousDbDir === undefined) {
-            delete process.env.YTCW_DB_DIR;
-        } else {
-            process.env.YTCW_DB_DIR = previousDbDir;
-        }
-
-        if (tempDir && fs.existsSync(tempDir)) {
-            fs.rmSync(tempDir, { recursive: true, force: true });
-        }
+        harness.dispose();
     });
 
     it('loads selected-only review data with filter state', async () => {
@@ -140,7 +119,7 @@ describe('admin virtual channel manage route', () => {
             location: '/admin/virtual-channels/1?reviewStateFilter-1=not_yet_reviewed&videoTypeFilter-1=unknown'
         });
 
-        const db = new Database(path.join(tempDir, 'test.db'), { readonly: true });
+        const db = harness.openReadOnly();
         const rows = db.prepare(`
             SELECT video_id, review_state
             FROM virtual_channel_assignment_video_selections

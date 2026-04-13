@@ -1,5 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { RouteDatabaseHarness } from '../helpers/RouteDatabaseHarness';
+import {
+    insertAssignment,
+    insertSourceChannel,
+    insertVirtualChannel
+} from '../helpers/TestFixtureBuilders';
 
 type IndexRouteModule = typeof import('../../src/routes/admin/virtual-channels/+page.server');
 
@@ -11,26 +16,37 @@ describe('admin virtual channels index route', () => {
         harness = RouteDatabaseHarness.create('ytcw-index-route-');
         const { db } = harness;
 
-        db.prepare(`
-            INSERT INTO source_channels(id, youtube_id, title, description, thumbnail_url, published_at, last_refreshed_at)
-            VALUES
-                (1, 'UC_INDEX_1', 'Index Source 1', '', NULL, NULL, NULL),
-                (2, 'UC_INDEX_2', 'Index Source 2', '', NULL, NULL, NULL),
-                (3, 'UC_INDEX_3', 'Index Source 3', '', NULL, NULL, NULL)
-        `).run();
-        db.prepare(`
-            INSERT INTO virtual_channels(id, name)
-            VALUES
-                (1, 'Index Channel 1'),
-                (2, 'Index Channel 2')
-        `).run();
-        db.prepare(`
-            INSERT INTO virtual_channel_assignments(id, source_channel_id, virtual_channel_id, mode)
-            VALUES
-                (1, 1, 1, 'all'),
-                (2, 2, 2, 'all')
-        `).run();
-        db.close();
+        insertSourceChannel(db, {
+            id: 1,
+            youtubeId: 'UC_INDEX_1',
+            title: 'Index Source 1',
+            description: '',
+            thumbnailUrl: null,
+            publishedAt: null,
+            lastRefreshedAt: null
+        });
+        insertSourceChannel(db, {
+            id: 2,
+            youtubeId: 'UC_INDEX_2',
+            title: 'Index Source 2',
+            description: '',
+            thumbnailUrl: null,
+            publishedAt: null,
+            lastRefreshedAt: null
+        });
+        insertSourceChannel(db, {
+            id: 3,
+            youtubeId: 'UC_INDEX_3',
+            title: 'Index Source 3',
+            description: '',
+            thumbnailUrl: null,
+            publishedAt: null,
+            lastRefreshedAt: null
+        });
+        insertVirtualChannel(db, { id: 1, name: 'Index Channel 1' });
+        insertVirtualChannel(db, { id: 2, name: 'Index Channel 2' });
+        insertAssignment(db, { id: 1, sourceChannelId: 1, virtualChannelId: 1, mode: 'all' });
+        insertAssignment(db, { id: 2, sourceChannelId: 2, virtualChannelId: 2, mode: 'all' });
 
         routeModule = await import('../../src/routes/admin/virtual-channels/+page.server');
     });

@@ -1,9 +1,6 @@
-import fs from 'node:fs';
-import os from 'node:os';
-import path from 'node:path';
 import Database from 'better-sqlite3';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { applyLatestSchemaBootstrap } from '../../src/lib/daos/shared/LatestSchemaBootstrap';
+import { RouteDatabaseHarness } from '../helpers/RouteDatabaseHarness';
 import {
     insertProfile,
     insertSourceChannel,
@@ -14,22 +11,12 @@ import {
 type ViewerRouteModule = typeof import('../../src/routes/viewer/+page.server');
 
 describe('viewer bulk flag actions', () => {
-    let tempDir: string;
-    let previousNodeEnv: string | undefined;
-    let previousDbDir: string | undefined;
+    let harness: RouteDatabaseHarness;
     let routeModule: ViewerRouteModule;
-    let dbPath: string;
 
     beforeEach(async () => {
-        tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'ytcw-viewer-bulk-route-'));
-        previousNodeEnv = process.env.NODE_ENV;
-        previousDbDir = process.env.YTCW_DB_DIR;
-        process.env.NODE_ENV = 'test';
-        process.env.YTCW_DB_DIR = tempDir;
-
-        dbPath = path.join(tempDir, 'test.db');
-        const db = new Database(dbPath);
-        applyLatestSchemaBootstrap(db);
+        harness = RouteDatabaseHarness.create('ytcw-viewer-bulk-route-');
+        const { db } = harness;
 
         insertProfile(db, { id: 1, key: 'default', name: 'Default' });
         insertSourceChannel(db, {
@@ -83,21 +70,12 @@ describe('viewer bulk flag actions', () => {
     });
 
     afterEach(() => {
-        process.env.NODE_ENV = previousNodeEnv;
-        if (previousDbDir === undefined) {
-            delete process.env.YTCW_DB_DIR;
-        } else {
-            process.env.YTCW_DB_DIR = previousDbDir;
-        }
-
-        if (tempDir && fs.existsSync(tempDir)) {
-            fs.rmSync(tempDir, { recursive: true, force: true });
-        }
+        harness.dispose();
     });
 
     function openDb(): Database.Database
     {
-        return new Database(dbPath);
+        return harness.openReadOnly();
     }
 
     function cookieJar()
