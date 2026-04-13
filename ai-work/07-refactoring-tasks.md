@@ -77,7 +77,7 @@
   - [x] 6.1 Extract reusable in-memory database/bootstrap helpers from viewer, admin, DAO, and migration tests
   - [x] 6.2 Add fixture builders for profiles, videos, flags, assignments, and migration-state scenarios that reduce repeated setup
   - [x] 6.3 Migrate refactored route, service, and DAO tests to the shared harness as each architectural slice lands
-  - [ ] 6.4 Add focused service-layer tests where route tests were previously the only executable coverage for business workflows
+  - [x] 6.4 Add focused service-layer tests where route tests were previously the only executable coverage for business workflows
   - [ ] 6.5 Remove superseded one-off test helpers once the shared harness covers the same behavior
 
 - [ ] 7.0 Remove obsolete code paths and finish repository-wide consistency cleanup
