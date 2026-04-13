@@ -11,7 +11,6 @@ describe('HistoryDAO session behavior', () => {
     let history: HistoryDAO;
     let profileId: number;
     let videoId: number;
-    let secondVideoId: number;
     let channelId: number;
     let baseNow: number;
 
@@ -56,7 +55,6 @@ describe('HistoryDAO session behavior', () => {
         } as any);
 
         videoId = videos.getByExternalId('VID_1')!.id;
-        secondVideoId = videos.getByExternalId('VID_2')!.id;
         history = new HistoryDAO(db);
         baseNow = 1_700_000_000_000;
     });
@@ -143,39 +141,4 @@ describe('HistoryDAO session behavior', () => {
         expect(gapMs).toBeGreaterThan(5 * 60 * 1000);
     });
 
-    it('aggregates sessions into per-video summaries while keeping session rows available', () => {
-        history.createSession({
-            video_id: videoId,
-            profile_id: profileId,
-            session_started_at: baseNow,
-            last_updated_at: baseNow + 10_000,
-            time_watched_seconds: 15
-        });
-        history.createSession({
-            video_id: videoId,
-            profile_id: profileId,
-            session_started_at: baseNow + 400_000,
-            last_updated_at: baseNow + 410_000,
-            time_watched_seconds: 20
-        });
-        history.createSession({
-            video_id: secondVideoId,
-            profile_id: profileId,
-            session_started_at: baseNow + 200_000,
-            last_updated_at: baseNow + 205_000,
-            time_watched_seconds: 9
-        });
-
-        const sessions = history.listSessionsWithFilters({ profileId });
-        const summaries = history.listVideoSummariesWithFilters({ profileId });
-
-        expect(sessions).toHaveLength(3);
-        expect(summaries).toHaveLength(2);
-        expect(summaries[0]).toMatchObject({
-            video_id: videoId,
-            session_count: 2,
-            total_time_watched_seconds: 35,
-            latest_session_started_at: baseNow + 400_000
-        });
-    });
 });

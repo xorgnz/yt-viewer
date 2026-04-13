@@ -1,6 +1,6 @@
 import { ProfileDAO } from '$lib/daos/profileDAO';
 import { SourceChannelDAO } from '$lib/daos/sourceChannelDAO';
-import { HistoryDAO } from '$lib/daos/historyDAO';
+import { HistoryReadRepository } from '$lib/daos/readers/HistoryReadRepository';
 import { ServerDatabaseContext } from '$lib/server/ServerDatabaseContext';
 import { ServerProfileContext } from '$lib/server/ServerProfileContext';
 
@@ -28,7 +28,7 @@ export const load = async ({ url, cookies }: { url: URL; cookies: any }) =>
             offset: offset ? Number(offset) : 0
         } as const;
 
-        const hDao = new HistoryDAO(db);
+        const historyReadRepository = new HistoryReadRepository(db);
         const cDao = new SourceChannelDAO(db);
 
         const queryFilters = {
@@ -40,9 +40,9 @@ export const load = async ({ url, cookies }: { url: URL; cookies: any }) =>
             offset: filters.offset
         };
         const items = filters.mode === 'videos'
-            ? hDao.listVideoSummariesWithFilters(queryFilters)
-            : hDao.listSessionsWithFilters(queryFilters);
-        const sessionItems = hDao.listSessionsWithFilters({
+            ? historyReadRepository.listVideoSummaries(queryFilters)
+            : historyReadRepository.listSessions(queryFilters);
+        const sessionItems = historyReadRepository.listSessions({
             profileId: profileContext.activeProfileId,
             channelId: filters.channelId ?? undefined,
             dateFrom: filters.dateFrom ?? undefined,
