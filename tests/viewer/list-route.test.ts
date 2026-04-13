@@ -4,6 +4,12 @@ import path from 'node:path';
 import Database from 'better-sqlite3';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { applyLatestSchemaBootstrap } from '../../src/lib/daos/shared/LatestSchemaBootstrap';
+import {
+    insertProfile,
+    insertSourceChannel,
+    insertVideo,
+    insertVideoFlag
+} from '../helpers/TestFixtureBuilders';
 
 type ViewerListRouteModule = typeof import('../../src/routes/viewer/+page.server');
 
@@ -23,26 +29,40 @@ describe('viewer list page load', () => {
         const db = new Database(path.join(tempDir, 'test.db'));
         applyLatestSchemaBootstrap(db);
 
-        db.prepare(`
-            INSERT INTO profiles(id, key, name)
-            VALUES
-                (1, 'default', 'Default'),
-                (2, 'child', 'Child')
-        `).run();
-        db.prepare(`
-            INSERT INTO source_channels(id, youtube_id, title, description, thumbnail_url, published_at, last_refreshed_at)
-            VALUES (1, 'UC_VIEWER', 'Viewer Source', '', NULL, NULL, NULL)
-        `).run();
-        db.prepare(`
-            INSERT INTO videos(id, youtube_id, channel_id, title, description, published_at, duration_seconds, thumbnail_url, length_classification)
-            VALUES
-                (1, 'VID_UNWATCHED', 1, 'Unwatched Video', '', NULL, 100, NULL, 'long'),
-                (2, 'VID_WATCHED', 1, 'Watched Video', '', NULL, 100, NULL, 'long')
-        `).run();
-        db.prepare(`
-            INSERT INTO video_flags(video_id, profile_id, watched, ignored, favorite)
-            VALUES (2, 2, 1, 0, 0)
-        `).run();
+        insertProfile(db, { id: 1, key: 'default', name: 'Default' });
+        insertProfile(db, { id: 2, key: 'child', name: 'Child' });
+        insertSourceChannel(db, {
+            id: 1,
+            youtubeId: 'UC_VIEWER',
+            title: 'Viewer Source',
+            description: '',
+            thumbnailUrl: null,
+            publishedAt: null,
+            lastRefreshedAt: null
+        });
+        insertVideo(db, {
+            id: 1,
+            youtubeId: 'VID_UNWATCHED',
+            channelId: 1,
+            title: 'Unwatched Video',
+            description: '',
+            publishedAt: null,
+            durationSeconds: 100,
+            thumbnailUrl: null,
+            lengthClassification: 'long'
+        });
+        insertVideo(db, {
+            id: 2,
+            youtubeId: 'VID_WATCHED',
+            channelId: 1,
+            title: 'Watched Video',
+            description: '',
+            publishedAt: null,
+            durationSeconds: 100,
+            thumbnailUrl: null,
+            lengthClassification: 'long'
+        });
+        insertVideoFlag(db, { videoId: 2, profileId: 2, watched: 1, ignored: 0, favorite: 0 });
         db.close();
 
         routeModule = await import('../../src/routes/viewer/+page.server');

@@ -4,6 +4,12 @@ import path from 'node:path';
 import Database from 'better-sqlite3';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { applyLatestSchemaBootstrap } from '../../src/lib/daos/shared/LatestSchemaBootstrap';
+import {
+    insertProfile,
+    insertSourceChannel,
+    insertVideo,
+    insertVideoFlag
+} from '../helpers/TestFixtureBuilders';
 
 type ViewerRouteModule = typeof import('../../src/routes/viewer/+page.server');
 
@@ -25,28 +31,52 @@ describe('viewer bulk flag actions', () => {
         const db = new Database(dbPath);
         applyLatestSchemaBootstrap(db);
 
-        db.prepare(`
-            INSERT INTO profiles(id, key, name)
-            VALUES (1, 'default', 'Default')
-        `).run();
-        db.prepare(`
-            INSERT INTO source_channels(id, youtube_id, title, description, thumbnail_url, published_at, last_refreshed_at)
-            VALUES (1, 'UC_BULK', 'Bulk Source', '', NULL, NULL, NULL)
-        `).run();
-        db.prepare(`
-            INSERT INTO videos(id, youtube_id, channel_id, title, description, published_at, duration_seconds, thumbnail_url, length_classification)
-            VALUES
-                (1, 'VID_B1', 1, 'Bulk Video 1', '', NULL, 120, NULL, 'long'),
-                (2, 'VID_B2', 1, 'Bulk Video 2', '', NULL, 120, NULL, 'long'),
-                (3, 'VID_B3', 1, 'Bulk Video 3', '', NULL, 120, NULL, 'long')
-        `).run();
-        db.prepare(`
-            INSERT INTO video_flags(video_id, profile_id, watched, ignored, favorite, updated_at)
-            VALUES
-                (1, 1, 0, 0, 0, 0),
-                (2, 1, 1, 0, 1, 0),
-                (3, 1, 0, 1, 0, 0)
-        `).run();
+        insertProfile(db, { id: 1, key: 'default', name: 'Default' });
+        insertSourceChannel(db, {
+            id: 1,
+            youtubeId: 'UC_BULK',
+            title: 'Bulk Source',
+            description: '',
+            thumbnailUrl: null,
+            publishedAt: null,
+            lastRefreshedAt: null
+        });
+        insertVideo(db, {
+            id: 1,
+            youtubeId: 'VID_B1',
+            channelId: 1,
+            title: 'Bulk Video 1',
+            description: '',
+            publishedAt: null,
+            durationSeconds: 120,
+            thumbnailUrl: null,
+            lengthClassification: 'long'
+        });
+        insertVideo(db, {
+            id: 2,
+            youtubeId: 'VID_B2',
+            channelId: 1,
+            title: 'Bulk Video 2',
+            description: '',
+            publishedAt: null,
+            durationSeconds: 120,
+            thumbnailUrl: null,
+            lengthClassification: 'long'
+        });
+        insertVideo(db, {
+            id: 3,
+            youtubeId: 'VID_B3',
+            channelId: 1,
+            title: 'Bulk Video 3',
+            description: '',
+            publishedAt: null,
+            durationSeconds: 120,
+            thumbnailUrl: null,
+            lengthClassification: 'long'
+        });
+        insertVideoFlag(db, { videoId: 1, profileId: 1, watched: 0, ignored: 0, favorite: 0, updatedAt: 0 });
+        insertVideoFlag(db, { videoId: 2, profileId: 1, watched: 1, ignored: 0, favorite: 1, updatedAt: 0 });
+        insertVideoFlag(db, { videoId: 3, profileId: 1, watched: 0, ignored: 1, favorite: 0, updatedAt: 0 });
         db.close();
 
         routeModule = await import('../../src/routes/viewer/+page.server');

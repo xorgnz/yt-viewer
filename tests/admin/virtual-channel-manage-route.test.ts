@@ -4,6 +4,13 @@ import path from 'node:path';
 import Database from 'better-sqlite3';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { applyLatestSchemaBootstrap } from '../../src/lib/daos/shared/LatestSchemaBootstrap';
+import {
+    insertAssignment,
+    insertAssignmentSelection,
+    insertSourceChannel,
+    insertVideo,
+    insertVirtualChannel
+} from '../helpers/TestFixtureBuilders';
 
 type ManageRouteModule = typeof import('../../src/routes/admin/virtual-channels/[virtualChannelId]/+page.server');
 
@@ -23,30 +30,53 @@ describe('admin virtual channel manage route', () => {
         const db = new Database(path.join(tempDir, 'test.db'));
         applyLatestSchemaBootstrap(db);
 
-        db.prepare(`
-            INSERT INTO source_channels(id, youtube_id, title, description, thumbnail_url, published_at, last_refreshed_at)
-            VALUES
-                (1, 'UC_ROUTE_1', 'Route Source 1', '', NULL, NULL, NULL),
-                (2, 'UC_ROUTE_2', 'Route Source 2', '', NULL, NULL, NULL)
-        `).run();
-        db.prepare(`
-            INSERT INTO virtual_channels(id, name)
-            VALUES (1, 'Route Test Channel')
-        `).run();
-        db.prepare(`
-            INSERT INTO virtual_channel_assignments(id, source_channel_id, virtual_channel_id, mode)
-            VALUES (1, 1, 1, 'selected_only')
-        `).run();
-        db.prepare(`
-            INSERT INTO videos(id, youtube_id, channel_id, title, description, published_at, duration_seconds, thumbnail_url, length_classification)
-            VALUES
-                (1, 'VID_ROUTE_1', 1, 'Route Video 1', 'First route video', 1000, 300, NULL, 'long'),
-                (2, 'VID_ROUTE_2', 1, 'Route Video 2', 'Second route video', 2000, NULL, NULL, 'unknown')
-        `).run();
-        db.prepare(`
-            INSERT INTO virtual_channel_assignment_video_selections(assignment_id, video_id, review_state)
-            VALUES (1, 1, 'included')
-        `).run();
+        insertSourceChannel(db, {
+            id: 1,
+            youtubeId: 'UC_ROUTE_1',
+            title: 'Route Source 1',
+            description: '',
+            thumbnailUrl: null,
+            publishedAt: null,
+            lastRefreshedAt: null
+        });
+        insertSourceChannel(db, {
+            id: 2,
+            youtubeId: 'UC_ROUTE_2',
+            title: 'Route Source 2',
+            description: '',
+            thumbnailUrl: null,
+            publishedAt: null,
+            lastRefreshedAt: null
+        });
+        insertVirtualChannel(db, { id: 1, name: 'Route Test Channel' });
+        insertAssignment(db, { id: 1, sourceChannelId: 1, virtualChannelId: 1, mode: 'selected_only' });
+        insertVideo(db, {
+            id: 1,
+            youtubeId: 'VID_ROUTE_1',
+            channelId: 1,
+            title: 'Route Video 1',
+            description: 'First route video',
+            publishedAt: 1000,
+            durationSeconds: 300,
+            thumbnailUrl: null,
+            lengthClassification: 'long'
+        });
+        insertVideo(db, {
+            id: 2,
+            youtubeId: 'VID_ROUTE_2',
+            channelId: 1,
+            title: 'Route Video 2',
+            description: 'Second route video',
+            publishedAt: 2000,
+            durationSeconds: null,
+            thumbnailUrl: null,
+            lengthClassification: 'unknown'
+        });
+        insertAssignmentSelection(db, {
+            assignmentId: 1,
+            videoId: 1,
+            reviewState: 'included'
+        });
         db.close();
 
         routeModule = await import('../../src/routes/admin/virtual-channels/[virtualChannelId]/+page.server');
