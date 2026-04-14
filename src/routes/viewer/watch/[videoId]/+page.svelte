@@ -389,7 +389,7 @@
     });
 </script>
 
-<div id="div_viewer_panel" class="page stack panel">
+<div id="div_viewer_panel" class="page panel">
     <div id="div_player_flex_wrapper">
         <div id="div_player_frame">
             {#if data.previousVideoYoutubeId}
@@ -475,44 +475,30 @@
 
 <style>
     #div_viewer_panel {
-        height: 100%;
+        --viewer-panel-height: calc(100vh - 48px);
+        height: var(--viewer-panel-height);
         display: flex;
-        flex: 1;
         flex-direction: column;
-        align-items: center;
-        gap: 0.8rem;
+        gap: 20px;
     }
 
     #div_player_flex_wrapper {
+        --player-flex-wrapper-height: calc(var(--viewer-panel-height) - 470px);
         width: 100%;
-        min-height: 245px;
         min-width: 438px;
-        flex: 5 5 auto;
+        min-height: 245px;
+        max-height: var(--player-flex-wrapper-height);
+        display: flex;
     }
 
     #div_player_frame {
-        --free-width: calc(100cqw - 150px);
-        --constrained-width: calc(100cqh * 16 / 9);
+        --free-width: calc(100% - 150px);
+        --constrained-width: calc(var(--player-flex-wrapper-height) * 16 / 9);
         --managed-width: min(var(--free-width), var(--constrained-width));
-        --free-height: 100cqh;
-        --constrained-height: calc((100cqw - 150px) / 16 * 9);
-        --managed-height: min(var(--free-height), var(--constrained-height));
+        flex: 1;
         display: flex;
-        height: 100%;
-        width: 100%;
         align-items: stretch;
         justify-content: center;
-        container-type: size;
-    }
-
-    #player {
-        width: var(--managed-width);
-        height: var(--managed-height);
-        display: block;
-        aspect-ratio: 16 / 9;
-        border: 2px solid #909090;
-        border-radius: var(--radius);
-        box-shadow: var(--shadow-md);
     }
 
     #a_player_nav_prev,
@@ -531,9 +517,20 @@
         text-align: center;
     }
 
+    #player {
+        width: var(--managed-width);
+        max-height: var(--player-flex-wrapper-height);
+        display: block;
+        aspect-ratio: 16 / 9;
+        border: 2px solid #909090;
+        border-radius: var(--radius);
+        box-shadow: var(--shadow-md);
+    }
+
     #svg_player_nav_prev,
     #svg_player_nav_next {
         width: 1.8rem;
+        vertical-align: middle;
         color: currentColor;
         stroke: currentColor;
         fill: none;
@@ -543,15 +540,15 @@
     }
 
     #div_video_meta_panel {
-        width: 100%;
         min-height: 400px;
-        height: 100%;
-        flex: 1 1 auto;
-        overflow: auto;
+        flex: 1;
+        display: block;
         border: 1px solid var(--border);
         padding: 1rem 1.1rem;
         border-radius: var(--radius);
+        box-sizing: border-box;
         background-color: var(--bg-panel);
+        overflow: auto;
     }
 
     #div_title_row {
@@ -616,6 +613,7 @@
         border: 1px solid var(--border);
         padding: 0.1rem 0.5rem;
         border-radius: 999px;
+        box-sizing: border-box;
         background-color: var(--bg-soft);
         color: var(--text);
         font-size: 0.8rem;
@@ -677,18 +675,19 @@
             text-align: left;
         }
 
-        #player {
-            width: 100%;
-            min-width: 300px;
-            min-height: calc(300px / 16 * 9);
-            max-width: min(100vw - 40px, (100vh - 520px) * 16 / 9);
-            max-height: min(100vh - 520px, (100vw - 40px) * 9 / 16);
-        }
-
         #a_player_nav_prev,
         #a_player_nav_next {
             width: 3.6rem;
             min-width: 3.6rem;
+        }
+
+        #player {
+            width: 100%;
+            height: 100%;
+            min-height: calc(300px / 16 * 9);
+            min-width: 300px;
+            max-width: min(100vw - 40px, (100vh - 520px) * 16 / 9);
+            max-height: min(100vh - 520px, (100vw - 40px) * 9 / 16);
         }
 
         #div_video_meta_panel {
