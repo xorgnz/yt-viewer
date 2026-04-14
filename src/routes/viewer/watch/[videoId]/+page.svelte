@@ -511,7 +511,7 @@
     }
 
     .player {
-        flex: 1 1 auto;
+        flex: 5 0 auto;
         aspect-ratio: 16 / 9;
         min-height: calc(400px / 16 * 9);
         min-width: 400px;
@@ -527,15 +527,16 @@
     }
 
     .video-meta-panel {
-        flex: 0 0 auto;
+        flex: 1 1 auto;
         min-height: 400px;
-        overflow: auto;
+        height: 100%;
         margin-top: 0.85rem;
         padding: 1rem 1.1rem;
         border: 1px solid var(--border);
         border-radius: var(--radius);
         background: var(--bg-panel);
-        width: 100%
+        width: 100%;
+        overflow: auto;
     }
 
     .desc summary {
@@ -554,7 +555,6 @@
         font-size: 0.95rem;
         color: var(--text-muted);
         max-height: 10rem;
-        overflow: auto;
     }
 
     @media (max-width: 900px) {
