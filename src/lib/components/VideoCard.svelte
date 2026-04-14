@@ -61,43 +61,45 @@
     </a>
     <div class="meta">
         <a class="title" href={displayState.watchHref}>{video.title}</a>
-        <div class="chan">{video.channel_title}</div>
+        <div class="channel-row">
+            <div class="actions">
+                <button
+                    type="button"
+                    class="icon favorite"
+                    class:active={!!video.favorite}
+                    aria-pressed={!!video.favorite}
+                    title={presenter.getToggleTitle('favorite')}
+                    on:click={(event) => handleFlagClick(event, 'favorite', presenter.getNextFlagValue('favorite'))}
+                >
+                    <span class="icon-glyph" aria-hidden="true">&#9733;</span>
+                    <span class="sr-only">{presenter.getToggleLabel('favorite')}</span>
+                </button>
+                <button
+                    type="button"
+                    class="icon watched"
+                    class:active={!!video.watched}
+                    aria-pressed={!!video.watched}
+                    title={presenter.getToggleTitle('watched')}
+                    on:click={(event) => handleFlagClick(event, 'watched', presenter.getNextFlagValue('watched'))}
+                >
+                    <span class="icon-glyph" aria-hidden="true">&#10003;</span>
+                    <span class="sr-only">{presenter.getToggleLabel('watched')}</span>
+                </button>
+                <button
+                    type="button"
+                    class="icon ignored"
+                    class:active={!!video.ignored}
+                    aria-pressed={!!video.ignored}
+                    title={presenter.getToggleTitle('ignored')}
+                    on:click={(event) => handleFlagClick(event, 'ignored', presenter.getNextFlagValue('ignored'))}
+                >
+                    <span class="icon-glyph" aria-hidden="true">&#10005;</span>
+                    <span class="sr-only">{presenter.getToggleLabel('ignored')}</span>
+                </button>
+            </div>
+            <div class="chan">{video.channel_title}</div>
+        </div>
         <div class="pub">{displayState.publishedDate}</div>
-    </div>
-    <div class="actions">
-        <button
-            type="button"
-            class="icon favorite"
-            class:active={!!video.favorite}
-            aria-pressed={!!video.favorite}
-            title={presenter.getToggleTitle('favorite')}
-            on:click={(event) => handleFlagClick(event, 'favorite', presenter.getNextFlagValue('favorite'))}
-        >
-            <span class="icon-glyph" aria-hidden="true">&#9733;</span>
-            <span class="sr-only">{presenter.getToggleLabel('favorite')}</span>
-        </button>
-        <button
-            type="button"
-            class="icon watched"
-            class:active={!!video.watched}
-            aria-pressed={!!video.watched}
-            title={presenter.getToggleTitle('watched')}
-            on:click={(event) => handleFlagClick(event, 'watched', presenter.getNextFlagValue('watched'))}
-        >
-            <span class="icon-glyph" aria-hidden="true">&#10003;</span>
-            <span class="sr-only">{presenter.getToggleLabel('watched')}</span>
-        </button>
-        <button
-            type="button"
-            class="icon ignored"
-            class:active={!!video.ignored}
-            aria-pressed={!!video.ignored}
-            title={presenter.getToggleTitle('ignored')}
-            on:click={(event) => handleFlagClick(event, 'ignored', presenter.getNextFlagValue('ignored'))}
-        >
-            <span class="icon-glyph" aria-hidden="true">&#10005;</span>
-            <span class="sr-only">{presenter.getToggleLabel('ignored')}</span>
-        </button>
     </div>
 </div>
 
@@ -184,13 +186,9 @@
     }
 
     .actions {
-        position: absolute;
-        right: 8px;
-        bottom: 8px;
         display: flex;
         gap: 8px;
         align-items: center;
-        pointer-events: none;
     }
 
     .actions button {
@@ -198,7 +196,6 @@
         height: 1.9rem;
         min-width: 1.9rem;
         min-height: 1.9rem;
-        pointer-events: auto;
         padding: 0;
         gap: 0;
         display: inline-flex;
@@ -257,6 +254,12 @@
 
     .actions button.icon {
         padding: 0;
+    }
+
+    .channel-row {
+        display: flex;
+        align-items: center;
+        gap: 0.45rem;
     }
 
     .sr-only {

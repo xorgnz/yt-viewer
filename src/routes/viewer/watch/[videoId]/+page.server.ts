@@ -1,6 +1,7 @@
 import { error, fail } from '@sveltejs/kit';
 import { ServerDatabaseContext } from '$lib/server/ServerDatabaseContext';
 import { ServerActionForm } from '$lib/server/ServerActionForm';
+import { ViewerActionParser } from '$lib/server/viewer/ViewerActionParser';
 import { ViewerServiceContext } from '$lib/server/viewer/ViewerServiceContext';
 
 export const load = async ({ params, cookies }: { params: { videoId: string }, cookies: any }) =>
@@ -17,6 +18,24 @@ export const load = async ({ params, cookies }: { params: { videoId: string }, c
 };
 
 export const actions = {
+    async toggleFlag({ request, cookies }: { request: Request; cookies: any })
+    {
+        const form = await ServerActionForm.fromRequest(request);
+        const parsed = ViewerActionParser.parseToggleFlag(form);
+
+        if (!parsed) {
+            return fail(400, { message: 'Invalid toggle parameters' });
+        }
+
+        return ServerDatabaseContext.run(({ db }) => {
+            return ViewerServiceContext.resolve(db, cookies).flagService.toggleFlag(
+                parsed.videoId,
+                parsed.kind,
+                parsed.value
+            );
+        });
+    },
+
     // Persist the first qualifying watch-history session independently of watched flags.
     async createHistorySession({ request, params, cookies }: { request: Request; params: { videoId: string }, cookies: any })
     {

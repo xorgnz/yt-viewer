@@ -25,6 +25,8 @@
     };
 
     let watched = !!data.video.watched;
+    let favorite = !!data.video.favorite;
+    let ignored = !!data.video.ignored;
     let thresholdReached = watched;
     let suppressThresholdWatch = false;
     let thresholdWatchSubmitted = watched;
@@ -85,6 +87,8 @@
     {
         stopPolling();
         watched = serverWatched;
+        favorite = !!data.video.favorite;
+        ignored = !!data.video.ignored;
         thresholdReached = serverWatched;
         thresholdWatchSubmitted = serverWatched;
         suppressThresholdWatch = false;
@@ -297,10 +301,45 @@
         }
     }
 
-    function handleWatchSubmit(event: SubmitEvent)
+    async function handleMetaFlagToggle(kind: 'favorite' | 'ignored' | 'watched')
     {
-        event.preventDefault();
-        void updateWatchedStatus(showWatched ? 'unwatch' : 'watch');
+        if (kind === 'watched')
+        {
+            await updateWatchedStatus(showWatched ? 'unwatch' : 'watch');
+            return;
+        }
+
+        const nextValue = kind === 'favorite'
+            ? (favorite ? 0 : 1)
+            : (ignored ? 0 : 1);
+
+        const formData = new FormData();
+        formData.set('videoId', String(data.video.id));
+        formData.set('kind', kind);
+        formData.set('value', String(nextValue));
+
+        try
+        {
+            const response = await fetch('?/toggleFlag', {
+                method: 'POST',
+                body: formData
+            });
+
+            if (!response.ok) {
+                return;
+            }
+
+            if (kind === 'favorite') {
+                favorite = !!nextValue;
+                return;
+            }
+
+            ignored = !!nextValue;
+        }
+        catch
+        {
+            // Ignore transient toggle failures and keep current flag display.
+        }
     }
 
     onMount(() =>
@@ -389,7 +428,14 @@
     });
 </script>
 
-<div id="div_viewer_panel" class="page panel">
+<div
+    id="div_viewer_panel"
+    class="page panel"
+    class:viewer-favorite={favorite}
+    class:viewer-watched={showWatched}
+    class:viewer-ignored={ignored}
+    class:viewer-favorite-watched={favorite && showWatched}
+>
     <div id="div_player_flex_wrapper">
         <div id="div_player_frame">
             {#if data.previousVideoYoutubeId}
@@ -421,6 +467,42 @@
         <div id="div_title_row">
             <h1 id="h1_video_title">{data.video.title}</h1>
             <div id="div_title_meta">
+                <div id="div_title_flag_actions">
+                    <button
+                        type="button"
+                        class="icon favorite"
+                        class:active={favorite}
+                        aria-pressed={favorite}
+                        title={favorite ? 'Clear favorite' : 'Mark favorite'}
+                        on:click={() => void handleMetaFlagToggle('favorite')}
+                    >
+                        <span class="icon-glyph" aria-hidden="true">&#9733;</span>
+                        <span class="sr-only">{favorite ? 'Clear favorite' : 'Mark favorite'}</span>
+                    </button>
+                    <button
+                        type="button"
+                        class="icon watched"
+                        class:active={showWatched}
+                        aria-pressed={showWatched}
+                        title={showWatched ? 'Clear watched' : 'Mark watched'}
+                        on:click={() => void handleMetaFlagToggle('watched')}
+                        disabled={watchMutationPending}
+                    >
+                        <span class="icon-glyph" aria-hidden="true">&#10003;</span>
+                        <span class="sr-only">{showWatched ? 'Clear watched' : 'Mark watched'}</span>
+                    </button>
+                    <button
+                        type="button"
+                        class="icon ignored"
+                        class:active={ignored}
+                        aria-pressed={ignored}
+                        title={ignored ? 'Clear ignored' : 'Mark ignored'}
+                        on:click={() => void handleMetaFlagToggle('ignored')}
+                    >
+                        <span class="icon-glyph" aria-hidden="true">&#10005;</span>
+                        <span class="sr-only">{ignored ? 'Clear ignored' : 'Mark ignored'}</span>
+                    </button>
+                </div>
                 <a id="a_channel_link"
                    href={`/viewer?channelId=${data.video.channel_id}`}>{data.video.channel_title}</a>
                 {#if data.video.published_at}
@@ -428,40 +510,6 @@
                     <span id="span_published_date">{formatDate(data.video.published_at)}</span>
                 {/if}
             </div>
-        </div>
-
-        <div id="div_video_meta">
-                    <span id="span_video_badges">
-                        {#if data.video.favorite}
-                            <span class="badge favorite">Favorite</span>
-                        {/if}
-                        {#if watched}
-                            <span class="badge watched">Watched</span>
-                        {/if}
-                        {#if data.video.ignored}
-                            <span class="badge ignored">Ignored</span>
-                        {/if}
-                    </span>
-        </div>
-
-        <div id="div_watch_actions" class="inline-actions">
-            <form id="form_watch" method="POST" action="?/markWatched" class="inline-form"
-                  on:submit={handleWatchSubmit}>
-                <input type="hidden" name="intent" value={showWatched ? 'unwatch' : 'watch'}/>
-                <button type="submit" aria-pressed={showWatched} disabled={watchMutationPending}>
-                    {#if showWatched}
-                        Clear watch status
-                    {:else}
-                        Mark as Watched
-                    {/if}
-                </button>
-            </form>
-            {#if showWatched}
-                <span class="badge watched watch-indicator" aria-live="polite">Watched</span>
-            {/if}
-            {#if data.video.favorite}
-                <span class="hint">This video is in your Favorites.</span>
-            {/if}
         </div>
 
         {#if data.video.description}
@@ -480,6 +528,39 @@
         display: flex;
         flex-direction: column;
         gap: 20px;
+        border: 1px solid var(--border);
+    }
+
+    #div_viewer_panel.viewer-watched {
+        border-color: rgba(67, 160, 71, 0.86);
+        background:
+            linear-gradient(135deg, rgba(36, 96, 50, 0.46), rgba(14, 44, 24, 0.62));
+        box-shadow: inset 0 1px 0 rgba(168, 236, 174, 0.26);
+    }
+
+    #div_viewer_panel.viewer-favorite {
+        border-color: rgba(227, 179, 65, 0.9);
+        background:
+            linear-gradient(135deg, rgba(120, 90, 24, 0.48), rgba(48, 34, 10, 0.64));
+        box-shadow: inset 0 1px 0 rgba(255, 232, 160, 0.28);
+    }
+
+    #div_viewer_panel.viewer-favorite-watched {
+        border-color: rgba(122, 198, 214, 0.95);
+        background:
+            linear-gradient(135deg, rgba(140, 103, 24, 0.56) 0%, rgba(30, 94, 54, 0.6) 52%, rgba(18, 80, 98, 0.54) 100%),
+            linear-gradient(135deg, rgba(255, 238, 162, 0.16), rgba(120, 232, 216, 0.14));
+        box-shadow:
+            inset 0 1px 0 rgba(255, 238, 170, 0.34),
+            inset 0 -1px 0 rgba(150, 230, 236, 0.3),
+            0 0 0 1px rgba(95, 195, 221, 0.34);
+    }
+
+    #div_viewer_panel.viewer-ignored {
+        border-color: rgba(229, 115, 115, 0.9);
+        background:
+            linear-gradient(135deg, rgba(124, 36, 48, 0.5), rgba(52, 16, 22, 0.66));
+        box-shadow: inset 0 1px 0 rgba(248, 176, 176, 0.26);
     }
 
     #div_player_flex_wrapper {
@@ -578,6 +659,70 @@
         text-align: right;
     }
 
+    #div_title_flag_actions {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        margin-right: 0.45rem;
+    }
+
+    #div_title_flag_actions .icon {
+        width: 1.9rem;
+        height: 1.9rem;
+        min-width: 1.9rem;
+        min-height: 1.9rem;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border: 2px solid rgba(184, 184, 184, 0.75);
+        border-radius: 999px;
+        padding: 0;
+        background: linear-gradient(180deg, rgba(46, 46, 46, 0.96), rgba(24, 24, 24, 0.98));
+        color: rgba(132, 138, 146, 0.82);
+        cursor: pointer;
+        box-shadow: 0 0.3rem 0.75rem rgba(0, 0, 0, 0.38);
+        font-size: 0.98rem;
+        font-weight: 800;
+        line-height: 1;
+    }
+
+    #div_title_flag_actions .icon:hover {
+        border-color: rgba(214, 214, 214, 0.8);
+        background: linear-gradient(180deg, rgba(68, 68, 68, 0.98), rgba(34, 34, 34, 0.98));
+    }
+
+    #div_title_flag_actions .icon:disabled {
+        opacity: 0.7;
+        cursor: default;
+    }
+
+    #div_title_flag_actions .icon .icon-glyph {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 1em;
+        height: 1em;
+        transform: translateY(-1px);
+    }
+
+    #div_title_flag_actions .icon.active.favorite {
+        border-color: rgba(255, 232, 162, 0.95);
+        background: linear-gradient(180deg, rgba(227, 179, 65, 0.98), rgba(199, 156, 37, 0.98));
+        color: #161616;
+    }
+
+    #div_title_flag_actions .icon.active.watched {
+        border-color: rgba(180, 234, 185, 0.92);
+        background: linear-gradient(180deg, rgba(46, 125, 50, 0.98), rgba(31, 90, 35, 0.98));
+        color: #f4fff4;
+    }
+
+    #div_title_flag_actions .icon.active.ignored {
+        border-color: rgba(255, 190, 198, 0.92);
+        background: linear-gradient(180deg, rgba(176, 0, 32, 0.98), rgba(122, 0, 21, 0.98));
+        color: #fff;
+    }
+
     #a_channel_link {
         color: inherit;
         text-align: inherit;
@@ -590,55 +735,6 @@
     #span_published_date {
         color: inherit;
         font-weight: 400;
-    }
-
-    #div_video_meta {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 0.25rem 0.5rem;
-        margin-top: 0.4rem;
-        color: var(--text-muted);
-        font-size: 0.95rem;
-        line-height: 1.5;
-    }
-
-    #span_video_badges {
-        display: inline-flex;
-        flex-wrap: wrap;
-        gap: 0.35rem;
-        margin-left: 0.25rem;
-    }
-
-    .badge {
-        border: 1px solid var(--border);
-        padding: 0.1rem 0.5rem;
-        border-radius: 999px;
-        box-sizing: border-box;
-        background-color: var(--bg-soft);
-        color: var(--text);
-        font-size: 0.8rem;
-        line-height: 1.2;
-    }
-
-    .badge.favorite {
-        border-color: rgba(210, 153, 34, 0.4);
-        background-color: rgba(210, 153, 34, 0.16);
-        color: #f3ca78;
-    }
-
-    .badge.watched {
-        border-color: rgba(47, 158, 68, 0.4);
-        background-color: rgba(47, 158, 68, 0.16);
-        color: #8dd89f;
-    }
-
-    .badge.ignored {
-        background-color: rgba(255, 255, 255, 0.06);
-        color: var(--text-muted);
-    }
-
-    #div_watch_actions {
-        margin-bottom: 1rem;
     }
 
     #details_description_panel summary {
