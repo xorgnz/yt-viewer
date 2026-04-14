@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { onMount, onDestroy } from 'svelte';
+    import {onMount, onDestroy} from 'svelte';
 
     export let data: {
         video: {
@@ -43,7 +43,8 @@
     function formatDate(ms: number | null): string
     {
         if (!ms) return '';
-        try {
+        try
+        {
             const d = new Date(ms);
             const year = d.getFullYear();
             const month = String(d.getMonth() + 1).padStart(2, '0');
@@ -52,7 +53,9 @@
             const minutes = String(d.getMinutes()).padStart(2, '0');
             const seconds = String(d.getSeconds()).padStart(2, '0');
             return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
-        } catch {
+        }
+        catch
+        {
             return '';
         }
     }
@@ -61,8 +64,10 @@
     {
         stopPolling();
         lastPlaybackTickAt = Date.now();
-        pollTimer = setInterval(() => {
-            try {
+        pollTimer = setInterval(() =>
+        {
+            try
+            {
                 if (!player || typeof player.getCurrentTime !== 'function') return;
 
                 const now = Date.now();
@@ -109,7 +114,9 @@
                         void updateWatchedStatus('watch');
                     }
                 }
-            } catch {
+            }
+            catch
+            {
                 // No-op while the player API is still warming up.
             }
         }, 1000);
@@ -117,7 +124,8 @@
 
     function stopPolling()
     {
-        if (pollTimer) {
+        if (pollTimer)
+        {
             clearInterval(pollTimer);
             pollTimer = null;
         }
@@ -143,18 +151,22 @@
         const formData = new FormData();
         formData.set('watchSeconds', String(Math.floor(elapsedWatchSeconds)));
 
-        try {
+        try
+        {
             const response = await fetch('?/createHistorySession', {
                 method: 'POST',
                 body: formData
             });
-            if (!response.ok) {
+            if (!response.ok)
+            {
                 historySessionCreated = false;
                 return;
             }
             lastPersistedWatchSeconds = Math.floor(elapsedWatchSeconds);
             lastHistoryActivityAt = Date.now();
-        } catch {
+        }
+        catch
+        {
             historySessionCreated = false;
         }
     }
@@ -164,21 +176,27 @@
         const formData = new FormData();
         formData.set('watchSeconds', String(Math.floor(elapsedWatchSeconds)));
 
-        try {
+        try
+        {
             const response = await fetch('?/updateHistoryProgress', {
                 method: 'POST',
                 body: formData
             });
-            if (response.ok) {
+            if (response.ok)
+            {
                 lastPersistedWatchSeconds = Math.floor(elapsedWatchSeconds);
                 lastHistoryActivityAt = Date.now();
-            } else if (response.status === 409) {
+            }
+            else if (response.status === 409)
+            {
                 elapsedWatchSeconds = 0;
                 historySessionCreated = false;
                 lastPersistedWatchSeconds = 0;
                 lastHistoryActivityAt = null;
             }
-        } catch {
+        }
+        catch
+        {
             // Ignore transient progress-update failures and retry later.
         }
     }
@@ -214,7 +232,8 @@
         const formData = new FormData();
         formData.set('intent', intent);
 
-        try {
+        try
+        {
             const response = await fetch('?/markWatched', {
                 method: 'POST',
                 body: formData
@@ -227,12 +246,16 @@
                 suppressThresholdWatch = previousSuppressThresholdWatch;
                 thresholdWatchSubmitted = previousThresholdWatchSubmitted;
             }
-        } catch {
+        }
+        catch
+        {
             watched = previousWatched;
             thresholdReached = previousThresholdReached;
             suppressThresholdWatch = previousSuppressThresholdWatch;
             thresholdWatchSubmitted = previousThresholdWatchSubmitted;
-        } finally {
+        }
+        finally
+        {
             watchMutationPending = false;
         }
     }
@@ -243,7 +266,8 @@
         void updateWatchedStatus(showWatched ? 'unwatch' : 'watch');
     }
 
-    onMount(() => {
+    onMount(() =>
+    {
         function createPlayer()
         {
             if ((window as any).YT && (window as any).YT.Player)
@@ -258,17 +282,20 @@
                     },
                     events: {
                         onReady: () => { startPolling(); },
-                        onStateChange: (e: any) => {
+                        onStateChange: (e: any) =>
+                        {
                             const YT = (window as any).YT;
                             if (!e || !YT || typeof YT.PlayerState === 'undefined') return;
 
-                            if (e.data === YT.PlayerState.PLAYING) {
+                            if (e.data === YT.PlayerState.PLAYING)
+                            {
                                 setPlaybackActive(true);
                                 startPolling();
                                 return;
                             }
 
-                            if (e.data === YT.PlayerState.PAUSED || e.data === YT.PlayerState.ENDED) {
+                            if (e.data === YT.PlayerState.PAUSED || e.data === YT.PlayerState.ENDED)
+                            {
                                 setPlaybackActive(false);
                             }
                         }
@@ -285,70 +312,80 @@
             const tag = document.createElement('script');
             tag.src = 'https://www.youtube.com/iframe_api';
             document.body.appendChild(tag);
-            (window as any).onYouTubeIframeAPIReady = () => {
+            (window as any).onYouTubeIframeAPIReady = () =>
+            {
                 createPlayer();
             };
         }
 
-        return () => {
+        return () =>
+        {
             stopPolling();
-            try {
-                if (player && typeof player.destroy === 'function') {
+            try
+            {
+                if (player && typeof player.destroy === 'function')
+                {
                     player.destroy();
                 }
-            } catch {
+            }
+            catch
+            {
                 // Ignore teardown issues from the YouTube iframe API.
             }
         };
     });
 
-    onDestroy(() => {
+    onDestroy(() =>
+    {
         stopPolling();
-        try {
-            if (player && typeof player.destroy === 'function') {
+        try
+        {
+            if (player && typeof player.destroy === 'function')
+            {
                 player.destroy();
             }
-        } catch {
+        }
+        catch
+        {
             // Ignore teardown issues from the YouTube iframe API.
         }
     });
 </script>
 
-<div class="page stack watch-page">
-    <section class="panel watch-panel">
-        <div class="title-row">
+<div id="div_watch_panel" class="page stack watch-page panel watch-panel">
+    <div id="player" class="player" title={data.video.title}></div>
+
+    <div id="div_video_meta_panel" class="video-meta-panel">
+        <div id="div_title_row" class="title-row">
             <h1 class="title">{data.video.title}</h1>
-            <div class="title-meta">
-                <a class="channel-link" href={`/viewer?channelId=${data.video.channel_id}`}>{data.video.channel_title}</a>
+            <div id="div_title_meta" class="title-meta">
+                <a class="channel-link"
+                   href={`/viewer?channelId=${data.video.channel_id}`}>{data.video.channel_title}</a>
                 {#if data.video.published_at}
                     <span class="dot">|</span>
                     <span class="date">{formatDate(data.video.published_at)}</span>
                 {/if}
             </div>
         </div>
-        <div class="meta">
-            <span class="badges">
-                {#if data.video.favorite}
-                    <span class="badge favorite">Favorite</span>
-                {/if}
-                {#if watched}
-                    <span class="badge watched">Watched</span>
-                {/if}
-                {#if data.video.ignored}
-                    <span class="badge ignored">Ignored</span>
-                {/if}
-            </span>
+
+        <div id="div_video_meta" class="meta">
+                    <span id="span_video_badges" class="badges">
+                        {#if data.video.favorite}
+                            <span class="badge favorite">Favorite</span>
+                        {/if}
+                        {#if watched}
+                            <span class="badge watched">Watched</span>
+                        {/if}
+                        {#if data.video.ignored}
+                            <span class="badge ignored">Ignored</span>
+                        {/if}
+                    </span>
         </div>
 
-        <div class="player-slot">
-            <div class="player-wrap">
-                <div id="player" class="player" title={data.video.title}></div>
-            </div>
-        </div>
-
-        <div class="inline-actions action-bar">
-            <form id="watchForm" method="POST" action="?/markWatched" class="inline-form" on:submit={handleWatchSubmit}>
-                <input type="hidden" name="intent" value={showWatched ? 'unwatch' : 'watch'} />
+        <div id="div_watch_actions" class="inline-actions action-bar">
+            <form id="form_watch" method="POST" action="?/markWatched" class="inline-form"
+                  on:submit={handleWatchSubmit}>
+                <input type="hidden" name="intent" value={showWatched ? 'unwatch' : 'watch'}/>
                 <button type="submit" aria-pressed={showWatched} disabled={watchMutationPending}>
                     {#if showWatched}
                         Clear watch status
@@ -366,12 +403,12 @@
         </div>
 
         {#if data.video.description}
-            <details class="desc">
+            <details id="details_description_panel" class="desc">
                 <summary>Description</summary>
                 <pre>{data.video.description}</pre>
             </details>
         {/if}
-    </section>
+    </div>
 </div>
 
 <style>
@@ -390,6 +427,8 @@
         flex: 1;
         flex-direction: column;
         min-height: 0;
+        gap: 0;
+        align-items: center;
     }
 
     .title {
@@ -471,32 +510,14 @@
         color: var(--text-muted);
     }
 
-    .player-slot {
-        display: grid;
-        flex: 1;
-        min-height: 0;
-        place-items: center;
-        margin: 1rem 0;
-        container-type: size;
-    }
-
-    .player-wrap {
-        position: relative;
-        width: 100%;
-        max-height: 100%;
-        aspect-ratio: 16 / 9;
-    }
-
-    @supports (width: 1cqw) {
-        .player-wrap {
-            width: min(100cqw, calc(100cqh * 16 / 9));
-        }
-    }
-
     .player {
-        width: 100%;
-        height: 100%;
-        border: 0;
+        flex: 1 1 auto;
+        aspect-ratio: 16 / 9;
+        min-height: calc(400px / 16 * 9);
+        min-width: 400px;
+        max-height: min(100vh - 520px, (100vw - 320px)* 9 / 16);
+        max-width: min(100vw - 320px, (100vh - 520px) * 16 / 9);
+        border: 2px solid #909090;
         border-radius: var(--radius);
         box-shadow: var(--shadow-md);
     }
@@ -505,8 +526,26 @@
         margin-bottom: 1rem;
     }
 
+    .video-meta-panel {
+        flex: 0 0 auto;
+        min-height: 400px;
+        overflow: auto;
+        margin-top: 0.85rem;
+        padding: 1rem 1.1rem;
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        background: var(--bg-panel);
+        width: 100%
+    }
+
     .desc summary {
         cursor: pointer;
+    }
+
+    .desc[open] {
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
     }
 
     .desc pre {
@@ -514,6 +553,8 @@
         font-family: var(--font-body);
         font-size: 0.95rem;
         color: var(--text-muted);
+        max-height: 10rem;
+        overflow: auto;
     }
 
     @media (max-width: 900px) {
@@ -531,8 +572,16 @@
             text-align: left;
         }
 
-        .player-wrap {
+        .player {
             width: 100%;
+            min-width: 300px;
+            min-height: calc(300px / 16 * 9);
+            max-height: min(100vh - 520px, (100vw - 40px)* 9 / 16);
+            max-width: min(100vw - 40px, (100vh - 520px) * 16 / 9);
+        }
+
+        .video-meta-panel {
+            min-height: 0;
         }
     }
 </style>
