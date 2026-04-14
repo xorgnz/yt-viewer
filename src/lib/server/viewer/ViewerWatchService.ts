@@ -12,6 +12,8 @@ type ViewerWatchVideo = ViewerVideoRecord;
 
 export type ViewerWatchLoadModel = {
     video: ViewerWatchVideo;
+    previousVideoYoutubeId: string | null;
+    nextVideoYoutubeId: string | null;
     profileId: number;
     profileKey: string;
     profileName: string;
@@ -52,8 +54,15 @@ export class ViewerWatchService
             return null;
         }
 
+        const adjacent = this.viewerVideoReadRepository.findAdjacentYoutubeIds(
+            video,
+            this.profileContext.activeProfileId
+        );
+
         return {
             video,
+            previousVideoYoutubeId: adjacent.previousYoutubeId,
+            nextVideoYoutubeId: adjacent.nextYoutubeId,
             profileId: this.profileContext.activeProfileId,
             profileKey: this.profileContext.activeProfileKey,
             profileName: this.profileContext.activeProfileName

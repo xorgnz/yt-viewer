@@ -42,7 +42,7 @@ describe('ViewerWatchService', () => {
             channel_id: sourceChannel.id,
             title: 'Watch Me',
             description: '',
-            published_at: null,
+            published_at: 2000,
             duration_seconds: 600,
             thumbnail_url: null
         } as any);
@@ -55,6 +55,7 @@ describe('ViewerWatchService', () => {
 
         return {
             harness,
+            videoDAO,
             flagsDAO,
             historyDAO,
             service: new ViewerWatchService(
@@ -116,6 +117,66 @@ describe('ViewerWatchService', () => {
             status: 409,
             message: 'History session is no longer active'
         });
+
+        harness.close();
+    });
+
+    it('returns chronological adjacent videos while skipping ignored entries', () => {
+        const { harness, videoDAO, flagsDAO, service } = createService();
+
+        videoDAO.upsert({
+            youtube_id: 'OLDER_VISIBLE',
+            channel_id: 1,
+            title: 'Older visible',
+            description: '',
+            published_at: 1000,
+            duration_seconds: 120,
+            thumbnail_url: null
+        } as any);
+        videoDAO.upsert({
+            youtube_id: 'OLDER_IGNORED',
+            channel_id: 1,
+            title: 'Older ignored',
+            description: '',
+            published_at: 1500,
+            duration_seconds: 120,
+            thumbnail_url: null
+        } as any);
+        videoDAO.upsert({
+            youtube_id: 'NEWER_WATCHED',
+            channel_id: 1,
+            title: 'Newer watched',
+            description: '',
+            published_at: 3000,
+            duration_seconds: 120,
+            thumbnail_url: null
+        } as any);
+        videoDAO.upsert({
+            youtube_id: 'NEWER_IGNORED',
+            channel_id: 1,
+            title: 'Newer ignored',
+            description: '',
+            published_at: 4000,
+            duration_seconds: 120,
+            thumbnail_url: null
+        } as any);
+
+        const olderIgnored = videoDAO.getByExternalId('OLDER_IGNORED');
+        const newerWatched = videoDAO.getByExternalId('NEWER_WATCHED');
+        const newerIgnored = videoDAO.getByExternalId('NEWER_IGNORED');
+
+        if (!olderIgnored || !newerWatched || !newerIgnored) {
+            throw new Error('Failed to seed adjacent videos for watch navigation test.');
+        }
+
+        flagsDAO.set(olderIgnored.id, 1, { ignored: 1 });
+        flagsDAO.set(newerIgnored.id, 1, { ignored: 1 });
+        flagsDAO.set(newerWatched.id, 1, { watched: 1 });
+
+        const result = service.load('WATCH_ME');
+
+        expect(result?.previousVideoYoutubeId).toBe('OLDER_VISIBLE');
+        expect(result?.nextVideoYoutubeId).toBe('NEWER_WATCHED');
 
         harness.close();
     });

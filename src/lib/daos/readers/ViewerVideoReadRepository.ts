@@ -24,6 +24,80 @@ export interface ViewerVideoRecord
 
 export class ViewerVideoReadRepository extends SqliteDAO
 {
+    findAdjacentYoutubeIds(
+        video: Pick<ViewerVideoRecord, 'id' | 'channel_id' | 'published_at'>,
+        profileId: number
+    ): { previousYoutubeId: string | null; nextYoutubeId: string | null }
+    {
+        const params = {
+            currentId: video.id,
+            channelId: video.channel_id,
+            currentPublishedAt: video.published_at ?? 0,
+            currentPublishedAtIsNull: video.published_at == null ? 1 : 0,
+            profileId
+        };
+
+        const previousSql = `
+            SELECT v.youtube_id AS youtube_id
+            FROM videos v
+            LEFT JOIN video_flags vf ON (vf.video_id = v.id AND vf.profile_id = :profileId)
+            WHERE v.channel_id = :channelId
+              AND v.id <> :currentId
+              AND COALESCE(vf.ignored, 0) = 0
+              AND (
+                CASE WHEN v.published_at IS NULL THEN 1 ELSE 0 END < :currentPublishedAtIsNull
+                OR (
+                    CASE WHEN v.published_at IS NULL THEN 1 ELSE 0 END = :currentPublishedAtIsNull
+                    AND COALESCE(v.published_at, 0) < :currentPublishedAt
+                )
+                OR (
+                    CASE WHEN v.published_at IS NULL THEN 1 ELSE 0 END = :currentPublishedAtIsNull
+                    AND COALESCE(v.published_at, 0) = :currentPublishedAt
+                    AND v.id < :currentId
+                )
+              )
+            ORDER BY
+                CASE WHEN v.published_at IS NULL THEN 1 ELSE 0 END DESC,
+                v.published_at DESC,
+                v.id DESC
+            LIMIT 1
+        `;
+
+        const nextSql = `
+            SELECT v.youtube_id AS youtube_id
+            FROM videos v
+            LEFT JOIN video_flags vf ON (vf.video_id = v.id AND vf.profile_id = :profileId)
+            WHERE v.channel_id = :channelId
+              AND v.id <> :currentId
+              AND COALESCE(vf.ignored, 0) = 0
+              AND (
+                CASE WHEN v.published_at IS NULL THEN 1 ELSE 0 END > :currentPublishedAtIsNull
+                OR (
+                    CASE WHEN v.published_at IS NULL THEN 1 ELSE 0 END = :currentPublishedAtIsNull
+                    AND COALESCE(v.published_at, 0) > :currentPublishedAt
+                )
+                OR (
+                    CASE WHEN v.published_at IS NULL THEN 1 ELSE 0 END = :currentPublishedAtIsNull
+                    AND COALESCE(v.published_at, 0) = :currentPublishedAt
+                    AND v.id > :currentId
+                )
+              )
+            ORDER BY
+                CASE WHEN v.published_at IS NULL THEN 1 ELSE 0 END ASC,
+                v.published_at ASC,
+                v.id ASC
+            LIMIT 1
+        `;
+
+        const previousRow = this.db.prepare(previousSql).get(params) as { youtube_id: string } | undefined;
+        const nextRow = this.db.prepare(nextSql).get(params) as { youtube_id: string } | undefined;
+
+        return {
+            previousYoutubeId: previousRow?.youtube_id ?? null,
+            nextYoutubeId: nextRow?.youtube_id ?? null
+        };
+    }
+
     getByYoutubeId(youtubeId: string, profileId: number): ViewerVideoRecord | undefined
     {
         const sql = `

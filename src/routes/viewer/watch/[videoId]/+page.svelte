@@ -20,6 +20,8 @@
         profileId: number;
         profileKey: string;
         profileName: string;
+        previousVideoYoutubeId: string | null;
+        nextVideoYoutubeId: string | null;
     };
 
     let watched = !!data.video.watched;
@@ -36,9 +38,28 @@
     let lastPersistedWatchSeconds = 0;
     let lastHistoryActivityAt: number | null = null;
     let watchMutationPending = false;
+    let activeVideoYoutubeId = data.video.youtube_id;
     const HISTORY_SESSION_GAP_MS = 5 * 60 * 1000;
 
     $: showWatched = watched || (thresholdReached && !suppressThresholdWatch);
+
+    $: if (data.video.youtube_id !== activeVideoYoutubeId)
+    {
+        activeVideoYoutubeId = data.video.youtube_id;
+        resetForVideoChange(!!data.video.watched);
+
+        if (player && typeof player.cueVideoById === 'function')
+        {
+            try
+            {
+                player.cueVideoById(data.video.youtube_id);
+            }
+            catch
+            {
+                // Ignore transient player API errors during route-driven video swaps.
+            }
+        }
+    }
 
     function formatDate(ms: number | null): string
     {
@@ -58,6 +79,22 @@
         {
             return '';
         }
+    }
+
+    function resetForVideoChange(serverWatched: boolean)
+    {
+        stopPolling();
+        watched = serverWatched;
+        thresholdReached = serverWatched;
+        thresholdWatchSubmitted = serverWatched;
+        suppressThresholdWatch = false;
+        showWatched = serverWatched;
+        watchMutationPending = false;
+        isActivelyPlaying = false;
+        elapsedWatchSeconds = 0;
+        historySessionCreated = false;
+        lastPersistedWatchSeconds = 0;
+        lastHistoryActivityAt = null;
     }
 
     function startPolling()
@@ -352,24 +389,49 @@
     });
 </script>
 
-<div id="div_watch_panel" class="page stack watch-page panel watch-panel">
-    <div id="player" class="player" title={data.video.title}></div>
+<div id="div_viewer_panel" class="page stack panel">
+    <div id="div_player_flex_wrapper">
+        <div id="div_player_frame">
+            {#if data.previousVideoYoutubeId}
+                <a id="a_player_nav_prev" href={`/viewer/watch/${data.previousVideoYoutubeId}`}
+                   aria-label="Previous video">
+                    <svg id="svg_player_nav_prev" viewBox="0 0 24 96" aria-hidden="true" focusable="false">
+                        <polyline points="18,8 6,48 18,88"></polyline>
+                    </svg>
+                </a>
+            {:else}
+                <span id="a_player_nav_prev" aria-hidden="true"></span>
+            {/if}
 
-    <div id="div_video_meta_panel" class="video-meta-panel">
-        <div id="div_title_row" class="title-row">
-            <h1 class="title">{data.video.title}</h1>
-            <div id="div_title_meta" class="title-meta">
-                <a class="channel-link"
+            <div id="player" title={data.video.title}></div>
+
+            {#if data.nextVideoYoutubeId}
+                <a id="a_player_nav_next" href={`/viewer/watch/${data.nextVideoYoutubeId}`} aria-label="Next video">
+                    <svg id="svg_player_nav_next" viewBox="0 0 24 96" aria-hidden="true" focusable="false">
+                        <polyline points="6,8 18,48 6,88"></polyline>
+                    </svg>
+                </a>
+            {:else}
+                <span id="a_player_nav_next" aria-hidden="true"></span>
+            {/if}
+        </div>
+    </div>
+
+    <div id="div_video_meta_panel">
+        <div id="div_title_row">
+            <h1 id="h1_video_title">{data.video.title}</h1>
+            <div id="div_title_meta">
+                <a id="a_channel_link"
                    href={`/viewer?channelId=${data.video.channel_id}`}>{data.video.channel_title}</a>
                 {#if data.video.published_at}
-                    <span class="dot">|</span>
-                    <span class="date">{formatDate(data.video.published_at)}</span>
+                    <span id="span_title_separator">|</span>
+                    <span id="span_published_date">{formatDate(data.video.published_at)}</span>
                 {/if}
             </div>
         </div>
 
-        <div id="div_video_meta" class="meta">
-                    <span id="span_video_badges" class="badges">
+        <div id="div_video_meta">
+                    <span id="span_video_badges">
                         {#if data.video.favorite}
                             <span class="badge favorite">Favorite</span>
                         {/if}
@@ -382,7 +444,7 @@
                     </span>
         </div>
 
-        <div id="div_watch_actions" class="inline-actions action-bar">
+        <div id="div_watch_actions" class="inline-actions">
             <form id="form_watch" method="POST" action="?/markWatched" class="inline-form"
                   on:submit={handleWatchSubmit}>
                 <input type="hidden" name="intent" value={showWatched ? 'unwatch' : 'watch'}/>
@@ -412,46 +474,105 @@
 </div>
 
 <style>
-    :global(.app-content) {
-        display: flex;
-        min-height: 100vh;
-    }
-
-    .watch-page {
-        flex: 1;
-        min-height: 0;
-    }
-
-    .watch-panel {
+    #div_viewer_panel {
+        height: 100%;
         display: flex;
         flex: 1;
         flex-direction: column;
-        min-height: 0;
-        gap: 0;
         align-items: center;
+        gap: 0.8rem;
     }
 
-    .title {
-        margin-bottom: 0;
-        font-size: 32px;
+    #div_player_flex_wrapper {
+        width: 100%;
+        min-height: 245px;
+        min-width: 438px;
+        flex: 5 5 auto;
     }
 
-    .channel-link {
-        color: inherit;
-    }
-
-    .title-row {
+    #div_player_frame {
+        --free-width: calc(100cqw - 150px);
+        --constrained-width: calc(100cqh * 16 / 9);
+        --managed-width: min(var(--free-width), var(--constrained-width));
+        --free-height: 100cqh;
+        --constrained-height: calc((100cqw - 150px) / 16 * 9);
+        --managed-height: min(var(--free-height), var(--constrained-height));
         display: flex;
-        align-items: baseline;
+        height: 100%;
+        width: 100%;
+        align-items: stretch;
+        justify-content: center;
+        container-type: size;
+    }
+
+    #player {
+        width: var(--managed-width);
+        height: var(--managed-height);
+        display: block;
+        aspect-ratio: 16 / 9;
+        border: 2px solid #909090;
+        border-radius: var(--radius);
+        box-shadow: var(--shadow-md);
+    }
+
+    #a_player_nav_prev,
+    #a_player_nav_next {
+        width: 75px;
+        height: var(--managed-height);
+        display: flex;
+        z-index: 2;
+        align-items: center;
+        justify-content: center;
+        border: 1px solid var(--border-strong);
+        border-radius: var(--radius-sm);
+        background-color: rgba(0, 0, 0, 0.25);
+        color: var(--text);
+        font-weight: 600;
+        text-align: center;
+    }
+
+    #svg_player_nav_prev,
+    #svg_player_nav_next {
+        width: 1.8rem;
+        color: currentColor;
+        stroke: currentColor;
+        fill: none;
+        stroke-width: 6;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+    }
+
+    #div_video_meta_panel {
+        width: 100%;
+        min-height: 400px;
+        height: 100%;
+        flex: 1 1 auto;
+        overflow: auto;
+        border: 1px solid var(--border);
+        padding: 1rem 1.1rem;
+        border-radius: var(--radius);
+        background-color: var(--bg-panel);
+    }
+
+    #div_title_row {
+        display: flex;
         justify-content: space-between;
+        align-items: baseline;
         gap: 1rem;
     }
 
-    .title-meta {
+    #h1_video_title {
+        margin-bottom: 0;
+        color: var(--text);
+        font-size: 32px;
+        line-height: 1.2;
+    }
+
+    #div_title_meta {
         display: inline-flex;
-        flex-wrap: wrap;
-        align-items: center;
         justify-content: flex-end;
+        align-items: center;
+        flex-wrap: wrap;
         gap: 0.25rem 0.5rem;
         color: var(--text);
         font-size: 32px;
@@ -460,24 +581,31 @@
         text-align: right;
     }
 
-    .meta {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 0.25rem 0.5rem;
-        color: var(--text-muted);
-        font-size: 0.95rem;
-        margin-top: 0.4rem;
+    #a_channel_link {
+        color: inherit;
+        text-align: inherit;
     }
 
-    .dot {
+    #span_title_separator {
         opacity: 0.6;
     }
 
-    .date {
+    #span_published_date {
+        color: inherit;
         font-weight: 400;
     }
 
-    .badges {
+    #div_video_meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.25rem 0.5rem;
+        margin-top: 0.4rem;
+        color: var(--text-muted);
+        font-size: 0.95rem;
+        line-height: 1.5;
+    }
+
+    #span_video_badges {
         display: inline-flex;
         flex-wrap: wrap;
         gap: 0.35rem;
@@ -485,76 +613,53 @@
     }
 
     .badge {
-        border-radius: 999px;
-        padding: 0.1rem 0.5rem;
-        font-size: 0.8rem;
         border: 1px solid var(--border);
-        background: var(--bg-soft);
+        padding: 0.1rem 0.5rem;
+        border-radius: 999px;
+        background-color: var(--bg-soft);
         color: var(--text);
+        font-size: 0.8rem;
+        line-height: 1.2;
     }
 
     .badge.favorite {
-        background: rgba(210, 153, 34, 0.16);
         border-color: rgba(210, 153, 34, 0.4);
+        background-color: rgba(210, 153, 34, 0.16);
         color: #f3ca78;
     }
 
     .badge.watched {
-        background: rgba(47, 158, 68, 0.16);
         border-color: rgba(47, 158, 68, 0.4);
+        background-color: rgba(47, 158, 68, 0.16);
         color: #8dd89f;
     }
 
     .badge.ignored {
-        background: rgba(255, 255, 255, 0.06);
+        background-color: rgba(255, 255, 255, 0.06);
         color: var(--text-muted);
     }
 
-    .player {
-        flex: 5 0 auto;
-        aspect-ratio: 16 / 9;
-        min-height: calc(400px / 16 * 9);
-        min-width: 400px;
-        max-height: min(100vh - 520px, (100vw - 320px)* 9 / 16);
-        max-width: min(100vw - 320px, (100vh - 520px) * 16 / 9);
-        border: 2px solid #909090;
-        border-radius: var(--radius);
-        box-shadow: var(--shadow-md);
-    }
-
-    .action-bar {
+    #div_watch_actions {
         margin-bottom: 1rem;
     }
 
-    .video-meta-panel {
-        flex: 1 1 auto;
-        min-height: 400px;
-        height: 100%;
-        margin-top: 0.85rem;
-        padding: 1rem 1.1rem;
-        border: 1px solid var(--border);
-        border-radius: var(--radius);
-        background: var(--bg-panel);
-        width: 100%;
-        overflow: auto;
-    }
-
-    .desc summary {
+    #details_description_panel summary {
         cursor: pointer;
     }
 
-    .desc[open] {
+    #details_description_panel[open] {
+        min-height: 0;
         display: flex;
         flex-direction: column;
-        min-height: 0;
     }
 
-    .desc pre {
-        white-space: pre-wrap;
+    #details_description_panel pre {
+        max-height: 10rem;
+        color: var(--text-muted);
         font-family: var(--font-body);
         font-size: 0.95rem;
-        color: var(--text-muted);
-        max-height: 10rem;
+        line-height: 1.5;
+        white-space: pre-wrap;
     }
 
     @media (max-width: 900px) {
@@ -562,25 +667,31 @@
             min-height: auto;
         }
 
-        .title-row {
+        #div_title_row {
             flex-wrap: wrap;
         }
 
-        .title-meta {
+        #div_title_meta {
             width: 100%;
             justify-content: flex-start;
             text-align: left;
         }
 
-        .player {
+        #player {
             width: 100%;
             min-width: 300px;
             min-height: calc(300px / 16 * 9);
-            max-height: min(100vh - 520px, (100vw - 40px)* 9 / 16);
             max-width: min(100vw - 40px, (100vh - 520px) * 16 / 9);
+            max-height: min(100vh - 520px, (100vw - 40px) * 9 / 16);
         }
 
-        .video-meta-panel {
+        #a_player_nav_prev,
+        #a_player_nav_next {
+            width: 3.6rem;
+            min-width: 3.6rem;
+        }
+
+        #div_video_meta_panel {
             min-height: 0;
         }
     }
