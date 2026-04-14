@@ -534,22 +534,21 @@
     #div_viewer_panel.viewer-watched {
         border-color: rgba(67, 160, 71, 0.86);
         background:
-            linear-gradient(135deg, rgba(36, 96, 50, 0.46), rgba(14, 44, 24, 0.62));
+            linear-gradient(90deg, rgb(14, 44, 24), rgb(36, 96, 50));
         box-shadow: inset 0 1px 0 rgba(168, 236, 174, 0.26);
     }
 
     #div_viewer_panel.viewer-favorite {
         border-color: rgba(227, 179, 65, 0.9);
         background:
-            linear-gradient(135deg, rgba(120, 90, 24, 0.48), rgba(48, 34, 10, 0.64));
+            linear-gradient(90deg, rgb(170, 112, 0), rgb(48, 34, 10));
         box-shadow: inset 0 1px 0 rgba(255, 232, 160, 0.28);
     }
 
     #div_viewer_panel.viewer-favorite-watched {
         border-color: rgba(122, 198, 214, 0.95);
         background:
-            linear-gradient(135deg, rgba(140, 103, 24, 0.56) 0%, rgba(30, 94, 54, 0.6) 52%, rgba(18, 80, 98, 0.54) 100%),
-            linear-gradient(135deg, rgba(255, 238, 162, 0.16), rgba(120, 232, 216, 0.14));
+            linear-gradient(90deg, rgb(170, 112, 0) 20%, rgba(30, 94, 54, 0.96) 100%);
         box-shadow:
             inset 0 1px 0 rgba(255, 238, 170, 0.34),
             inset 0 -1px 0 rgba(150, 230, 236, 0.3),
@@ -559,7 +558,7 @@
     #div_viewer_panel.viewer-ignored {
         border-color: rgba(229, 115, 115, 0.9);
         background:
-            linear-gradient(135deg, rgba(124, 36, 48, 0.5), rgba(52, 16, 22, 0.66));
+            linear-gradient(90deg, rgb(124, 36, 48), rgb(52, 16, 22));
         box-shadow: inset 0 1px 0 rgba(248, 176, 176, 0.26);
     }
 

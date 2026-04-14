@@ -118,31 +118,34 @@
     }
 
     .card.card-watched {
-        border-color: rgba(67, 160, 71, 0.7);
+        border-color: rgba(67, 160, 71, 0.86);
         background:
-            linear-gradient(180deg, rgba(28, 58, 34, 0.96), rgba(18, 34, 22, 0.98));
-        box-shadow: inset 0 1px 0 rgba(129, 199, 132, 0.14);
+            linear-gradient(90deg, rgb(14, 44, 24), rgb(36, 96, 50));
+        box-shadow: inset 0 1px 0 rgba(168, 236, 174, 0.26);
     }
 
     .card.card-favorite {
-        border-color: rgba(227, 179, 65, 0.75);
+        border-color: rgba(227, 179, 65, 0.9);
         background:
-            linear-gradient(180deg, rgba(64, 51, 18, 0.96), rgba(35, 28, 11, 0.98));
-        box-shadow: inset 0 1px 0 rgba(255, 224, 130, 0.18);
+            linear-gradient(90deg, rgb(170, 112, 0), rgb(48, 34, 10));
+        box-shadow: inset 0 1px 0 rgba(255, 232, 160, 0.28);
     }
 
     .card.card-favorite-watched {
-        border-color: rgba(171, 198, 79, 0.78);
+        border-color: rgba(122, 198, 214, 0.95);
         background:
-            linear-gradient(135deg, rgba(78, 63, 18, 0.96), rgba(28, 58, 34, 0.98));
-        box-shadow: inset 0 1px 0 rgba(212, 225, 87, 0.16);
+            linear-gradient(90deg, rgb(170, 112, 0) 20%, rgba(30, 94, 54, 0.96) 100%);
+        box-shadow:
+            inset 0 1px 0 rgba(255, 238, 170, 0.34),
+            inset 0 -1px 0 rgba(150, 230, 236, 0.3),
+            0 0 0 1px rgba(95, 195, 221, 0.34);
     }
 
     .card.card-ignored {
-        border-color: rgba(229, 115, 115, 0.78);
+        border-color: rgba(229, 115, 115, 0.9);
         background:
-            linear-gradient(180deg, rgba(78, 24, 30, 0.97), rgba(40, 14, 18, 0.99));
-        box-shadow: inset 0 1px 0 rgba(239, 154, 154, 0.16);
+            linear-gradient(90deg, rgb(124, 36, 48), rgb(52, 16, 22));
+        box-shadow: inset 0 1px 0 rgba(248, 176, 176, 0.26);
     }
 
     .card.card-selected {
