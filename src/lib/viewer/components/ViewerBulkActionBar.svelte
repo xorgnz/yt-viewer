@@ -109,11 +109,14 @@
 
 <style>
     .bulk-action-slot {
-        min-height: 3.1rem;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        margin-block: 0;
+        position: fixed;
+        top: 0.75rem;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 1200;
+        width: min(calc(100% - 1rem), 54rem);
+        min-height: 0;
+        pointer-events: none;
     }
 
     .bulk-action-slot.is-empty {
@@ -125,7 +128,7 @@
         align-items: center;
         justify-content: space-between;
         gap: 0.85rem;
-        width: min(100%, 54rem);
+        width: 100%;
         min-height: 3.1rem;
         padding: 0.45rem 0.85rem;
         border: 1px solid color-mix(in srgb, var(--accent) 40%, var(--border));
@@ -136,10 +139,12 @@
         overflow-x: auto;
         overflow-y: hidden;
         scrollbar-width: thin;
+        pointer-events: auto;
     }
 
     .bulk-action-bar.is-hidden {
         visibility: hidden;
+        pointer-events: none;
     }
 
     .bulk-action-copy {
