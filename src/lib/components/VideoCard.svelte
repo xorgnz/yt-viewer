@@ -108,6 +108,7 @@
     .card {
         display: flex;
         flex-direction: column;
+        height: 320px;
         border: 1px solid #333;
         border-radius: 6px;
         overflow: hidden;

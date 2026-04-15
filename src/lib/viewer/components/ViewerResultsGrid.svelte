@@ -41,7 +41,9 @@
 
     .grid {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(clamp(250px, 18vw, 320px), 1fr));
+        grid-template-columns: repeat(auto-fill, minmax(min(100%, 250px), 320px));
+        justify-content: start;
+        align-items: start;
         gap: 1rem;
     }
 </style>
