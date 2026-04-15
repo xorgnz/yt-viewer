@@ -1,6 +1,14 @@
 import { SqliteDAO } from '$lib/daos/shared/SqliteDAO';
 import type { SourceChannel } from '$lib/entities/sourceChannel';
 
+export interface SourceChannelWithVideoStats extends SourceChannel
+{
+    video_count: number;
+    watched_count: number;
+    favorite_count: number;
+    ignored_count: number;
+}
+
 export class SourceChannelDAO extends SqliteDAO
 {
     upsert(channel: Omit<SourceChannel, 'id'> | Partial<SourceChannel> & { youtube_id: string; title: string })
@@ -30,6 +38,37 @@ export class SourceChannelDAO extends SqliteDAO
     list(): SourceChannel[]
     {
         return this.db.prepare(`SELECT id, youtube_id, title, description, thumbnail_url, published_at, last_refreshed_at FROM source_channels ORDER BY title`).all() as SourceChannel[];
+    }
+
+    listWithVideoStats(): SourceChannelWithVideoStats[]
+    {
+        return this.db.prepare(`
+            SELECT
+                sc.id,
+                sc.youtube_id,
+                sc.title,
+                sc.description,
+                sc.thumbnail_url,
+                sc.published_at,
+                sc.last_refreshed_at,
+                COUNT(v.id) AS video_count,
+                COALESCE(SUM(CASE WHEN vf_agg.watched = 1 THEN 1 ELSE 0 END), 0) AS watched_count,
+                COALESCE(SUM(CASE WHEN vf_agg.favorite = 1 THEN 1 ELSE 0 END), 0) AS favorite_count,
+                COALESCE(SUM(CASE WHEN vf_agg.ignored = 1 THEN 1 ELSE 0 END), 0) AS ignored_count
+            FROM source_channels sc
+            LEFT JOIN videos v ON v.channel_id = sc.id
+            LEFT JOIN (
+                SELECT
+                    video_id,
+                    MAX(watched) AS watched,
+                    MAX(favorite) AS favorite,
+                    MAX(ignored) AS ignored
+                FROM video_flags
+                GROUP BY video_id
+            ) vf_agg ON vf_agg.video_id = v.id
+            GROUP BY sc.id
+            ORDER BY sc.title
+        `).all() as SourceChannelWithVideoStats[];
     }
 
     remove(id: number)

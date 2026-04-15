@@ -39,7 +39,7 @@ export class AdminSourceChannelPageService
     loadPageData(): AdminSourceChannelPageData
     {
         return {
-            channels: this.sourceChannelDAO.list()
+            channels: this.sourceChannelDAO.listWithVideoStats()
         };
     }
 

@@ -2,7 +2,19 @@
     import ThumbnailImage from '$lib/components/ThumbnailImage.svelte';
 
     export let data: {
-        channels: Array<{ id: number; youtube_id: string; title: string; description: string; thumbnail_url: string | null; published_at: number | null; last_refreshed_at: number | null }>
+        channels: Array<{
+            id: number;
+            youtube_id: string;
+            title: string;
+            description: string;
+            thumbnail_url: string | null;
+            published_at: number | null;
+            last_refreshed_at: number | null;
+            video_count: number;
+            watched_count: number;
+            favorite_count: number;
+            ignored_count: number;
+        }>
     };
 
     let creating = false;
@@ -138,6 +150,10 @@
                             <th>Description</th>
                             <th>Thumb</th>
                             <th>Published</th>
+                            <th class="th-count th-count-total">#</th>
+                            <th class="th-count th-count-watched">W</th>
+                            <th class="th-count th-count-favorite">F</th>
+                            <th class="th-count th-count-ignored">I</th>
                             <th>Last Refreshed</th>
                             <th>Actions</th>
                         </tr>
@@ -156,6 +172,10 @@
                                     {/if}
                                 </td>
                                 <td>{fmtDate(ch.published_at)}</td>
+                                <td class="td-count td-count-total">{ch.video_count}</td>
+                                <td class="td-count td-count-watched">{ch.watched_count}</td>
+                                <td class="td-count td-count-favorite">{ch.favorite_count}</td>
+                                <td class="td-count td-count-ignored">{ch.ignored_count}</td>
                                 <td>{fmtDateTime(ch.last_refreshed_at)}</td>
                                 <td>
                                     <div class="inline-actions">
@@ -189,5 +209,58 @@
 
     .desc {
         max-width: 40ch;
+    }
+
+    tbody tr:nth-child(odd) {
+        background-color: rgba(255, 255, 255, 0.03);
+    }
+
+    tbody tr:nth-child(even) {
+        background-color: rgba(255, 255, 255, 0.06);
+    }
+
+    .th-count,
+    .td-count {
+        width: 40px;
+        min-width: 40px;
+        max-width: 40px;
+        white-space: nowrap;
+    }
+
+    .th-count {
+        text-align: center;
+    }
+
+    .td-count {
+        font-family: monospace;
+        text-align: right;
+    }
+
+    .th-count-total,
+    .td-count-total {
+        background-color: rgba(255, 255, 255, 0.10);
+    }
+
+    .th-count-watched,
+    .td-count-watched {
+        background-color: rgba(112, 201, 124, 0.16);
+    }
+
+    .th-count-favorite,
+    .td-count-favorite {
+        background-color: rgba(231, 197, 111, 0.20);
+    }
+
+    .th-count-ignored,
+    .td-count-ignored {
+        background-color: rgba(227, 126, 126, 0.20);
+    }
+
+    tbody tr:nth-child(odd) .td-count {
+        background-image: linear-gradient(rgba(255, 255, 255, 0.10), rgba(255, 255, 255, 0.10));
+    }
+
+    tbody tr:nth-child(even) .td-count {
+        background-image: linear-gradient(rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0.16));
     }
 </style>

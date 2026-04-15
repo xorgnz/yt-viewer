@@ -1,4 +1,4 @@
-import type { SourceChannel } from '$lib/entities/sourceChannel';
+import type { SourceChannelWithVideoStats } from '$lib/daos/sourceChannelDAO';
 
 export interface AdminSourceChannelServiceError<TCode extends string = string>
 {
@@ -25,7 +25,7 @@ export interface AdminSourceChannelRedirect
 
 export interface AdminSourceChannelPageData
 {
-    channels: SourceChannel[];
+    channels: SourceChannelWithVideoStats[];
 }
 
 export interface AdminSourceChannelLookupData
