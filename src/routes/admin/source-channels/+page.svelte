@@ -145,10 +145,9 @@
                 <table>
                     <thead>
                         <tr>
-                            <th>Title</th>
-                            <th>YouTube ID</th>
+                            <th class="th-icon">Icon</th>
+                            <th class="th-title">Title</th>
                             <th>Description</th>
-                            <th>Thumb</th>
                             <th>Published</th>
                             <th class="th-count th-count-total">#</th>
                             <th class="th-count th-count-watched">W</th>
@@ -161,16 +160,15 @@
                     <tbody>
                         {#each data.channels as ch}
                             <tr>
-                                <td>{ch.title}</td>
-                                <td><code>{ch.youtube_id}</code></td>
-                                <td class="desc">{ch.description}</td>
-                                <td>
+                                <td class="td-icon">
                                     {#if ch.thumbnail_url}
                                         <ThumbnailImage src={ch.thumbnail_url} alt={`${ch.title} thumbnail`} className="thumb-preview" />
                                     {:else}
                                         <span class="muted">No image</span>
                                     {/if}
                                 </td>
+                                <td class="td-title">{ch.title}</td>
+                                <td class="desc">{ch.description}</td>
                                 <td>{fmtDate(ch.published_at)}</td>
                                 <td class="td-count td-count-total">{ch.video_count}</td>
                                 <td class="td-count td-count-watched">{ch.watched_count}</td>
@@ -200,15 +198,36 @@
 
 <style>
     :global(.thumb-preview) {
-        width: 120px;
+        width: 160px;
         height: auto;
         display: block;
         border: 1px solid var(--border);
         border-radius: var(--radius-sm);
     }
 
+    .th-icon,
+    .td-icon {
+        width: 160px;
+        min-width: 160px;
+        max-width: 160px;
+        padding: 0;
+    }
+
+    .th-title,
+    .td-title {
+        width: 300px;
+        min-width: 300px;
+        max-width: 300px;
+    }
+
+    .td-title {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
     .desc {
-        max-width: 40ch;
+        max-width: 70ch;
     }
 
     tbody tr:nth-child(odd) {
