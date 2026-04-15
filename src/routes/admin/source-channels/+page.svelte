@@ -1,4 +1,6 @@
 <script lang="ts">
+    import ThumbnailImage from '$lib/components/ThumbnailImage.svelte';
+
     export let data: {
         channels: Array<{ id: number; youtube_id: string; title: string; description: string; thumbnail_url: string | null; published_at: number | null; last_refreshed_at: number | null }>
     };
@@ -148,7 +150,7 @@
                                 <td class="desc">{ch.description}</td>
                                 <td>
                                     {#if ch.thumbnail_url}
-                                        <img src={ch.thumbnail_url} alt={`${ch.title} thumbnail`} class="thumb-preview" />
+                                        <ThumbnailImage src={ch.thumbnail_url} alt={`${ch.title} thumbnail`} className="thumb-preview" />
                                     {:else}
                                         <span class="muted">No image</span>
                                     {/if}
@@ -177,7 +179,7 @@
 </div>
 
 <style>
-    .thumb-preview {
+    :global(.thumb-preview) {
         width: 120px;
         height: auto;
         display: block;

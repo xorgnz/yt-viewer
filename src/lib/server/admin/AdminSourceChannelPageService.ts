@@ -69,12 +69,19 @@ export class AdminSourceChannelPageService
                 );
             }
 
+            const metadata = await this.youTubeCoordinator.fetchChannelMetadata(client, resolved.channelId);
+            const snippet = metadata?.snippet || {};
+            const metadataThumbnailUrl = this.getBestThumbnailUrl(snippet.thumbnails as Record<string, { url?: string }> | undefined);
+            const metadataPublishedAt = snippet.publishedAt ? Date.parse(snippet.publishedAt) : null;
+
             this.sourceChannelDAO.upsert({
                 youtube_id: resolved.channelId,
-                title: input.title,
-                description: input.description,
-                thumbnail_url: input.thumbnail_url,
-                published_at: input.published_at
+                title: input.title || snippet.title || '',
+                description: input.description || snippet.description || '',
+                thumbnail_url: input.thumbnail_url || metadataThumbnailUrl,
+                published_at: input.published_at ?? (
+                    Number.isFinite(metadataPublishedAt as number) ? (metadataPublishedAt as number) : null
+                )
             });
 
             return {
@@ -248,5 +255,28 @@ export class AdminSourceChannelPageService
     private getErrorName(error: unknown): string
     {
         return error instanceof Error ? error.name : '';
+    }
+
+    private getBestThumbnailUrl(thumbnails?: Record<string, { url?: string }>): string | null
+    {
+        if (!thumbnails) {
+            return null;
+        }
+
+        const prioritizedKeys = ['maxres', 'standard', 'high', 'medium', 'default'];
+        for (const key of prioritizedKeys) {
+            const url = thumbnails[key]?.url;
+            if (url) {
+                return url;
+            }
+        }
+
+        for (const entry of Object.values(thumbnails)) {
+            if (entry?.url) {
+                return entry.url;
+            }
+        }
+
+        return null;
     }
 }

@@ -1,4 +1,5 @@
 <script lang="ts">
+    import ThumbnailImage from '$lib/components/ThumbnailImage.svelte';
     import {
         ViewerVideoDisplayPresenter,
         type ViewerFlagToggleHandler
@@ -54,7 +55,7 @@
             <span class="selection-indicator" aria-hidden="true">&#10003;</span>
         {/if}
         {#if video.thumbnail_url}
-            <img src={video.thumbnail_url} alt={video.title} loading="lazy" />
+            <ThumbnailImage src={video.thumbnail_url} alt={video.title} className="img-thumb" />
         {:else}
             <div class="placeholder"></div>
         {/if}
@@ -284,7 +285,7 @@
         display: block;
     }
 
-    .thumb img {
+    .thumb :global(.img-thumb) {
         width: 100%;
         height: 100%;
         object-fit: cover;

@@ -69,8 +69,7 @@ export class AdminSourceChannelLookupService
     private buildLookupData(item: Awaited<ReturnType<AdminSourceChannelYouTubeCoordinator['fetchChannelMetadata']>> extends infer TItem ? Exclude<TItem, null> : never): AdminSourceChannelLookupData
     {
         const snippet = item.snippet || {};
-        const thumbs = snippet.thumbnails;
-        const thumbUrl = thumbs?.high?.url || thumbs?.medium?.url || thumbs?.default?.url || null;
+        const thumbUrl = this.getBestThumbnailUrl(snippet.thumbnails as Record<string, { url?: string }> | undefined);
         const publishedAtMs = snippet.publishedAt ? Date.parse(snippet.publishedAt) : null;
 
         return {
@@ -129,5 +128,28 @@ export class AdminSourceChannelLookupService
     private getErrorName(error: unknown): string
     {
         return error instanceof Error ? error.name : '';
+    }
+
+    private getBestThumbnailUrl(thumbnails?: Record<string, { url?: string }>): string | null
+    {
+        if (!thumbnails) {
+            return null;
+        }
+
+        const prioritizedKeys = ['maxres', 'standard', 'high', 'medium', 'default'];
+        for (const key of prioritizedKeys) {
+            const url = thumbnails[key]?.url;
+            if (url) {
+                return url;
+            }
+        }
+
+        for (const entry of Object.values(thumbnails)) {
+            if (entry?.url) {
+                return entry.url;
+            }
+        }
+
+        return null;
     }
 }

@@ -22,12 +22,21 @@ export class YouTubeChannelUpsertMapper
             return null;
         }
 
-        return (
-            thumbnails.high?.url ||
-            thumbnails.medium?.url ||
-            (thumbnails as any).default?.url ||
-            null
-        );
+        const prioritizedKeys = ['maxres', 'standard', 'high', 'medium', 'default'];
+        for (const key of prioritizedKeys) {
+            const url = (thumbnails as any)[key]?.url;
+            if (url) {
+                return url;
+            }
+        }
+
+        for (const entry of Object.values(thumbnails)) {
+            if (entry?.url) {
+                return entry.url;
+            }
+        }
+
+        return null;
     }
 }
 
@@ -95,11 +104,20 @@ export class YouTubeVideoUpsertMapper
             return null;
         }
 
-        return (
-            thumbnails.high?.url ||
-            thumbnails.medium?.url ||
-            (thumbnails as any).default?.url ||
-            null
-        );
+        const prioritizedKeys = ['maxres', 'standard', 'high', 'medium', 'default'];
+        for (const key of prioritizedKeys) {
+            const url = (thumbnails as any)[key]?.url;
+            if (url) {
+                return url;
+            }
+        }
+
+        for (const entry of Object.values(thumbnails)) {
+            if (entry?.url) {
+                return entry.url;
+            }
+        }
+
+        return null;
     }
 }
