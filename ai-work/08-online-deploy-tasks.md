@@ -30,8 +30,8 @@
 ## Tasks
 
 - [ ] 1.0 Switch runtime and shared dependencies to the Cloud Run + Postgres baseline
-  - [ ] 1.1 Replace `@sveltejs/adapter-auto` with `@sveltejs/adapter-node` and update `svelte.config.js` for Node server output.
-  - [ ] 1.2 Add Postgres runtime dependencies (`pg` and required typings) and remove SQLite-specific dependencies that are no longer used.
+  - [x] 1.1 Replace `@sveltejs/adapter-auto` with `@sveltejs/adapter-node` and update `svelte.config.js` for Node server output.
+  - [ ] 1.2 Add Postgres runtime dependencies (`pg` and required typings) while retaining SQLite bindings temporarily for migration tooling.
   - [ ] 1.3 Update npm scripts so production startup and DB lifecycle scripts align with `node build` and Postgres migration/bootstrap execution.
   - [ ] 1.4 Update configuration loading to require `DATABASE_URL` for server-side runtime paths used by app requests and scripts.
 
@@ -45,7 +45,13 @@
   - [ ] 3.1 Refactor shared DAO base utilities to use Postgres parameter binding and result mapping conventions.
   - [ ] 3.2 Update all DAO modules and query/read-repository modules to run against Postgres while preserving current behavior and return shapes.
   - [ ] 3.3 Update request database-context wiring in route/server helpers so all route workflows run on Postgres-backed connections.
-  - [ ] 3.4 Remove remaining SQLite-only code paths and stale file-layout assumptions once Postgres parity is verified.
+  - [ ] 3.4 Isolate remaining SQLite-only code paths to migration-only tooling and remove SQLite usage from the main runtime code paths.
+
+- [ ] 3.5 Implement and validate SQLite-to-Postgres data migration execution
+  - [ ] 3.5.1 Build a one-time migration tool that reads existing SQLite data and writes equivalent Postgres records with deterministic ordering and idempotency guards.
+  - [ ] 3.5.2 Add validation checks/reports for migrated row counts and key relational integrity before cutover.
+  - [ ] 3.5.3 Define and document the cutover sequence (backup, migrate, verify, switch runtime) for local and production workflows.
+  - [ ] 3.5.4 Remove SQLite bindings/dependencies only after migration validation passes and Postgres-only runtime is confirmed.
 
 - [ ] 4.0 Add Docker Compose local runtime for full-system Postgres development
   - [ ] 4.1 Add `docker-compose.yml` with a Postgres service, persistent volume, healthcheck, and explicit port mapping for local development.
