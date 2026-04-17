@@ -1,7 +1,7 @@
 # Master Technology Stack: YouTube Viewer & Tracker
 
 **Created:** 2026-02-17
-**Status:** Approved baseline
+**Status:** Approved baseline + shared updates through `08-online-deploy`
 
 ## Overview
 
@@ -27,17 +27,41 @@ This document is the shared application-wide source of truth for the stack used 
 - **Version:** Included with SvelteKit
 - **First Required By:** `01-initial`
 
+### Runtime Deployment Adapter
+- **Choice:** `@sveltejs/adapter-node`
+- **Rationale:** Produces a Node server build that runs directly in Cloud Run via `node build`.
+- **Version:** `@sveltejs/adapter-node` `^7.0.0`
+- **First Required By:** `08-online-deploy`
+
+### Deployment Platform
+- **Choice:** Google Cloud Run (buildpacks flow with staged `deploy/`)
+- **Rationale:** Keeps deployment simple while supporting managed runtime, scaling, and secret injection.
+- **Version:** Managed GCP service
+- **First Required By:** `08-online-deploy`
+
+### Secrets Management
+- **Choice:** Google Cloud Secret Manager with `DATABASE_URL` as the primary DB secret contract
+- **Rationale:** Centralizes production secret handling and keeps credentials out of source control.
+- **Version:** Managed GCP service
+- **First Required By:** `08-online-deploy`
+
 ### Database
-- **Choice:** SQLite
-- **Rationale:** Matches the project's local-first persistence requirements with minimal operational overhead.
-- **Version:** Via `better-sqlite3` `latest`
-- **First Required By:** `01-initial`
+- **Choice:** PostgreSQL for both local and production environments
+- **Rationale:** Provides one durable database technology across environments and avoids Cloud Run SQLite limitations.
+- **Version:** Vendor-managed in production; Docker Compose-managed locally
+- **First Required By:** `08-online-deploy`
 
 ### Database Access
-- **Choice:** `better-sqlite3` with direct SQL helpers
-- **Rationale:** Keeps persistence simple and explicit for a small local application.
-- **Version:** `better-sqlite3` `latest`
-- **First Required By:** `01-initial`
+- **Choice:** Direct SQL helpers against PostgreSQL
+- **Rationale:** Preserves the current explicit SQL style while migrating storage from SQLite to Postgres.
+- **Version:** Postgres client dependency selected during `08-online-deploy` implementation
+- **First Required By:** `08-online-deploy`
+
+### Local Database Runtime
+- **Choice:** Docker Compose-managed PostgreSQL service
+- **Rationale:** Creates a reproducible local environment and keeps database lifecycle bundled with app setup.
+- **Version:** Docker Compose stack in repository
+- **First Required By:** `08-online-deploy`
 
 ### YouTube Integration
 - **Choice:** Direct REST calls via `fetch`
@@ -86,6 +110,7 @@ This document is the shared application-wide source of truth for the stack used 
 - **Node Version:** 20.x
 - **Package Manager:** npm
 - **Operating Environment:** Windows shell environment per `AGENTS.md`
+- **Local Database Runtime:** Docker Compose
 - **IDE/Editor:** Not specified
 
 ## Dependencies
@@ -93,7 +118,7 @@ This document is the shared application-wide source of truth for the stack used 
 ### Core Dependencies
 ```json
 {
-  "better-sqlite3": "latest",
+  "pg": "latest",
   "svelte-material-ui": "latest"
 }
 ```
@@ -101,11 +126,11 @@ This document is the shared application-wide source of truth for the stack used 
 ### Development Dependencies
 ```json
 {
-  "@sveltejs/adapter-auto": "^7.0.0",
+  "@sveltejs/adapter-node": "^7.0.0",
   "@sveltejs/kit": "^2.50.0",
   "@sveltejs/vite-plugin-svelte": "^6.2.0",
-  "@types/better-sqlite3": "^7.6.13",
   "@types/node": "^25.2.3",
+  "@types/pg": "latest",
   "sass": "^1.77.0",
   "svelte": "^5.50.0",
   "svelte-check": "^4.3.0",
@@ -120,6 +145,9 @@ This document is the shared application-wide source of truth for the stack used 
 
 - Use SvelteKit routes and server handlers for admin CRUD, import workflows, viewer queries, and history endpoints.
 - Keep schema and migration logic explicit in the repository.
+- Complete a full SQLite-to-Postgres migration in `08-online-deploy`, including local development runtime alignment.
+- Keep local and production database behavior aligned through one Postgres-backed data model.
+- Use Docker Compose locally for Postgres lifecycle and Cloud Run + Secret Manager in production.
 - Implement watch-completion logic in shared helpers so viewer behavior is consistent.
 - Treat this document as the baseline stack for future features and update it only when a feature introduces a new shared technology decision.
 
