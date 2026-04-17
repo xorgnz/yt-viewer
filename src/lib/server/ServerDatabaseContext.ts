@@ -1,5 +1,6 @@
 import type Database from 'better-sqlite3';
 import { DatabaseMode, DatabaseWrapper } from '$lib/daos/shared/DatabaseWrapper';
+import { requireDatabaseUrlForRuntime } from '$lib/server/RuntimeDatabaseUrl';
 
 export class ServerDatabaseContext
 {
@@ -32,6 +33,11 @@ export class ServerDatabaseContext
     static open(nodeEnv: string | undefined = process.env.NODE_ENV): ServerDatabaseContext
     {
         const mode = ServerDatabaseContext.resolveMode(nodeEnv);
+
+        if (mode !== DatabaseMode.Test) {
+            requireDatabaseUrlForRuntime('Server runtime database access', { nodeEnv });
+        }
+
         const wrapper = new DatabaseWrapper(mode);
         const db = wrapper.open();
 

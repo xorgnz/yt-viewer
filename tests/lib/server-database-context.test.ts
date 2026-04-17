@@ -11,11 +11,13 @@ describe('ServerDatabaseContext', () => {
     let tempDir: string;
     let previousNodeEnv: string | undefined;
     let previousDbDir: string | undefined;
+    let previousDatabaseUrl: string | undefined;
 
     beforeEach(() => {
         tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'ytcw-request-db-'));
         previousNodeEnv = process.env.NODE_ENV;
         previousDbDir = process.env.YTCW_DB_DIR;
+        previousDatabaseUrl = process.env.DATABASE_URL;
         process.env.NODE_ENV = 'test';
         process.env.YTCW_DB_DIR = tempDir;
 
@@ -35,6 +37,12 @@ describe('ServerDatabaseContext', () => {
             delete process.env.YTCW_DB_DIR;
         } else {
             process.env.YTCW_DB_DIR = previousDbDir;
+        }
+
+        if (previousDatabaseUrl === undefined) {
+            delete process.env.DATABASE_URL;
+        } else {
+            process.env.DATABASE_URL = previousDatabaseUrl;
         }
 
         if (tempDir && fs.existsSync(tempDir)) {
@@ -63,6 +71,13 @@ describe('ServerDatabaseContext', () => {
         } finally {
             context.close();
         }
+    });
+
+    it('requires DATABASE_URL for non-test runtime modes', () => {
+        process.env.NODE_ENV = 'development';
+        delete process.env.DATABASE_URL;
+
+        expect(() => ServerDatabaseContext.open('development')).toThrow('Server runtime database access requires DATABASE_URL to be set.');
     });
 
     it('closes the wrapper after successful and failed work', async () => {

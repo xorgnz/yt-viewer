@@ -8,6 +8,7 @@ import {
     type DatabaseMigrationWorkflowOptions,
     type DatabaseMigrationWorkflowResult
 } from '$lib/daos/shared/DatabaseMigrationWorkflow';
+import { requireDatabaseUrlForRuntime } from '$lib/server/RuntimeDatabaseUrl';
 
 type ModeArg = DatabaseMode;
 
@@ -69,6 +70,9 @@ export function runMigrationWorkflow(options: DatabaseMigrationWorkflowOptions):
 async function main()
 {
     const { mode } = parseArgs();
+
+    requireDatabaseUrlForRuntime('Database migrate script');
+
     const dbPath = new DatabaseFileLayout().resolveDatabasePath(mode);
 
     try {

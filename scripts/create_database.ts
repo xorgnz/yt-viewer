@@ -7,6 +7,7 @@ import Database from 'better-sqlite3';
 import {SCHEMA_VERSION} from '$lib/daos/_schema';
 import { DatabaseFileLayout, DatabaseMode } from '$lib/daos/shared/DatabaseFileLayout';
 import { LatestSchemaBootstrapper } from '$lib/daos/shared/LatestSchemaBootstrap';
+import { requireDatabaseUrlForRuntime } from '$lib/server/RuntimeDatabaseUrl';
 
 function parseArgs(): { mode: DatabaseMode; reset: boolean }
 {
@@ -61,6 +62,11 @@ function usage(error?: string): never
 async function main()
 {
     const { mode, reset } = parseArgs();
+
+    if (mode !== DatabaseMode.Test) {
+        requireDatabaseUrlForRuntime('Database create script');
+    }
+
     const fileLayout = new DatabaseFileLayout();
     const dbPath = fileLayout.resolveDatabasePath(mode);
 
