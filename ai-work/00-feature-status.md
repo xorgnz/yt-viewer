@@ -1,8 +1,8 @@
 # Feature Status
 
-**Current Feature:** `07-refactoring`
+**Current Feature:** `none`
 **Current Branch:** `main`
-**Last Updated:** `2026-04-10`
+**Last Updated:** `2026-04-17`
 
 ## Shared Feature-State Contract
 
@@ -64,4 +64,4 @@ Additional guidance:
 | `04-watch-history` | `feature/04-watch-history` | `completed` | `2026-04-06` | `2026-04-07` | Decouple watch history from watched flags and track playback sessions with elapsed watch time |
 | `05-db-migrations` | `feature/05-db-migrations` | `completed` | `2026-04-07` | `2026-04-10` | Forward-only database migration infrastructure for evolving local app data safely across releases |
 | `06-video-select` | `feature/06-video-select` | `completed` | `2026-04-08` | `2026-04-10` | Multi-select video actions in the viewer using range and additive selection |
-| `07-refactoring` | `feature/07-refactoring` | `active` | `2026-04-10` |  | Repository refactoring work after the migration feature completion |
+| `07-refactoring` | `feature/07-refactoring` | `completed` | `2026-04-10` | `2026-04-17` | Repository refactoring work after the migration feature completion |
