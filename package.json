@@ -10,11 +10,14 @@
   "scripts": {
     "dev": "vite dev",
     "build": "vite build",
+    "start": "node build",
     "preview": "vite preview",
     "check": "svelte-check --tsconfig ./tsconfig.json",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
+    "db:create": "tsx scripts/create_database.ts",
+    "db:migrate": "tsx scripts/migrate_database.ts",
     "create_database": "tsx scripts/create_database.ts",
     "migrate_database": "tsx scripts/migrate_database.ts"
   },

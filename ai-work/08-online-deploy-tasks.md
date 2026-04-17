@@ -32,7 +32,7 @@
 - [ ] 1.0 Switch runtime and shared dependencies to the Cloud Run + Postgres baseline
   - [x] 1.1 Replace `@sveltejs/adapter-auto` with `@sveltejs/adapter-node` and update `svelte.config.js` for Node server output.
   - [x] 1.2 Add Postgres runtime dependencies (`pg` and required typings) while retaining SQLite bindings temporarily for migration tooling.
-  - [ ] 1.3 Update npm scripts so production startup and DB lifecycle scripts align with `node build` and Postgres migration/bootstrap execution.
+  - [x] 1.3 Update npm scripts so production startup and DB lifecycle scripts align with `node build` and Postgres migration/bootstrap execution.
   - [ ] 1.4 Update configuration loading to require `DATABASE_URL` for server-side runtime paths used by app requests and scripts.
 
 - [ ] 2.0 Implement Postgres persistence infrastructure and migration execution
