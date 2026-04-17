@@ -1,6 +1,6 @@
 ---
-version: 1.0.0
-timestamp: 2026-03-22 13:20
+version: 1.0.1
+timestamp: 2026-04-17 09:25
 ---
 # Rule: Running Project Validation and Tests
 
@@ -174,3 +174,5 @@ AI: "Ran `npm run check` and `npm run test`. `npm run check` passed. `npm run te
 6. Expand to additional test suites as they are added and documented
 7. Never use watch-mode or long-running validation commands unless the user explicitly asks
 8. Present validation choices as numbered options and place the default as option `1`
+9. Treat validation-option prompts as selection prompts, not approval gates
+10. Do not ask extra `Approve this? Y/N.` questions for routine validation execution under normal workspace permissions

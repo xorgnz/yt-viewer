@@ -1,6 +1,6 @@
 ---
-version: 1.4.0
-timestamp: 2026-04-08 11:05
+version: 1.4.1
+timestamp: 2026-04-13 00:00
 ---
 # Rule: Generating a Task List from User Requirements
 
@@ -30,6 +30,7 @@ To guide an AI assistant in creating a concise, implementation-ready task list i
 4. If the user names a different feature and it is `paused` or `completed`, stop and tell the user rule 5 does not run on that feature state
 5. Only require the feature-change workflow when the user wants a different feature to become the active working feature
 6. Analyze the PRD and master tech stack
+   - Treat the PRD as the implementation-facing boundary and requirements document
 7. Generate the task list in one pass, using parent tasks and sub-tasks only where they improve execution clarity
 8. Identify relevant files and tests when that context will materially help implementation
 9. Save the completed task list to `/ai-work/{feature-tag}-tasks.md`

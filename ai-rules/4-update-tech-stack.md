@@ -1,6 +1,6 @@
 ---
-version: 1.2.0
-timestamp: 2026-04-08 11:05
+version: 1.2.1
+timestamp: 2026-04-17 09:23
 ---
 # Rule: Technology Stack Selection and Documentation
 
@@ -31,12 +31,14 @@ Use this rule after creating the PRD and before creating the task list.
 7. Compare needs against `/ai-work/00-master-techstack.md`
 8. Identify only the technology decision points that actually matter
 9. Present 2-3 viable options with a recommendation where a decision is needed
-10. Wait for user confirmation before documenting any new shared decision
+10. Wait for user confirmation before documenting any new shared decision in `/ai-work/00-master-techstack.md`
 11. Update `/ai-work/00-master-techstack.md` only when the feature introduces a new shared technology or architecture choice
 
 ## Final Instructions
 
 1. Reuse the master stack whenever possible
 2. Avoid documenting feature-local duplication when the master stack already covers it
-3. Do not update tech-stack decisions for paused or completed features
-4. Allow tech-stack planning for an explicitly selected planned feature without activating it
+3. Ask for approval only when writing a new shared decision to `/ai-work/00-master-techstack.md`; do not ask extra approval prompts for analysis or recommendation steps
+4. When asking for approval, name the exact decision text that will be written
+5. Do not update tech-stack decisions for paused or completed features
+6. Allow tech-stack planning for an explicitly selected planned feature without activating it

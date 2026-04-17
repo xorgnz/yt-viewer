@@ -1,6 +1,6 @@
 ---
-version: 1.2.2
-timestamp: 2026-04-05 18:56
+version: 1.2.3
+timestamp: 2026-04-17 09:22
 ---
 # Rule: Creating a Feature Tag
 
@@ -67,6 +67,7 @@ Examples:
 
 5. **Present the Proposed Tag**
    - Show the proposed feature tag and expected related files
+   - Make the approval target explicit: approving records the new feature as `planned` in `/ai-work/00-feature-status.md`
    - Ask `Approve this? Y/N.` before recording it anywhere
 
 6. **Record the Proposed Feature**

@@ -1,6 +1,6 @@
 ---
-version: 1.0.0
-timestamp: 2026-04-06 11:01
+version: 1.1.0
+timestamp: 2026-04-17 09:21
 ---
 # Workflow Shortcut: 6-7-8 Subtask Flow
 
@@ -30,6 +30,8 @@ The shortcut expands to the same intent as:
 ## Usage Notes
 
 - Do not skip required confirmations or safeguards defined by rules 6, 7, or 8.
+- Do not add extra approval prompts beyond rule 6 task-start approval and rule 8 commit approval.
+- Keep approval prompts explicit and scoped to a concrete action.
 - If task or subtask scope is ambiguous, ask instead of inferring.
 - If validation or commit scope becomes ambiguous for a subtask, stop and resolve that ambiguity before continuing.
 - Treat the parent task as complete only when its subtasks are complete and rule 6's completion-tracking guidance is satisfied.
