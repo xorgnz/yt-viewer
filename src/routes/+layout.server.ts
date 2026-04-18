@@ -1,18 +1,18 @@
 import type { LayoutServerLoad } from './$types';
-import { ProfileDAO } from '$lib/daos/profileDAO';
+import { PostgresProfileDAO } from '$lib/daos/profileDAO';
 import { ServerDatabaseContext } from '$lib/server/ServerDatabaseContext';
 import { ServerProfileContext } from '$lib/server/ServerProfileContext';
 import { ServerAdminSession } from '$lib/server/ServerAdminSession';
 
 export const load: LayoutServerLoad = async ({ cookies }) =>
 {
-    return ServerDatabaseContext.run(({ db }) => {
+    return ServerDatabaseContext.run(async ({ db }) => {
         // Resolve the site-wide active profile once so pages can treat it as current identity.
-        const profileDAO = new ProfileDAO(db);
-        const profileContext = ServerProfileContext.resolve(profileDAO, cookies);
+        const profileDAO = new PostgresProfileDAO(db);
+        const profileContext = await ServerProfileContext.resolve(profileDAO, cookies);
 
         return {
-            profiles: profileDAO.list(),
+            profiles: await profileDAO.list(),
             activeProfileKey: profileContext.activeProfileKey,
             activeProfileName: profileContext.activeProfileName,
             isAdminLoggedIn: ServerAdminSession.isLoggedIn(cookies)

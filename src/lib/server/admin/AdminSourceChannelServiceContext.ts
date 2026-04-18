@@ -1,5 +1,5 @@
-import type Database from 'better-sqlite3';
-import { SourceChannelDAO } from '$lib/daos/sourceChannelDAO';
+import { PostgresSourceChannelDAO } from '$lib/daos/sourceChannelDAO';
+import type { PostgresPoolWrapper } from '$lib/daos/shared/PostgresPoolWrapper';
 import { AdminSourceChannelLookupService } from '$lib/server/admin/AdminSourceChannelLookupService';
 import { AdminSourceChannelPageService } from '$lib/server/admin/AdminSourceChannelPageService';
 import { AdminSourceChannelYouTubeCoordinator } from '$lib/server/admin/AdminSourceChannelYouTubeCoordinator';
@@ -19,15 +19,15 @@ export class AdminSourceChannelServiceContext
         this.lookupService = lookupService;
     }
 
-    static resolve(db: Database.Database): AdminSourceChannelServiceContext
+    static resolve(db: PostgresPoolWrapper): AdminSourceChannelServiceContext
     {
         const clientProvider = new AdminYouTubeClientProvider();
         const coordinator = new AdminSourceChannelYouTubeCoordinator();
 
         return new AdminSourceChannelServiceContext(
             new AdminSourceChannelPageService(
-                db,
-                new SourceChannelDAO(db),
+                db as never,
+                new PostgresSourceChannelDAO(db) as never,
                 clientProvider,
                 coordinator
             ),

@@ -9,7 +9,7 @@ import { ViewerQueryParser } from '../../src/lib/server/viewer/ViewerQueryParser
 import { InMemoryDatabaseHarness } from '../helpers/InMemoryDatabaseHarness';
 
 describe('ViewerPageLoader', () => {
-    it('assembles the viewer load model from normalized filters and the active profile', () => {
+    it('assembles the viewer load model from normalized filters and the active profile', async () => {
         const harness = InMemoryDatabaseHarness.createWithLatestSchema();
         const { db } = harness;
 
@@ -50,7 +50,7 @@ describe('ViewerPageLoader', () => {
             }
         } as any);
         const filters = ViewerQueryParser.parse(new URL('http://localhost/viewer?term=Load'), profileContext.activeProfileKey);
-        const result = new ViewerPageLoader(db).load(filters, profileContext);
+        const result = await new ViewerPageLoader(db as never).load(filters, profileContext);
 
         expect(result.filters.term).toBe('Load');
         expect(result.profileKey).toBe('default');

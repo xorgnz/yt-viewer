@@ -9,8 +9,9 @@ export const load = async ({ params, cookies }: { params: { videoId: string }, c
     const videoId = String(params.videoId || '').trim();
     if (!videoId) throw error(400, 'Missing videoId');
 
-    return ServerDatabaseContext.run(({ db }) => {
-        const result = ViewerServiceContext.resolve(db, cookies).watchService.load(videoId);
+    return ServerDatabaseContext.run(async ({ db }) => {
+        const serviceContext = await ViewerServiceContext.resolve(db, cookies);
+        const result = await serviceContext.watchService.load(videoId);
         if (!result) throw error(404, 'Video not found');
 
         return result;
@@ -27,8 +28,9 @@ export const actions = {
             return fail(400, { message: 'Invalid toggle parameters' });
         }
 
-        return ServerDatabaseContext.run(({ db }) => {
-            return ViewerServiceContext.resolve(db, cookies).flagService.toggleFlag(
+        return ServerDatabaseContext.run(async ({ db }) => {
+            const serviceContext = await ViewerServiceContext.resolve(db, cookies);
+            return serviceContext.flagService.toggleFlag(
                 parsed.videoId,
                 parsed.kind,
                 parsed.value
@@ -48,8 +50,9 @@ export const actions = {
             return fail(400, { message: 'Insufficient watch time for history session' });
         }
 
-        return ServerDatabaseContext.run(({ db }) => {
-            const result = ViewerServiceContext.resolve(db, cookies).watchService.createHistorySession(
+        return ServerDatabaseContext.run(async ({ db }) => {
+            const serviceContext = await ViewerServiceContext.resolve(db, cookies);
+            const result = await serviceContext.watchService.createHistorySession(
                 videoYoutubeId,
                 watchSeconds
             );
@@ -74,8 +77,9 @@ export const actions = {
             return fail(400, { message: 'Invalid watch time' });
         }
 
-        return ServerDatabaseContext.run(({ db }) => {
-            const result = ViewerServiceContext.resolve(db, cookies).watchService.updateHistoryProgress(
+        return ServerDatabaseContext.run(async ({ db }) => {
+            const serviceContext = await ViewerServiceContext.resolve(db, cookies);
+            const result = await serviceContext.watchService.updateHistoryProgress(
                 videoYoutubeId,
                 watchSeconds
             );
@@ -96,8 +100,9 @@ export const actions = {
         const form = await ServerActionForm.fromRequest(request);
         const intent = form.getTrimmedString('intent', 'watch');
 
-        return ServerDatabaseContext.run(({ db }) => {
-            const result = ViewerServiceContext.resolve(db, cookies).watchService.setWatched(
+        return ServerDatabaseContext.run(async ({ db }) => {
+            const serviceContext = await ViewerServiceContext.resolve(db, cookies);
+            const result = await serviceContext.watchService.setWatched(
                 videoYoutubeId,
                 intent !== 'unwatch'
             );

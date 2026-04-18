@@ -4,7 +4,8 @@ import { ViewerServiceContext } from '$lib/server/viewer/ViewerServiceContext';
 
 export const load: PageServerLoad = async ({ cookies }) =>
 {
-    return ServerDatabaseContext.run(({ db }) => {
-        return ViewerServiceContext.resolve(db, cookies).virtualChannelService.loadNavigation();
+    return ServerDatabaseContext.run(async ({ db }) => {
+        const serviceContext = await ViewerServiceContext.resolve(db, cookies);
+        return serviceContext.virtualChannelService.loadNavigation();
     });
 };

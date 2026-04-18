@@ -1,7 +1,7 @@
-import { FlagsDAO } from '$lib/daos/flagsDAO';
-import { HistoryDAO } from '$lib/daos/historyDAO';
+import { PostgresFlagsDAO } from '$lib/daos/flagsDAO';
+import { PostgresHistoryDAO } from '$lib/daos/historyDAO';
 import {
-    ViewerVideoReadRepository,
+    PostgresViewerVideoReadRepository,
     type ViewerVideoRecord
 } from '$lib/daos/readers/ViewerVideoReadRepository';
 import type { ServerProfileContext } from '$lib/server/ServerProfileContext';
@@ -29,15 +29,15 @@ export type ViewerWatchFlagResult =
 
 export class ViewerWatchService
 {
-    private readonly viewerVideoReadRepository: ViewerVideoReadRepository;
-    private readonly flagsDAO: FlagsDAO;
-    private readonly historyDAO: HistoryDAO;
+    private readonly viewerVideoReadRepository: PostgresViewerVideoReadRepository;
+    private readonly flagsDAO: PostgresFlagsDAO;
+    private readonly historyDAO: PostgresHistoryDAO;
     private readonly profileContext: ServerProfileContext;
 
     constructor(
-        viewerVideoReadRepository: ViewerVideoReadRepository,
-        flagsDAO: FlagsDAO,
-        historyDAO: HistoryDAO,
+        viewerVideoReadRepository: PostgresViewerVideoReadRepository,
+        flagsDAO: PostgresFlagsDAO,
+        historyDAO: PostgresHistoryDAO,
         profileContext: ServerProfileContext
     )
     {
@@ -47,14 +47,14 @@ export class ViewerWatchService
         this.profileContext = profileContext;
     }
 
-    load(videoYoutubeId: string): ViewerWatchLoadModel | null
+    async load(videoYoutubeId: string): Promise<ViewerWatchLoadModel | null>
     {
-        const video = this.loadVideo(videoYoutubeId);
+        const video = await this.loadVideo(videoYoutubeId);
         if (!video) {
             return null;
         }
 
-        const adjacent = this.viewerVideoReadRepository.findAdjacentYoutubeIds(
+        const adjacent = await this.viewerVideoReadRepository.findAdjacentYoutubeIds(
             video,
             this.profileContext.activeProfileId
         );
@@ -69,26 +69,26 @@ export class ViewerWatchService
         };
     }
 
-    createHistorySession(videoYoutubeId: string, watchSeconds: number, now = Date.now()): ViewerWatchResult
+    async createHistorySession(videoYoutubeId: string, watchSeconds: number, now = Date.now()): Promise<ViewerWatchResult>
     {
-        const video = this.loadVideo(videoYoutubeId);
+        const video = await this.loadVideo(videoYoutubeId);
         if (!video) {
             return { ok: false, status: 404, message: 'Video not found' };
         }
 
-        const latestSession = this.historyDAO.findMostRecentSession(video.id, this.profileContext.activeProfileId);
+        const latestSession = await this.historyDAO.findMostRecentSession(video.id, this.profileContext.activeProfileId);
         const timeWatchedSeconds = Math.floor(watchSeconds);
 
         if (latestSession && (now - latestSession.last_updated_at) <= HISTORY_SESSION_GAP_MS)
         {
-            this.historyDAO.updateSessionProgress(latestSession.id, {
+            await this.historyDAO.updateSessionProgress(latestSession.id, {
                 last_updated_at: now,
                 time_watched_seconds: timeWatchedSeconds
             });
         }
         else
         {
-            this.historyDAO.createSession({
+            await this.historyDAO.createSession({
                 video_id: video.id,
                 profile_id: this.profileContext.activeProfileId,
                 session_started_at: now,
@@ -100,14 +100,14 @@ export class ViewerWatchService
         return { ok: true };
     }
 
-    updateHistoryProgress(videoYoutubeId: string, watchSeconds: number, now = Date.now()): ViewerWatchResult
+    async updateHistoryProgress(videoYoutubeId: string, watchSeconds: number, now = Date.now()): Promise<ViewerWatchResult>
     {
-        const video = this.loadVideo(videoYoutubeId);
+        const video = await this.loadVideo(videoYoutubeId);
         if (!video) {
             return { ok: false, status: 404, message: 'Video not found' };
         }
 
-        const session = this.historyDAO.findMostRecentSession(video.id, this.profileContext.activeProfileId);
+        const session = await this.historyDAO.findMostRecentSession(video.id, this.profileContext.activeProfileId);
         if (!session) {
             return { ok: false, status: 404, message: 'History session not found' };
         }
@@ -116,7 +116,7 @@ export class ViewerWatchService
             return { ok: false, status: 409, message: 'History session is no longer active' };
         }
 
-        this.historyDAO.updateSessionProgress(session.id, {
+        await this.historyDAO.updateSessionProgress(session.id, {
             last_updated_at: now,
             time_watched_seconds: Math.floor(watchSeconds)
         });
@@ -124,14 +124,14 @@ export class ViewerWatchService
         return { ok: true };
     }
 
-    setWatched(videoYoutubeId: string, watched: boolean): ViewerWatchFlagResult
+    async setWatched(videoYoutubeId: string, watched: boolean): Promise<ViewerWatchFlagResult>
     {
-        const video = this.loadVideo(videoYoutubeId);
+        const video = await this.loadVideo(videoYoutubeId);
         if (!video) {
             return { ok: false, status: 404, message: 'Video not found' };
         }
 
-        this.flagsDAO.set(video.id, this.profileContext.activeProfileId, {
+        await this.flagsDAO.set(video.id, this.profileContext.activeProfileId, {
             watched: watched ? 1 : 0
         });
 
@@ -141,8 +141,8 @@ export class ViewerWatchService
         };
     }
 
-    private loadVideo(videoYoutubeId: string): ViewerWatchVideo | null
+    private async loadVideo(videoYoutubeId: string): Promise<ViewerWatchVideo | null>
     {
-        return this.viewerVideoReadRepository.getByYoutubeId(videoYoutubeId, this.profileContext.activeProfileId) || null;
+        return await this.viewerVideoReadRepository.getByYoutubeId(videoYoutubeId, this.profileContext.activeProfileId) || null;
     }
 }

@@ -2,10 +2,55 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import Database from 'better-sqlite3';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { applyLatestSchemaBootstrap } from '../../src/lib/daos/shared/LatestSchemaBootstrap';
-import { DatabaseMode, DatabaseWrapper } from '../../src/lib/daos/shared/DatabaseWrapper';
+import { DatabaseMode } from '../../src/lib/daos/shared/DatabaseWrapper';
+import type { PostgresPoolWrapper } from '../../src/lib/daos/shared/PostgresPoolWrapper';
 import { ServerDatabaseContext } from '../../src/lib/server/ServerDatabaseContext';
+
+type MockPoolState = {
+    end: () => Promise<void>;
+    query: () => Promise<{ rows: Array<{ value: number }> }>;
+};
+
+const hoisted = vi.hoisted(() => {
+    return {
+        poolStates: [] as MockPoolState[]
+    };
+});
+
+vi.mock('pg', () => {
+    class MockPool
+    {
+        readonly state: MockPoolState;
+
+        constructor()
+        {
+            this.state = {
+                end: vi.fn(async () => {}),
+                query: vi.fn(async () => {
+                    return { rows: [{ value: 1 }] };
+                })
+            };
+
+            hoisted.poolStates.push(this.state);
+        }
+
+        end(): Promise<void>
+        {
+            return this.state.end();
+        }
+
+        query(): Promise<{ rows: Array<{ value: number }> }>
+        {
+            return this.state.query();
+        }
+    }
+
+    return {
+        Pool: MockPool
+    };
+});
 
 describe('ServerDatabaseContext', () => {
     let tempDir: string;
@@ -20,6 +65,8 @@ describe('ServerDatabaseContext', () => {
         previousDatabaseUrl = process.env.DATABASE_URL;
         process.env.NODE_ENV = 'test';
         process.env.YTCW_DB_DIR = tempDir;
+        process.env.DATABASE_URL = 'postgres://example-user:secret@localhost:5432/yt_viewer';
+        hoisted.poolStates.length = 0;
 
         const db = new Database(path.join(tempDir, 'test.db'));
         applyLatestSchemaBootstrap(db);
@@ -58,18 +105,17 @@ describe('ServerDatabaseContext', () => {
         expect(ServerDatabaseContext.resolveMode('TEST')).toBe(DatabaseMode.Test);
     });
 
-    it('opens a database context for the resolved mode', () => {
+    it('opens a database context for the resolved mode', async () => {
         const context = ServerDatabaseContext.open();
 
         try {
-            const row = context.db.prepare('SELECT 1 AS value').get() as { value: number };
+            const result = await context.db.query<{ value: number }>('SELECT 1 AS value');
 
             expect(context.mode).toBe(DatabaseMode.Test);
-            expect(path.basename(context.wrapper.path)).toBe('test.db');
-            expect(row.value).toBe(1);
-            expect(context.wrapper.instance).not.toBeNull();
+            expect(result.rows[0].value).toBe(1);
+            expect(context.db.instance).not.toBeNull();
         } finally {
-            context.close();
+            await context.close();
         }
     });
 
@@ -81,27 +127,27 @@ describe('ServerDatabaseContext', () => {
     });
 
     it('closes the wrapper after successful and failed work', async () => {
-        let successfulWrapper: Pick<DatabaseWrapper, 'instance'> | null = null;
-        let failingWrapper: Pick<DatabaseWrapper, 'instance'> | null = null;
+        const successfulWrappers: Array<Pick<PostgresPoolWrapper, 'instance'>> = [];
+        const failingWrappers: Array<Pick<PostgresPoolWrapper, 'instance'>> = [];
 
-        await expect(ServerDatabaseContext.run(({ wrapper, db }) => {
-            successfulWrapper = wrapper;
+        await expect(ServerDatabaseContext.run(async ({ db }) => {
+            successfulWrappers.push(db);
 
-            const row = db.prepare('SELECT 1 AS value').get() as { value: number };
-            expect(row.value).toBe(1);
+            const result = await db.query<{ value: number }>('SELECT 1 AS value');
+            expect(result.rows[0].value).toBe(1);
 
             return 42;
         })).resolves.toBe(42);
 
-        expect(successfulWrapper).not.toBeNull();
-        expect((successfulWrapper as any).instance).toBeNull();
+        expect(successfulWrappers).toHaveLength(1);
+        expect(successfulWrappers[0].instance).toBeNull();
 
-        await expect(ServerDatabaseContext.run(({ wrapper }) => {
-            failingWrapper = wrapper;
+        await expect(ServerDatabaseContext.run(({ db }) => {
+            failingWrappers.push(db);
             throw new Error('request failed');
         })).rejects.toThrow('request failed');
 
-        expect(failingWrapper).not.toBeNull();
-        expect((failingWrapper as any).instance).toBeNull();
+        expect(failingWrappers).toHaveLength(1);
+        expect(failingWrappers[0].instance).toBeNull();
     });
 });

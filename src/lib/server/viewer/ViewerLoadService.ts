@@ -1,23 +1,23 @@
-import { ProfileDAO } from '$lib/daos/profileDAO';
-import type Database from 'better-sqlite3';
+import { PostgresProfileDAO } from '$lib/daos/profileDAO';
+import type { PostgresPoolWrapper } from '$lib/daos/shared/PostgresPoolWrapper';
 import { ServerProfileContext } from '$lib/server/ServerProfileContext';
 import { ViewerPageLoader } from '$lib/server/viewer/ViewerPageLoader';
 import { ViewerQueryParser } from '$lib/server/viewer/ViewerQueryParser';
 
 export class ViewerLoadService
 {
-    private readonly profileDAO: ProfileDAO;
+    private readonly profileDAO: PostgresProfileDAO;
     private readonly pageLoader: ViewerPageLoader;
 
-    constructor(db: Database.Database)
+    constructor(db: PostgresPoolWrapper)
     {
-        this.profileDAO = new ProfileDAO(db);
+        this.profileDAO = new PostgresProfileDAO(db);
         this.pageLoader = new ViewerPageLoader(db);
     }
 
-    load(url: URL, cookies: any)
+    async load(url: URL, cookies: any)
     {
-        const profileContext = ServerProfileContext.resolve(this.profileDAO, cookies);
+        const profileContext = await ServerProfileContext.resolve(this.profileDAO, cookies);
         const filters = ViewerQueryParser.parse(url, profileContext.activeProfileKey);
 
         return this.pageLoader.load(filters, profileContext);

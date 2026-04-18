@@ -1,10 +1,10 @@
-import type Database from 'better-sqlite3';
-import { HistoryDAO } from '$lib/daos/historyDAO';
-import { ProfileDAO } from '$lib/daos/profileDAO';
-import { ViewerVideoReadRepository } from '$lib/daos/readers/ViewerVideoReadRepository';
-import { VideoDAO } from '$lib/daos/videoDAO';
-import { FlagsDAO } from '$lib/daos/flagsDAO';
-import { VirtualChannelDAO } from '$lib/daos/virtualChannelDAO';
+import { PostgresFlagsDAO } from '$lib/daos/flagsDAO';
+import { PostgresHistoryDAO } from '$lib/daos/historyDAO';
+import { PostgresProfileDAO } from '$lib/daos/profileDAO';
+import { PostgresViewerVideoReadRepository } from '$lib/daos/readers/ViewerVideoReadRepository';
+import type { PostgresPoolWrapper } from '$lib/daos/shared/PostgresPoolWrapper';
+import { PostgresVideoDAO } from '$lib/daos/videoDAO';
+import { PostgresVirtualChannelDAO } from '$lib/daos/virtualChannelDAO';
 import { ServerProfileContext } from '$lib/server/ServerProfileContext';
 import { ViewerFlagService } from '$lib/server/viewer/ViewerFlagService';
 import { ViewerVirtualChannelService } from '$lib/server/viewer/ViewerVirtualChannelService';
@@ -30,12 +30,12 @@ export class ViewerServiceContext
         this.virtualChannelService = virtualChannelService;
     }
 
-    static resolve(db: Database.Database, cookies: any): ViewerServiceContext
+    static async resolve(db: PostgresPoolWrapper, cookies: any): Promise<ViewerServiceContext>
     {
-        const profileContext = ServerProfileContext.resolve(new ProfileDAO(db), cookies);
-        const videoDAO = new VideoDAO(db);
-        const viewerVideoReadRepository = new ViewerVideoReadRepository(db);
-        const flagsDAO = new FlagsDAO(db);
+        const profileContext = await ServerProfileContext.resolve(new PostgresProfileDAO(db), cookies);
+        const videoDAO = new PostgresVideoDAO(db);
+        const viewerVideoReadRepository = new PostgresViewerVideoReadRepository(db);
+        const flagsDAO = new PostgresFlagsDAO(db);
         const flagService = new ViewerFlagService(
             videoDAO,
             flagsDAO,
@@ -44,11 +44,11 @@ export class ViewerServiceContext
         const watchService = new ViewerWatchService(
             viewerVideoReadRepository,
             flagsDAO,
-            new HistoryDAO(db),
+            new PostgresHistoryDAO(db),
             profileContext
         );
         const virtualChannelService = new ViewerVirtualChannelService(
-            new VirtualChannelDAO(db),
+            new PostgresVirtualChannelDAO(db),
             profileContext
         );
 

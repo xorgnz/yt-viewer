@@ -1,21 +1,24 @@
-import { VirtualChannelDAO } from '$lib/daos/virtualChannelDAO';
+import type { PostgresVirtualChannelDAO, VirtualChannelDAO } from '$lib/daos/virtualChannelDAO';
 import type { ServerProfileContext } from '$lib/server/ServerProfileContext';
 
 export class ViewerVirtualChannelService
 {
-    private readonly virtualChannelDAO: VirtualChannelDAO;
+    private readonly virtualChannelDAO: Pick<VirtualChannelDAO | PostgresVirtualChannelDAO, 'list'>;
     private readonly profileContext: ServerProfileContext;
 
-    constructor(virtualChannelDAO: VirtualChannelDAO, profileContext: ServerProfileContext)
+    constructor(
+        virtualChannelDAO: Pick<VirtualChannelDAO | PostgresVirtualChannelDAO, 'list'>,
+        profileContext: ServerProfileContext
+    )
     {
         this.virtualChannelDAO = virtualChannelDAO;
         this.profileContext = profileContext;
     }
 
-    loadNavigation()
+    async loadNavigation()
     {
         return {
-            groups: this.virtualChannelDAO.list(),
+            groups: await this.virtualChannelDAO.list(),
             profileKey: this.profileContext.activeProfileKey
         };
     }

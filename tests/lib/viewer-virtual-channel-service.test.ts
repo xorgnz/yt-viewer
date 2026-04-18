@@ -7,7 +7,7 @@ import { ServerProfileContext } from '../../src/lib/server/ServerProfileContext'
 import { ViewerVirtualChannelService } from '../../src/lib/server/viewer/ViewerVirtualChannelService';
 
 describe('ViewerVirtualChannelService', () => {
-    it('loads viewer virtual-channel navigation with the active profile key', () => {
+    it('loads viewer virtual-channel navigation with the active profile key', async () => {
         const db = new Database(':memory:');
         applyLatestSchemaBootstrap(db);
 
@@ -25,7 +25,7 @@ describe('ViewerVirtualChannelService', () => {
         } as any);
         const service = new ViewerVirtualChannelService(virtualChannelDAO, profileContext);
 
-        const result = service.loadNavigation();
+        const result = await service.loadNavigation();
 
         expect(result.profileKey).toBe('default');
         expect(result.groups.map((group) => group.name)).toEqual([

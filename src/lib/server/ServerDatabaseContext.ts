@@ -1,17 +1,17 @@
-import type Database from 'better-sqlite3';
-import { DatabaseMode, DatabaseWrapper } from '$lib/daos/shared/DatabaseWrapper';
+import { DatabaseMode } from '$lib/daos/shared/DatabaseFileLayout';
+import { PostgresPoolWrapper } from '$lib/daos/shared/PostgresPoolWrapper';
 import { requireDatabaseUrlForRuntime } from '$lib/server/RuntimeDatabaseUrl';
+
+export { DatabaseMode } from '$lib/daos/shared/DatabaseFileLayout';
 
 export class ServerDatabaseContext
 {
     readonly mode: DatabaseMode;
-    readonly wrapper: DatabaseWrapper;
-    readonly db: Database.Database;
+    readonly db: PostgresPoolWrapper;
 
-    private constructor(mode: DatabaseMode, wrapper: DatabaseWrapper, db: Database.Database)
+    private constructor(mode: DatabaseMode, db: PostgresPoolWrapper)
     {
         this.mode = mode;
-        this.wrapper = wrapper;
         this.db = db;
     }
 
@@ -33,15 +33,15 @@ export class ServerDatabaseContext
     static open(nodeEnv: string | undefined = process.env.NODE_ENV): ServerDatabaseContext
     {
         const mode = ServerDatabaseContext.resolveMode(nodeEnv);
+        const databaseUrl = requireDatabaseUrlForRuntime('Server runtime database access', {
+            nodeEnv,
+            allowMissingInTest: false,
+        });
+        const db = new PostgresPoolWrapper({ connectionString: databaseUrl });
 
-        if (mode !== DatabaseMode.Test) {
-            requireDatabaseUrlForRuntime('Server runtime database access', { nodeEnv });
-        }
+        db.open();
 
-        const wrapper = new DatabaseWrapper(mode);
-        const db = wrapper.open();
-
-        return new ServerDatabaseContext(mode, wrapper, db);
+        return new ServerDatabaseContext(mode, db);
     }
 
     static async run<T>(
@@ -54,12 +54,12 @@ export class ServerDatabaseContext
         try {
             return await work(context);
         } finally {
-            context.close();
+            await context.close();
         }
     }
 
-    close(): void
+    async close(): Promise<void>
     {
-        this.wrapper.close();
+        await this.db.close();
     }
 }

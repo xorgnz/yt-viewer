@@ -73,10 +73,10 @@ describe('ViewerFlagService', () => {
         };
     }
 
-    it('toggles a single flag through the service boundary', () => {
+    it('toggles a single flag through the service boundary', async () => {
         const { harness, profileId, video1, flagsDAO, service } = createService();
 
-        const result = service.toggleFlag(video1.id, 'favorite', 1);
+        const result = await service.toggleFlag(video1.id, 'favorite', 1);
         const values = flagsDAO.getValueMap([video1.id], profileId, 'favorite');
 
         expect(result).toMatchObject({
@@ -90,10 +90,10 @@ describe('ViewerFlagService', () => {
         harness.close();
     });
 
-    it('returns undo data and partial-success accounting for bulk updates', () => {
+    it('returns undo data and partial-success accounting for bulk updates', async () => {
         const { harness, video1, video2, service } = createService();
 
-        const result = service.bulkUpdateFlags({
+        const result = await service.bulkUpdateFlags({
             kind: 'watched',
             value: 1,
             requestedVideoIds: [video1.id, video2.id, 999],
@@ -126,10 +126,10 @@ describe('ViewerFlagService', () => {
         harness.close();
     });
 
-    it('restores mixed state through undo and selection restore operations', () => {
+    it('restores mixed state through undo and selection restore operations', async () => {
         const { harness, video1, video2, flagsDAO, profileId, service } = createService();
 
-        const undoResult = service.undoBulkUpdateFlags({
+        const undoResult = await service.undoBulkUpdateFlags({
             kind: 'favorite',
             requestedVideoIds: [video1.id, video2.id],
             undoStates: [
@@ -138,7 +138,7 @@ describe('ViewerFlagService', () => {
             ],
             selectionContextKey: null
         });
-        const restoreResult = service.restoreSelectionState({
+        const restoreResult = await service.restoreSelectionState({
             requestedVideoIds: [video1.id, video2.id],
             restoreStates: [
                 { videoId: video1.id, watched: 1, favorite: 0, ignored: 0 },

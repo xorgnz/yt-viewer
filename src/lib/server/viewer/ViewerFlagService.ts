@@ -1,5 +1,4 @@
-import { VideoDAO } from '$lib/daos/videoDAO';
-import { FlagsDAO, type BulkFlagKind } from '$lib/daos/flagsDAO';
+import type { BulkFlagKind } from '$lib/daos/flagsDAO';
 
 export type BulkFlagValue = 0 | 1;
 
@@ -47,6 +46,18 @@ export type ViewerBulkUndoResult = ViewerBulkOperationResult & {
     kind: BulkFlagKind;
 };
 
+type ViewerFlagVideoDAO = {
+    listExistingIds(ids: number[]): number[] | Promise<number[]>;
+};
+
+type ViewerFlagFlagsDAO = {
+    set(video_id: number, profile_id: number, patch: Partial<{ ignored: 0 | 1; watched: 0 | 1; favorite: 0 | 1 }>): void | Promise<void>;
+    getValueMap(videoIds: number[], profileId: number, kind: BulkFlagKind): Map<number, 0 | 1> | Promise<Map<number, 0 | 1>>;
+    setManyValue(videoIds: number[], profileId: number, kind: BulkFlagKind, value: 0 | 1): void | Promise<void>;
+    setManyValues(entries: Array<{ videoId: number; value: 0 | 1 }>, profileId: number, kind: BulkFlagKind): void | Promise<void>;
+    setMany(entries: Array<{ videoId: number; watched: 0 | 1; favorite: 0 | 1; ignored: 0 | 1 }>, profileId: number): void | Promise<void>;
+};
+
 type ViewerBulkUpdateInput = {
     kind: BulkFlagKind;
     value: BulkFlagValue;
@@ -71,25 +82,30 @@ type ViewerRestoreSelectionInput = {
 
 export class ViewerFlagService
 {
-    private readonly videoDAO: VideoDAO;
-    private readonly flagsDAO: FlagsDAO;
+    private readonly videoDAO: ViewerFlagVideoDAO;
+    private readonly flagsDAO: ViewerFlagFlagsDAO;
     private readonly profileId: number;
 
-    constructor(videoDAO: VideoDAO, flagsDAO: FlagsDAO, profileId: number)
+    constructor(videoDAO: ViewerFlagVideoDAO, flagsDAO: ViewerFlagFlagsDAO, profileId: number)
     {
         this.videoDAO = videoDAO;
         this.flagsDAO = flagsDAO;
         this.profileId = profileId;
     }
 
-    toggleFlag(videoId: number, kind: BulkFlagKind, value: BulkFlagValue)
+    async toggleFlag(videoId: number, kind: BulkFlagKind, value: BulkFlagValue): Promise<{
+        ok: true;
+        videoId: number;
+        kind: BulkFlagKind;
+        value: BulkFlagValue;
+    }>
     {
         if (kind === 'watched') {
-            this.flagsDAO.set(videoId, this.profileId, { watched: value });
+            await this.flagsDAO.set(videoId, this.profileId, { watched: value });
         } else if (kind === 'favorite') {
-            this.flagsDAO.set(videoId, this.profileId, { favorite: value });
+            await this.flagsDAO.set(videoId, this.profileId, { favorite: value });
         } else {
-            this.flagsDAO.set(videoId, this.profileId, { ignored: value });
+            await this.flagsDAO.set(videoId, this.profileId, { ignored: value });
         }
 
         return {
@@ -100,18 +116,18 @@ export class ViewerFlagService
         };
     }
 
-    bulkUpdateFlags(input: ViewerBulkUpdateInput): ViewerBulkUpdateResult
+    async bulkUpdateFlags(input: ViewerBulkUpdateInput): Promise<ViewerBulkUpdateResult>
     {
-        const existingIds = this.videoDAO.listExistingIds(input.requestedVideoIds);
+        const existingIds = await this.videoDAO.listExistingIds(input.requestedVideoIds);
         const existingIdSet = new Set(existingIds);
         const failedIds = input.requestedVideoIds.filter((videoId) => !existingIdSet.has(videoId));
-        const originalValueMap = this.flagsDAO.getValueMap(existingIds, this.profileId, input.kind);
+        const originalValueMap = await this.flagsDAO.getValueMap(existingIds, this.profileId, input.kind);
         const undoStates = existingIds.map((videoId) => ({
             videoId,
             value: originalValueMap.get(videoId) ?? 0
         }));
 
-        this.flagsDAO.setManyValue(existingIds, this.profileId, input.kind, input.value);
+        await this.flagsDAO.setManyValue(existingIds, this.profileId, input.kind, input.value);
 
         const succeededIds = [...existingIds];
         const skippedIds: number[] = [];
@@ -147,9 +163,9 @@ export class ViewerFlagService
         };
     }
 
-    undoBulkUpdateFlags(input: ViewerBulkUndoInput): ViewerBulkUndoResult
+    async undoBulkUpdateFlags(input: ViewerBulkUndoInput): Promise<ViewerBulkUndoResult>
     {
-        const existingIds = this.videoDAO.listExistingIds(input.requestedVideoIds);
+        const existingIds = await this.videoDAO.listExistingIds(input.requestedVideoIds);
         const existingIdSet = new Set(existingIds);
         const requestedUndoIds = input.requestedVideoIds.length > 0
             ? input.requestedVideoIds
@@ -167,7 +183,7 @@ export class ViewerFlagService
         const failedIds = requestedUndoIds.filter((videoId) => !existingIdSet.has(videoId));
         const skippedIds = requestedUndoIds.filter((videoId) => existingIdSet.has(videoId) && !undoStateMap.has(videoId));
 
-        this.flagsDAO.setManyValues(applicableStates, this.profileId, input.kind);
+        await this.flagsDAO.setManyValues(applicableStates, this.profileId, input.kind);
 
         return {
             ok: succeededIds.length > 0,
@@ -192,9 +208,9 @@ export class ViewerFlagService
         };
     }
 
-    restoreSelectionState(input: ViewerRestoreSelectionInput): ViewerBulkOperationResult
+    async restoreSelectionState(input: ViewerRestoreSelectionInput): Promise<ViewerBulkOperationResult>
     {
-        const existingIds = this.videoDAO.listExistingIds(input.requestedVideoIds);
+        const existingIds = await this.videoDAO.listExistingIds(input.requestedVideoIds);
         const existingIdSet = new Set(existingIds);
         const requestedRestoreIds = input.requestedVideoIds.length > 0
             ? input.requestedVideoIds
@@ -212,7 +228,7 @@ export class ViewerFlagService
         const failedIds = requestedRestoreIds.filter((videoId) => !existingIdSet.has(videoId));
         const skippedIds = requestedRestoreIds.filter((videoId) => existingIdSet.has(videoId) && !restoreStateMap.has(videoId));
 
-        this.flagsDAO.setMany(applicableStates, this.profileId);
+        await this.flagsDAO.setMany(applicableStates, this.profileId);
 
         return {
             ok: succeededIds.length > 0,

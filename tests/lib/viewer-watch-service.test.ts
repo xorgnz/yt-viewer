@@ -9,7 +9,47 @@ import { ServerProfileContext } from '../../src/lib/server/ServerProfileContext'
 import { ViewerWatchService } from '../../src/lib/server/viewer/ViewerWatchService';
 import { InMemoryDatabaseHarness } from '../helpers/InMemoryDatabaseHarness';
 
+type ViewerWatchServiceDependencies = ConstructorParameters<typeof ViewerWatchService>;
+
 describe('ViewerWatchService', () => {
+    function createAsyncViewerVideoReadRepository(
+        repository: ViewerVideoReadRepository
+    ): ViewerWatchServiceDependencies[0]
+    {
+        return {
+            findAdjacentYoutubeIds: async (
+                ...args: Parameters<ViewerVideoReadRepository['findAdjacentYoutubeIds']>
+            ) => repository.findAdjacentYoutubeIds(...args),
+            getByYoutubeId: async (
+                ...args: Parameters<ViewerVideoReadRepository['getByYoutubeId']>
+            ) => repository.getByYoutubeId(...args)
+        } as unknown as ViewerWatchServiceDependencies[0];
+    }
+
+    function createAsyncFlagsDAO(flagsDAO: FlagsDAO): ViewerWatchServiceDependencies[1]
+    {
+        return {
+            set: async (...args: Parameters<FlagsDAO['set']>) => {
+                flagsDAO.set(...args);
+            }
+        } as unknown as ViewerWatchServiceDependencies[1];
+    }
+
+    function createAsyncHistoryDAO(historyDAO: HistoryDAO): ViewerWatchServiceDependencies[2]
+    {
+        return {
+            createSession: async (...args: Parameters<HistoryDAO['createSession']>) => {
+                return historyDAO.createSession(...args);
+            },
+            findMostRecentSession: async (...args: Parameters<HistoryDAO['findMostRecentSession']>) => {
+                return historyDAO.findMostRecentSession(...args);
+            },
+            updateSessionProgress: async (...args: Parameters<HistoryDAO['updateSessionProgress']>) => {
+                historyDAO.updateSessionProgress(...args);
+            }
+        } as unknown as ViewerWatchServiceDependencies[2];
+    }
+
     function createService()
     {
         const harness = InMemoryDatabaseHarness.createWithLatestSchema();
@@ -59,18 +99,18 @@ describe('ViewerWatchService', () => {
             flagsDAO,
             historyDAO,
             service: new ViewerWatchService(
-                viewerVideoReadRepository,
-                flagsDAO,
-                historyDAO,
+                createAsyncViewerVideoReadRepository(viewerVideoReadRepository),
+                createAsyncFlagsDAO(flagsDAO),
+                createAsyncHistoryDAO(historyDAO),
                 profileContext
             )
         };
     }
 
-    it('loads the viewer watch page model in the active profile context', () => {
+    it('loads the viewer watch page model in the active profile context', async () => {
         const { harness, service } = createService();
 
-        const result = service.load('WATCH_ME');
+        const result = await service.load('WATCH_ME');
 
         expect(result).toMatchObject({
             profileId: 1,
@@ -82,11 +122,11 @@ describe('ViewerWatchService', () => {
         harness.close();
     });
 
-    it('creates and updates watch history independently of watched flags', () => {
+    it('creates and updates watch history independently of watched flags', async () => {
         const { harness, flagsDAO, historyDAO, service } = createService();
 
-        const createResult = service.createHistorySession('WATCH_ME', 8, 1000);
-        const updateResult = service.updateHistoryProgress('WATCH_ME', 21, 2000);
+        const createResult = await service.createHistorySession('WATCH_ME', 8, 1000);
+        const updateResult = await service.updateHistoryProgress('WATCH_ME', 21, 2000);
 
         const flagValues = flagsDAO.getValueMap([1], 1, 'watched');
         const session = historyDAO.findMostRecentSession(1, 1);
@@ -99,12 +139,12 @@ describe('ViewerWatchService', () => {
         harness.close();
     });
 
-    it('returns status-bearing failures for missing videos and stale sessions', () => {
+    it('returns status-bearing failures for missing videos and stale sessions', async () => {
         const { harness, service } = createService();
 
-        const missingVideoResult = service.setWatched('UNKNOWN', true);
-        const sessionCreateResult = service.createHistorySession('WATCH_ME', 8, 1000);
-        const staleSessionResult = service.updateHistoryProgress('WATCH_ME', 21, 1000 + (6 * 60 * 1000));
+        const missingVideoResult = await service.setWatched('UNKNOWN', true);
+        const sessionCreateResult = await service.createHistorySession('WATCH_ME', 8, 1000);
+        const staleSessionResult = await service.updateHistoryProgress('WATCH_ME', 21, 1000 + (6 * 60 * 1000));
 
         expect(missingVideoResult).toEqual({
             ok: false,
@@ -121,7 +161,7 @@ describe('ViewerWatchService', () => {
         harness.close();
     });
 
-    it('returns chronological adjacent videos while skipping ignored entries', () => {
+    it('returns chronological adjacent videos while skipping ignored entries', async () => {
         const { harness, videoDAO, flagsDAO, service } = createService();
 
         videoDAO.upsert({
@@ -173,7 +213,7 @@ describe('ViewerWatchService', () => {
         flagsDAO.set(newerIgnored.id, 1, { ignored: 1 });
         flagsDAO.set(newerWatched.id, 1, { watched: 1 });
 
-        const result = service.load('WATCH_ME');
+        const result = await service.load('WATCH_ME');
 
         expect(result?.previousVideoYoutubeId).toBe('OLDER_VISIBLE');
         expect(result?.nextVideoYoutubeId).toBe('NEWER_WATCHED');

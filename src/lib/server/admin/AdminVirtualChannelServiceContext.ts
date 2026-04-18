@@ -1,9 +1,9 @@
-import type Database from 'better-sqlite3';
-import { AssignmentDAO } from '$lib/daos/assignmentDAO';
-import { SourceChannelDAO } from '$lib/daos/sourceChannelDAO';
-import { VideoDAO } from '$lib/daos/videoDAO';
-import { VirtualChannelAssignmentVideoSelectionDAO } from '$lib/daos/virtualChannelAssignmentVideoSelectionDAO';
-import { VirtualChannelDAO } from '$lib/daos/virtualChannelDAO';
+import { PostgresAssignmentDAO } from '$lib/daos/assignmentDAO';
+import { PostgresSourceChannelDAO } from '$lib/daos/sourceChannelDAO';
+import type { PostgresPoolWrapper } from '$lib/daos/shared/PostgresPoolWrapper';
+import { PostgresVideoDAO } from '$lib/daos/videoDAO';
+import { PostgresVirtualChannelAssignmentVideoSelectionDAO } from '$lib/daos/virtualChannelAssignmentVideoSelectionDAO';
+import { PostgresVirtualChannelDAO } from '$lib/daos/virtualChannelDAO';
 import { AdminVirtualChannelIndexService } from '$lib/server/admin/AdminVirtualChannelIndexService';
 import { AdminVirtualChannelManageService } from '$lib/server/admin/AdminVirtualChannelManageService';
 
@@ -21,26 +21,26 @@ export class AdminVirtualChannelServiceContext
         this.manageService = manageService;
     }
 
-    static resolve(db: Database.Database): AdminVirtualChannelServiceContext
+    static resolve(db: PostgresPoolWrapper): AdminVirtualChannelServiceContext
     {
-        const virtualChannelDAO = new VirtualChannelDAO(db);
-        const assignmentDAO = new AssignmentDAO(db);
-        const sourceChannelDAO = new SourceChannelDAO(db);
-        const videoDAO = new VideoDAO(db);
-        const selectionDAO = new VirtualChannelAssignmentVideoSelectionDAO(db);
+        const virtualChannelDAO = new PostgresVirtualChannelDAO(db);
+        const assignmentDAO = new PostgresAssignmentDAO(db);
+        const sourceChannelDAO = new PostgresSourceChannelDAO(db);
+        const videoDAO = new PostgresVideoDAO(db);
+        const selectionDAO = new PostgresVirtualChannelAssignmentVideoSelectionDAO(db);
 
         return new AdminVirtualChannelServiceContext(
             new AdminVirtualChannelIndexService(
-                virtualChannelDAO,
-                assignmentDAO,
-                sourceChannelDAO
+                virtualChannelDAO as never,
+                assignmentDAO as never,
+                sourceChannelDAO as never
             ),
             new AdminVirtualChannelManageService(
-                virtualChannelDAO,
-                assignmentDAO,
-                sourceChannelDAO,
-                videoDAO,
-                selectionDAO
+                virtualChannelDAO as never,
+                assignmentDAO as never,
+                sourceChannelDAO as never,
+                videoDAO as never,
+                selectionDAO as never
             )
         );
     }

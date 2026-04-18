@@ -1,5 +1,5 @@
 import type { Cookies } from '@sveltejs/kit';
-import { ProfileDAO } from '$lib/daos/profileDAO';
+import type { ProfileDAO, PostgresProfileDAO } from '$lib/daos/profileDAO';
 
 const PROFILE_DEFINITIONS = [
     { key: 'default', name: 'Adult' },
@@ -7,6 +7,8 @@ const PROFILE_DEFINITIONS = [
 ] as const;
 
 export type ProfileKey = (typeof PROFILE_DEFINITIONS)[number]['key'];
+type MaybePromise<T> = T | Promise<T>;
+type ProfileCatalogDAO = Pick<ProfileDAO | PostgresProfileDAO, 'upsertByKey'>;
 
 type ProfileSelectionCookies = Partial<Pick<Cookies, 'get' | 'set'>>;
 
@@ -19,11 +21,23 @@ export class ProfileCatalog
         return PROFILE_DEFINITIONS.some((profile) => profile.key === value);
     }
 
-    static ensureProfiles(profileDAO: ProfileDAO): void
+    static ensureProfiles(profileDAO: ProfileDAO): void;
+    static ensureProfiles(profileDAO: PostgresProfileDAO): Promise<void>;
+    static ensureProfiles(profileDAO: ProfileCatalogDAO): MaybePromise<void>
     {
+        let chain: Promise<void> | null = null;
+
         for (const profile of PROFILE_DEFINITIONS) {
-            profileDAO.upsertByKey(profile.key, profile.name);
+            const result = profileDAO.upsertByKey(profile.key, profile.name);
+
+            if (chain) {
+                chain = chain.then(() => result);
+            } else if (result instanceof Promise) {
+                chain = result;
+            }
         }
+
+        return chain ?? undefined;
     }
 }
 

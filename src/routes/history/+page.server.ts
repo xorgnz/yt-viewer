@@ -1,6 +1,6 @@
-import { ProfileDAO } from '$lib/daos/profileDAO';
-import { SourceChannelDAO } from '$lib/daos/sourceChannelDAO';
-import { HistoryReadRepository } from '$lib/daos/readers/HistoryReadRepository';
+import { PostgresProfileDAO } from '$lib/daos/profileDAO';
+import { PostgresHistoryReadRepository } from '$lib/daos/readers/HistoryReadRepository';
+import { PostgresSourceChannelDAO } from '$lib/daos/sourceChannelDAO';
 import { ServerDatabaseContext } from '$lib/server/ServerDatabaseContext';
 import { ServerProfileContext } from '$lib/server/ServerProfileContext';
 
@@ -15,9 +15,9 @@ export const load = async ({ url, cookies }: { url: URL; cookies: any }) =>
     const offset = url.searchParams.get('offset');
     const mode = modeRaw === 'videos' ? 'videos' : 'sessions';
 
-    return ServerDatabaseContext.run(({ db }) => {
+    return ServerDatabaseContext.run(async ({ db }) => {
         // Resolve history against the active site-wide profile.
-        const profileContext = ServerProfileContext.resolve(new ProfileDAO(db), cookies);
+        const profileContext = await ServerProfileContext.resolve(new PostgresProfileDAO(db), cookies);
         const filters = {
             profileKey: profileContext.activeProfileKey,
             mode,
@@ -28,8 +28,8 @@ export const load = async ({ url, cookies }: { url: URL; cookies: any }) =>
             offset: offset ? Number(offset) : 0
         } as const;
 
-        const historyReadRepository = new HistoryReadRepository(db);
-        const cDao = new SourceChannelDAO(db);
+        const historyReadRepository = new PostgresHistoryReadRepository(db);
+        const cDao = new PostgresSourceChannelDAO(db);
 
         const queryFilters = {
             profileId: profileContext.activeProfileId,
@@ -42,7 +42,7 @@ export const load = async ({ url, cookies }: { url: URL; cookies: any }) =>
         const items = filters.mode === 'videos'
             ? historyReadRepository.listVideoSummaries(queryFilters)
             : historyReadRepository.listSessions(queryFilters);
-        const sessionItems = historyReadRepository.listSessions({
+        const sessionItems = await historyReadRepository.listSessions({
             profileId: profileContext.activeProfileId,
             channelId: filters.channelId ?? undefined,
             dateFrom: filters.dateFrom ?? undefined,
@@ -51,11 +51,11 @@ export const load = async ({ url, cookies }: { url: URL; cookies: any }) =>
             offset: 0
         });
 
-        const channels = cDao.list();
+        const channels = await cDao.list();
 
         return {
             filters,
-            items,
+            items: await items,
             sessionItems,
             channels,
             profileId: profileContext.activeProfileId,

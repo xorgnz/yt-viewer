@@ -7,7 +7,7 @@ import { ViewerServiceContext } from '$lib/server/viewer/ViewerServiceContext';
 
 export const load = async ({ url, cookies }: { url: URL; cookies: any }) =>
 {
-    return ServerDatabaseContext.run(({ db }) => {
+    return ServerDatabaseContext.run(async ({ db }) => {
         return new ViewerLoadService(db).load(url, cookies);
     });
 };
@@ -22,8 +22,9 @@ export const actions = {
             return fail(400, { message: 'Invalid toggle parameters' });
         }
 
-        return ServerDatabaseContext.run(({ db }) => {
-            return ViewerServiceContext.resolve(db, cookies).flagService.toggleFlag(
+        return ServerDatabaseContext.run(async ({ db }) => {
+            const serviceContext = await ViewerServiceContext.resolve(db, cookies);
+            return serviceContext.flagService.toggleFlag(
                 parsed.videoId,
                 parsed.kind,
                 parsed.value
@@ -40,8 +41,9 @@ export const actions = {
             return fail(400, { message: 'Invalid bulk flag parameters' });
         }
 
-        return ServerDatabaseContext.run(({ db }) => {
-            return ViewerServiceContext.resolve(db, cookies).flagService.bulkUpdateFlags(parsed);
+        return ServerDatabaseContext.run(async ({ db }) => {
+            const serviceContext = await ViewerServiceContext.resolve(db, cookies);
+            return serviceContext.flagService.bulkUpdateFlags(parsed);
         });
     },
 
@@ -54,8 +56,9 @@ export const actions = {
             return fail(400, { message: 'Invalid bulk undo parameters' });
         }
 
-        return ServerDatabaseContext.run(({ db }) => {
-            return ViewerServiceContext.resolve(db, cookies).flagService.undoBulkUpdateFlags(parsed);
+        return ServerDatabaseContext.run(async ({ db }) => {
+            const serviceContext = await ViewerServiceContext.resolve(db, cookies);
+            return serviceContext.flagService.undoBulkUpdateFlags(parsed);
         });
     },
 
@@ -68,8 +71,9 @@ export const actions = {
             return fail(400, { message: 'Invalid restore parameters' });
         }
 
-        return ServerDatabaseContext.run(({ db }) => {
-            return ViewerServiceContext.resolve(db, cookies).flagService.restoreSelectionState(parsed);
+        return ServerDatabaseContext.run(async ({ db }) => {
+            const serviceContext = await ViewerServiceContext.resolve(db, cookies);
+            return serviceContext.flagService.restoreSelectionState(parsed);
         });
     }
 };
