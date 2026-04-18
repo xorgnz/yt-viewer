@@ -4,10 +4,6 @@ timestamp: 2026-04-17 09:21
 ---
 # Workflow Shortcut: 6-7-8 Subtask Flow
 
-## Goal
-
-To define a reusable shorthand for processing the subtasks of a parent task one at a time using the existing downstream task execution, validation, and commit rules.
-
 ## Shortcut Phrase
 
 ### `Run the 6-7-8 subtask flow for task <task id>`

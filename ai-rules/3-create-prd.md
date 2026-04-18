@@ -4,17 +4,12 @@ timestamp: 2026-04-17 09:22
 ---
 # Rule: Generating a Product Requirements Document (PRD)
 
-## Goal
-
-To guide an AI assistant in creating a clear, implementation-relevant Product Requirements Document in Markdown format for the active feature or an explicitly selected planned feature, based on the scope and the user's clarifications.
-
 ## Prerequisites
 
 - A feature tag must exist
 - `/ai-work/00-feature-status.md` must identify the feature as `active` or an explicitly selected `planned` feature
 - The feature must not be marked `paused` or `completed`
-- A scope file should exist at `/ai-work/{feature-tag}-scope.md`
-- Follow the shared feature-state contract in `/ai-work/00-feature-status.md`
+- A scope file must exist at `/ai-work/{feature-tag}-scope.md`
 
 ## Process
 
@@ -86,16 +81,3 @@ Add more detailed sections when they materially improve execution clarity. Usefu
 - Clarifications applied
 - Open questions
 - Risks, assumptions, dependencies, rollout notes, or similar project-specific sections
-
-## Final Instructions
-
-1. Do not start implementation from this rule
-2. Capture the important clarifications inside the PRD
-3. Treat the scope file as the upstream planning artifact, not the implementation-time boundary source of truth
-4. Ensure the PRD contains the essential boundary context needed for implementation without requiring the reader to reopen the scope file
-5. Keep the PRD as lean as possible while still giving implementation enough direction
-6. When the master tech stack materially affects the feature, capture the relevant feature-specific technical constraints or decisions inside the PRD instead of assuming the reader will infer them later
-7. Add detailed sections only when they improve clarity for the feature at hand
-8. Do not create or update PRDs for paused or completed features
-9. Allow PRD work for an explicitly selected planned feature without activating it
-10. Require explicit approval before writing the PRD file

@@ -4,12 +4,6 @@ timestamp: 2026-04-17 10:35
 ---
 # Rule: Prepare a Commit for Approval
 
-## Overview. 
-
-This rule guides an AI assistant in preparing commits to git. To execute, parse the invocation in Step 0, then work through steps 1 through 6 in order.
-
-Use this rule when the user explicitly asks to run rule 8 or otherwise asks to prepare a commit.
-
 ## Core Principle
 
 The AI must not commit automatically when using this rule unless the user explicitly includes approval in the same request.
@@ -74,7 +68,7 @@ A strong task diff match means one task is clearly favored by actual changes, su
 
 A clear tracked-feature match means the work belongs to one tracked feature overall even if it does not map cleanly to one task.
 
-Explicit tracked-feature selectors may override the active tracked feature for follow-up commit context. This does not change tracked-feature state, does not switch branches, and does not authorize implementation on that tracked feature by itself.
+Explicit tracked-feature selectors may override the active tracked feature for follow-up commit context. This does not change tracked-feature state and does not authorize implementation on that tracked feature by itself.
 
 If two or more tasks remain plausible after applying the rules above, do not infer. Ask the user to choose.
 
@@ -88,11 +82,9 @@ If the diff appears to span multiple tasks, multiple tracked features, or unrela
 
 Apply these gates when Step 2 selects the commit mode and selected context.
 
-- When task-scoped or tracked-feature-scoped context may apply, read `/ai-work/00-workflow-config.md` and `/ai-work/00-feature-status.md`, and follow the feature-state contract in `/ai-work/00-feature-status.md`.
-- If `/ai-work/00-workflow-config.md` is needed and missing, ask whether `branch_mode` should be `required` or `optional`, write the file, and then continue
+- When task-scoped or tracked-feature-scoped context may apply, read `/ai-work/00-feature-status.md` and follow the feature-state contract in that file.
 - Use the active tracked feature as the default tracked-feature context unless the user explicitly identifies another tracked feature for follow-up commit labeling, or the commit is repo-scoped
 - Main-task commits and task-scoped or tracked-feature-scoped ad hoc `feat` commits require an active tracked feature
-- If `branch_mode: required`, main-task commits and task-scoped or tracked-feature-scoped ad hoc `feat` commits require the current branch to match the active tracked-feature branch; if `branch_mode: optional`, do not reject solely because the current branch differs
 - Do not prepare main-task commits or task-scoped/tracked-feature-scoped ad hoc `feat` commits for paused or completed tracked features unless the user explicitly asks for an exception
 - For `management`, an explicit tracked-feature selector may reference a `planned`, non-active, or completed tracked feature without activating it
 - Non-`mgmt` follow-up prefixes may reference a non-active or completed tracked feature as commit context when the rule otherwise permits that scope

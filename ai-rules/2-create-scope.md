@@ -4,16 +4,10 @@ timestamp: 2026-04-17 09:22
 ---
 # Rule: Creating a High-Level Project Scope
 
-## Goal
-
-To guide an AI assistant in working with the user to create a concise, high-level scope document that captures why a feature exists and where its boundaries are before detailed requirements are written.
-
 ## Prerequisites
 
 - A feature tag must already exist
 - `/ai-work/00-feature-status.md` must identify the feature as the current active feature or an explicitly selected planned feature
-- The feature must not be marked `paused` or `completed` unless the user explicitly asks for an exception
-- Follow the shared feature-state contract in `/ai-work/00-feature-status.md`
 
 ## Process
 
@@ -113,13 +107,3 @@ AI: [Summarizes the scope]
 AI: [Shows a draft for approval]
 AI: "Feature `03-user-auth` remains planned. I can write the approved scope without activating it."
 ```
-
-## Final Instructions
-
-1. Keep the scope high-level
-2. Focus on what and why, not how
-3. Treat the scope as the upstream planning document rather than the implementation-facing source of truth
-4. Expect the later PRD to carry forward the important boundary content in implementation-ready form
-5. Do not create or update scope files for paused or completed features unless the user explicitly asks to make an exception
-6. Require explicit approval before writing the scope file
-7. Do not proceed to create a PRD unless explicitly asked

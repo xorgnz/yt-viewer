@@ -4,10 +4,6 @@ timestamp: 2026-04-17 09:20
 ---
 # Rule Command Glossary
 
-## Goal
-
-To provide a short reference for shorthand commands used across the workflow rules.
-
 ## Shorthand Commands
 
 ### `run 8`

@@ -4,17 +4,11 @@ timestamp: 2026-04-17 09:24
 ---
 # Rule: Performing a Task for the Active Feature
 
-## Goal
-
-To guide an AI assistant in executing development tasks from structured task lists while maintaining proper environment configuration, approval protocols, any required branch alignment, and accurate progress tracking.
-
 ## Prerequisites
 
-- `/ai-work/00-workflow-config.md` should exist
 - `/ai-work/00-feature-status.md` must exist
 - A feature must be marked `active`
 - A task list must exist at `/ai-work/{feature-tag}-tasks.md`
-- `/ai-work/00-master-techstack.md` is the shared technology source of truth if it exists
 
 ## Active Feature Protocol
 
@@ -22,12 +16,7 @@ To guide an AI assistant in executing development tasks from structured task lis
 
 - Use `/ai-work/00-feature-status.md` as the source of truth for:
   - the active feature
-  - the active branch
   - whether a feature is planned, active, paused, or completed
-
-- Use `/ai-work/00-workflow-config.md` as the source of truth for whether `branch_mode` is `required` or `optional`
-
-- If `/ai-work/00-workflow-config.md` is missing, ask the user whether `branch_mode` should be `required` or `optional`, write the file, and then continue
 
 ### Non-Active Features
 
@@ -36,13 +25,6 @@ To guide an AI assistant in executing development tasks from structured task lis
 - Tell the user to switch features first by using the feature-change workflow if they want to resume a paused feature
 - Treat completed features as read-only by default
 - Refuse to modify scope, PRD, tasks, or implementation for a completed feature unless the user explicitly asks for an exception
-
-### Branch Alignment
-
-- If `branch_mode: required` and the current branch does not match the active feature branch, do not proceed with implementation
-- If `branch_mode: required`, tell the user to switch features first by using the feature-change workflow
-- If `branch_mode: optional`, do not block implementation solely because the current branch does not match the active feature branch
-- If `branch_mode: optional`, treat branch use as advisory unless the user explicitly asks to work on a specific branch
 
 ## Task Selection Process
 
@@ -91,15 +73,3 @@ As each task or sub-task is completed:
 6. Do not run long-running application servers unless explicitly asked
 7. Follow `AGENTS.md` for command, style, and environment conventions
 
-## Final Instructions
-
-1. Never start tasks without explicit user approval
-2. Always use the active feature in `/ai-work/00-feature-status.md`
-3. Use `/ai-work/00-workflow-config.md` as the source of truth for branch workflow mode
-4. A feature argument is optional and must not override the active feature
-5. If no feature is active, refuse implementation work until the user activates or switches to a feature
-6. Treat paused features as inactive until switched back in
-7. Refuse routine edits to completed features
-8. Read `/ai-work/00-master-techstack.md` before implementation when that file exists
-9. Always update task checkboxes immediately upon completion
-10. Check off the parent task when its last sub-task is done and the task itself is actually complete
