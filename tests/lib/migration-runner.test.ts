@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { PoolClient, QueryResult, QueryResultRow } from 'pg';
-import type { AsyncMigrationDefinition } from '../../src/lib/daos/migrations/migrationTypes';
-import { MIGRATIONS } from '../../src/lib/daos/migrations/registry';
+import { POSTGRES_CREATE_TABLE_MIGRATION_HISTORY } from '../../src/lib/daos/_schema';
+import { MIGRATIONS, POSTGRES_MIGRATIONS } from '../../src/lib/daos/migrations/registry';
 import { SchemaVersionDAO } from '../../src/lib/daos/schemaVersionDAO';
 import { AsyncMigrationRunner, MigrationRunner } from '../../src/lib/daos/shared/MigrationRunner';
 import { PostgresMigrationAdapter } from '../../src/lib/daos/shared/PostgresMigrationAdapter';
@@ -155,16 +155,7 @@ describe('MigrationRunner', () => {
 
     it('runs pending Postgres migrations in a transaction with schema metadata updates', async () => {
         const client = new MockPostgresMigrationClient();
-        const migrations: AsyncMigrationDefinition[] = [
-            {
-                version: 8,
-                name: 'add_migration_history',
-                async apply(context) {
-                    await context.exec('CREATE TABLE IF NOT EXISTS migration_history(id INTEGER)');
-                },
-            }
-        ];
-        const runner = new AsyncMigrationRunner(createPostgresAdapter(client), migrations);
+        const runner = new AsyncMigrationRunner(createPostgresAdapter(client), POSTGRES_MIGRATIONS);
 
         const result = await runner.runToLatest();
 
@@ -181,13 +172,14 @@ describe('MigrationRunner', () => {
         });
         expect(client.calls.map((call) => call.sql)).toContain('BEGIN');
         expect(client.calls.map((call) => call.sql)).toContain('COMMIT');
+        expect(client.calls.map((call) => call.sql)).toContain(POSTGRES_CREATE_TABLE_MIGRATION_HISTORY);
         expect(client.calls.some((call) => call.sql.includes('INSERT INTO migration_history'))).toBe(true);
         expect(client.calls.some((call) => call.params?.[0] === '8')).toBe(true);
     });
 
     it('rolls back a failed Postgres migration transaction', async () => {
         const client = new MockPostgresMigrationClient();
-        const migrations: AsyncMigrationDefinition[] = [
+        const migrations = [
             {
                 version: 8,
                 name: 'broken_migration',
