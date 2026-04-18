@@ -42,7 +42,7 @@
   - [x] 2.4 Update database setup scripts to create or validate Postgres schema state without SQLite file operations.
 
 - [ ] 3.0 Migrate data-access and server flows from SQLite bindings to Postgres
-  - [ ] 3.1 Refactor shared DAO base utilities to use Postgres parameter binding and result mapping conventions.
+  - [x] 3.1 Refactor shared DAO base utilities to use Postgres parameter binding and result mapping conventions.
   - [ ] 3.2 Update all DAO modules and query/read-repository modules to run against Postgres while preserving current behavior and return shapes.
   - [ ] 3.3 Update request database-context wiring in route/server helpers so all route workflows run on Postgres-backed connections.
   - [ ] 3.4 Isolate remaining SQLite-only code paths to migration-only tooling and remove SQLite usage from the main runtime code paths.
