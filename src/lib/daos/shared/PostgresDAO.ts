@@ -190,7 +190,7 @@ export class PostgresDAO
         return result.rowCount ?? 0;
     }
 
-    protected async get<T extends QueryResultRow>(
+    protected async getOne<T extends QueryResultRow>(
         sql: string,
         params?: PostgresSqlParams
     ): Promise<T | undefined>
@@ -199,7 +199,7 @@ export class PostgresDAO
         return result.rows[0];
     }
 
-    protected async all<T extends QueryResultRow>(
+    protected async listRows<T extends QueryResultRow>(
         sql: string,
         params?: PostgresSqlParams
     ): Promise<T[]>

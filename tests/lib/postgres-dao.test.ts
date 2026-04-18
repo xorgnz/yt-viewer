@@ -19,7 +19,7 @@ class MockPostgresDAO extends PostgresDAO
         params?: unknown[] | Record<string, unknown>
     ): Promise<T | undefined>
     {
-        return this.get<T>(sql, params);
+        return this.getOne<T>(sql, params);
     }
 
     async allRows<T extends QueryResultRow>(
@@ -27,7 +27,7 @@ class MockPostgresDAO extends PostgresDAO
         params?: unknown[] | Record<string, unknown>
     ): Promise<T[]>
     {
-        return this.all<T>(sql, params);
+        return this.listRows<T>(sql, params);
     }
 }
 
