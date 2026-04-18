@@ -48,9 +48,9 @@
   - [x] 3.4 Isolate remaining SQLite-only code paths to migration-only tooling and remove SQLite usage from the main runtime code paths.
 
 - [ ] 3.5 Implement and validate SQLite-to-Postgres data migration execution
-  - [ ] 3.5.1 Build a one-time migration tool that reads existing SQLite data and writes equivalent Postgres records with deterministic ordering and idempotency guards.
-  - [ ] 3.5.2 Add validation checks/reports for migrated row counts and key relational integrity before cutover.
-  - [ ] 3.5.3 Define and document the cutover sequence (backup, migrate, verify, switch runtime) for local and production workflows.
+  - [x] 3.5.1 Build a one-time migration tool that reads existing SQLite data and writes equivalent Postgres records with deterministic ordering and idempotency guards.
+  - [x] 3.5.2 Add validation checks/reports for migrated row counts and key relational integrity before cutover.
+  - [x] 3.5.3 Define and document the cutover sequence (backup, migrate, verify, switch runtime) for local and production workflows.
   - [ ] 3.5.4 Remove SQLite bindings/dependencies only after migration validation passes and Postgres-only runtime is confirmed.
 
 - [ ] 4.0 Add Docker Compose local runtime for full-system Postgres development

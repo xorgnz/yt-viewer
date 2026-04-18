@@ -18,8 +18,10 @@
     "test:watch": "vitest",
     "db:create": "tsx scripts/create_database.ts",
     "db:migrate": "tsx scripts/migrate_database.ts",
+    "db:migrate:sqlite": "tsx scripts/migrate_sqlite_to_postgres.ts",
     "create_database": "tsx scripts/create_database.ts",
-    "migrate_database": "tsx scripts/migrate_database.ts"
+    "migrate_database": "tsx scripts/migrate_database.ts",
+    "migrate_sqlite_to_postgres": "tsx scripts/migrate_sqlite_to_postgres.ts"
   },
   "dependencies": {
     "better-sqlite3": "latest",
