@@ -1,6 +1,5 @@
-import type Database from 'better-sqlite3';
-import { SourceChannelDAO } from '../daos/sourceChannelDAO';
-import { VideoDAO } from '../daos/videoDAO';
+import type { PostgresSourceChannelDAO, SourceChannelDAO } from '../daos/sourceChannelDAO';
+import type { PostgresVideoDAO, VideoDAO } from '../daos/videoDAO';
 import { YouTubeChannelDataService } from './fetch';
 import { YouTubeChannelUpsertMapper, YouTubeVideoUpsertMapper } from './mapper';
 import type { YouTubeClient } from './youTubeClient';
@@ -11,26 +10,26 @@ export interface ImportResult
     videosUpserted: number;
 }
 
+type ImportSourceChannelDAO = Pick<SourceChannelDAO | PostgresSourceChannelDAO, 'getByExternalId' | 'upsert'>;
+type ImportVideoDAO = Pick<VideoDAO | PostgresVideoDAO, 'upsert'>;
+
 export class YouTubeChannelImportService
 {
-    private readonly db: Database.Database;
     private readonly channelDataService: YouTubeChannelDataService;
-    private readonly sourceChannelDAO: SourceChannelDAO;
-    private readonly videoDAO: VideoDAO;
+    private readonly sourceChannelDAO: ImportSourceChannelDAO;
+    private readonly videoDAO: ImportVideoDAO;
     private readonly channelMapper: YouTubeChannelUpsertMapper;
     private readonly videoMapper: YouTubeVideoUpsertMapper;
 
     constructor(
-        db: Database.Database,
         client: YouTubeClient,
         channelDataService: YouTubeChannelDataService = new YouTubeChannelDataService(client),
-        sourceChannelDAO: SourceChannelDAO = new SourceChannelDAO(db),
-        videoDAO: VideoDAO = new VideoDAO(db),
+        sourceChannelDAO: ImportSourceChannelDAO,
+        videoDAO: ImportVideoDAO,
         channelMapper: YouTubeChannelUpsertMapper = new YouTubeChannelUpsertMapper(),
         videoMapper: YouTubeVideoUpsertMapper = new YouTubeVideoUpsertMapper()
     )
     {
-        this.db = db;
         this.channelDataService = channelDataService;
         this.sourceChannelDAO = sourceChannelDAO;
         this.videoDAO = videoDAO;
@@ -54,39 +53,34 @@ export class YouTubeChannelImportService
         );
         const videoMetadataById = new Map(videoMetadataItems.map((item) => [item.id, item]));
 
-        // Run inside a transaction for consistency.
-        const transaction = this.db.transaction(() => {
-            const channelUpsert = this.channelMapper.toChannelUpsert(channel);
-            this.sourceChannelDAO.upsert(channelUpsert);
+        const channelUpsert = this.channelMapper.toChannelUpsert(channel);
+        await this.sourceChannelDAO.upsert(channelUpsert);
 
-            const sourceChannel = this.sourceChannelDAO.getByExternalId(channelUpsert.youtube_id);
-            if (!sourceChannel) {
-                throw new Error(`Failed to resolve imported channel ${channelUpsert.youtube_id}.`);
+        const sourceChannel = await this.sourceChannelDAO.getByExternalId(channelUpsert.youtube_id);
+        if (!sourceChannel) {
+            throw new Error(`Failed to resolve imported channel ${channelUpsert.youtube_id}.`);
+        }
+
+        let videosUpserted = 0;
+        for (const item of videos) {
+            const videoId = item.contentDetails?.videoId || item.snippet?.resourceId?.videoId || '';
+            const videoUpsert = this.videoMapper.toVideoUpsert(
+                item,
+                sourceChannel.id,
+                videoMetadataById.get(videoId)
+            );
+
+            if (!videoUpsert.youtube_id) {
+                continue;
             }
 
-            let videosUpserted = 0;
-            for (const item of videos) {
-                const videoId = item.contentDetails?.videoId || item.snippet?.resourceId?.videoId || '';
-                const videoUpsert = this.videoMapper.toVideoUpsert(
-                    item,
-                    sourceChannel.id,
-                    videoMetadataById.get(videoId)
-                );
+            await this.videoDAO.upsert(videoUpsert);
+            videosUpserted++;
+        }
 
-                if (!videoUpsert.youtube_id) {
-                    continue;
-                }
-
-                this.videoDAO.upsert(videoUpsert);
-                videosUpserted++;
-            }
-
-            return {
-                channelId: sourceChannel.id,
-                videosUpserted
-            };
-        });
-
-        return transaction();
+        return {
+            channelId: sourceChannel.id,
+            videosUpserted
+        };
     }
 }

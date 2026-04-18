@@ -1,4 +1,6 @@
-import type Database from 'better-sqlite3';
+import { PostgresSourceChannelDAO } from '$lib/daos/sourceChannelDAO';
+import type { PostgresPoolWrapper } from '$lib/daos/shared/PostgresPoolWrapper';
+import { PostgresVideoDAO } from '$lib/daos/videoDAO';
 import {
     type ResolvedChannelReference,
     YouTubeChannelDataService,
@@ -23,11 +25,18 @@ export class AdminSourceChannelYouTubeCoordinator
     }
 
     async importChannelFromYouTube(
-        db: Database.Database,
+        db: unknown,
         client: YouTubeClient,
         channelExternalId: string
     ): Promise<ImportResult>
     {
-        return new YouTubeChannelImportService(db, client).importChannel(channelExternalId);
+        const postgresDb = db as PostgresPoolWrapper;
+
+        return new YouTubeChannelImportService(
+            client,
+            new YouTubeChannelDataService(client),
+            new PostgresSourceChannelDAO(postgresDb),
+            new PostgresVideoDAO(postgresDb)
+        ).importChannel(channelExternalId);
     }
 }

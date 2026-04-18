@@ -26,8 +26,8 @@ export class AdminSourceChannelServiceContext
 
         return new AdminSourceChannelServiceContext(
             new AdminSourceChannelPageService(
-                db as never,
-                new PostgresSourceChannelDAO(db) as never,
+                db,
+                new PostgresSourceChannelDAO(db),
                 clientProvider,
                 coordinator
             ),

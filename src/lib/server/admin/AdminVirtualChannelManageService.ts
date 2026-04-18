@@ -1,8 +1,11 @@
-import { AssignmentDAO } from '$lib/daos/assignmentDAO';
-import { SourceChannelDAO } from '$lib/daos/sourceChannelDAO';
-import { VideoDAO } from '$lib/daos/videoDAO';
-import { VirtualChannelAssignmentVideoSelectionDAO } from '$lib/daos/virtualChannelAssignmentVideoSelectionDAO';
-import { VirtualChannelDAO } from '$lib/daos/virtualChannelDAO';
+import type { AssignmentDAO, PostgresAssignmentDAO } from '$lib/daos/assignmentDAO';
+import type { PostgresSourceChannelDAO, SourceChannelDAO } from '$lib/daos/sourceChannelDAO';
+import type { PostgresVideoDAO, VideoDAO } from '$lib/daos/videoDAO';
+import type {
+    PostgresVirtualChannelAssignmentVideoSelectionDAO,
+    VirtualChannelAssignmentVideoSelectionDAO
+} from '$lib/daos/virtualChannelAssignmentVideoSelectionDAO';
+import type { PostgresVirtualChannelDAO, VirtualChannelDAO } from '$lib/daos/virtualChannelDAO';
 import type { VirtualChannelAssignment } from '$lib/entities/virtualChannelAssignment';
 import type { VirtualChannelAssignmentMode } from '$lib/entities/virtualChannelAssignment';
 import type { VirtualChannelAssignmentVideoReviewState } from '$lib/entities/virtualChannelAssignmentVideoSelection';
@@ -16,6 +19,15 @@ import type {
     AdminVirtualChannelServiceError,
     AdminVirtualChannelServiceResult
 } from '$lib/server/admin/AdminVirtualChannelTypes';
+
+type AdminVirtualChannelDAO = Pick<PostgresVirtualChannelDAO | VirtualChannelDAO, 'get'>;
+type AdminAssignmentDAO = Pick<PostgresAssignmentDAO | AssignmentDAO, 'add' | 'get' | 'listForVirtualChannel' | 'remove' | 'updateMode'>;
+type AdminSourceChannelDAO = Pick<PostgresSourceChannelDAO | SourceChannelDAO, 'get' | 'list'>;
+type AdminVideoDAO = Pick<PostgresVideoDAO | VideoDAO, 'get' | 'listByChannel'>;
+type AdminSelectionDAO = Pick<
+    PostgresVirtualChannelAssignmentVideoSelectionDAO | VirtualChannelAssignmentVideoSelectionDAO,
+    'listForAssignment' | 'setReviewState'
+>;
 
 export interface LoadAdminVirtualChannelPageInput
 {
@@ -62,18 +74,18 @@ export interface BulkUpdateAdminVideoReviewStateInput
 
 export class AdminVirtualChannelManageService
 {
-    private readonly virtualChannelDAO: VirtualChannelDAO;
-    private readonly assignmentDAO: AssignmentDAO;
-    private readonly sourceChannelDAO: SourceChannelDAO;
-    private readonly videoDAO: VideoDAO;
-    private readonly selectionDAO: VirtualChannelAssignmentVideoSelectionDAO;
+    private readonly virtualChannelDAO: AdminVirtualChannelDAO;
+    private readonly assignmentDAO: AdminAssignmentDAO;
+    private readonly sourceChannelDAO: AdminSourceChannelDAO;
+    private readonly videoDAO: AdminVideoDAO;
+    private readonly selectionDAO: AdminSelectionDAO;
 
     constructor(
-        virtualChannelDAO: VirtualChannelDAO,
-        assignmentDAO: AssignmentDAO,
-        sourceChannelDAO: SourceChannelDAO,
-        videoDAO: VideoDAO,
-        selectionDAO: VirtualChannelAssignmentVideoSelectionDAO
+        virtualChannelDAO: AdminVirtualChannelDAO,
+        assignmentDAO: AdminAssignmentDAO,
+        sourceChannelDAO: AdminSourceChannelDAO,
+        videoDAO: AdminVideoDAO,
+        selectionDAO: AdminSelectionDAO
     )
     {
         this.virtualChannelDAO = virtualChannelDAO;
@@ -83,25 +95,25 @@ export class AdminVirtualChannelManageService
         this.selectionDAO = selectionDAO;
     }
 
-    loadPageData(input: LoadAdminVirtualChannelPageInput): AdminVirtualChannelServiceResult<
+    async loadPageData(input: LoadAdminVirtualChannelPageInput): Promise<AdminVirtualChannelServiceResult<
         AdminVirtualChannelManagePageData,
         AdminVirtualChannelServiceError<'virtual_channel_not_found'>
-    >
+    >>
     {
-        const virtualChannel = this.virtualChannelDAO.get(input.virtualChannelId);
+        const virtualChannel = await this.virtualChannelDAO.get(input.virtualChannelId);
         if (!virtualChannel) {
             return this.buildError('virtual_channel_not_found', 404, 'Virtual channel not found');
         }
 
         // Load imported source channels and existing assignments for the page shell.
-        const availableSourceChannels = this.sourceChannelDAO.list();
+        const availableSourceChannels = await this.sourceChannelDAO.list();
         const sourceChannelsById = new Map(availableSourceChannels.map((channel) => [channel.id, channel]));
-        const assignments = this.assignmentDAO.listForVirtualChannel(input.virtualChannelId);
-        const associatedSourceChannels = assignments.map((assignment) => this.buildAssociatedSourceChannelView(
+        const assignments = await this.assignmentDAO.listForVirtualChannel(input.virtualChannelId);
+        const associatedSourceChannels = await Promise.all(assignments.map((assignment) => this.buildAssociatedSourceChannelView(
             assignment,
             sourceChannelsById,
             input.searchParams
-        ));
+        )));
 
         return {
             ok: true,
@@ -113,25 +125,25 @@ export class AdminVirtualChannelManageService
         };
     }
 
-    addAssociation(input: AddAdminAssociationInput): AdminVirtualChannelServiceResult<
+    async addAssociation(input: AddAdminAssociationInput): Promise<AdminVirtualChannelServiceResult<
         AdminVirtualChannelRedirect,
         AdminVirtualChannelServiceError<
             'virtual_channel_not_found' |
             'source_channel_not_found' |
             'add_association_failed'
         >
-    >
+    >>
     {
         try {
-            if (!this.virtualChannelDAO.get(input.virtualChannelId)) {
+            if (!await this.virtualChannelDAO.get(input.virtualChannelId)) {
                 return this.buildError('virtual_channel_not_found', 404, 'Virtual channel not found');
             }
 
-            if (!this.sourceChannelDAO.get(input.sourceChannelId)) {
+            if (!await this.sourceChannelDAO.get(input.sourceChannelId)) {
                 return this.buildError('source_channel_not_found', 404, 'Source channel not found.');
             }
 
-            this.assignmentDAO.add(input.sourceChannelId, input.virtualChannelId, input.mode);
+            await this.assignmentDAO.add(input.sourceChannelId, input.virtualChannelId, input.mode);
             return {
                 ok: true,
                 data: { redirectTo: this.buildManagePath(input.virtualChannelId) }
@@ -145,50 +157,50 @@ export class AdminVirtualChannelManageService
         }
     }
 
-    updateAssociationMode(input: UpdateAdminAssociationModeInput): AdminVirtualChannelServiceResult<
+    async updateAssociationMode(input: UpdateAdminAssociationModeInput): Promise<AdminVirtualChannelServiceResult<
         AdminVirtualChannelRedirect,
         AdminVirtualChannelServiceError<'assignment_not_found'>
-    >
+    >>
     {
-        const assignment = this.assignmentDAO.get(input.assignmentId);
+        const assignment = await this.assignmentDAO.get(input.assignmentId);
         if (!assignment || assignment.virtual_channel_id !== input.virtualChannelId) {
             return this.buildError('assignment_not_found', 404, 'Assignment not found.');
         }
 
-        this.assignmentDAO.updateMode(input.assignmentId, input.mode);
+        await this.assignmentDAO.updateMode(input.assignmentId, input.mode);
         return {
             ok: true,
             data: { redirectTo: this.buildManagePath(input.virtualChannelId) }
         };
     }
 
-    removeAssociation(input: RemoveAdminAssociationInput): AdminVirtualChannelServiceResult<
+    async removeAssociation(input: RemoveAdminAssociationInput): Promise<AdminVirtualChannelServiceResult<
         AdminVirtualChannelRedirect,
         AdminVirtualChannelServiceError<'assignment_not_found'>
-    >
+    >>
     {
-        const assignment = this.assignmentDAO.get(input.assignmentId);
+        const assignment = await this.assignmentDAO.get(input.assignmentId);
         if (!assignment || assignment.virtual_channel_id !== input.virtualChannelId) {
             return this.buildError('assignment_not_found', 404, 'Assignment not found.');
         }
 
-        this.assignmentDAO.remove(assignment.source_channel_id, assignment.virtual_channel_id);
+        await this.assignmentDAO.remove(assignment.source_channel_id, assignment.virtual_channel_id);
         return {
             ok: true,
             data: { redirectTo: this.buildManagePath(input.virtualChannelId) }
         };
     }
 
-    setVideoReviewState(input: SetAdminVideoReviewStateInput): AdminVirtualChannelServiceResult<
+    async setVideoReviewState(input: SetAdminVideoReviewStateInput): Promise<AdminVirtualChannelServiceResult<
         AdminVirtualChannelRedirect,
         AdminVirtualChannelServiceError<
             'assignment_not_found' |
             'assignment_mode_invalid' |
             'video_not_found'
         >
-    >
+    >>
     {
-        const assignment = this.assignmentDAO.get(input.assignmentId);
+        const assignment = await this.assignmentDAO.get(input.assignmentId);
         if (!assignment || assignment.virtual_channel_id !== input.virtualChannelId) {
             return this.buildError('assignment_not_found', 404, 'Assignment not found.');
         }
@@ -201,28 +213,28 @@ export class AdminVirtualChannelManageService
             );
         }
 
-        const video = this.videoDAO.get(input.videoId);
+        const video = await this.videoDAO.get(input.videoId);
         if (!video || video.channel_id !== assignment.source_channel_id) {
             return this.buildError('video_not_found', 404, 'Video not found for this assignment.');
         }
 
-        this.selectionDAO.setReviewState(input.assignmentId, input.videoId, input.reviewState);
+        await this.selectionDAO.setReviewState(input.assignmentId, input.videoId, input.reviewState);
         return {
             ok: true,
             data: { redirectTo: this.buildManagePath(input.virtualChannelId) }
         };
     }
 
-    bulkUpdateVideoReviewState(input: BulkUpdateAdminVideoReviewStateInput): AdminVirtualChannelServiceResult<
+    async bulkUpdateVideoReviewState(input: BulkUpdateAdminVideoReviewStateInput): Promise<AdminVirtualChannelServiceResult<
         AdminVirtualChannelRedirect,
         AdminVirtualChannelServiceError<
             'assignment_not_found' |
             'assignment_mode_invalid' |
             'video_not_found'
         >
-    >
+    >>
     {
-        const assignment = this.assignmentDAO.get(input.assignmentId);
+        const assignment = await this.assignmentDAO.get(input.assignmentId);
         if (!assignment || assignment.virtual_channel_id !== input.virtualChannelId) {
             return this.buildError('assignment_not_found', 404, 'Assignment not found.');
         }
@@ -236,14 +248,14 @@ export class AdminVirtualChannelManageService
         }
 
         for (const videoId of input.videoIds) {
-            const video = this.videoDAO.get(videoId);
+            const video = await this.videoDAO.get(videoId);
             if (!video || video.channel_id !== assignment.source_channel_id) {
                 return this.buildError('video_not_found', 404, `Video ${videoId} is not available for this assignment.`);
             }
         }
 
         for (const videoId of input.videoIds) {
-            this.selectionDAO.setReviewState(input.assignmentId, videoId, input.reviewState);
+            await this.selectionDAO.setReviewState(input.assignmentId, videoId, input.reviewState);
         }
 
         return {
@@ -254,17 +266,17 @@ export class AdminVirtualChannelManageService
         };
     }
 
-    private buildAssociatedSourceChannelView(
+    private async buildAssociatedSourceChannelView(
         assignment: VirtualChannelAssignment,
         sourceChannelsById: Map<number, SourceChannel>,
         searchParams: URLSearchParams
-    ): AdminAssociatedSourceChannelView
+    ): Promise<AdminAssociatedSourceChannelView>
     {
         const regexFilter = searchParams.get(`regexFilter-${assignment.id}`)?.trim() ?? '';
         const videoTypeFilter = this.getVideoTypeFilter(searchParams, assignment.id);
-        const sourceVideos = this.videoDAO.listByChannel(assignment.source_channel_id);
+        const sourceVideos = await this.videoDAO.listByChannel(assignment.source_channel_id);
         const selectionRows = assignment.mode === 'selected_only'
-            ? this.selectionDAO.listForAssignment(assignment.id)
+            ? await this.selectionDAO.listForAssignment(assignment.id)
             : [];
         const selectionByVideoId = new Map(selectionRows.map((row) => [row.video_id, row]));
 

@@ -15,9 +15,9 @@ export const load: PageServerLoad = async ({ params, url }) =>
         throw error(404, 'Virtual channel not found');
     }
 
-    return ServerDatabaseContext.run(({ db }) => {
+    return ServerDatabaseContext.run(async ({ db }) => {
         const serviceContext = AdminVirtualChannelServiceContext.resolve(db);
-        const result = serviceContext.manageService.loadPageData({
+        const result = await serviceContext.manageService.loadPageData({
             virtualChannelId,
             searchParams: url.searchParams
         });
@@ -62,9 +62,9 @@ export const actions: Actions = {
             return fail(400, { message: 'A valid source channel is required.' });
         }
 
-        return ServerDatabaseContext.run(({ db }) => {
+        return ServerDatabaseContext.run(async ({ db }) => {
             const serviceContext = AdminVirtualChannelServiceContext.resolve(db);
-            const result = serviceContext.manageService.addAssociation({
+            const result = await serviceContext.manageService.addAssociation({
                 virtualChannelId,
                 sourceChannelId,
                 mode
@@ -97,9 +97,9 @@ export const actions: Actions = {
             return fail(400, { message: 'A valid assignment is required.' });
         }
 
-        return ServerDatabaseContext.run(({ db }) => {
+        return ServerDatabaseContext.run(async ({ db }) => {
             const serviceContext = AdminVirtualChannelServiceContext.resolve(db);
-            const result = serviceContext.manageService.updateAssociationMode({
+            const result = await serviceContext.manageService.updateAssociationMode({
                 virtualChannelId,
                 assignmentId,
                 mode
@@ -127,9 +127,9 @@ export const actions: Actions = {
             return fail(400, { message: 'A valid assignment is required.' });
         }
 
-        return ServerDatabaseContext.run(({ db }) => {
+        return ServerDatabaseContext.run(async ({ db }) => {
             const serviceContext = AdminVirtualChannelServiceContext.resolve(db);
-            const result = serviceContext.manageService.removeAssociation({
+            const result = await serviceContext.manageService.removeAssociation({
                 virtualChannelId,
                 assignmentId
             });
@@ -158,9 +158,9 @@ export const actions: Actions = {
             return fail(400, { message: 'A valid assignment and video are required.' });
         }
 
-        return ServerDatabaseContext.run(({ db }) => {
+        return ServerDatabaseContext.run(async ({ db }) => {
             const serviceContext = AdminVirtualChannelServiceContext.resolve(db);
-            const result = serviceContext.manageService.setVideoReviewState({
+            const result = await serviceContext.manageService.setVideoReviewState({
                 virtualChannelId,
                 assignmentId,
                 videoId,
@@ -199,9 +199,9 @@ export const actions: Actions = {
             return fail(400, { message: 'At least one video is required for bulk update.' });
         }
 
-        return ServerDatabaseContext.run(({ db }) => {
+        return ServerDatabaseContext.run(async ({ db }) => {
             const serviceContext = AdminVirtualChannelServiceContext.resolve(db);
-            const result = serviceContext.manageService.bulkUpdateVideoReviewState({
+            const result = await serviceContext.manageService.bulkUpdateVideoReviewState({
                 virtualChannelId,
                 assignmentId,
                 videoIds,

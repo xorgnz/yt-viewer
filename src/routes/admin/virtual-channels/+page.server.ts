@@ -6,9 +6,9 @@ import { AdminVirtualChannelServiceContext } from '$lib/server/admin/AdminVirtua
 
 export const load: PageServerLoad = async () =>
 {
-    return ServerDatabaseContext.run(({ db }) => {
+    return ServerDatabaseContext.run(async ({ db }) => {
         const serviceContext = AdminVirtualChannelServiceContext.resolve(db);
-        return serviceContext.indexService.loadPageData();
+        return await serviceContext.indexService.loadPageData();
     });
 };
 
@@ -18,9 +18,9 @@ export const actions: Actions = {
         const name = form.getTrimmedString('name');
         if (!name) return fail(400, { message: 'Name is required' });
 
-        const result = await ServerDatabaseContext.run(({ db }) => {
+        const result = await ServerDatabaseContext.run(async ({ db }) => {
             const serviceContext = AdminVirtualChannelServiceContext.resolve(db);
-            return serviceContext.indexService.createVirtualChannel({ name });
+            return await serviceContext.indexService.createVirtualChannel({ name });
         });
 
         if (!result.ok) {
@@ -36,9 +36,9 @@ export const actions: Actions = {
         const name = form.getTrimmedString('name');
         if (id === null || !name) return fail(400, { message: 'Invalid input' });
 
-        const result = await ServerDatabaseContext.run(({ db }) => {
+        const result = await ServerDatabaseContext.run(async ({ db }) => {
             const serviceContext = AdminVirtualChannelServiceContext.resolve(db);
-            return serviceContext.indexService.renameVirtualChannel({ id, name });
+            return await serviceContext.indexService.renameVirtualChannel({ id, name });
         });
 
         if (!result.ok) {
@@ -53,9 +53,9 @@ export const actions: Actions = {
         const id = form.getPositiveInteger('id');
         if (id === null) return fail(400, { message: 'Invalid id' });
 
-        const result = await ServerDatabaseContext.run(({ db }) => {
+        const result = await ServerDatabaseContext.run(async ({ db }) => {
             const serviceContext = AdminVirtualChannelServiceContext.resolve(db);
-            return serviceContext.indexService.deleteVirtualChannel({ id });
+            return await serviceContext.indexService.deleteVirtualChannel({ id });
         });
 
         if (!result.ok) {
@@ -78,9 +78,9 @@ export const actions: Actions = {
             return fail(400, { message: 'A valid source channel is required.', virtualChannelId });
         }
 
-        return ServerDatabaseContext.run(({ db }) => {
+        return ServerDatabaseContext.run(async ({ db }) => {
             const serviceContext = AdminVirtualChannelServiceContext.resolve(db);
-            const result = serviceContext.indexService.addInlineAssociation({
+            const result = await serviceContext.indexService.addInlineAssociation({
                 virtualChannelId,
                 sourceChannelId
             });
@@ -109,9 +109,9 @@ export const actions: Actions = {
             return fail(400, { message: 'A valid source channel is required.', virtualChannelId });
         }
 
-        return ServerDatabaseContext.run(({ db }) => {
+        return ServerDatabaseContext.run(async ({ db }) => {
             const serviceContext = AdminVirtualChannelServiceContext.resolve(db);
-            const result = serviceContext.indexService.removeInlineAssociation({
+            const result = await serviceContext.indexService.removeInlineAssociation({
                 virtualChannelId,
                 sourceChannelId
             });

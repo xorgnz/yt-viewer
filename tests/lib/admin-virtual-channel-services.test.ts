@@ -49,7 +49,7 @@ describe('admin virtual channel services', () => {
         );
     }
 
-    it('adds an inline association and returns the refreshed virtual channel row', () => {
+    it('adds an inline association and returns the refreshed virtual channel row', async () => {
         insertSourceChannel(db, {
             id: 1,
             youtubeId: 'UC_INDEX_1',
@@ -80,7 +80,7 @@ describe('admin virtual channel services', () => {
         insertVirtualChannel(db, { id: 1, name: 'Index Channel 1' });
         insertAssignment(db, { id: 1, sourceChannelId: 1, virtualChannelId: 1, mode: 'all' });
 
-        const result = createIndexService().addInlineAssociation({
+        const result = await createIndexService().addInlineAssociation({
             virtualChannelId: 1,
             sourceChannelId: 3
         });
@@ -133,7 +133,7 @@ describe('admin virtual channel services', () => {
         });
     });
 
-    it('reports a missing assignment when inline removal targets an unassociated source channel', () => {
+    it('reports a missing assignment when inline removal targets an unassociated source channel', async () => {
         insertSourceChannel(db, {
             id: 1,
             youtubeId: 'UC_REMOVE',
@@ -145,7 +145,7 @@ describe('admin virtual channel services', () => {
         });
         insertVirtualChannel(db, { id: 1, name: 'Remove Channel' });
 
-        const result = createIndexService().removeInlineAssociation({
+        const result = await createIndexService().removeInlineAssociation({
             virtualChannelId: 1,
             sourceChannelId: 1
         });
@@ -161,7 +161,7 @@ describe('admin virtual channel services', () => {
         });
     });
 
-    it('loads selected-only review data with assignment-level filter state', () => {
+    it('loads selected-only review data with assignment-level filter state', async () => {
         insertSourceChannel(db, {
             id: 1,
             youtubeId: 'UC_MANAGE_1',
@@ -201,7 +201,7 @@ describe('admin virtual channel services', () => {
             reviewState: 'included'
         });
 
-        const result = createManageService().loadPageData({
+        const result = await createManageService().loadPageData({
             virtualChannelId: 1,
             searchParams: new URLSearchParams('reviewStateFilter-1=not_yet_reviewed&videoTypeFilter-1=unknown&regexFilter-1=manage')
         });
@@ -255,7 +255,7 @@ describe('admin virtual channel services', () => {
         ]);
     });
 
-    it('bulk updates review state through the service and preserves the return query', () => {
+    it('bulk updates review state through the service and preserves the return query', async () => {
         insertSourceChannel(db, {
             id: 1,
             youtubeId: 'UC_BULK',
@@ -290,7 +290,7 @@ describe('admin virtual channel services', () => {
             lengthClassification: 'long'
         });
 
-        const result = createManageService().bulkUpdateVideoReviewState({
+        const result = await createManageService().bulkUpdateVideoReviewState({
             virtualChannelId: 1,
             assignmentId: 1,
             videoIds: [1, 2],

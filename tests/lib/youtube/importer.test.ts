@@ -93,7 +93,12 @@ describe('youtube importer (task 3.3)', () => {
 
     it('imports channel and videos, then is idempotent on re-run', async () => {
         const yt = fakeClient();
-        const importer = new YouTubeChannelImportService(db, yt);
+        const importer = new YouTubeChannelImportService(
+            yt,
+            undefined,
+            new SourceChannelDAO(db),
+            new VideoDAO(db)
+        );
         const res1 = await importer.importChannel('UC_DEMO');
         expect(res1.channelId).toBeGreaterThan(0);
         expect(res1.videosUpserted).toBe(2);
@@ -179,7 +184,12 @@ describe('youtube importer (task 3.3)', () => {
             }
         };
 
-        const importer = new YouTubeChannelImportService(db, client as YouTubeClient);
+        const importer = new YouTubeChannelImportService(
+            client as YouTubeClient,
+            undefined,
+            new SourceChannelDAO(db),
+            new VideoDAO(db)
+        );
         await importer.importChannel('UC_DEMO');
 
         const sourceChannelDao = new SourceChannelDAO(db);
@@ -248,7 +258,12 @@ describe('youtube importer (task 3.3)', () => {
             }
         };
 
-        const importer = new YouTubeChannelImportService(db, client as YouTubeClient);
+        const importer = new YouTubeChannelImportService(
+            client as YouTubeClient,
+            undefined,
+            new SourceChannelDAO(db),
+            new VideoDAO(db)
+        );
         await importer.importChannel('UC_DEMO');
 
         const sourceChannelDao = new SourceChannelDAO(db);

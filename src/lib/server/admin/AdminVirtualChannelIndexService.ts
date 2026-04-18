@@ -1,6 +1,7 @@
-import { AssignmentDAO } from '$lib/daos/assignmentDAO';
-import { SourceChannelDAO } from '$lib/daos/sourceChannelDAO';
-import { VirtualChannelDAO } from '$lib/daos/virtualChannelDAO';
+import type { AssignmentDAO, PostgresAssignmentDAO } from '$lib/daos/assignmentDAO';
+import type { PostgresSourceChannelDAO, SourceChannelDAO } from '$lib/daos/sourceChannelDAO';
+import type { PostgresVirtualChannelDAO, VirtualChannelDAO } from '$lib/daos/virtualChannelDAO';
+import type { SourceChannel } from '$lib/entities/sourceChannel';
 import type { VirtualChannel } from '$lib/entities/virtualChannel';
 import type {
     AdminVirtualChannelIndexPageData,
@@ -11,6 +12,11 @@ import type {
     AdminVirtualChannelServiceError,
     AdminVirtualChannelServiceResult
 } from '$lib/server/admin/AdminVirtualChannelTypes';
+
+type AdminVirtualChannelDAO = Pick<PostgresVirtualChannelDAO | VirtualChannelDAO, 'create' | 'get' | 'list' | 'remove' | 'rename'>;
+type AdminAssignmentDAO = Pick<PostgresAssignmentDAO | AssignmentDAO, 'add' | 'listForVirtualChannel' | 'remove'>;
+type AdminSourceChannelDAO = Pick<PostgresSourceChannelDAO | SourceChannelDAO, 'get' | 'list'>;
+type AdminAssignmentRows = Awaited<ReturnType<AdminAssignmentDAO['listForVirtualChannel']>>;
 
 export interface CreateVirtualChannelInput
 {
@@ -38,14 +44,14 @@ export class AdminVirtualChannelIndexService
 {
     private static readonly INDEX_PATH = '/admin/virtual-channels';
 
-    private readonly virtualChannelDAO: VirtualChannelDAO;
-    private readonly assignmentDAO: AssignmentDAO;
-    private readonly sourceChannelDAO: SourceChannelDAO;
+    private readonly virtualChannelDAO: AdminVirtualChannelDAO;
+    private readonly assignmentDAO: AdminAssignmentDAO;
+    private readonly sourceChannelDAO: AdminSourceChannelDAO;
 
     constructor(
-        virtualChannelDAO: VirtualChannelDAO,
-        assignmentDAO: AssignmentDAO,
-        sourceChannelDAO: SourceChannelDAO
+        virtualChannelDAO: AdminVirtualChannelDAO,
+        assignmentDAO: AdminAssignmentDAO,
+        sourceChannelDAO: AdminSourceChannelDAO
     )
     {
         this.virtualChannelDAO = virtualChannelDAO;
@@ -53,12 +59,14 @@ export class AdminVirtualChannelIndexService
         this.sourceChannelDAO = sourceChannelDAO;
     }
 
-    loadPageData(): AdminVirtualChannelIndexPageData
+    async loadPageData(): Promise<AdminVirtualChannelIndexPageData>
     {
-        const allSourceChannels = this.sourceChannelDAO.list();
-        const groups = this.virtualChannelDAO
-            .list()
-            .map((virtualChannel) => this.buildVirtualChannelRow(virtualChannel, allSourceChannels));
+        const allSourceChannels = await this.sourceChannelDAO.list();
+        const virtualChannels = await this.virtualChannelDAO.list();
+        const groups = await Promise.all(virtualChannels.map(async (virtualChannel) => {
+            const assignments = await this.assignmentDAO.listForVirtualChannel(virtualChannel.id);
+            return this.buildVirtualChannelRow(virtualChannel, allSourceChannels, assignments);
+        }));
 
         return {
             groups,
@@ -66,13 +74,13 @@ export class AdminVirtualChannelIndexService
         };
     }
 
-    createVirtualChannel(input: CreateVirtualChannelInput): AdminVirtualChannelServiceResult<
+    async createVirtualChannel(input: CreateVirtualChannelInput): Promise<AdminVirtualChannelServiceResult<
         AdminVirtualChannelRedirect,
         AdminVirtualChannelServiceError<'create_virtual_channel_failed'>
-    >
+    >>
     {
         try {
-            this.virtualChannelDAO.create(input.name);
+            await this.virtualChannelDAO.create(input.name);
 
             return {
                 ok: true,
@@ -90,13 +98,13 @@ export class AdminVirtualChannelIndexService
         }
     }
 
-    renameVirtualChannel(input: RenameVirtualChannelInput): AdminVirtualChannelServiceResult<
+    async renameVirtualChannel(input: RenameVirtualChannelInput): Promise<AdminVirtualChannelServiceResult<
         AdminVirtualChannelRedirect,
         AdminVirtualChannelServiceError<'rename_virtual_channel_failed'>
-    >
+    >>
     {
         try {
-            this.virtualChannelDAO.rename(input.id, input.name);
+            await this.virtualChannelDAO.rename(input.id, input.name);
 
             return {
                 ok: true,
@@ -114,13 +122,13 @@ export class AdminVirtualChannelIndexService
         }
     }
 
-    deleteVirtualChannel(input: DeleteVirtualChannelInput): AdminVirtualChannelServiceResult<
+    async deleteVirtualChannel(input: DeleteVirtualChannelInput): Promise<AdminVirtualChannelServiceResult<
         AdminVirtualChannelRedirect,
         AdminVirtualChannelServiceError<'delete_virtual_channel_failed'>
-    >
+    >>
     {
         try {
-            this.virtualChannelDAO.remove(input.id);
+            await this.virtualChannelDAO.remove(input.id);
 
             return {
                 ok: true,
@@ -138,18 +146,18 @@ export class AdminVirtualChannelIndexService
         }
     }
 
-    addInlineAssociation(input: AdminInlineAssociationInput): AdminVirtualChannelServiceResult<
+    async addInlineAssociation(input: AdminInlineAssociationInput): Promise<AdminVirtualChannelServiceResult<
         AdminVirtualChannelInlineMutationData,
         AdminVirtualChannelInlineServiceError<
             'virtual_channel_not_found' |
             'source_channel_not_found' |
             'add_inline_association_failed'
         >
-    >
+    >>
     {
         try {
-            const allSourceChannels = this.sourceChannelDAO.list();
-            const virtualChannel = this.virtualChannelDAO.get(input.virtualChannelId);
+            const allSourceChannels = await this.sourceChannelDAO.list();
+            const virtualChannel = await this.virtualChannelDAO.get(input.virtualChannelId);
 
             if (!virtualChannel) {
                 return this.buildInlineError(
@@ -160,7 +168,7 @@ export class AdminVirtualChannelIndexService
                 );
             }
 
-            if (!this.sourceChannelDAO.get(input.sourceChannelId)) {
+            if (!await this.sourceChannelDAO.get(input.sourceChannelId)) {
                 return this.buildInlineError(
                     'source_channel_not_found',
                     404,
@@ -169,12 +177,13 @@ export class AdminVirtualChannelIndexService
                 );
             }
 
-            this.assignmentDAO.add(input.sourceChannelId, input.virtualChannelId);
+            await this.assignmentDAO.add(input.sourceChannelId, input.virtualChannelId);
+            const assignments = await this.assignmentDAO.listForVirtualChannel(input.virtualChannelId);
 
             return {
                 ok: true,
                 data: {
-                    group: this.buildVirtualChannelRow(virtualChannel, allSourceChannels),
+                    group: this.buildVirtualChannelRow(virtualChannel, allSourceChannels, assignments),
                     message: 'Source channel added.',
                     virtualChannelId: input.virtualChannelId
                 }
@@ -189,18 +198,18 @@ export class AdminVirtualChannelIndexService
         }
     }
 
-    removeInlineAssociation(input: AdminInlineAssociationInput): AdminVirtualChannelServiceResult<
+    async removeInlineAssociation(input: AdminInlineAssociationInput): Promise<AdminVirtualChannelServiceResult<
         AdminVirtualChannelInlineMutationData,
         AdminVirtualChannelInlineServiceError<
             'virtual_channel_not_found' |
             'assignment_not_found' |
             'remove_inline_association_failed'
         >
-    >
+    >>
     {
         try {
-            const allSourceChannels = this.sourceChannelDAO.list();
-            const virtualChannel = this.virtualChannelDAO.get(input.virtualChannelId);
+            const allSourceChannels = await this.sourceChannelDAO.list();
+            const virtualChannel = await this.virtualChannelDAO.get(input.virtualChannelId);
 
             if (!virtualChannel) {
                 return this.buildInlineError(
@@ -211,8 +220,8 @@ export class AdminVirtualChannelIndexService
                 );
             }
 
-            const assignment = this.assignmentDAO
-                .listForVirtualChannel(input.virtualChannelId)
+            const currentAssignments = await this.assignmentDAO.listForVirtualChannel(input.virtualChannelId);
+            const assignment = currentAssignments
                 .find((candidate) => candidate.source_channel_id === input.sourceChannelId);
 
             if (!assignment) {
@@ -224,12 +233,13 @@ export class AdminVirtualChannelIndexService
                 );
             }
 
-            this.assignmentDAO.remove(input.sourceChannelId, input.virtualChannelId);
+            await this.assignmentDAO.remove(input.sourceChannelId, input.virtualChannelId);
+            const assignments = await this.assignmentDAO.listForVirtualChannel(input.virtualChannelId);
 
             return {
                 ok: true,
                 data: {
-                    group: this.buildVirtualChannelRow(virtualChannel, allSourceChannels),
+                    group: this.buildVirtualChannelRow(virtualChannel, allSourceChannels, assignments),
                     message: 'Source channel removed.',
                     virtualChannelId: input.virtualChannelId
                 }
@@ -246,12 +256,12 @@ export class AdminVirtualChannelIndexService
 
     private buildVirtualChannelRow(
         virtualChannel: Pick<VirtualChannel, 'id' | 'name'>,
-        allSourceChannels: ReturnType<SourceChannelDAO['list']>
+        allSourceChannels: SourceChannel[],
+        assignments: AdminAssignmentRows
     ): AdminVirtualChannelRow
     {
         // Shape the current assignments and remaining inline add options for one row.
         const sourceChannelsById = new Map(allSourceChannels.map((channel) => [channel.id, channel]));
-        const assignments = this.assignmentDAO.listForVirtualChannel(virtualChannel.id);
         const associatedSourceChannels = assignments.map((assignment) => ({
             assignment,
             sourceChannel: sourceChannelsById.get(assignment.source_channel_id) ?? null

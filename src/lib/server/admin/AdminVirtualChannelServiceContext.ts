@@ -31,16 +31,16 @@ export class AdminVirtualChannelServiceContext
 
         return new AdminVirtualChannelServiceContext(
             new AdminVirtualChannelIndexService(
-                virtualChannelDAO as never,
-                assignmentDAO as never,
-                sourceChannelDAO as never
+                virtualChannelDAO,
+                assignmentDAO,
+                sourceChannelDAO
             ),
             new AdminVirtualChannelManageService(
-                virtualChannelDAO as never,
-                assignmentDAO as never,
-                sourceChannelDAO as never,
-                videoDAO as never,
-                selectionDAO as never
+                virtualChannelDAO,
+                assignmentDAO,
+                sourceChannelDAO,
+                videoDAO,
+                selectionDAO
             )
         );
     }

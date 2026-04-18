@@ -1,5 +1,4 @@
-import type Database from 'better-sqlite3';
-import { SourceChannelDAO } from '$lib/daos/sourceChannelDAO';
+import type { PostgresSourceChannelDAO, SourceChannelDAO } from '$lib/daos/sourceChannelDAO';
 import { AdminSourceChannelYouTubeCoordinator } from '$lib/server/admin/AdminSourceChannelYouTubeCoordinator';
 import { AdminYouTubeClientProvider } from '$lib/server/admin/AdminYouTubeClientProvider';
 import type {
@@ -14,18 +13,23 @@ import type {
 } from '$lib/server/admin/AdminSourceChannelTypes';
 import { YouTubeApiError } from '$lib/youtube/youTubeClient';
 
+type AdminSourceChannelDAO = Pick<
+    SourceChannelDAO | PostgresSourceChannelDAO,
+    'get' | 'listWithVideoStats' | 'markRefreshed' | 'remove' | 'upsert'
+>;
+
 export class AdminSourceChannelPageService
 {
     private static readonly INDEX_PATH = '/admin/source-channels';
 
-    private readonly db: Database.Database;
-    private readonly sourceChannelDAO: SourceChannelDAO;
+    private readonly db: unknown;
+    private readonly sourceChannelDAO: AdminSourceChannelDAO;
     private readonly clientProvider: AdminYouTubeClientProvider;
     private readonly youTubeCoordinator: AdminSourceChannelYouTubeCoordinator;
 
     constructor(
-        db: Database.Database,
-        sourceChannelDAO: SourceChannelDAO,
+        db: unknown,
+        sourceChannelDAO: AdminSourceChannelDAO,
         clientProvider: AdminYouTubeClientProvider,
         youTubeCoordinator: AdminSourceChannelYouTubeCoordinator
     )
@@ -36,10 +40,10 @@ export class AdminSourceChannelPageService
         this.youTubeCoordinator = youTubeCoordinator;
     }
 
-    loadPageData(): AdminSourceChannelPageData
+    async loadPageData(): Promise<AdminSourceChannelPageData>
     {
         return {
-            channels: this.sourceChannelDAO.listWithVideoStats()
+            channels: await this.sourceChannelDAO.listWithVideoStats()
         };
     }
 
@@ -74,7 +78,7 @@ export class AdminSourceChannelPageService
             const metadataThumbnailUrl = this.getBestThumbnailUrl(snippet.thumbnails as Record<string, { url?: string }> | undefined);
             const metadataPublishedAt = snippet.publishedAt ? Date.parse(snippet.publishedAt) : null;
 
-            this.sourceChannelDAO.upsert({
+            await this.sourceChannelDAO.upsert({
                 youtube_id: resolved.channelId,
                 title: input.title || snippet.title || '',
                 description: input.description || snippet.description || '',
@@ -96,17 +100,17 @@ export class AdminSourceChannelPageService
         }
     }
 
-    updateSourceChannel(input: UpdateAdminSourceChannelInput): AdminSourceChannelServiceResult<
+    async updateSourceChannel(input: UpdateAdminSourceChannelInput): Promise<AdminSourceChannelServiceResult<
         AdminSourceChannelRedirect,
         AdminSourceChannelServiceError<'source_channel_not_found'>
-    >
+    >>
     {
-        const existing = this.sourceChannelDAO.get(input.id);
+        const existing = await this.sourceChannelDAO.get(input.id);
         if (!existing) {
             return this.buildError('source_channel_not_found', 404, 'SourceChannel not found.');
         }
 
-        this.sourceChannelDAO.upsert({
+        await this.sourceChannelDAO.upsert({
             youtube_id: existing.youtube_id,
             title: input.title,
             description: input.description,
@@ -120,9 +124,9 @@ export class AdminSourceChannelPageService
         };
     }
 
-    deleteSourceChannel(input: DeleteAdminSourceChannelInput): AdminSourceChannelRedirect
+    async deleteSourceChannel(input: DeleteAdminSourceChannelInput): Promise<AdminSourceChannelRedirect>
     {
-        this.sourceChannelDAO.remove(input.id);
+        await this.sourceChannelDAO.remove(input.id);
         return {
             redirectTo: AdminSourceChannelPageService.INDEX_PATH
         };
@@ -133,7 +137,7 @@ export class AdminSourceChannelPageService
         AdminSourceChannelServiceError
     >>
     {
-        const existing = this.sourceChannelDAO.get(input.id);
+        const existing = await this.sourceChannelDAO.get(input.id);
         if (!existing) {
             return this.buildError('source_channel_not_found', 404, 'SourceChannel not found.');
         }
@@ -164,7 +168,7 @@ export class AdminSourceChannelPageService
                 );
             }
 
-            this.sourceChannelDAO.markRefreshed(input.id, Date.now());
+            await this.sourceChannelDAO.markRefreshed(input.id, Date.now());
             return {
                 ok: true,
                 data: { redirectTo: AdminSourceChannelPageService.INDEX_PATH }
