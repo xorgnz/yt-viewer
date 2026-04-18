@@ -4,6 +4,8 @@ import { SchemaVersionDAO } from '$lib/daos/schemaVersionDAO';
 import { ALL_DDL, POSTGRES_ALL_DDL, POSTGRES_CREATE_TABLE_META, SCHEMA_VERSION } from '$lib/daos/_schema';
 import type { PostgresPoolWrapper } from '$lib/daos/shared/PostgresPoolWrapper';
 
+type PostgresClientProvider = Pick<PostgresPoolWrapper, 'withClient'>;
+
 export class LatestSchemaBootstrapper
 {
     apply(db: Database.Database): void
@@ -30,7 +32,7 @@ export function applyLatestSchemaBootstrap(db: Database.Database): void
 
 export class PostgresLatestSchemaBootstrapper
 {
-    async apply(pool: PostgresPoolWrapper): Promise<void>
+    async apply(pool: PostgresClientProvider): Promise<void>
     {
         await pool.withClient(async (client) => {
             await this.applyWithClient(client);
@@ -64,7 +66,7 @@ export class PostgresLatestSchemaBootstrapper
     }
 }
 
-export async function applyLatestPostgresSchemaBootstrap(pool: PostgresPoolWrapper): Promise<void>
+export async function applyLatestPostgresSchemaBootstrap(pool: PostgresClientProvider): Promise<void>
 {
     await new PostgresLatestSchemaBootstrapper().apply(pool);
 }

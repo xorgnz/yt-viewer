@@ -35,11 +35,11 @@
   - [x] 1.3 Update npm scripts so production startup and DB lifecycle scripts align with `node build` and Postgres migration/bootstrap execution.
   - [x] 1.4 Update configuration loading to require `DATABASE_URL` for server-side runtime paths used by app requests and scripts.
 
-- [ ] 2.0 Implement Postgres persistence infrastructure and migration execution
+- [x] 2.0 Implement Postgres persistence infrastructure and migration execution
   - [x] 2.1 Introduce a shared Postgres connection/pool wrapper to replace SQLite file-based wrapper assumptions.
   - [x] 2.2 Port schema bootstrap and forward migration execution from SQLite adapters to Postgres-compatible SQL and transaction handling.
   - [x] 2.3 Update migration registry and migration helpers so new migrations run correctly against Postgres in local and production environments.
-  - [ ] 2.4 Update database setup scripts to create or validate Postgres schema state without SQLite file operations.
+  - [x] 2.4 Update database setup scripts to create or validate Postgres schema state without SQLite file operations.
 
 - [ ] 3.0 Migrate data-access and server flows from SQLite bindings to Postgres
   - [ ] 3.1 Refactor shared DAO base utilities to use Postgres parameter binding and result mapping conventions.
