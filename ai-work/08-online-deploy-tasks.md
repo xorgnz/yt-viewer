@@ -37,7 +37,7 @@
 
 - [ ] 2.0 Implement Postgres persistence infrastructure and migration execution
   - [x] 2.1 Introduce a shared Postgres connection/pool wrapper to replace SQLite file-based wrapper assumptions.
-  - [ ] 2.2 Port schema bootstrap and forward migration execution from SQLite adapters to Postgres-compatible SQL and transaction handling.
+  - [x] 2.2 Port schema bootstrap and forward migration execution from SQLite adapters to Postgres-compatible SQL and transaction handling.
   - [ ] 2.3 Update migration registry and migration helpers so new migrations run correctly against Postgres in local and production environments.
   - [ ] 2.4 Update database setup scripts to create or validate Postgres schema state without SQLite file operations.
 

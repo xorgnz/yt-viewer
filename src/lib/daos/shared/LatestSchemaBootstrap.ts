@@ -1,6 +1,8 @@
 import type Database from 'better-sqlite3';
+import type { PoolClient } from 'pg';
 import { SchemaVersionDAO } from '$lib/daos/schemaVersionDAO';
-import { ALL_DDL, SCHEMA_VERSION } from '$lib/daos/_schema';
+import { ALL_DDL, POSTGRES_ALL_DDL, POSTGRES_CREATE_TABLE_META, SCHEMA_VERSION } from '$lib/daos/_schema';
+import type { PostgresPoolWrapper } from '$lib/daos/shared/PostgresPoolWrapper';
 
 export class LatestSchemaBootstrapper
 {
@@ -24,4 +26,45 @@ export class LatestSchemaBootstrapper
 export function applyLatestSchemaBootstrap(db: Database.Database): void
 {
     new LatestSchemaBootstrapper().apply(db);
+}
+
+export class PostgresLatestSchemaBootstrapper
+{
+    async apply(pool: PostgresPoolWrapper): Promise<void>
+    {
+        await pool.withClient(async (client) => {
+            await this.applyWithClient(client);
+        });
+    }
+
+    async applyWithClient(client: PoolClient): Promise<void>
+    {
+        await client.query('BEGIN');
+
+        try {
+            await client.query(POSTGRES_CREATE_TABLE_META);
+
+            for (const ddl of POSTGRES_ALL_DDL) {
+                await client.query(ddl);
+            }
+
+            await client.query(
+                `
+                    INSERT INTO _meta(key, value) VALUES('schema_version', $1)
+                    ON CONFLICT(key) DO UPDATE SET value=EXCLUDED.value
+                `,
+                [String(SCHEMA_VERSION)]
+            );
+
+            await client.query('COMMIT');
+        } catch (error) {
+            await client.query('ROLLBACK');
+            throw error;
+        }
+    }
+}
+
+export async function applyLatestPostgresSchemaBootstrap(pool: PostgresPoolWrapper): Promise<void>
+{
+    await new PostgresLatestSchemaBootstrapper().apply(pool);
 }
