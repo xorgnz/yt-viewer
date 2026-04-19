@@ -172,3 +172,4 @@ describe('SQLiteToPostgresMigrator', () => {
         }
     });
 });
+// apply-patch-anchor - do not delete

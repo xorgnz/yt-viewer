@@ -121,3 +121,4 @@ describe('PostgresPoolWrapper', () => {
         expect(wrapper.instance).toBeNull();
     });
 });
+// apply-patch-anchor - do not delete

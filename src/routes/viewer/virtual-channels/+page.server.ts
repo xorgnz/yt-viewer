@@ -9,3 +9,4 @@ export const load: PageServerLoad = async ({ cookies }) =>
         return serviceContext.virtualChannelService.loadNavigation();
     });
 };
+// apply-patch-anchor - do not delete

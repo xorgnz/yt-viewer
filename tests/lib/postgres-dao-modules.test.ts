@@ -76,3 +76,4 @@ describe('Postgres DAO modules', () => {
         expect(provider.calls.some((call) => call.text.includes('COUNT(DISTINCT v.id)::INTEGER'))).toBe(true);
     });
 });
+// apply-patch-anchor - do not delete

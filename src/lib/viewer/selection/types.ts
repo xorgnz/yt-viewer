@@ -39,3 +39,4 @@ export interface ViewerSelectionContextInput
     channelId: number | null;
     groupId: number | null;
 }
+// apply-patch-anchor - do not delete

@@ -79,3 +79,4 @@ describe('VideoDAO length classification persistence', () => {
         expect(dao.get(video.id)).toBeUndefined();
     });
 });
+// apply-patch-anchor - do not delete

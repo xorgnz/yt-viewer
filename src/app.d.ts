@@ -5,3 +5,4 @@ declare namespace App {
   // interface PageData {}
   // interface Platform {}
 }
+// apply-patch-anchor - do not delete

@@ -43,3 +43,4 @@ describe('profile helpers', () => {
         expect(ProfileReturnPathPolicy.sanitize('')).toBe('/viewer');
     });
 });
+// apply-patch-anchor - do not delete

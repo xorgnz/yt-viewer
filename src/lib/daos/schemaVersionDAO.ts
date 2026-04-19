@@ -34,3 +34,4 @@ export class SchemaVersionDAO
             .run(String(version));
     }
 }
+// apply-patch-anchor - do not delete

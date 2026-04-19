@@ -31,3 +31,4 @@ export class VirtualChannel
         );
     }
 }
+// apply-patch-anchor - do not delete

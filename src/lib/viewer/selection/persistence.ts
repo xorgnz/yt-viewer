@@ -105,3 +105,4 @@ class ViewerSelectionSessionStore
 }
 
 export const viewerSelectionSessionStore = new ViewerSelectionSessionStore();
+// apply-patch-anchor - do not delete

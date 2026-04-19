@@ -73,3 +73,4 @@ describe('applyLatestSchemaBootstrap', () => {
         expect(queries).toEqual(['BEGIN', POSTGRES_CREATE_TABLE_META, 'ROLLBACK']);
     });
 });
+// apply-patch-anchor - do not delete

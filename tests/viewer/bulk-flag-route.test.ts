@@ -680,3 +680,4 @@ describe('viewer bulk flag actions', () => {
         }
     });
 });
+// apply-patch-anchor - do not delete

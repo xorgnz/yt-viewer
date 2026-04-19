@@ -70,3 +70,4 @@ export async function applyLatestPostgresSchemaBootstrap(pool: PostgresClientPro
 {
     await new PostgresLatestSchemaBootstrapper().apply(pool);
 }
+// apply-patch-anchor - do not delete

@@ -274,3 +274,4 @@ export class AsyncMigrationRunner
         };
     }
 }
+// apply-patch-anchor - do not delete

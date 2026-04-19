@@ -93,3 +93,4 @@ export interface AdminVirtualChannelManagePageData
     associatedSourceChannels: AdminAssociatedSourceChannelView[];
     availableSourceChannels: SourceChannel[];
 }
+// apply-patch-anchor - do not delete

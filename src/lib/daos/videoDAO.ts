@@ -118,3 +118,4 @@ export class PostgresVideoDAO extends PostgresDAO
         await this.run(`DELETE FROM videos WHERE id = ?`, [id]);
     }
 }
+// apply-patch-anchor - do not delete

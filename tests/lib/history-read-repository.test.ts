@@ -156,3 +156,4 @@ describe('HistoryReadRepository', () => {
         });
     });
 });
+// apply-patch-anchor - do not delete

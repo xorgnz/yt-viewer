@@ -151,3 +151,4 @@ describe('ServerDatabaseContext', () => {
         expect(failingWrappers[0].instance).toBeNull();
     });
 });
+// apply-patch-anchor - do not delete

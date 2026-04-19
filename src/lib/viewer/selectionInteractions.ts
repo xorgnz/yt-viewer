@@ -81,3 +81,4 @@ export const viewerSelectionInteractions = {
     shouldPreventViewerCardMouseDown,
     shouldClearViewerSelectionFromBackground
 };
+// apply-patch-anchor - do not delete

@@ -139,3 +139,4 @@ export const viewerBulkActions = {
     restoreVisibleVideoSnapshots,
     updateVisibleVideoFlag
 };
+// apply-patch-anchor - do not delete

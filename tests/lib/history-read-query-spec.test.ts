@@ -42,3 +42,4 @@ describe('History read query specs', () => {
         expect(queryParts.offset).toBe(0);
     });
 });
+// apply-patch-anchor - do not delete

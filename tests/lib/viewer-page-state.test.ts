@@ -97,3 +97,4 @@ describe('viewer page state helpers', () => {
         expect(summary.ignoredControlState).toBe('unchecked');
     });
 });
+// apply-patch-anchor - do not delete

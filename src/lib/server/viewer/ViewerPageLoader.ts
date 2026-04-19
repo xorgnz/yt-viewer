@@ -40,3 +40,4 @@ export class ViewerPageLoader
         };
     }
 }
+// apply-patch-anchor - do not delete

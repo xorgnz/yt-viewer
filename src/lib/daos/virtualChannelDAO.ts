@@ -63,3 +63,4 @@ export class PostgresVirtualChannelDAO extends PostgresDAO
         await this.run(`DELETE FROM virtual_channels WHERE id = ?`, [id]);
     }
 }
+// apply-patch-anchor - do not delete

@@ -72,3 +72,4 @@ export interface MigrationRunResult
     appliedMigrations: AppliedMigrationSummary[];
     finalVersion: number;
 }
+// apply-patch-anchor - do not delete

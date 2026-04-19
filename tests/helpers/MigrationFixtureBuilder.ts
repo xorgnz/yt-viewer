@@ -111,3 +111,4 @@ export function createPreV8DatabaseFile(dbPath: string): void
     applyPreV8Schema(db);
     db.close();
 }
+// apply-patch-anchor - do not delete

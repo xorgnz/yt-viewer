@@ -7,3 +7,4 @@ export class AdminYouTubeClientProvider
         return new YouTubeClient();
     }
 }
+// apply-patch-anchor - do not delete

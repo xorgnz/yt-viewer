@@ -6,3 +6,4 @@ export const load: PageServerLoad = async () =>
     // Home page now redirects to the Virtual Channels selection page
     throw redirect(302, '/viewer/virtual-channels');
 };
+// apply-patch-anchor - do not delete

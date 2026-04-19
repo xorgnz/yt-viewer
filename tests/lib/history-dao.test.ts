@@ -145,3 +145,4 @@ describe('HistoryDAO session behavior', () => {
     });
 
 });
+// apply-patch-anchor - do not delete

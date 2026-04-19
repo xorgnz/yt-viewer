@@ -12,3 +12,4 @@ export class AdminPasswordPolicy
         return String(password) === String(AdminPasswordPolicy.configuredPassword);
     }
 }
+// apply-patch-anchor - do not delete

@@ -101,3 +101,4 @@ export class PostgresVirtualChannelAssignmentVideoSelectionDAO extends PostgresD
         `, [assignment_id]);
     }
 }
+// apply-patch-anchor - do not delete

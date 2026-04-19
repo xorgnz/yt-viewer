@@ -193,3 +193,4 @@ export class PostgresMigrationAdapter implements AsyncMigrationAdapter
         });
     }
 }
+// apply-patch-anchor - do not delete

@@ -159,3 +159,4 @@ export class PostgresSourceChannelDAO extends PostgresDAO
         return this.getOne<T>(sql, params);
     }
 }
+// apply-patch-anchor - do not delete

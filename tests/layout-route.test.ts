@@ -59,3 +59,4 @@ describe('root layout route', () => {
         expect(result.isAdminLoggedIn).toBe(false);
     });
 });
+// apply-patch-anchor - do not delete

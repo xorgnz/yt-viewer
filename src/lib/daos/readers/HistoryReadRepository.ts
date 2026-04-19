@@ -178,3 +178,4 @@ export class PostgresHistoryReadRepository extends PostgresDAO
         });
     }
 }
+// apply-patch-anchor - do not delete

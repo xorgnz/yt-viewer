@@ -26,3 +26,4 @@ export const GET: RequestHandler = async ({ url }) =>
         { status: 200, headers: { 'content-type': 'application/json' } }
     );
 };
+// apply-patch-anchor - do not delete

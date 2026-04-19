@@ -43,3 +43,4 @@ export class PostgresProfileDAO extends PostgresDAO
         return this.listRows<Profile>(`SELECT id, key, name FROM profiles ORDER BY id`);
     }
 }
+// apply-patch-anchor - do not delete

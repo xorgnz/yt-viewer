@@ -114,3 +114,4 @@ describe('history page load', () => {
         expect(result.sessionItems).toHaveLength(3);
     });
 });
+// apply-patch-anchor - do not delete

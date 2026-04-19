@@ -107,3 +107,4 @@ describe('AssignmentDAO and selection persistence', () => {
         expect(selectionDao.get(assignment.id, video.id)).toBeUndefined();
     });
 });
+// apply-patch-anchor - do not delete

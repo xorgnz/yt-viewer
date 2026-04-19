@@ -50,3 +50,4 @@ class ViewerSelectionInspector
 }
 
 export const viewerSelectionInspector = new ViewerSelectionInspector();
+// apply-patch-anchor - do not delete

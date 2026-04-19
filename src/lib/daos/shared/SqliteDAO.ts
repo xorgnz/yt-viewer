@@ -24,3 +24,4 @@ export class SqliteDAO
         }
     }
 }
+// apply-patch-anchor - do not delete

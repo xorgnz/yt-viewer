@@ -175,3 +175,4 @@ export class ViewerActionParser
         }
     }
 }
+// apply-patch-anchor - do not delete

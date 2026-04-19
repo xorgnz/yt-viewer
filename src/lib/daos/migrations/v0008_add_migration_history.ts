@@ -16,3 +16,4 @@ export const addPostgresMigrationHistoryMigration: AsyncMigrationDefinition = {
         await context.exec(POSTGRES_CREATE_TABLE_MIGRATION_HISTORY);
     },
 };
+// apply-patch-anchor - do not delete

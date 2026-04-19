@@ -299,3 +299,4 @@ export class ViewerFlagService
         return 'partial_success';
     }
 }
+// apply-patch-anchor - do not delete

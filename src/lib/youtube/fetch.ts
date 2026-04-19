@@ -224,3 +224,4 @@ export class YouTubeChannelReferenceResolver
         return null;
     }
 }
+// apply-patch-anchor - do not delete

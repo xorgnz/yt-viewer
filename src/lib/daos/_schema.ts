@@ -268,3 +268,4 @@ export const ALL_DDL = [
     CREATE_TABLE_MIGRATION_HISTORY,
     CREATE_INDEXES
 ];
+// apply-patch-anchor - do not delete

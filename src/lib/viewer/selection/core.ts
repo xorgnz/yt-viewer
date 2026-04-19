@@ -320,3 +320,4 @@ class ViewerSelectionStateManager
 }
 
 export const viewerSelectionStateManager = new ViewerSelectionStateManager();
+// apply-patch-anchor - do not delete

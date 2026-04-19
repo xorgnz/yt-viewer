@@ -29,3 +29,4 @@ describe('DatabaseFileLayout', () => {
         expect(artifactPath).toContain('dev-20260412-123456.bak.db');
     });
 });
+// apply-patch-anchor - do not delete

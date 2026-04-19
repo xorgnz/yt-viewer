@@ -7,3 +7,4 @@ export const POST: RequestHandler = async ({ cookies }) =>
     ServerAdminSession.clear(cookies);
     throw redirect(302, '/');
 };
+// apply-patch-anchor - do not delete

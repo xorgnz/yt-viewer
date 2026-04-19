@@ -197,3 +197,4 @@ describe('MigrationRunner', () => {
         expect(client.calls.map((call) => call.sql)).not.toContain('COMMIT');
     });
 });
+// apply-patch-anchor - do not delete

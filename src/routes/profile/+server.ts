@@ -20,3 +20,4 @@ export const POST: RequestHandler = async ({ request, cookies }) =>
 
     throw redirect(303, returnTo);
 };
+// apply-patch-anchor - do not delete

@@ -217,3 +217,4 @@ export class PostgresDAO
         return this.db.query<T>(boundSql.text, boundSql.values);
     }
 }
+// apply-patch-anchor - do not delete

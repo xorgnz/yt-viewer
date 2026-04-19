@@ -171,3 +171,4 @@ export class SqliteMigrationAdapter implements MigrationAdapter
         return transaction();
     }
 }
+// apply-patch-anchor - do not delete

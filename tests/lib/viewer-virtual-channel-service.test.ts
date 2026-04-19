@@ -36,3 +36,4 @@ describe('ViewerVirtualChannelService', () => {
         db.close();
     });
 });
+// apply-patch-anchor - do not delete

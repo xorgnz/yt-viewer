@@ -78,3 +78,4 @@ export class DatabaseMigrationWorkflow
         return backupPath;
     }
 }
+// apply-patch-anchor - do not delete

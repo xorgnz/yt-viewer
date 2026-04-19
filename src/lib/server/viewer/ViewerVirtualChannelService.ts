@@ -23,3 +23,4 @@ export class ViewerVirtualChannelService
         };
     }
 }
+// apply-patch-anchor - do not delete

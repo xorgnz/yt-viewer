@@ -55,3 +55,4 @@ export class VirtualChannelAssignment
         });
     }
 }
+// apply-patch-anchor - do not delete

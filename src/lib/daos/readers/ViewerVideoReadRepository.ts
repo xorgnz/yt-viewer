@@ -346,3 +346,4 @@ export class PostgresViewerVideoReadRepository extends PostgresDAO
         return row?.count ?? 0;
     }
 }
+// apply-patch-anchor - do not delete

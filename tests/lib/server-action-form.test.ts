@@ -52,3 +52,4 @@ describe('ServerActionForm', () => {
         expect(form.isEnabled('missingFlag')).toBe(false);
     });
 });
+// apply-patch-anchor - do not delete

@@ -146,3 +146,4 @@ export class ViewerWatchService
         return await this.viewerVideoReadRepository.getByYoutubeId(videoYoutubeId, this.profileContext.activeProfileId) || null;
     }
 }
+// apply-patch-anchor - do not delete

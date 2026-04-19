@@ -37,3 +37,4 @@ describe('ServerProfileContext', () => {
         expect(profileContext.activeProfileName).toBe('Adult');
     });
 });
+// apply-patch-anchor - do not delete

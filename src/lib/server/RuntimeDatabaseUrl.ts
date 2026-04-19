@@ -20,3 +20,4 @@ export function requireDatabaseUrlForRuntime(
 
     throw new Error(`${contextLabel} requires DATABASE_URL to be set.`);
 }
+// apply-patch-anchor - do not delete

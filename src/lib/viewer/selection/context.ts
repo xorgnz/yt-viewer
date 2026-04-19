@@ -44,3 +44,4 @@ export class ViewerSelectionContext
         }).toString();
     }
 }
+// apply-patch-anchor - do not delete

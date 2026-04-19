@@ -89,3 +89,4 @@ export class ViewerSelectionSupport
         return currentPageVideos.map((video) => video.id);
     }
 }
+// apply-patch-anchor - do not delete

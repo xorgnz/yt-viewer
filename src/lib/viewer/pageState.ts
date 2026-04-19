@@ -171,3 +171,4 @@ export const viewerPageState = {
     createViewerSelectionSnapshots,
     deriveViewerSelectionSummary
 };
+// apply-patch-anchor - do not delete

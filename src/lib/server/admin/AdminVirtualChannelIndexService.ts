@@ -300,3 +300,4 @@ export class AdminVirtualChannelIndexService
         return error instanceof Error ? error.message : fallback;
     }
 }
+// apply-patch-anchor - do not delete

@@ -48,3 +48,4 @@ describe('admin layout route', () => {
         expect(result).toEqual({});
     });
 });
+// apply-patch-anchor - do not delete

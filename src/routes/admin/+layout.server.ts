@@ -7,3 +7,4 @@ export const load: LayoutServerLoad = async ({ cookies, url }) =>
 
     return {};
 };
+// apply-patch-anchor - do not delete

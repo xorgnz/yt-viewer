@@ -59,3 +59,4 @@ export class VirtualChannelAssignmentVideoSelection
         });
     }
 }
+// apply-patch-anchor - do not delete

@@ -76,3 +76,4 @@ export class ViewerQueryParser
         return new Date(year, month, day, 23, 59, 59, 999).getTime();
     }
 }
+// apply-patch-anchor - do not delete

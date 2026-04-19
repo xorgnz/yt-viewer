@@ -53,3 +53,4 @@ export class VideoFlags
         });
     }
 }
+// apply-patch-anchor - do not delete

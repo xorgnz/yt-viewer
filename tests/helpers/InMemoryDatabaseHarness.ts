@@ -27,3 +27,4 @@ export class InMemoryDatabaseHarness
         this.db.close();
     }
 }
+// apply-patch-anchor - do not delete

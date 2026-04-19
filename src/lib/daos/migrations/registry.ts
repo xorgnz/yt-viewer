@@ -11,3 +11,4 @@ export const MIGRATIONS: MigrationDefinition[] = [
 export const POSTGRES_MIGRATIONS: AsyncMigrationDefinition[] = [
     addPostgresMigrationHistoryMigration,
 ];
+// apply-patch-anchor - do not delete

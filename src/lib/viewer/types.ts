@@ -90,3 +90,4 @@ export type ViewerPaginationState = {
     currentPage: number;
     visiblePages: ViewerVisiblePage[];
 };
+// apply-patch-anchor - do not delete

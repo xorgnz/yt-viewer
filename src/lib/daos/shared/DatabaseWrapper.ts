@@ -89,3 +89,4 @@ export class DatabaseWrapper
         return this.db;
     }
 }
+// apply-patch-anchor - do not delete

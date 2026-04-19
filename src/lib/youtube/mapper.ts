@@ -121,3 +121,4 @@ export class YouTubeVideoUpsertMapper
         return null;
     }
 }
+// apply-patch-anchor - do not delete

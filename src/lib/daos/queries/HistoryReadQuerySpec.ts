@@ -79,3 +79,4 @@ export class HistorySessionReadQuerySpec extends HistoryReadQuerySpec
 export class HistoryVideoSummaryReadQuerySpec extends HistoryReadQuerySpec
 {
 }
+// apply-patch-anchor - do not delete

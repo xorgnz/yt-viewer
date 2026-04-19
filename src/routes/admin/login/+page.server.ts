@@ -20,3 +20,4 @@ export const load: PageServerLoad = async () =>
     // No special data; avoid flashing error unless provided by action
     return {};
 };
+// apply-patch-anchor - do not delete

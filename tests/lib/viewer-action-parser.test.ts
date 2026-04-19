@@ -76,3 +76,4 @@ describe('ViewerActionParser', () => {
         expect(ViewerActionParser.parseRestoreSelectionState(new ServerActionForm(invalidRestoreFormData))).toBeNull();
     });
 });
+// apply-patch-anchor - do not delete

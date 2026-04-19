@@ -127,3 +127,4 @@ export class ViewerVideoQuerySpec
         return Math.max(0, this.filters.offset ?? 0);
     }
 }
+// apply-patch-anchor - do not delete
