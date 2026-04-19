@@ -5,12 +5,12 @@ import Database from 'better-sqlite3';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { applyLatestSchemaBootstrap } from '../../src/lib/daos/shared/LatestSchemaBootstrap';
 import { DatabaseMode } from '../../src/lib/daos/shared/DatabaseWrapper';
-import type { PostgresPoolWrapper } from '../../src/lib/daos/shared/PostgresPoolWrapper';
+import type { MySqlPoolWrapper } from '../../src/lib/daos/shared/MySqlPoolWrapper';
 import { ServerDatabaseContext } from '../../src/lib/server/ServerDatabaseContext';
 
 type MockPoolState = {
     end: () => Promise<void>;
-    query: () => Promise<{ rows: Array<{ value: number }> }>;
+    execute: () => Promise<Array<Array<{ value: number }>>>;
 };
 
 const hoisted = vi.hoisted(() => {
@@ -19,7 +19,7 @@ const hoisted = vi.hoisted(() => {
     };
 });
 
-vi.mock('pg', () => {
+vi.mock('mysql2/promise', () => {
     class MockPool
     {
         readonly state: MockPoolState;
@@ -28,8 +28,8 @@ vi.mock('pg', () => {
         {
             this.state = {
                 end: vi.fn(async () => {}),
-                query: vi.fn(async () => {
-                    return { rows: [{ value: 1 }] };
+                execute: vi.fn(async () => {
+                    return [[{ value: 1 }]];
                 })
             };
 
@@ -41,14 +41,14 @@ vi.mock('pg', () => {
             return this.state.end();
         }
 
-        query(): Promise<{ rows: Array<{ value: number }> }>
+        execute(): Promise<Array<Array<{ value: number }>>>
         {
-            return this.state.query();
+            return this.state.execute();
         }
     }
 
     return {
-        Pool: MockPool
+        createPool: () => new MockPool()
     };
 });
 
@@ -65,7 +65,7 @@ describe('ServerDatabaseContext', () => {
         previousDatabaseUrl = process.env.DATABASE_URL;
         process.env.NODE_ENV = 'test';
         process.env.YTCW_DB_DIR = tempDir;
-        process.env.DATABASE_URL = 'postgres://example-user:secret@localhost:5432/yt_viewer';
+        process.env.DATABASE_URL = 'mysql://example-user:secret@localhost:3306/yt_viewer';
         hoisted.poolStates.length = 0;
 
         const db = new Database(path.join(tempDir, 'test.db'));
@@ -127,8 +127,8 @@ describe('ServerDatabaseContext', () => {
     });
 
     it('closes the wrapper after successful and failed work', async () => {
-        const successfulWrappers: Array<Pick<PostgresPoolWrapper, 'instance'>> = [];
-        const failingWrappers: Array<Pick<PostgresPoolWrapper, 'instance'>> = [];
+        const successfulWrappers: Array<Pick<MySqlPoolWrapper, 'instance'>> = [];
+        const failingWrappers: Array<Pick<MySqlPoolWrapper, 'instance'>> = [];
 
         await expect(ServerDatabaseContext.run(async ({ db }) => {
             successfulWrappers.push(db);

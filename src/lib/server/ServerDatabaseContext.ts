@@ -1,5 +1,5 @@
 import { DatabaseMode } from '$lib/daos/shared/DatabaseFileLayout';
-import { PostgresPoolWrapper } from '$lib/daos/shared/PostgresPoolWrapper';
+import { MySqlPoolWrapper } from '$lib/daos/shared/MySqlPoolWrapper';
 import { requireDatabaseUrlForRuntime } from '$lib/server/RuntimeDatabaseUrl';
 
 export { DatabaseMode } from '$lib/daos/shared/DatabaseFileLayout';
@@ -7,9 +7,9 @@ export { DatabaseMode } from '$lib/daos/shared/DatabaseFileLayout';
 export class ServerDatabaseContext
 {
     readonly mode: DatabaseMode;
-    readonly db: PostgresPoolWrapper;
+    readonly db: MySqlPoolWrapper;
 
-    private constructor(mode: DatabaseMode, db: PostgresPoolWrapper)
+    private constructor(mode: DatabaseMode, db: MySqlPoolWrapper)
     {
         this.mode = mode;
         this.db = db;
@@ -37,7 +37,7 @@ export class ServerDatabaseContext
             nodeEnv,
             allowMissingInTest: false,
         });
-        const db = new PostgresPoolWrapper({ connectionString: databaseUrl });
+        const db = new MySqlPoolWrapper({ connectionString: databaseUrl });
 
         db.open();
 

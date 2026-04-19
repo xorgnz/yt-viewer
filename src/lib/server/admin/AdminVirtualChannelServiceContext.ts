@@ -1,9 +1,9 @@
-import { PostgresAssignmentDAO } from '$lib/daos/assignmentDAO';
-import { PostgresSourceChannelDAO } from '$lib/daos/sourceChannelDAO';
-import type { PostgresPoolWrapper } from '$lib/daos/shared/PostgresPoolWrapper';
-import { PostgresVideoDAO } from '$lib/daos/videoDAO';
-import { PostgresVirtualChannelAssignmentVideoSelectionDAO } from '$lib/daos/virtualChannelAssignmentVideoSelectionDAO';
-import { PostgresVirtualChannelDAO } from '$lib/daos/virtualChannelDAO';
+import { MySqlAssignmentDAO } from '$lib/daos/assignmentDAO';
+import { MySqlSourceChannelDAO } from '$lib/daos/sourceChannelDAO';
+import type { MySqlPoolWrapper } from '$lib/daos/shared/MySqlPoolWrapper';
+import { MySqlVideoDAO } from '$lib/daos/videoDAO';
+import { MySqlVirtualChannelAssignmentVideoSelectionDAO } from '$lib/daos/virtualChannelAssignmentVideoSelectionDAO';
+import { MySqlVirtualChannelDAO } from '$lib/daos/virtualChannelDAO';
 import { AdminVirtualChannelIndexService } from '$lib/server/admin/AdminVirtualChannelIndexService';
 import { AdminVirtualChannelManageService } from '$lib/server/admin/AdminVirtualChannelManageService';
 
@@ -21,13 +21,13 @@ export class AdminVirtualChannelServiceContext
         this.manageService = manageService;
     }
 
-    static resolve(db: PostgresPoolWrapper): AdminVirtualChannelServiceContext
+    static resolve(db: MySqlPoolWrapper): AdminVirtualChannelServiceContext
     {
-        const virtualChannelDAO = new PostgresVirtualChannelDAO(db);
-        const assignmentDAO = new PostgresAssignmentDAO(db);
-        const sourceChannelDAO = new PostgresSourceChannelDAO(db);
-        const videoDAO = new PostgresVideoDAO(db);
-        const selectionDAO = new PostgresVirtualChannelAssignmentVideoSelectionDAO(db);
+        const virtualChannelDAO = new MySqlVirtualChannelDAO(db);
+        const assignmentDAO = new MySqlAssignmentDAO(db);
+        const sourceChannelDAO = new MySqlSourceChannelDAO(db);
+        const videoDAO = new MySqlVideoDAO(db);
+        const selectionDAO = new MySqlVirtualChannelAssignmentVideoSelectionDAO(db);
 
         return new AdminVirtualChannelServiceContext(
             new AdminVirtualChannelIndexService(

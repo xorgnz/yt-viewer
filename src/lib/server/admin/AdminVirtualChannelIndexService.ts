@@ -1,6 +1,6 @@
-import type { AssignmentDAO, PostgresAssignmentDAO } from '$lib/daos/assignmentDAO';
-import type { PostgresSourceChannelDAO, SourceChannelDAO } from '$lib/daos/sourceChannelDAO';
-import type { PostgresVirtualChannelDAO, VirtualChannelDAO } from '$lib/daos/virtualChannelDAO';
+import type { AssignmentDAO, MySqlAssignmentDAO } from '$lib/daos/assignmentDAO';
+import type { MySqlSourceChannelDAO, SourceChannelDAO } from '$lib/daos/sourceChannelDAO';
+import type { MySqlVirtualChannelDAO, VirtualChannelDAO } from '$lib/daos/virtualChannelDAO';
 import type { SourceChannel } from '$lib/entities/sourceChannel';
 import type { VirtualChannel } from '$lib/entities/virtualChannel';
 import type {
@@ -13,9 +13,9 @@ import type {
     AdminVirtualChannelServiceResult
 } from '$lib/server/admin/AdminVirtualChannelTypes';
 
-type AdminVirtualChannelDAO = Pick<PostgresVirtualChannelDAO | VirtualChannelDAO, 'create' | 'get' | 'list' | 'remove' | 'rename'>;
-type AdminAssignmentDAO = Pick<PostgresAssignmentDAO | AssignmentDAO, 'add' | 'listForVirtualChannel' | 'remove'>;
-type AdminSourceChannelDAO = Pick<PostgresSourceChannelDAO | SourceChannelDAO, 'get' | 'list'>;
+type AdminVirtualChannelDAO = Pick<MySqlVirtualChannelDAO | VirtualChannelDAO, 'create' | 'get' | 'list' | 'remove' | 'rename'>;
+type AdminAssignmentDAO = Pick<MySqlAssignmentDAO | AssignmentDAO, 'add' | 'listForVirtualChannel' | 'remove'>;
+type AdminSourceChannelDAO = Pick<MySqlSourceChannelDAO | SourceChannelDAO, 'get' | 'list'>;
 type AdminAssignmentRows = Awaited<ReturnType<AdminAssignmentDAO['listForVirtualChannel']>>;
 
 export interface CreateVirtualChannelInput

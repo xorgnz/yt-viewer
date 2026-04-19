@@ -1,21 +1,21 @@
-import { PostgresViewerVideoReadRepository } from '$lib/daos/readers/ViewerVideoReadRepository';
-import { PostgresSourceChannelDAO } from '$lib/daos/sourceChannelDAO';
-import type { PostgresPoolWrapper } from '$lib/daos/shared/PostgresPoolWrapper';
-import { PostgresVirtualChannelDAO } from '$lib/daos/virtualChannelDAO';
+import { MySqlViewerVideoReadRepository } from '$lib/daos/readers/ViewerVideoReadRepository';
+import { MySqlSourceChannelDAO } from '$lib/daos/sourceChannelDAO';
+import type { MySqlPoolWrapper } from '$lib/daos/shared/MySqlPoolWrapper';
+import { MySqlVirtualChannelDAO } from '$lib/daos/virtualChannelDAO';
 import type { ServerProfileContext } from '$lib/server/ServerProfileContext';
 import type { ViewerQueryFilters } from '$lib/server/viewer/ViewerQueryParser';
 
 export class ViewerPageLoader
 {
-    private readonly viewerVideoReadRepository: PostgresViewerVideoReadRepository;
-    private readonly sourceChannelDAO: PostgresSourceChannelDAO;
-    private readonly virtualChannelDAO: PostgresVirtualChannelDAO;
+    private readonly viewerVideoReadRepository: MySqlViewerVideoReadRepository;
+    private readonly sourceChannelDAO: MySqlSourceChannelDAO;
+    private readonly virtualChannelDAO: MySqlVirtualChannelDAO;
 
-    constructor(db: PostgresPoolWrapper)
+    constructor(db: MySqlPoolWrapper)
     {
-        this.viewerVideoReadRepository = new PostgresViewerVideoReadRepository(db);
-        this.sourceChannelDAO = new PostgresSourceChannelDAO(db);
-        this.virtualChannelDAO = new PostgresVirtualChannelDAO(db);
+        this.viewerVideoReadRepository = new MySqlViewerVideoReadRepository(db);
+        this.sourceChannelDAO = new MySqlSourceChannelDAO(db);
+        this.virtualChannelDAO = new MySqlVirtualChannelDAO(db);
     }
 
     async load(filters: ViewerQueryFilters, profileContext: ServerProfileContext)

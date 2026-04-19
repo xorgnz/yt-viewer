@@ -1,5 +1,5 @@
 import type { Cookies } from '@sveltejs/kit';
-import type { ProfileDAO, PostgresProfileDAO } from '$lib/daos/profileDAO';
+import type { ProfileDAO, MySqlProfileDAO } from '$lib/daos/profileDAO';
 import type { Profile } from '$lib/entities/profile';
 import {
     ProfileCatalog,
@@ -7,7 +7,7 @@ import {
     type ProfileKey
 } from '$lib/profiles';
 
-type ServerProfileDAO = Pick<ProfileDAO | PostgresProfileDAO, 'getByKey' | 'list' | 'upsertByKey'>;
+type ServerProfileDAO = Pick<ProfileDAO | MySqlProfileDAO, 'getByKey' | 'list' | 'upsertByKey'>;
 
 export class ServerProfileContext
 {
@@ -21,7 +21,7 @@ export class ServerProfileContext
     }
 
     static resolve(profileDAO: ProfileDAO, cookies: Pick<Cookies, 'get'>): ServerProfileContext;
-    static resolve(profileDAO: PostgresProfileDAO, cookies: Pick<Cookies, 'get'>): Promise<ServerProfileContext>;
+    static resolve(profileDAO: MySqlProfileDAO, cookies: Pick<Cookies, 'get'>): Promise<ServerProfileContext>;
     static resolve(
         profileDAO: ServerProfileDAO,
         cookies: Pick<Cookies, 'get'>

@@ -1,7 +1,7 @@
-import { PostgresFlagsDAO } from '$lib/daos/flagsDAO';
-import { PostgresHistoryDAO } from '$lib/daos/historyDAO';
+import { MySqlFlagsDAO } from '$lib/daos/flagsDAO';
+import { MySqlHistoryDAO } from '$lib/daos/historyDAO';
 import {
-    PostgresViewerVideoReadRepository,
+    MySqlViewerVideoReadRepository,
     type ViewerVideoRecord
 } from '$lib/daos/readers/ViewerVideoReadRepository';
 import type { ServerProfileContext } from '$lib/server/ServerProfileContext';
@@ -29,15 +29,15 @@ export type ViewerWatchFlagResult =
 
 export class ViewerWatchService
 {
-    private readonly viewerVideoReadRepository: PostgresViewerVideoReadRepository;
-    private readonly flagsDAO: PostgresFlagsDAO;
-    private readonly historyDAO: PostgresHistoryDAO;
+    private readonly viewerVideoReadRepository: MySqlViewerVideoReadRepository;
+    private readonly flagsDAO: MySqlFlagsDAO;
+    private readonly historyDAO: MySqlHistoryDAO;
     private readonly profileContext: ServerProfileContext;
 
     constructor(
-        viewerVideoReadRepository: PostgresViewerVideoReadRepository,
-        flagsDAO: PostgresFlagsDAO,
-        historyDAO: PostgresHistoryDAO,
+        viewerVideoReadRepository: MySqlViewerVideoReadRepository,
+        flagsDAO: MySqlFlagsDAO,
+        historyDAO: MySqlHistoryDAO,
         profileContext: ServerProfileContext
     )
     {

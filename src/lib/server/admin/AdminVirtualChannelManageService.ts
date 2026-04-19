@@ -1,11 +1,11 @@
-import type { AssignmentDAO, PostgresAssignmentDAO } from '$lib/daos/assignmentDAO';
-import type { PostgresSourceChannelDAO, SourceChannelDAO } from '$lib/daos/sourceChannelDAO';
-import type { PostgresVideoDAO, VideoDAO } from '$lib/daos/videoDAO';
+import type { AssignmentDAO, MySqlAssignmentDAO } from '$lib/daos/assignmentDAO';
+import type { MySqlSourceChannelDAO, SourceChannelDAO } from '$lib/daos/sourceChannelDAO';
+import type { MySqlVideoDAO, VideoDAO } from '$lib/daos/videoDAO';
 import type {
-    PostgresVirtualChannelAssignmentVideoSelectionDAO,
+    MySqlVirtualChannelAssignmentVideoSelectionDAO,
     VirtualChannelAssignmentVideoSelectionDAO
 } from '$lib/daos/virtualChannelAssignmentVideoSelectionDAO';
-import type { PostgresVirtualChannelDAO, VirtualChannelDAO } from '$lib/daos/virtualChannelDAO';
+import type { MySqlVirtualChannelDAO, VirtualChannelDAO } from '$lib/daos/virtualChannelDAO';
 import type { VirtualChannelAssignment } from '$lib/entities/virtualChannelAssignment';
 import type { VirtualChannelAssignmentMode } from '$lib/entities/virtualChannelAssignment';
 import type { VirtualChannelAssignmentVideoReviewState } from '$lib/entities/virtualChannelAssignmentVideoSelection';
@@ -20,12 +20,12 @@ import type {
     AdminVirtualChannelServiceResult
 } from '$lib/server/admin/AdminVirtualChannelTypes';
 
-type AdminVirtualChannelDAO = Pick<PostgresVirtualChannelDAO | VirtualChannelDAO, 'get'>;
-type AdminAssignmentDAO = Pick<PostgresAssignmentDAO | AssignmentDAO, 'add' | 'get' | 'listForVirtualChannel' | 'remove' | 'updateMode'>;
-type AdminSourceChannelDAO = Pick<PostgresSourceChannelDAO | SourceChannelDAO, 'get' | 'list'>;
-type AdminVideoDAO = Pick<PostgresVideoDAO | VideoDAO, 'get' | 'listByChannel'>;
+type AdminVirtualChannelDAO = Pick<MySqlVirtualChannelDAO | VirtualChannelDAO, 'get'>;
+type AdminAssignmentDAO = Pick<MySqlAssignmentDAO | AssignmentDAO, 'add' | 'get' | 'listForVirtualChannel' | 'remove' | 'updateMode'>;
+type AdminSourceChannelDAO = Pick<MySqlSourceChannelDAO | SourceChannelDAO, 'get' | 'list'>;
+type AdminVideoDAO = Pick<MySqlVideoDAO | VideoDAO, 'get' | 'listByChannel'>;
 type AdminSelectionDAO = Pick<
-    PostgresVirtualChannelAssignmentVideoSelectionDAO | VirtualChannelAssignmentVideoSelectionDAO,
+    MySqlVirtualChannelAssignmentVideoSelectionDAO | VirtualChannelAssignmentVideoSelectionDAO,
     'listForAssignment' | 'setReviewState'
 >;
 

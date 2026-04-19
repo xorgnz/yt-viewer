@@ -1,7 +1,7 @@
-import type { PoolClient, QueryResult, QueryResultRow } from 'pg';
 import { describe, expect, it } from 'vitest';
-import { POSTGRES_CREATE_TABLE_META } from '../../src/lib/daos/_schema';
+import { MYSQL_CREATE_TABLE_META } from '../../src/lib/daos/_schema';
 import type { AsyncMigrationDefinition } from '../../src/lib/daos/migrations/migrationTypes';
+import type { MySqlQueryResult } from '../../src/lib/daos/shared/MySqlPoolWrapper';
 import { runCreateDatabaseWorkflow } from '../../scripts/create_database';
 import { runMigrationWorkflow } from '../../scripts/migrate_database';
 
@@ -10,61 +10,60 @@ type QueryCall = {
     params?: unknown[];
 };
 
-function createQueryResult<T extends QueryResultRow>(rows: T[]): QueryResult<T>
+function createQueryResult<T extends object>(rows: T[]): MySqlQueryResult<T>
 {
     return {
-        command: 'SELECT',
-        rowCount: rows.length,
-        oid: 0,
-        fields: [],
         rows,
+        affectedRows: rows.length,
+        insertId: 0,
     };
 }
 
-class MockPostgresClient
+class MockMySqlClient
 {
     readonly calls: QueryCall[] = [];
 
-    async query(sql: string, params?: unknown[]): Promise<QueryResult>
+    async query<T extends object = Record<string, unknown>>(
+        sql: string,
+        params?: unknown[]
+    ): Promise<MySqlQueryResult<T>>
     {
         this.calls.push({ sql, params });
 
         if (sql.includes('SELECT value FROM _meta')) {
-            return createQueryResult([{ value: '7' }]);
+            return createQueryResult([{ value: '7' }] as T[]);
         }
 
         if (sql.includes('information_schema.tables')) {
-            return createQueryResult([]);
+            return createQueryResult([] as T[]);
         }
 
-        return createQueryResult([]);
+        return createQueryResult([] as T[]);
     }
 }
 
-function createProvider(client: MockPostgresClient)
+function createProvider(client: MockMySqlClient)
 {
     return {
-        withClient: async <T>(work: (client: PoolClient) => Promise<T> | T): Promise<T> => {
-            return work(client as unknown as PoolClient);
-        }
+        query: client.query.bind(client),
     };
 }
 
 describe('database setup scripts', () => {
-    it('bootstraps the latest Postgres schema without SQLite file operations', async () => {
-        const client = new MockPostgresClient();
+    it('bootstraps the latest MySQL schema without SQLite file operations', async () => {
+        const client = new MockMySqlClient();
 
         await runCreateDatabaseWorkflow({
             pool: createProvider(client),
         });
 
-        expect(client.calls[0].sql).toBe('BEGIN');
-        expect(client.calls.some((call) => call.sql === POSTGRES_CREATE_TABLE_META)).toBe(true);
+        expect(client.calls[0].sql).toBe('START TRANSACTION');
+        expect(client.calls.some((call) => MYSQL_CREATE_TABLE_META.includes(call.sql))).toBe(true);
         expect(client.calls.at(-1)?.sql).toBe('COMMIT');
     });
 
-    it('runs registered Postgres migrations without SQLite file operations', async () => {
-        const client = new MockPostgresClient();
+    it('runs registered MySQL migrations without SQLite file operations', async () => {
+        const client = new MockMySqlClient();
 
         const result = await runMigrationWorkflow({
             pool: createProvider(client),
@@ -79,13 +78,13 @@ describe('database setup scripts', () => {
                 name: 'add_migration_history',
             }
         ]);
-        expect(client.calls.map((call) => call.sql)).toContain('BEGIN');
+        expect(client.calls.map((call) => call.sql)).toContain('START TRANSACTION');
         expect(client.calls.map((call) => call.sql)).toContain('COMMIT');
         expect(client.calls.some((call) => call.sql.includes('INSERT INTO migration_history'))).toBe(true);
     });
 
-    it('rolls back failed Postgres setup migrations', async () => {
-        const client = new MockPostgresClient();
+    it('rolls back failed MySQL setup migrations', async () => {
+        const client = new MockMySqlClient();
         const failingMigrations: AsyncMigrationDefinition[] = [
             {
                 version: 8,
@@ -101,7 +100,7 @@ describe('database setup scripts', () => {
             migrations: failingMigrations,
         })).rejects.toThrow('forced migration failure');
 
-        expect(client.calls.map((call) => call.sql)).toContain('BEGIN');
+        expect(client.calls.map((call) => call.sql)).toContain('START TRANSACTION');
         expect(client.calls.map((call) => call.sql)).toContain('ROLLBACK');
         expect(client.calls.map((call) => call.sql)).not.toContain('COMMIT');
     });
