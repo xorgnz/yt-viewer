@@ -66,3 +66,4 @@ Additional guidance:
 | `06-video-select` | `feature/06-video-select` | `completed` | `2026-04-08` | `2026-04-10` | Multi-select video actions in the viewer using range and additive selection |
 | `07-refactoring` | `feature/07-refactoring` | `completed` | `2026-04-10` | `2026-04-17` | Repository refactoring work after the migration feature completion |
 | `08-online-deploy` | `feature/08-online-deploy` | `active` | `2026-04-17` | | New block of work for deployment online |
+| `09-stable-db-ids` | `feature/09-stable-db-ids` | `planned` | `2026-04-19` | | Refactor database relationships away from brittle generated serial row IDs |
