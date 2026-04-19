@@ -1,27 +1,28 @@
 ## Relevant Files
 
-- `package.json` - Dependency and script updates for `@sveltejs/adapter-node`, `pg`, and Postgres-focused local workflows.
+- `package.json` - Dependency and script updates for `@sveltejs/adapter-node`, database client dependencies, and database-focused local workflows.
 - `svelte.config.js` - SvelteKit adapter switch to `adapter-node`.
-- `src/lib/server/database/context.ts` - Request-scoped database context entrypoint that must resolve Postgres runtime connections.
-- `src/lib/daos/shared/` - Shared persistence infrastructure currently tied to SQLite that needs a Postgres implementation path.
-- `src/lib/daos/*.ts` - DAO modules that currently run SQLite SQL and must run against Postgres.
-- `src/lib/daos/migrations/` - Migration registry and migration units that must support Postgres schema evolution.
-- `scripts/create_database.ts` - Database bootstrap flow to align with Postgres local/prod behavior.
-- `scripts/migrate_database.ts` - Migration runner entrypoint for Postgres.
+- `src/lib/server/database/context.ts` - Request-scoped database context entrypoint that must resolve production runtime connections.
+- `src/lib/daos/shared/` - Shared persistence infrastructure currently tied to SQLite/Postgres that needs a MySQL/MariaDB implementation path.
+- `src/lib/daos/*.ts` - DAO modules that must run against the target production database.
+- `src/lib/daos/migrations/` - Migration registry and migration units that must support target database schema evolution.
+- `scripts/create_database.ts` - Database bootstrap flow to align with local/prod behavior.
+- `scripts/migrate_database.ts` - Migration runner entrypoint for the target database.
 - `deploy.ps1` - Windows deployment flow for Cloud Run, Secret Manager wiring, and startup smoke test.
 - `deploy.sh` - Unix deployment flow matching the Windows deployment behavior.
-- `docker-compose.yml` - Local Postgres service definition for reproducible local runtime.
-- `.env.sample` - Environment contract updates for local Postgres and deployment settings.
-- `tests/helpers/` - Database harness updates to support Postgres-backed test setup.
+- `docker-compose.yml` - Local database service definition for reproducible local runtime.
+- `.env.sample` - Environment contract updates for local database and deployment settings.
+- `tests/helpers/` - Database harness updates to support target database-backed test setup.
 - `tests/lib/*.test.ts` - DAO, migration, and server-context tests affected by the persistence migration.
-- `tests/viewer/`, `tests/admin/`, `tests/history-route.test.ts`, `tests/layout-route.test.ts` - Route-level regression coverage for full app behavior on Postgres.
+- `tests/viewer/`, `tests/admin/`, `tests/history-route.test.ts`, `tests/layout-route.test.ts` - Route-level regression coverage for full app behavior on the target database.
 
 ### Notes
 
-- Feature completion target is full Postgres operation in both local and production environments.
+- Feature completion target is full MySQL/MariaDB operation in both local and production environments.
 - Keep local runtime containerized with Docker Compose and avoid requiring host-level Postgres setup.
 - Preserve existing user-facing behavior while replacing persistence and deployment plumbing.
 - Use `DATABASE_URL` as the primary configuration contract across local and production.
+- Earlier Postgres work remains in history but should be replaced by MySQL/MariaDB before the feature closes.
 
 ## Instructions for Completing Tasks
 
@@ -65,8 +66,18 @@
   - [x] 5.3 Remove or replace unrelated legacy deploy secret wiring so deploy scripts only set variables required for this app runtime.
   - [x] 5.4 Verify Cloud Run deploy arguments enforce `HOST=0.0.0.0`, runtime port compatibility, and expected buildpacks start behavior.
 
-- [ ] 6.0 Rebuild automated coverage around Postgres-backed execution and deployment-critical paths
-  - [ ] 6.1 Update test harnesses/fixtures to run against Postgres-compatible setup and migration flows.
-  - [ ] 6.2 Update DAO and migration tests to assert Postgres SQL behavior, schema versioning, and forward-only migration guarantees.
-  - [ ] 6.3 Run and fix route-level regression tests for viewer, admin, history, and layout paths against the migrated persistence layer.
-  - [ ] 6.4 Run project validation (`npm run check`, `npm run test`) and resolve remaining typing, import, and runtime issues before closing the feature.
+- [ ] 6.0 Switch production persistence target from Postgres to InMotion MySQL/MariaDB
+  - [x] 6.1 Replace Postgres runtime dependencies and wrappers with a MySQL/MariaDB client layer using `mysql2` or an equivalent maintained Node driver.
+  - [ ] 6.2 Port schema bootstrap, migration registry, and forward migration execution from Postgres SQL to MySQL/MariaDB-compatible DDL and transactions.
+  - [ ] 6.3 Port DAO modules and read repositories from Postgres placeholders/result mapping to MySQL/MariaDB conventions while preserving return shapes.
+  - [ ] 6.4 Update server database-context wiring, runtime URL handling, and local command wrappers so app requests target MySQL/MariaDB.
+  - [ ] 6.5 Replace Docker Compose Postgres local runtime with MySQL/MariaDB-compatible local runtime and update `.env.sample` defaults.
+  - [ ] 6.6 Replace SQLite-to-Postgres migration tooling with SQLite-to-MySQL/MariaDB migration tooling, including deterministic ordering, idempotency guards, row-count reports, and integrity checks.
+  - [ ] 6.7 Update Cloud Run deployment scripts and user setup notes to name the MySQL/MariaDB `DATABASE_URL` secret contract and InMotion connection assumptions.
+
+- [ ] 7.0 Remove obsolete Postgres implementation and validate MySQL/MariaDB runtime
+  - [ ] 7.1 Remove Postgres-specific wrappers, adapters, tests, scripts, dependency entries, and documentation once MySQL/MariaDB runtime coverage passes.
+  - [ ] 7.2 Update test harnesses/fixtures to run against MySQL/MariaDB-compatible setup and migration flows.
+  - [ ] 7.3 Update DAO and migration tests to assert MySQL/MariaDB SQL behavior, schema versioning, and forward-only migration guarantees.
+  - [ ] 7.4 Run and fix route-level regression tests for viewer, admin, history, and layout paths against the MySQL/MariaDB persistence layer.
+  - [ ] 7.5 Run project validation (`npm run check`, `npm run test`) and resolve remaining typing, import, dependency, and runtime issues before closing the feature.
