@@ -144,7 +144,13 @@ export class MySqlDAO
         return result.affectedRows;
     }
 
-    protected async getOne<T extends Record<string, unknown>>(
+    protected async insert(sql: string, params?: MySqlSqlParams): Promise<number>
+    {
+        const result = await this.query(sql, params);
+        return result.insertId;
+    }
+
+    protected async getOne<T extends object>(
         sql: string,
         params?: MySqlSqlParams
     ): Promise<T | undefined>
@@ -153,7 +159,7 @@ export class MySqlDAO
         return result.rows[0];
     }
 
-    protected async listRows<T extends Record<string, unknown>>(
+    protected async listRows<T extends object>(
         sql: string,
         params?: MySqlSqlParams
     ): Promise<T[]>
@@ -162,7 +168,7 @@ export class MySqlDAO
         return result.rows;
     }
 
-    protected async query<T extends Record<string, unknown> = Record<string, unknown>>(
+    protected async query<T extends object = Record<string, unknown>>(
         sql: string,
         params?: MySqlSqlParams
     ): Promise<MySqlQueryResult<T>>

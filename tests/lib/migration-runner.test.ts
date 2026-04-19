@@ -232,7 +232,7 @@ describe('MigrationRunner', () => {
 
     it('runs pending MySQL migrations in a transaction with schema metadata updates', async () => {
         const provider = new MockMySqlMigrationProvider();
-        const runner = new AsyncMigrationRunner(new MySqlMigrationAdapter(provider), MYSQL_MIGRATIONS);
+        const runner = new AsyncMigrationRunner(new MySqlMigrationAdapter(provider as never), MYSQL_MIGRATIONS);
 
         const result = await runner.runToLatest();
 
@@ -265,7 +265,7 @@ describe('MigrationRunner', () => {
                 },
             }
         ];
-        const runner = new AsyncMigrationRunner(new MySqlMigrationAdapter(provider), migrations);
+        const runner = new AsyncMigrationRunner(new MySqlMigrationAdapter(provider as never), migrations);
 
         await expect(runner.runToLatest()).rejects.toThrow('migration failed');
 

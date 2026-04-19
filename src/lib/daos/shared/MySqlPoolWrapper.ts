@@ -60,7 +60,7 @@ export class MySqlPoolWrapper
         }
     }
 
-    async query<T extends Record<string, unknown> = Record<string, unknown>>(
+    async query<T extends object = Record<string, unknown>>(
         text: string,
         values?: unknown[]
     ): Promise<MySqlQueryResult<T>>
@@ -85,7 +85,7 @@ export class MySqlPoolWrapper
         return this.pool;
     }
 
-    private static mapResult<T extends Record<string, unknown>>(result: QueryResult): MySqlQueryResult<T>
+    private static mapResult<T extends object>(result: QueryResult): MySqlQueryResult<T>
     {
         if (Array.isArray(result)) {
             return {

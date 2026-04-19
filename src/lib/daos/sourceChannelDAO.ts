@@ -1,5 +1,6 @@
 import { SqliteDAO } from '$lib/daos/shared/SqliteDAO';
 import { PostgresDAO } from '$lib/daos/shared/PostgresDAO';
+import { MySqlDAO } from '$lib/daos/shared/MySqlDAO';
 import type { SourceChannel } from '$lib/entities/sourceChannel';
 
 export interface SourceChannelWithVideoStats extends SourceChannel
@@ -157,6 +158,78 @@ export class PostgresSourceChannelDAO extends PostgresDAO
     private async getRow<T extends SourceChannel>(sql: string, params: unknown[]): Promise<T | undefined>
     {
         return this.getOne<T>(sql, params);
+    }
+}
+
+export class MySqlSourceChannelDAO extends MySqlDAO
+{
+    async upsert(channel: Omit<SourceChannel, 'id'> | Partial<SourceChannel> & { youtube_id: string; title: string }): Promise<void>
+    {
+        await this.run(`
+            INSERT INTO source_channels(youtube_id, title, description, thumbnail_url, published_at)
+            VALUES(:youtube_id,:title,:description,:thumbnail_url,:published_at)
+            ON DUPLICATE KEY UPDATE
+                title=VALUES(title),
+                description=VALUES(description),
+                thumbnail_url=VALUES(thumbnail_url),
+                published_at=VALUES(published_at)
+        `, channel as Record<string, unknown>);
+    }
+
+    async get(id: number): Promise<SourceChannel | undefined>
+    {
+        return this.getOne<SourceChannel>(`SELECT id, youtube_id, title, description, thumbnail_url, published_at, last_refreshed_at FROM source_channels WHERE id = ?`, [id]);
+    }
+
+    async getByExternalId(external_id: string): Promise<SourceChannel | undefined>
+    {
+        return this.getOne<SourceChannel>(`SELECT id, youtube_id, title, description, thumbnail_url, published_at, last_refreshed_at FROM source_channels WHERE youtube_id = ?`, [external_id]);
+    }
+
+    async list(): Promise<SourceChannel[]>
+    {
+        return this.listRows<SourceChannel>(`SELECT id, youtube_id, title, description, thumbnail_url, published_at, last_refreshed_at FROM source_channels ORDER BY title`);
+    }
+
+    async listWithVideoStats(): Promise<SourceChannelWithVideoStats[]>
+    {
+        return this.listRows<SourceChannelWithVideoStats>(`
+            SELECT
+                sc.id,
+                sc.youtube_id,
+                sc.title,
+                sc.description,
+                sc.thumbnail_url,
+                sc.published_at,
+                sc.last_refreshed_at,
+                COUNT(v.id) AS video_count,
+                COALESCE(SUM(CASE WHEN vf_agg.watched = 1 THEN 1 ELSE 0 END), 0) AS watched_count,
+                COALESCE(SUM(CASE WHEN vf_agg.favorite = 1 THEN 1 ELSE 0 END), 0) AS favorite_count,
+                COALESCE(SUM(CASE WHEN vf_agg.ignored = 1 THEN 1 ELSE 0 END), 0) AS ignored_count
+            FROM source_channels sc
+            LEFT JOIN videos v ON v.channel_id = sc.id
+            LEFT JOIN (
+                SELECT
+                    video_id,
+                    MAX(watched) AS watched,
+                    MAX(favorite) AS favorite,
+                    MAX(ignored) AS ignored
+                FROM video_flags
+                GROUP BY video_id
+            ) vf_agg ON vf_agg.video_id = v.id
+            GROUP BY sc.id
+            ORDER BY sc.title
+        `);
+    }
+
+    async remove(id: number): Promise<void>
+    {
+        await this.run(`DELETE FROM source_channels WHERE id = ?`, [id]);
+    }
+
+    async markRefreshed(id: number, ts: number = Date.now()): Promise<void>
+    {
+        await this.run(`UPDATE source_channels SET last_refreshed_at = ? WHERE id = ?`, [ts, id]);
     }
 }
 // apply-patch-anchor - do not delete

@@ -89,7 +89,7 @@ describe('MySqlSqlBinder', () => {
 describe('MySqlDAO', () => {
     it('runs statements through the shared parameter binder', async () => {
         const provider = new MockQueryProvider();
-        const dao = new MockMySqlDAO(provider);
+        const dao = new MockMySqlDAO(provider as never);
 
         const rowCount = await dao.runSql(
             `UPDATE videos SET title = :title WHERE id = :id`,
@@ -110,7 +110,7 @@ describe('MySqlDAO', () => {
 
     it('maps first-row and all-row query results', async () => {
         const provider = new MockQueryProvider();
-        const dao = new MockMySqlDAO(provider);
+        const dao = new MockMySqlDAO(provider as never);
 
         await expect(dao.getRow<{ id: number; name: string }>(
             `SELECT * FROM profiles WHERE id = ?`,
