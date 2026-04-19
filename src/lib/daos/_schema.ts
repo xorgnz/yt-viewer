@@ -234,7 +234,7 @@ export const CREATE_INDEXES = `
 -- Uniqueness on external IDs
 CREATE UNIQUE INDEX IF NOT EXISTS uq_source_channels_youtube_id ON source_channels(youtube_id);
 CREATE UNIQUE INDEX IF NOT EXISTS uq_videos_youtube_id ON videos(youtube_id);
-CREATE UNIQUE INDEX IF NOT EXISTS uq_profiles_key ON profiles(key);
+CREATE UNIQUE INDEX IF NOT EXISTS uq_profiles_key ON profiles(\`key\`);
 CREATE UNIQUE INDEX IF NOT EXISTS uq_virtual_channels_name ON virtual_channels(name);
 CREATE UNIQUE INDEX IF NOT EXISTS uq_video_flags_pk ON video_flags(video_id, profile_id);
 CREATE UNIQUE INDEX IF NOT EXISTS uq_virtual_channel_assignment_pair ON virtual_channel_assignments(source_channel_id, virtual_channel_id);

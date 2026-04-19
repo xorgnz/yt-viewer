@@ -251,14 +251,14 @@ export class SQLiteToMySqlMigrator
 
     private buildUpsertSql(table: TableCopyDefinition): string
     {
-        const columnList = table.columns.join(', ');
+        const columnList = table.columns.map((column) => this.quoteMySqlIdentifier(column)).join(', ');
         const valueList = table.columns.map((column) => `:${column}`).join(', ');
         const updateList = table.updateColumns
-            .map((column) => `${column} = VALUES(${column})`)
+            .map((column) => `${this.quoteMySqlIdentifier(column)} = VALUES(${this.quoteMySqlIdentifier(column)})`)
             .join(', ');
 
         return `
-            INSERT INTO ${table.table} (${columnList})
+            INSERT INTO ${this.quoteMySqlIdentifier(table.table)} (${columnList})
             VALUES (${valueList})
             ON DUPLICATE KEY UPDATE ${updateList}
         `;
@@ -266,7 +266,7 @@ export class SQLiteToMySqlMigrator
 
     private async resetIdentity(table: string): Promise<void>
     {
-        await this.mysql.query(`ALTER TABLE ${table} AUTO_INCREMENT = 1`);
+        await this.mysql.query(`ALTER TABLE ${this.quoteMySqlIdentifier(table)} AUTO_INCREMENT = 1`);
     }
 
     private countSourceRows(table: string): number
@@ -280,7 +280,7 @@ export class SQLiteToMySqlMigrator
 
     private async countTargetRows(table: string): Promise<number>
     {
-        const result = await this.mysql.query<{ count: number }>(`SELECT COUNT(*) AS count FROM ${table}`);
+        const result = await this.mysql.query<{ count: number }>(`SELECT COUNT(*) AS count FROM ${this.quoteMySqlIdentifier(table)}`);
         return Number(result.rows[0]?.count ?? 0);
     }
 
@@ -288,6 +288,11 @@ export class SQLiteToMySqlMigrator
     {
         const boundSql = MySqlSqlBinder.bind(sql, params);
         await this.mysql.query(boundSql.text, boundSql.values);
+    }
+
+    private quoteMySqlIdentifier(identifier: string): string
+    {
+        return `\`${identifier.replace(/`/g, '``')}\``;
     }
 }
 

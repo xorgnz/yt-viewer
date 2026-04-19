@@ -9,15 +9,17 @@
   Database host: `www.meme-hazard.org`.
   Database port: `3306`.
   Password: provided out of band for local testing only; do not commit it.
-- [ ] Create a Secret Manager secret containing the production MySQL/MariaDB `DATABASE_URL`.
+- [x] Create a Secret Manager secret containing the production MySQL/MariaDB `DATABASE_URL`.
    Default secret name expected by scripts: `yt-viewer-database-url`.
    Default version expected by scripts: `latest`.
    Expected URL shape: `mysql://memeha5_ytviewer_user:<password>@www.meme-hazard.org:3306/memeha5_ytviewer`.
    Use the password already provided out of band; do not write it to source-controlled files.
-- [ ] Grant the Cloud Run runtime service account permission to access that secret.
-- [ ] Ensure the local `gcloud` CLI is authenticated and configured for the chosen project.
-- [ ] Confirm which command should be used for deployment:
-   PowerShell: `.\deploy.ps1 -ProjectId <project-id>`
+- [x] Grant the Cloud Run runtime service account permission to access that secret.
+   Runtime service account: `yt-viewer-runner@trond-personal-tools.iam.gserviceaccount.com`.
+- [x] Ensure the local `gcloud` CLI is authenticated and configured for the chosen project.
+- [x] Confirm which command should be used for deployment:
+   PowerShell: `.\deploy.ps1 -ProjectId trond-personal-tools`
    Bash: `PROJECT_ID=<project-id> ./deploy.sh`
+- [x] Create or validate the live MySQL/MariaDB schema using the local admin database URL.
 
 If you use a different service name, region, or secret name, pass the matching overrides to the deploy script.

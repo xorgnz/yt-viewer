@@ -1,9 +1,10 @@
 param(
     [string]$ServiceName = "yt-viewer",
-    [string]$ProjectId = "",
+    [string]$ProjectId = "trond-personal-tools",
     [string]$Region = "us-west1",
     [string]$DatabaseUrlSecretName = "yt-viewer-database-url",
-    [string]$DatabaseUrlSecretVersion = "latest"
+    [string]$DatabaseUrlSecretVersion = "latest",
+    [string]$ServiceAccount = "yt-viewer-runner@trond-personal-tools.iam.gserviceaccount.com"
 )
 
 $ErrorActionPreference = "Stop"
@@ -119,7 +120,6 @@ try
     $env:PUBLIC_DEPLOY_COMMIT = $deployCommit
     $env:PUBLIC_DEPLOY_DATE = $deployDate
 
-    npm.cmd ci
     npm.cmd run build
 }
 finally
@@ -147,6 +147,7 @@ gcloud run deploy $ServiceName `
     --set-build-env-vars "GOOGLE_NODE_RUN_SCRIPTS=" `
     --set-env-vars "HOST=0.0.0.0" `
     --update-secrets "DATABASE_URL=$DatabaseUrlSecretName`:$DatabaseUrlSecretVersion" `
+    --service-account=$ServiceAccount `
     --port=8080 `
     --memory=2Gi
 
