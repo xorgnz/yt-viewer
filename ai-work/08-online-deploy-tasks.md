@@ -55,7 +55,7 @@
 
 - [ ] 4.0 Add Docker Compose local runtime for full-system Postgres development
   - [x] 4.1 Add `docker-compose.yml` with a Postgres service, persistent volume, healthcheck, and explicit port mapping for local development.
-  - [ ] 4.2 Define local environment defaults (`DATABASE_URL`, credentials, port mapping) in `.env.sample` and local docs comments as needed.
+  - [x] 4.2 Define local environment defaults (`DATABASE_URL`, credentials, port mapping) in `.env.sample` and local docs comments as needed.
   - [ ] 4.3 Ensure app startup, migration scripts, and tests can target the Compose-managed Postgres instance predictably.
   - [ ] 4.4 Add guardrails to avoid accidental fallback to SQLite when local Postgres is unavailable.
 
