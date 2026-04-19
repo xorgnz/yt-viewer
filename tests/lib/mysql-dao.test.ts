@@ -54,6 +54,20 @@ describe('MySqlSqlBinder', () => {
         });
     });
 
+    it('does not replace named-looking tokens inside quoted MySQL identifiers', () => {
+        const boundSql = MySqlSqlBinder.bind(
+            'SELECT `:not_a_param` FROM profiles WHERE `key` = :key',
+            {
+                key: 'default',
+            }
+        );
+
+        expect(boundSql).toEqual({
+            text: 'SELECT `:not_a_param` FROM profiles WHERE `key` = ?',
+            values: ['default'],
+        });
+    });
+
     it('throws when a named placeholder has no value', () => {
         expect(() => MySqlSqlBinder.bind(
             `SELECT * FROM videos WHERE id = :id`,

@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { MYSQL_CREATE_TABLE_MIGRATION_HISTORY } from '../../src/lib/daos/_schema';
 import { MIGRATIONS, MYSQL_MIGRATIONS } from '../../src/lib/daos/migrations/registry';
 import { SchemaVersionDAO } from '../../src/lib/daos/schemaVersionDAO';
 import { MySqlMigrationAdapter } from '../../src/lib/daos/shared/MySqlMigrationAdapter';
@@ -164,8 +165,9 @@ describe('MigrationRunner', () => {
         });
         expect(provider.calls.map((call) => call.sql)).toContain('START TRANSACTION');
         expect(provider.calls.map((call) => call.sql)).toContain('COMMIT');
-        expect(provider.calls.some((call) => call.sql.includes('CREATE TABLE IF NOT EXISTS migration_history'))).toBe(true);
+        expect(provider.calls.some((call) => MYSQL_CREATE_TABLE_MIGRATION_HISTORY.includes(call.sql))).toBe(true);
         expect(provider.calls.some((call) => call.sql.includes('INSERT INTO migration_history'))).toBe(true);
+        expect(provider.calls.some((call) => call.sql.includes('ON DUPLICATE KEY UPDATE value=VALUES(value)'))).toBe(true);
         expect(provider.calls.some((call) => call.params?.[0] === '8')).toBe(true);
     });
 

@@ -43,7 +43,7 @@ export class MySqlSqlBinder
             const previousChar = sql[index - 1];
             const nextChar = sql[index + 1];
 
-            if (char === '\'' || char === '"') {
+            if (char === '\'' || char === '"' || char === '`') {
                 const quoted = MySqlSqlBinder.readQuotedText(sql, index, char);
                 output += quoted.value;
                 index = quoted.endIndex;

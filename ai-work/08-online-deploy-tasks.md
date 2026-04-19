@@ -78,6 +78,6 @@
 - [ ] 7.0 Remove obsolete Postgres implementation and validate MySQL/MariaDB runtime
   - [x] 7.1 Remove Postgres-specific wrappers, adapters, tests, scripts, dependency entries, and documentation once MySQL/MariaDB runtime coverage passes.
   - [x] 7.2 Update test harnesses/fixtures to run against MySQL/MariaDB-compatible setup and migration flows.
-  - [ ] 7.3 Update DAO and migration tests to assert MySQL/MariaDB SQL behavior, schema versioning, and forward-only migration guarantees.
+  - [x] 7.3 Update DAO and migration tests to assert MySQL/MariaDB SQL behavior, schema versioning, and forward-only migration guarantees.
   - [ ] 7.4 Run and fix route-level regression tests for viewer, admin, history, and layout paths against the MySQL/MariaDB persistence layer.
   - [ ] 7.5 Run project validation (`npm run check`, `npm run test`) and resolve remaining typing, import, dependency, and runtime issues before closing the feature.

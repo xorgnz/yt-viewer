@@ -46,16 +46,23 @@ describe('MySQL DAO modules', () => {
             time_watched_seconds: 30,
         });
         await new MySqlFlagsDAO(provider).set(1, 2, { watched: 1 });
+        await new MySqlViewerVideoReadRepository(provider).list({}, 2);
         await new MySqlViewerVideoReadRepository(provider).count({ term: 'demo' }, 2);
         await new MySqlHistoryReadRepository(provider).listVideoSummaries({ profileId: 2 });
 
         expect(provider.calls.length).toBeGreaterThan(10);
         expect(provider.calls.every((call) => !call.text.includes('$1'))).toBe(true);
+        expect(provider.calls.every((call) => !call.text.includes('ON CONFLICT'))).toBe(true);
+        expect(provider.calls.every((call) => !call.text.includes('EXCLUDED.'))).toBe(true);
+        expect(provider.calls.every((call) => !call.text.includes('EXTRACT(EPOCH'))).toBe(true);
         expect(provider.calls.every((call) => !call.text.includes(':profileId'))).toBe(true);
         expect(provider.calls.every((call) => !call.text.includes('RETURNING id'))).toBe(true);
         expect(provider.calls.every((call) => !call.text.includes('::INTEGER'))).toBe(true);
         expect(provider.calls.every((call) => !call.text.includes('NULLS LAST'))).toBe(true);
         expect(provider.calls.some((call) => call.text.includes('ON DUPLICATE KEY UPDATE'))).toBe(true);
+        expect(provider.calls.some((call) => call.text.includes('INSERT IGNORE INTO video_flags'))).toBe(true);
+        expect(provider.calls.some((call) => call.text.includes('UNIX_TIMESTAMP(CURRENT_TIMESTAMP(3)) * 1000'))).toBe(true);
+        expect(provider.calls.some((call) => call.text.includes('ORDER BY v.published_at IS NULL ASC'))).toBe(true);
         expect(provider.calls.some((call) => call.text.includes('COUNT(DISTINCT v.id) AS count'))).toBe(true);
     });
 });
