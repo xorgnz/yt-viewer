@@ -1,11 +1,16 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-SERVICE_NAME="oversite-demo"
-PROJECT_ID="oversite-490604"
+SERVICE_NAME="${SERVICE_NAME:-yt-viewer}"
+PROJECT_ID="${PROJECT_ID:-}"
 REGION="us-west1"
-MAPBOX_SECRET_NAME="mapbox-public-token"
-MAPBOX_SECRET_VERSION="1"
+DATABASE_URL_SECRET_NAME="${DATABASE_URL_SECRET_NAME:-yt-viewer-database-url}"
+DATABASE_URL_SECRET_VERSION="${DATABASE_URL_SECRET_VERSION:-latest}"
+
+if [[ -z "$PROJECT_ID" ]]; then
+  echo "PROJECT_ID is required. Set PROJECT_ID=<gcp-project-id> before running deploy.sh." >&2
+  exit 1
+fi
 
 echo "Building..."
 rm -rf build
@@ -44,7 +49,7 @@ else
 fi
 
 echo "Smoke testing..."
-PORT=8080 HOST=0.0.0.0 PUBLIC_MAPBOX_TOKEN=smoke-test-token node build &
+PORT=8080 HOST=0.0.0.0 DATABASE_URL="postgres://yt_viewer:yt_viewer_dev@localhost:5432/yt_viewer?sslmode=disable" node build &
 pid=$!
 sleep 1
 kill $pid || true
@@ -57,7 +62,7 @@ gcloud run deploy "$SERVICE_NAME" \
   --allow-unauthenticated \
   --set-build-env-vars "GOOGLE_NODE_RUN_SCRIPTS=" \
   --set-env-vars "HOST=0.0.0.0" \
-  --update-secrets "PUBLIC_MAPBOX_TOKEN=${MAPBOX_SECRET_NAME}:${MAPBOX_SECRET_VERSION}" \
+  --update-secrets "DATABASE_URL=${DATABASE_URL_SECRET_NAME}:${DATABASE_URL_SECRET_VERSION}" \
   --memory=2Gi
 
 rm -rf deploy

@@ -61,7 +61,7 @@
 
 - [ ] 5.0 Update Cloud Run deployment scripts and secret wiring for Postgres production runtime
   - [x] 5.1 Update `deploy.ps1` to stage Node build output, run smoke startup checks, and deploy with `DATABASE_URL` sourced from Secret Manager.
-  - [ ] 5.2 Update `deploy.sh` to mirror the same staging, smoke-test, and `gcloud run deploy --update-secrets` behavior.
+  - [x] 5.2 Update `deploy.sh` to mirror the same staging, smoke-test, and `gcloud run deploy --update-secrets` behavior.
   - [ ] 5.3 Remove or replace unrelated legacy deploy secret wiring so deploy scripts only set variables required for this app runtime.
   - [ ] 5.4 Verify Cloud Run deploy arguments enforce `HOST=0.0.0.0`, runtime port compatibility, and expected buildpacks start behavior.
 
