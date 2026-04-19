@@ -53,11 +53,11 @@
   - [x] 3.5.3 Define and document the cutover sequence (backup, migrate, verify, switch runtime) for local and production workflows.
   - [ ] 3.5.4 Remove SQLite bindings/dependencies only after migration validation passes and Postgres-only runtime is confirmed.
 
-- [ ] 4.0 Add Docker Compose local runtime for full-system Postgres development
+- [x] 4.0 Add Docker Compose local runtime for full-system Postgres development
   - [x] 4.1 Add `docker-compose.yml` with a Postgres service, persistent volume, healthcheck, and explicit port mapping for local development.
   - [x] 4.2 Define local environment defaults (`DATABASE_URL`, credentials, port mapping) in `.env.sample` and local docs comments as needed.
   - [x] 4.3 Ensure app startup, migration scripts, and tests can target the Compose-managed Postgres instance predictably.
-  - [ ] 4.4 Add guardrails to avoid accidental fallback to SQLite when local Postgres is unavailable.
+  - [x] 4.4 Add guardrails to avoid accidental fallback to SQLite when local Postgres is unavailable.
 
 - [ ] 5.0 Update Cloud Run deployment scripts and secret wiring for Postgres production runtime
   - [ ] 5.1 Update `deploy.ps1` to stage Node build output, run smoke startup checks, and deploy with `DATABASE_URL` sourced from Secret Manager.
