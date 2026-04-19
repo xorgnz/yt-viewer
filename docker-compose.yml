@@ -1,22 +1,23 @@
 services:
-  postgres:
-    image: postgres:16-alpine
-    container_name: yt-viewer-postgres
+  mysql:
+    image: mariadb:10.6
+    container_name: yt-viewer-mysql
     restart: unless-stopped
     environment:
-      POSTGRES_DB: yt_viewer
-      POSTGRES_USER: yt_viewer
-      POSTGRES_PASSWORD: yt_viewer_dev
+      MARIADB_DATABASE: yt_viewer
+      MARIADB_USER: yt_viewer
+      MARIADB_PASSWORD: yt_viewer_dev
+      MARIADB_ROOT_PASSWORD: yt_viewer_root_dev
     ports:
-      - "5432:5432"
+      - "3306:3306"
     volumes:
-      - postgres-data:/var/lib/postgresql/data
+      - mysql-data:/var/lib/mysql
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U yt_viewer -d yt_viewer"]
+      test: ["CMD-SHELL", "mariadb-admin ping -h 127.0.0.1 -u yt_viewer --password=$$MARIADB_PASSWORD --silent"]
       interval: 5s
       timeout: 5s
       retries: 12
       start_period: 10s
 
 volumes:
-  postgres-data:
+  mysql-data:
