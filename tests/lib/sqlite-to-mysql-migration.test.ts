@@ -1,15 +1,15 @@
 import Database from 'better-sqlite3';
-import type { QueryResult, QueryResultRow } from 'pg';
 import { describe, expect, it } from 'vitest';
 import { applyLatestSchemaBootstrap } from '../../src/lib/daos/shared/LatestSchemaBootstrap';
-import { SQLiteToPostgresMigrator } from '../../scripts/migrate_sqlite_to_postgres';
+import type { MySqlQueryResult } from '../../src/lib/daos/shared/MySqlPoolWrapper';
+import { SQLiteToMySqlMigrator } from '../../scripts/migrate_sqlite_to_mysql';
 
 type QueryCall = {
     text: string;
     values: unknown[];
 };
 
-class MockPostgresProvider
+class MockMySqlProvider
 {
     readonly calls: QueryCall[] = [];
     readonly targetCounts: Record<string, number>;
@@ -24,11 +24,14 @@ class MockPostgresProvider
         this.brokenCount = options.brokenCount || 0;
     }
 
-    async query<T extends QueryResultRow>(text: string, values: unknown[] = []): Promise<QueryResult<T>>
+    async query<T extends object = Record<string, unknown>>(
+        text: string,
+        values: unknown[] = []
+    ): Promise<MySqlQueryResult<T>>
     {
         this.calls.push({ text, values });
 
-        const countMatch = text.match(/SELECT COUNT\(\*\)::INTEGER AS count FROM ([a-z_]+)/);
+        const countMatch = text.match(/SELECT COUNT\(\*\) AS count FROM ([a-z_]+)/);
         if (countMatch) {
             return this.buildResult([{ count: this.targetCounts[countMatch[1]] ?? 0 }] as unknown as T[]);
         }
@@ -40,14 +43,12 @@ class MockPostgresProvider
         return this.buildResult([] as T[]);
     }
 
-    private buildResult<T extends QueryResultRow>(rows: T[]): QueryResult<T>
+    private buildResult<T extends object>(rows: T[]): MySqlQueryResult<T>
     {
         return {
-            command: 'SELECT',
-            rowCount: rows.length,
-            oid: 0,
-            fields: [],
-            rows
+            rows,
+            affectedRows: rows.length,
+            insertId: 0
         };
     }
 }
@@ -93,10 +94,10 @@ function createSourceDatabase(): Database.Database
     return db;
 }
 
-describe('SQLiteToPostgresMigrator', () => {
+describe('SQLiteToMySqlMigrator', () => {
     it('copies source rows in dependency order with idempotent upserts and validates counts', async () => {
         const sqlite = createSourceDatabase();
-        const postgres = new MockPostgresProvider({
+        const mysql = new MockMySqlProvider({
             targetCounts: {
                 profiles: 1,
                 source_channels: 1,
@@ -110,8 +111,8 @@ describe('SQLiteToPostgresMigrator', () => {
         });
 
         try {
-            const report = await new SQLiteToPostgresMigrator(sqlite, postgres).migrate();
-            const insertCalls = postgres.calls.filter((call) => call.text.includes('INSERT INTO'));
+            const report = await new SQLiteToMySqlMigrator(sqlite, mysql).migrate();
+            const insertCalls = mysql.calls.filter((call) => call.text.includes('INSERT INTO'));
 
             expect(report.ok).toBe(true);
             expect(report.copiedRows).toMatchObject({
@@ -134,9 +135,9 @@ describe('SQLiteToPostgresMigrator', () => {
                 'video_flags',
                 'watch_history'
             ]);
-            expect(insertCalls.every((call) => call.text.includes('ON CONFLICT'))).toBe(true);
+            expect(insertCalls.every((call) => call.text.includes('ON DUPLICATE KEY UPDATE'))).toBe(true);
             expect(insertCalls.every((call) => !call.text.includes(':id'))).toBe(true);
-            expect(postgres.calls.some((call) => call.text.includes('setval'))).toBe(true);
+            expect(mysql.calls.some((call) => call.text.includes('AUTO_INCREMENT'))).toBe(true);
         } finally {
             sqlite.close();
         }
@@ -144,7 +145,7 @@ describe('SQLiteToPostgresMigrator', () => {
 
     it('reports validation failure when target counts differ', async () => {
         const sqlite = createSourceDatabase();
-        const postgres = new MockPostgresProvider({
+        const mysql = new MockMySqlProvider({
             targetCounts: {
                 profiles: 1,
                 source_channels: 0,
@@ -158,7 +159,7 @@ describe('SQLiteToPostgresMigrator', () => {
         });
 
         try {
-            const report = await new SQLiteToPostgresMigrator(sqlite, postgres).migrate();
+            const report = await new SQLiteToMySqlMigrator(sqlite, mysql).migrate();
 
             expect(report.ok).toBe(false);
             expect(report.tableCounts.find((result) => result.table === 'source_channels')).toMatchObject({
@@ -173,7 +174,7 @@ describe('SQLiteToPostgresMigrator', () => {
 
     it('reports validation failure when relational integrity checks fail', async () => {
         const sqlite = createSourceDatabase();
-        const postgres = new MockPostgresProvider({
+        const mysql = new MockMySqlProvider({
             targetCounts: {
                 profiles: 1,
                 source_channels: 1,
@@ -188,7 +189,7 @@ describe('SQLiteToPostgresMigrator', () => {
         });
 
         try {
-            const report = await new SQLiteToPostgresMigrator(sqlite, postgres).migrate();
+            const report = await new SQLiteToMySqlMigrator(sqlite, mysql).migrate();
 
             expect(report.ok).toBe(false);
             expect(report.integrityChecks.some((result) => result.brokenCount === 1 && !result.ok)).toBe(true);
@@ -198,3 +199,4 @@ describe('SQLiteToPostgresMigrator', () => {
     });
 });
 // apply-patch-anchor - do not delete
+

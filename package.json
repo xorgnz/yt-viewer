@@ -24,10 +24,10 @@
     "db:create:local": "tsx scripts/run_with_local_mysql.ts npm run db:create -- --mode dev",
     "db:migrate": "tsx scripts/migrate_database.ts",
     "db:migrate:local": "tsx scripts/run_with_local_mysql.ts npm run db:migrate -- --mode dev",
-    "db:migrate:sqlite": "tsx scripts/migrate_sqlite_to_postgres.ts",
+    "db:migrate:sqlite": "tsx scripts/migrate_sqlite_to_mysql.ts",
     "create_database": "tsx scripts/create_database.ts",
     "migrate_database": "tsx scripts/migrate_database.ts",
-    "migrate_sqlite_to_postgres": "tsx scripts/migrate_sqlite_to_postgres.ts"
+    "migrate_sqlite_to_mysql": "tsx scripts/migrate_sqlite_to_mysql.ts"
   },
   "dependencies": {
     "better-sqlite3": "latest",
