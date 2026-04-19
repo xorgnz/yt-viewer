@@ -13,15 +13,15 @@ class MockPostgresProvider
 {
     readonly calls: QueryCall[] = [];
     readonly targetCounts: Record<string, number>;
-    readonly brokenCounts: Record<string, number>;
+    readonly brokenCount: number;
 
     constructor(options: {
         targetCounts: Record<string, number>;
-        brokenCounts?: Record<string, number>;
+        brokenCount?: number;
     })
     {
         this.targetCounts = options.targetCounts;
-        this.brokenCounts = options.brokenCounts || {};
+        this.brokenCount = options.brokenCount || 0;
     }
 
     async query<T extends QueryResultRow>(text: string, values: unknown[] = []): Promise<QueryResult<T>>
@@ -33,9 +33,8 @@ class MockPostgresProvider
             return this.buildResult([{ count: this.targetCounts[countMatch[1]] ?? 0 }] as unknown as T[]);
         }
 
-        const integrityName = Object.keys(this.brokenCounts).find((name) => text.includes(name));
         if (text.includes('broken_count')) {
-            return this.buildResult([{ broken_count: integrityName ? this.brokenCounts[integrityName] : 0 }] as unknown as T[]);
+            return this.buildResult([{ broken_count: this.brokenCount }] as unknown as T[]);
         }
 
         return this.buildResult([] as T[]);
@@ -167,6 +166,32 @@ describe('SQLiteToPostgresMigrator', () => {
                 targetCount: 0,
                 matches: false
             });
+        } finally {
+            sqlite.close();
+        }
+    });
+
+    it('reports validation failure when relational integrity checks fail', async () => {
+        const sqlite = createSourceDatabase();
+        const postgres = new MockPostgresProvider({
+            targetCounts: {
+                profiles: 1,
+                source_channels: 1,
+                virtual_channels: 1,
+                videos: 1,
+                virtual_channel_assignments: 1,
+                virtual_channel_assignment_video_selections: 1,
+                video_flags: 1,
+                watch_history: 1
+            },
+            brokenCount: 1
+        });
+
+        try {
+            const report = await new SQLiteToPostgresMigrator(sqlite, postgres).migrate();
+
+            expect(report.ok).toBe(false);
+            expect(report.integrityChecks.some((result) => result.brokenCount === 1 && !result.ok)).toBe(true);
         } finally {
             sqlite.close();
         }
