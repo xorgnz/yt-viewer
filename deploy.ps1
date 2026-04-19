@@ -1,9 +1,9 @@
 param(
-    [string]$ServiceName = "oversite-demo",
-    [string]$ProjectId = "oversite-490604",
+    [string]$ServiceName = "yt-viewer",
+    [string]$ProjectId = "",
     [string]$Region = "us-west1",
-    [string]$MapboxSecretName = "mapbox-public-token",
-    [string]$MapboxSecretVersion = "1"
+    [string]$DatabaseUrlSecretName = "yt-viewer-database-url",
+    [string]$DatabaseUrlSecretVersion = "latest"
 )
 
 $ErrorActionPreference = "Stop"
@@ -64,7 +64,7 @@ function Invoke-SmokeTest
     $startInfo.WorkingDirectory = (Get-Location).Path
     $startInfo.EnvironmentVariables["PORT"] = "8080"
     $startInfo.EnvironmentVariables["HOST"] = "0.0.0.0"
-    $startInfo.EnvironmentVariables["PUBLIC_MAPBOX_TOKEN"] = "smoke-test-token"
+    $startInfo.EnvironmentVariables["DATABASE_URL"] = "postgres://yt_viewer:yt_viewer_dev@localhost:5432/yt_viewer?sslmode=disable"
 
     $process = [System.Diagnostics.Process]::Start($startInfo)
 
@@ -101,6 +101,11 @@ $deployBuildPath = Join-Path $deployPath "build"
 $deployPackageJsonPath = Join-Path $deployPath "package.json"
 $deployCommit = (git rev-parse --short HEAD).Trim()
 $deployDate = (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ")
+
+if ([string]::IsNullOrWhiteSpace($ProjectId))
+{
+    throw "ProjectId is required. Pass -ProjectId <gcp-project-id>."
+}
 
 Write-Host "Building..."
 Remove-DirectoryIfPresent -Path $buildPath
@@ -141,7 +146,7 @@ gcloud run deploy $ServiceName `
     --allow-unauthenticated `
     --set-build-env-vars "GOOGLE_NODE_RUN_SCRIPTS=" `
     --set-env-vars "HOST=0.0.0.0" `
-    --update-secrets "PUBLIC_MAPBOX_TOKEN=$MapboxSecretName`:$MapboxSecretVersion" `
+    --update-secrets "DATABASE_URL=$DatabaseUrlSecretName`:$DatabaseUrlSecretVersion" `
     --memory=2Gi
 
 Remove-DirectoryIfPresent -Path $deployPath
