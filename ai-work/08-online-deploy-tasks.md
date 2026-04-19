@@ -59,11 +59,11 @@
   - [x] 4.3 Ensure app startup, migration scripts, and tests can target the Compose-managed Postgres instance predictably.
   - [x] 4.4 Add guardrails to avoid accidental fallback to SQLite when local Postgres is unavailable.
 
-- [ ] 5.0 Update Cloud Run deployment scripts and secret wiring for Postgres production runtime
+- [x] 5.0 Update Cloud Run deployment scripts and secret wiring for Postgres production runtime
   - [x] 5.1 Update `deploy.ps1` to stage Node build output, run smoke startup checks, and deploy with `DATABASE_URL` sourced from Secret Manager.
   - [x] 5.2 Update `deploy.sh` to mirror the same staging, smoke-test, and `gcloud run deploy --update-secrets` behavior.
   - [x] 5.3 Remove or replace unrelated legacy deploy secret wiring so deploy scripts only set variables required for this app runtime.
-  - [ ] 5.4 Verify Cloud Run deploy arguments enforce `HOST=0.0.0.0`, runtime port compatibility, and expected buildpacks start behavior.
+  - [x] 5.4 Verify Cloud Run deploy arguments enforce `HOST=0.0.0.0`, runtime port compatibility, and expected buildpacks start behavior.
 
 - [ ] 6.0 Rebuild automated coverage around Postgres-backed execution and deployment-critical paths
   - [ ] 6.1 Update test harnesses/fixtures to run against Postgres-compatible setup and migration flows.

@@ -52,7 +52,12 @@ echo "Smoke testing..."
 PORT=8080 HOST=0.0.0.0 DATABASE_URL="postgres://yt_viewer:yt_viewer_dev@localhost:5432/yt_viewer?sslmode=disable" node build &
 pid=$!
 sleep 1
-kill $pid || true
+if ! kill -0 "$pid" >/dev/null 2>&1; then
+  wait "$pid"
+  echo "Smoke test process exited early." >&2
+  exit 1
+fi
+kill "$pid" || true
 
 echo "Deploying to Cloud Run..."
 gcloud config set project "$PROJECT_ID"
@@ -63,6 +68,7 @@ gcloud run deploy "$SERVICE_NAME" \
   --set-build-env-vars "GOOGLE_NODE_RUN_SCRIPTS=" \
   --set-env-vars "HOST=0.0.0.0" \
   --update-secrets "DATABASE_URL=${DATABASE_URL_SECRET_NAME}:${DATABASE_URL_SECRET_VERSION}" \
+  --port=8080 \
   --memory=2Gi
 
 rm -rf deploy

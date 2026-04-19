@@ -147,6 +147,7 @@ gcloud run deploy $ServiceName `
     --set-build-env-vars "GOOGLE_NODE_RUN_SCRIPTS=" `
     --set-env-vars "HOST=0.0.0.0" `
     --update-secrets "DATABASE_URL=$DatabaseUrlSecretName`:$DatabaseUrlSecretVersion" `
+    --port=8080 `
     --memory=2Gi
 
 Remove-DirectoryIfPresent -Path $deployPath
