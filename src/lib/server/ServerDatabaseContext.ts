@@ -1,8 +1,8 @@
-import { DatabaseMode } from '$lib/daos/shared/DatabaseFileLayout';
+import { DatabaseMode } from '$lib/daos/shared/DatabaseMode';
 import { MySqlPoolWrapper } from '$lib/daos/shared/MySqlPoolWrapper';
 import { requireDatabaseUrlForRuntime } from '$lib/server/RuntimeDatabaseUrl';
 
-export { DatabaseMode } from '$lib/daos/shared/DatabaseFileLayout';
+export { DatabaseMode } from '$lib/daos/shared/DatabaseMode';
 
 export class ServerDatabaseContext
 {

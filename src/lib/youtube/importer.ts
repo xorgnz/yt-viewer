@@ -1,5 +1,5 @@
-import type { MySqlSourceChannelDAO, SourceChannelDAO } from '../daos/sourceChannelDAO';
-import type { MySqlVideoDAO, VideoDAO } from '../daos/videoDAO';
+import type { MySqlSourceChannelDAO } from '../daos/sourceChannelDAO';
+import type { MySqlVideoDAO } from '../daos/videoDAO';
 import { YouTubeChannelDataService } from './fetch';
 import { YouTubeChannelUpsertMapper, YouTubeVideoUpsertMapper } from './mapper';
 import type { YouTubeClient } from './youTubeClient';
@@ -10,8 +10,8 @@ export interface ImportResult
     videosUpserted: number;
 }
 
-type ImportSourceChannelDAO = Pick<SourceChannelDAO | MySqlSourceChannelDAO, 'getByExternalId' | 'upsert'>;
-type ImportVideoDAO = Pick<VideoDAO | MySqlVideoDAO, 'upsert'>;
+type ImportSourceChannelDAO = Pick<MySqlSourceChannelDAO, 'getByExternalId' | 'upsert'>;
+type ImportVideoDAO = Pick<MySqlVideoDAO, 'upsert'>;
 
 export class YouTubeChannelImportService
 {

@@ -1,5 +1,5 @@
 import type { Cookies } from '@sveltejs/kit';
-import type { ProfileDAO, MySqlProfileDAO } from '$lib/daos/profileDAO';
+import type { MySqlProfileDAO } from '$lib/daos/profileDAO';
 import type { Profile } from '$lib/entities/profile';
 import {
     ProfileCatalog,
@@ -7,7 +7,7 @@ import {
     type ProfileKey
 } from '$lib/profiles';
 
-type ServerProfileDAO = Pick<ProfileDAO | MySqlProfileDAO, 'getByKey' | 'list' | 'upsertByKey'>;
+type ServerProfileDAO = Pick<MySqlProfileDAO, 'getByKey' | 'list' | 'upsertByKey'>;
 
 export class ServerProfileContext
 {
@@ -20,39 +20,23 @@ export class ServerProfileContext
         this.requestedProfileKey = requestedProfileKey;
     }
 
-    static resolve(profileDAO: ProfileDAO, cookies: Pick<Cookies, 'get'>): ServerProfileContext;
     static resolve(profileDAO: MySqlProfileDAO, cookies: Pick<Cookies, 'get'>): Promise<ServerProfileContext>;
-    static resolve(
+    static async resolve(
         profileDAO: ServerProfileDAO,
         cookies: Pick<Cookies, 'get'>
-    ): ServerProfileContext | Promise<ServerProfileContext>
+    ): Promise<ServerProfileContext>
     {
-        const ensureResult = (ProfileCatalog.ensureProfiles as (dao: ServerProfileDAO) => void | Promise<void>)(profileDAO);
+        await ProfileCatalog.ensureProfiles(profileDAO);
 
         const requestedProfileKey = new ProfileSelectionCookieStore(cookies).getActiveProfileKey();
+        const activeProfile = await profileDAO.getByKey(requestedProfileKey)
+            || await profileDAO.getByKey(ProfileCatalog.DEFAULT_KEY);
 
-        const buildContext = (activeProfile: Profile | undefined): ServerProfileContext => {
-            if (!activeProfile) {
-                throw new Error('Failed to resolve a supported active profile.');
-            }
-
-            return new ServerProfileContext(activeProfile, requestedProfileKey);
-        };
-
-        if (ensureResult instanceof Promise) {
-            return ensureResult.then(async () => {
-                const activeProfile = await profileDAO.getByKey(requestedProfileKey)
-                    || await profileDAO.getByKey(ProfileCatalog.DEFAULT_KEY);
-
-                return buildContext(activeProfile);
-            });
+        if (!activeProfile) {
+            throw new Error('Failed to resolve a supported active profile.');
         }
 
-        const syncProfileDAO = profileDAO as ProfileDAO;
-        const activeProfile = syncProfileDAO.getByKey(requestedProfileKey)
-            || syncProfileDAO.getByKey(ProfileCatalog.DEFAULT_KEY);
-
-        return buildContext(activeProfile);
+        return new ServerProfileContext(activeProfile, requestedProfileKey);
     }
 
     get activeProfileId(): number

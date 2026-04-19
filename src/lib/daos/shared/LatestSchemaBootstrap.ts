@@ -1,33 +1,7 @@
-import type Database from 'better-sqlite3';
-import { SchemaVersionDAO } from '$lib/daos/schemaVersionDAO';
-import { ALL_DDL, MYSQL_ALL_DDL, MYSQL_CREATE_TABLE_META, SCHEMA_VERSION } from '$lib/daos/_schema';
+import { MYSQL_ALL_DDL, MYSQL_CREATE_TABLE_META, SCHEMA_VERSION } from '$lib/daos/_schema';
 import type { MySqlPoolWrapper } from '$lib/daos/shared/MySqlPoolWrapper';
 
 type MySqlClientProvider = Pick<MySqlPoolWrapper, 'query'>;
-
-export class LatestSchemaBootstrapper
-{
-    apply(db: Database.Database): void
-    {
-        const schemaDao = new SchemaVersionDAO(db);
-        schemaDao.createMetaTable();
-
-        const transaction = db.transaction(() => {
-            for (const ddl of ALL_DDL) {
-                db.exec(ddl);
-            }
-
-            schemaDao.set(SCHEMA_VERSION);
-        });
-
-        transaction();
-    }
-}
-
-export function applyLatestSchemaBootstrap(db: Database.Database): void
-{
-    new LatestSchemaBootstrapper().apply(db);
-}
 
 export class MySqlLatestSchemaBootstrapper
 {

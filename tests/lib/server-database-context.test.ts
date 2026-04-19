@@ -1,10 +1,5 @@
-import fs from 'node:fs';
-import os from 'node:os';
-import path from 'node:path';
-import Database from 'better-sqlite3';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { applyLatestSchemaBootstrap } from '../../src/lib/daos/shared/LatestSchemaBootstrap';
-import { DatabaseMode } from '../../src/lib/daos/shared/DatabaseWrapper';
+import { DatabaseMode } from '../../src/lib/daos/shared/DatabaseMode';
 import type { MySqlPoolWrapper } from '../../src/lib/daos/shared/MySqlPoolWrapper';
 import { ServerDatabaseContext } from '../../src/lib/server/ServerDatabaseContext';
 
@@ -53,24 +48,15 @@ vi.mock('mysql2/promise', () => {
 });
 
 describe('ServerDatabaseContext', () => {
-    let tempDir: string;
     let previousNodeEnv: string | undefined;
-    let previousDbDir: string | undefined;
     let previousDatabaseUrl: string | undefined;
 
     beforeEach(() => {
-        tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'ytcw-request-db-'));
         previousNodeEnv = process.env.NODE_ENV;
-        previousDbDir = process.env.YTCW_DB_DIR;
         previousDatabaseUrl = process.env.DATABASE_URL;
         process.env.NODE_ENV = 'test';
-        process.env.YTCW_DB_DIR = tempDir;
         process.env.DATABASE_URL = 'mysql://example-user:secret@localhost:3306/yt_viewer';
         hoisted.poolStates.length = 0;
-
-        const db = new Database(path.join(tempDir, 'test.db'));
-        applyLatestSchemaBootstrap(db);
-        db.close();
     });
 
     afterEach(() => {
@@ -80,20 +66,10 @@ describe('ServerDatabaseContext', () => {
             process.env.NODE_ENV = previousNodeEnv;
         }
 
-        if (previousDbDir === undefined) {
-            delete process.env.YTCW_DB_DIR;
-        } else {
-            process.env.YTCW_DB_DIR = previousDbDir;
-        }
-
         if (previousDatabaseUrl === undefined) {
             delete process.env.DATABASE_URL;
         } else {
             process.env.DATABASE_URL = previousDatabaseUrl;
-        }
-
-        if (tempDir && fs.existsSync(tempDir)) {
-            fs.rmSync(tempDir, { recursive: true, force: true });
         }
     });
 

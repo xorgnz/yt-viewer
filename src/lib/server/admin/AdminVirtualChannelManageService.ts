@@ -1,11 +1,10 @@
-import type { AssignmentDAO, MySqlAssignmentDAO } from '$lib/daos/assignmentDAO';
-import type { MySqlSourceChannelDAO, SourceChannelDAO } from '$lib/daos/sourceChannelDAO';
-import type { MySqlVideoDAO, VideoDAO } from '$lib/daos/videoDAO';
+import type { MySqlAssignmentDAO } from '$lib/daos/assignmentDAO';
+import type { MySqlSourceChannelDAO } from '$lib/daos/sourceChannelDAO';
+import type { MySqlVideoDAO } from '$lib/daos/videoDAO';
 import type {
-    MySqlVirtualChannelAssignmentVideoSelectionDAO,
-    VirtualChannelAssignmentVideoSelectionDAO
+    MySqlVirtualChannelAssignmentVideoSelectionDAO
 } from '$lib/daos/virtualChannelAssignmentVideoSelectionDAO';
-import type { MySqlVirtualChannelDAO, VirtualChannelDAO } from '$lib/daos/virtualChannelDAO';
+import type { MySqlVirtualChannelDAO } from '$lib/daos/virtualChannelDAO';
 import type { VirtualChannelAssignment } from '$lib/entities/virtualChannelAssignment';
 import type { VirtualChannelAssignmentMode } from '$lib/entities/virtualChannelAssignment';
 import type { VirtualChannelAssignmentVideoReviewState } from '$lib/entities/virtualChannelAssignmentVideoSelection';
@@ -20,12 +19,12 @@ import type {
     AdminVirtualChannelServiceResult
 } from '$lib/server/admin/AdminVirtualChannelTypes';
 
-type AdminVirtualChannelDAO = Pick<MySqlVirtualChannelDAO | VirtualChannelDAO, 'get'>;
-type AdminAssignmentDAO = Pick<MySqlAssignmentDAO | AssignmentDAO, 'add' | 'get' | 'listForVirtualChannel' | 'remove' | 'updateMode'>;
-type AdminSourceChannelDAO = Pick<MySqlSourceChannelDAO | SourceChannelDAO, 'get' | 'list'>;
-type AdminVideoDAO = Pick<MySqlVideoDAO | VideoDAO, 'get' | 'listByChannel'>;
+type AdminVirtualChannelDAO = Pick<MySqlVirtualChannelDAO, 'get'>;
+type AdminAssignmentDAO = Pick<MySqlAssignmentDAO, 'add' | 'get' | 'listForVirtualChannel' | 'remove' | 'updateMode'>;
+type AdminSourceChannelDAO = Pick<MySqlSourceChannelDAO, 'get' | 'list'>;
+type AdminVideoDAO = Pick<MySqlVideoDAO, 'get' | 'listByChannel'>;
 type AdminSelectionDAO = Pick<
-    MySqlVirtualChannelAssignmentVideoSelectionDAO | VirtualChannelAssignmentVideoSelectionDAO,
+    MySqlVirtualChannelAssignmentVideoSelectionDAO,
     'listForAssignment' | 'setReviewState'
 >;
 

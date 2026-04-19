@@ -4,7 +4,7 @@ import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 import { MYSQL_MIGRATIONS } from '$lib/daos/migrations/registry';
 import type { AsyncMigrationDefinition, MigrationRunResult } from '$lib/daos/migrations/migrationTypes';
-import { DatabaseMode } from '$lib/daos/shared/DatabaseFileLayout';
+import { DatabaseMode } from '$lib/daos/shared/DatabaseMode';
 import { AsyncMigrationRunner } from '$lib/daos/shared/MigrationRunner';
 import { MySqlMigrationAdapter } from '$lib/daos/shared/MySqlMigrationAdapter';
 import { MySqlPoolWrapper } from '$lib/daos/shared/MySqlPoolWrapper';

@@ -1,4 +1,4 @@
-import type { MySqlSourceChannelDAO, SourceChannelDAO } from '$lib/daos/sourceChannelDAO';
+import type { MySqlSourceChannelDAO } from '$lib/daos/sourceChannelDAO';
 import { AdminSourceChannelYouTubeCoordinator } from '$lib/server/admin/AdminSourceChannelYouTubeCoordinator';
 import { AdminYouTubeClientProvider } from '$lib/server/admin/AdminYouTubeClientProvider';
 import type {
@@ -14,7 +14,7 @@ import type {
 import { YouTubeApiError } from '$lib/youtube/youTubeClient';
 
 type AdminSourceChannelDAO = Pick<
-    SourceChannelDAO | MySqlSourceChannelDAO,
+    MySqlSourceChannelDAO,
     'get' | 'listWithVideoStats' | 'markRefreshed' | 'remove' | 'upsert'
 >;
 
