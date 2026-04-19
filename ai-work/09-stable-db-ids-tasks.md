@@ -15,10 +15,10 @@
 
 ## Tasks
 
-- [ ] 1 - Audit current generated-ID usage.
-  - [ ] 1.1. Inventory every table column that is an auto-increment primary key or generated row-id foreign key.
-  - [ ] 1.2. Trace every DAO, reader, service, route, importer, and test path that passes generated IDs between entities.
-  - [ ] 1.3. Identify stable identifier needs, join/state-table composite key candidates, and any public/API/UI contracts that expose generated row IDs.
+- [x] 1 - Audit current generated-ID usage.
+  - [x] 1.1. Inventory every table column that is an auto-increment primary key or generated row-id foreign key.
+  - [x] 1.2. Trace every DAO, reader, service, route, importer, and test path that passes generated IDs between entities.
+  - [x] 1.3. Identify stable identifier needs, join/state-table composite key candidates, and any public/API/UI contracts that expose generated row IDs.
 
 - [ ] 2 - Propose exact database changes for user validation before implementation.
   - [ ] 2.1. Draft `ai-work/09-stable-db-ids-db-change-plan.md` with the exact planned table, column, key, index, and foreign key changes.
