@@ -1,5 +1,4 @@
 import { SqliteDAO } from '$lib/daos/shared/SqliteDAO';
-import { PostgresDAO } from '$lib/daos/shared/PostgresDAO';
 import { MySqlDAO } from '$lib/daos/shared/MySqlDAO';
 import type { Video } from '$lib/entities/video';
 
@@ -62,64 +61,6 @@ export class VideoDAO extends SqliteDAO
     }
 }
 
-export class PostgresVideoDAO extends PostgresDAO
-{
-    async upsert(video: Omit<Video, 'id'> | Partial<Video> & { youtube_id: string; channel_id: number; title: string }): Promise<void>
-    {
-        await this.run(`
-            INSERT INTO videos(youtube_id, channel_id, title, description, published_at, duration_seconds, thumbnail_url, length_classification)
-            VALUES(:youtube_id,:channel_id,:title,:description,:published_at,:duration_seconds,:thumbnail_url,:length_classification)
-            ON CONFLICT(youtube_id) DO UPDATE SET
-                channel_id=excluded.channel_id,
-                title=excluded.title,
-                description=excluded.description,
-                published_at=excluded.published_at,
-                duration_seconds=excluded.duration_seconds,
-                thumbnail_url=excluded.thumbnail_url,
-                length_classification=excluded.length_classification
-        `, {
-            length_classification: 'unknown',
-            ...(video as Record<string, unknown>)
-        });
-    }
-
-    async get(id: number): Promise<Video | undefined>
-    {
-        return this.getOne<Video>(`SELECT id, youtube_id, channel_id, title, description, published_at, duration_seconds, thumbnail_url, length_classification FROM videos WHERE id = ?`, [id]);
-    }
-
-    async listExistingIds(ids: number[]): Promise<number[]>
-    {
-        if (ids.length === 0) {
-            return [];
-        }
-
-        const placeholders = ids.map(() => '?').join(',');
-        const rows = await this.listRows<{ id: number }>(`
-            SELECT id
-            FROM videos
-            WHERE id IN (${placeholders})
-        `, ids);
-
-        return rows.map((row) => row.id);
-    }
-
-    async getByExternalId(external_id: string): Promise<Video | undefined>
-    {
-        return this.getOne<Video>(`SELECT id, youtube_id, channel_id, title, description, published_at, duration_seconds, thumbnail_url, length_classification FROM videos WHERE youtube_id = ?`, [external_id]);
-    }
-
-    async listByChannel(channel_id: number): Promise<Video[]>
-    {
-        return this.listRows<Video>(`SELECT id, youtube_id, channel_id, title, description, published_at, duration_seconds, thumbnail_url, length_classification FROM videos WHERE channel_id = ? ORDER BY published_at DESC NULLS LAST, id DESC`, [channel_id]);
-    }
-
-    async remove(id: number): Promise<void>
-    {
-        await this.run(`DELETE FROM videos WHERE id = ?`, [id]);
-    }
-}
-
 export class MySqlVideoDAO extends MySqlDAO
 {
     async upsert(video: Omit<Video, 'id'> | Partial<Video> & { youtube_id: string; channel_id: number; title: string }): Promise<void>
@@ -178,3 +119,6 @@ export class MySqlVideoDAO extends MySqlDAO
     }
 }
 // apply-patch-anchor - do not delete
+
+
+

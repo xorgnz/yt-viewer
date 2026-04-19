@@ -2,11 +2,11 @@
 
 ## Overview
 
-Deploy the yt-viewer SvelteKit application to Google Cloud with a streamlined two-environment setup (local dev and GCP prod). Use `adapter-node` to produce a Node runtime artifact suitable for GCP hosting and connect the app to an external managed Postgres database. Manage runtime configuration and credentials via Google Cloud Secret Manager.
+Deploy the yt-viewer SvelteKit application to Google Cloud with a streamlined two-environment setup (local dev and GCP prod). Use `adapter-node` to produce a Node runtime artifact suitable for GCP hosting and connect the app to an external managed MySQL/MariaDB database. Manage runtime configuration and credentials via Google Cloud Secret Manager.
 
 ## Problem Statement
 
-The project currently runs locally only. We need a reliable, low-friction path to deploy and run the app online on GCP while safely handling secrets and connecting to the existing Postgres vendor.
+The project currently runs locally only. We need a reliable, low-friction path to deploy and run the app online on GCP while safely handling secrets and connecting to the existing MySQL/MariaDB vendor.
 
 ## Target Users
 
@@ -16,7 +16,7 @@ The project currently runs locally only. We need a reliable, low-friction path t
 
 1. Build the app with SvelteKit `adapter-node` for a Node runtime on GCP.
 2. Configure secure secret management using GCP Secret Manager and env var injection.
-3. Connect the deployed app to the existing Postgres database vendor.
+3. Connect the deployed app to the existing MySQL/MariaDB database vendor.
 4. Define a simple, repeatable deployment procedure for prod (GCP) alongside local dev.
 
 ## In Scope
@@ -36,5 +36,5 @@ The project currently runs locally only. We need a reliable, low-friction path t
 ## Assumptions and Constraints
 
 - Google Cloud project and billing are already set up or will be provided
-- Postgres connection info (host, port, db, user) will be available via Secret Manager
+- MySQL/MariaDB connection info (host, port, db, user) will be available via Secret Manager
 - No special regional or latency constraints at this time

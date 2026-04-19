@@ -1,11 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import type { PoolClient, QueryResult, QueryResultRow } from 'pg';
-import { POSTGRES_CREATE_TABLE_MIGRATION_HISTORY } from '../../src/lib/daos/_schema';
-import { MIGRATIONS, MYSQL_MIGRATIONS, POSTGRES_MIGRATIONS } from '../../src/lib/daos/migrations/registry';
+import { MIGRATIONS, MYSQL_MIGRATIONS } from '../../src/lib/daos/migrations/registry';
 import { SchemaVersionDAO } from '../../src/lib/daos/schemaVersionDAO';
 import { MySqlMigrationAdapter } from '../../src/lib/daos/shared/MySqlMigrationAdapter';
 import { AsyncMigrationRunner, MigrationRunner } from '../../src/lib/daos/shared/MigrationRunner';
-import { PostgresMigrationAdapter } from '../../src/lib/daos/shared/PostgresMigrationAdapter';
 import { SqliteMigrationAdapter } from '../../src/lib/daos/shared/SqliteMigrationAdapter';
 import { InMemoryDatabaseHarness } from '../helpers/InMemoryDatabaseHarness';
 import { createPreV8Database } from '../helpers/MigrationFixtureBuilder';
@@ -14,37 +11,6 @@ type QueryCall = {
     sql: string;
     params?: unknown[];
 };
-
-function createQueryResult<T extends QueryResultRow>(rows: T[]): QueryResult<T>
-{
-    return {
-        command: 'SELECT',
-        rowCount: rows.length,
-        oid: 0,
-        fields: [],
-        rows,
-    };
-}
-
-class MockPostgresMigrationClient
-{
-    readonly calls: QueryCall[] = [];
-
-    async query(sql: string, params?: unknown[]): Promise<QueryResult>
-    {
-        this.calls.push({ sql, params });
-
-        if (sql.includes('SELECT value FROM _meta')) {
-            return createQueryResult([{ value: '7' }]);
-        }
-
-        if (sql.includes('information_schema.tables')) {
-            return createQueryResult([]);
-        }
-
-        return createQueryResult([]);
-    }
-}
 
 class MockMySqlMigrationProvider
 {
@@ -76,13 +42,6 @@ class MockMySqlMigrationProvider
             insertId: 0
         };
     }
-}
-
-function createPostgresAdapter(client: MockPostgresMigrationClient): PostgresMigrationAdapter
-{
-    return new PostgresMigrationAdapter({
-        withClient: async (work) => work(client as unknown as PoolClient)
-    });
 }
 
 describe('MigrationRunner', () => {
@@ -184,50 +143,6 @@ describe('MigrationRunner', () => {
         );
 
         db.close();
-    });
-
-    it('runs pending Postgres migrations in a transaction with schema metadata updates', async () => {
-        const client = new MockPostgresMigrationClient();
-        const runner = new AsyncMigrationRunner(createPostgresAdapter(client), POSTGRES_MIGRATIONS);
-
-        const result = await runner.runToLatest();
-
-        expect(result).toEqual({
-            currentVersion: 7,
-            targetVersion: 8,
-            appliedMigrations: [
-                {
-                    version: 8,
-                    name: 'add_migration_history',
-                }
-            ],
-            finalVersion: 8,
-        });
-        expect(client.calls.map((call) => call.sql)).toContain('BEGIN');
-        expect(client.calls.map((call) => call.sql)).toContain('COMMIT');
-        expect(client.calls.map((call) => call.sql)).toContain(POSTGRES_CREATE_TABLE_MIGRATION_HISTORY);
-        expect(client.calls.some((call) => call.sql.includes('INSERT INTO migration_history'))).toBe(true);
-        expect(client.calls.some((call) => call.params?.[0] === '8')).toBe(true);
-    });
-
-    it('rolls back a failed Postgres migration transaction', async () => {
-        const client = new MockPostgresMigrationClient();
-        const migrations = [
-            {
-                version: 8,
-                name: 'broken_migration',
-                async apply() {
-                    throw new Error('migration failed');
-                },
-            }
-        ];
-        const runner = new AsyncMigrationRunner(createPostgresAdapter(client), migrations);
-
-        await expect(runner.runToLatest()).rejects.toThrow('migration failed');
-
-        expect(client.calls.map((call) => call.sql)).toContain('BEGIN');
-        expect(client.calls.map((call) => call.sql)).toContain('ROLLBACK');
-        expect(client.calls.map((call) => call.sql)).not.toContain('COMMIT');
     });
 
     it('runs pending MySQL migrations in a transaction with schema metadata updates', async () => {

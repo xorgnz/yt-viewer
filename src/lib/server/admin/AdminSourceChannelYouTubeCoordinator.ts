@@ -30,13 +30,13 @@ export class AdminSourceChannelYouTubeCoordinator
         channelExternalId: string
     ): Promise<ImportResult>
     {
-        const postgresDb = db as MySqlPoolWrapper;
+        const mysqlDb = db as MySqlPoolWrapper;
 
         return new YouTubeChannelImportService(
             client,
             new YouTubeChannelDataService(client),
-            new MySqlSourceChannelDAO(postgresDb),
-            new MySqlVideoDAO(postgresDb)
+            new MySqlSourceChannelDAO(mysqlDb),
+            new MySqlVideoDAO(mysqlDb)
         ).importChannel(channelExternalId);
     }
 }

@@ -1,5 +1,4 @@
 import { SqliteDAO } from '$lib/daos/shared/SqliteDAO';
-import { PostgresDAO } from '$lib/daos/shared/PostgresDAO';
 import { MySqlDAO } from '$lib/daos/shared/MySqlDAO';
 import { VirtualChannel } from '$lib/entities/virtualChannel';
 
@@ -32,39 +31,6 @@ export class VirtualChannelDAO extends SqliteDAO
     }
 }
 
-export class PostgresVirtualChannelDAO extends PostgresDAO
-{
-    async create(name: string): Promise<VirtualChannel>
-    {
-        const row = await this.getOne<{ id: number }>(
-            `INSERT INTO virtual_channels(name) VALUES(?) RETURNING id`,
-            [name]
-        );
-
-        return new VirtualChannel({ id: Number(row?.id), name });
-    }
-
-    async get(id: number): Promise<VirtualChannel | undefined>
-    {
-        return this.getOne<VirtualChannel>(`SELECT * FROM virtual_channels WHERE id = ?`, [id]);
-    }
-
-    async rename(id: number, name: string): Promise<void>
-    {
-        await this.run(`UPDATE virtual_channels SET name = ? WHERE id = ?`, [name, id]);
-    }
-
-    async list(): Promise<VirtualChannel[]>
-    {
-        return this.listRows<VirtualChannel>(`SELECT * FROM virtual_channels ORDER BY name`);
-    }
-
-    async remove(id: number): Promise<void>
-    {
-        await this.run(`DELETE FROM virtual_channels WHERE id = ?`, [id]);
-    }
-}
-
 export class MySqlVirtualChannelDAO extends MySqlDAO
 {
     async create(name: string): Promise<VirtualChannel>
@@ -94,3 +60,6 @@ export class MySqlVirtualChannelDAO extends MySqlDAO
     }
 }
 // apply-patch-anchor - do not delete
+
+
+

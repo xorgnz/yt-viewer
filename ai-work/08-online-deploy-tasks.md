@@ -76,7 +76,7 @@
   - [x] 6.7 Update Cloud Run deployment scripts and user setup notes to name the MySQL/MariaDB `DATABASE_URL` secret contract and InMotion connection assumptions.
 
 - [ ] 7.0 Remove obsolete Postgres implementation and validate MySQL/MariaDB runtime
-  - [ ] 7.1 Remove Postgres-specific wrappers, adapters, tests, scripts, dependency entries, and documentation once MySQL/MariaDB runtime coverage passes.
+  - [x] 7.1 Remove Postgres-specific wrappers, adapters, tests, scripts, dependency entries, and documentation once MySQL/MariaDB runtime coverage passes.
   - [ ] 7.2 Update test harnesses/fixtures to run against MySQL/MariaDB-compatible setup and migration flows.
   - [ ] 7.3 Update DAO and migration tests to assert MySQL/MariaDB SQL behavior, schema versioning, and forward-only migration guarantees.
   - [ ] 7.4 Run and fix route-level regression tests for viewer, admin, history, and layout paths against the MySQL/MariaDB persistence layer.

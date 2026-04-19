@@ -46,19 +46,19 @@ This document is the shared application-wide source of truth for the stack used 
 - **First Required By:** `08-online-deploy`
 
 ### Database
-- **Choice:** PostgreSQL for both local and production environments
-- **Rationale:** Provides one durable database technology across environments and avoids Cloud Run SQLite limitations.
-- **Version:** Vendor-managed in production; Docker Compose-managed locally
+- **Choice:** MySQL/MariaDB for both local and production environments
+- **Rationale:** Provides one durable database technology across environments, avoids Cloud Run SQLite limitations, and matches the available InMotion database host.
+- **Version:** InMotion MariaDB-compatible production database; Docker Compose-managed MariaDB locally
 - **First Required By:** `08-online-deploy`
 
 ### Database Access
-- **Choice:** Direct SQL helpers against PostgreSQL
-- **Rationale:** Preserves the current explicit SQL style while migrating storage from SQLite to Postgres.
-- **Version:** Postgres client dependency selected during `08-online-deploy` implementation
+- **Choice:** Direct SQL helpers against MySQL/MariaDB
+- **Rationale:** Preserves the current explicit SQL style while migrating storage from SQLite to the production database engine.
+- **Version:** `mysql2` `^3.22.1`
 - **First Required By:** `08-online-deploy`
 
 ### Local Database Runtime
-- **Choice:** Docker Compose-managed PostgreSQL service
+- **Choice:** Docker Compose-managed MariaDB service
 - **Rationale:** Creates a reproducible local environment and keeps database lifecycle bundled with app setup.
 - **Version:** Docker Compose stack in repository
 - **First Required By:** `08-online-deploy`
@@ -118,7 +118,7 @@ This document is the shared application-wide source of truth for the stack used 
 ### Core Dependencies
 ```json
 {
-  "pg": "latest",
+  "mysql2": "^3.22.1",
   "svelte-material-ui": "latest"
 }
 ```
@@ -130,7 +130,6 @@ This document is the shared application-wide source of truth for the stack used 
   "@sveltejs/kit": "^2.50.0",
   "@sveltejs/vite-plugin-svelte": "^6.2.0",
   "@types/node": "^25.2.3",
-  "@types/pg": "latest",
   "sass": "^1.77.0",
   "svelte": "^5.50.0",
   "svelte-check": "^4.3.0",
@@ -145,9 +144,9 @@ This document is the shared application-wide source of truth for the stack used 
 
 - Use SvelteKit routes and server handlers for admin CRUD, import workflows, viewer queries, and history endpoints.
 - Keep schema and migration logic explicit in the repository.
-- Complete a full SQLite-to-Postgres migration in `08-online-deploy`, including local development runtime alignment.
-- Keep local and production database behavior aligned through one Postgres-backed data model.
-- Use Docker Compose locally for Postgres lifecycle and Cloud Run + Secret Manager in production.
+- Complete a full SQLite-to-MySQL/MariaDB migration in `08-online-deploy`, including local development runtime alignment.
+- Keep local and production database behavior aligned through one MySQL/MariaDB-backed data model.
+- Use Docker Compose locally for MariaDB lifecycle and Cloud Run + Secret Manager in production.
 - Implement watch-completion logic in shared helpers so viewer behavior is consistent.
 - Treat this document as the baseline stack for future features and update it only when a feature introduces a new shared technology decision.
 
