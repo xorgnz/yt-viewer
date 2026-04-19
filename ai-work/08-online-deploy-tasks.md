@@ -3,7 +3,7 @@
 - `package.json` - Dependency and script updates for `@sveltejs/adapter-node`, database client dependencies, and database-focused local workflows.
 - `svelte.config.js` - SvelteKit adapter switch to `adapter-node`.
 - `src/lib/server/database/context.ts` - Request-scoped database context entrypoint that must resolve production runtime connections.
-- `src/lib/daos/shared/` - Shared persistence infrastructure currently tied to SQLite/Postgres that needs a MySQL/MariaDB implementation path.
+- `src/lib/daos/shared/` - Shared persistence infrastructure for the MySQL/MariaDB runtime path.
 - `src/lib/daos/*.ts` - DAO modules that must run against the target production database.
 - `src/lib/daos/migrations/` - Migration registry and migration units that must support target database schema evolution.
 - `scripts/create_database.ts` - Database bootstrap flow to align with local/prod behavior.
@@ -22,7 +22,7 @@
 - Keep local runtime containerized with Docker Compose and avoid requiring host-level Postgres setup.
 - Preserve existing user-facing behavior while replacing persistence and deployment plumbing.
 - Use `DATABASE_URL` as the primary configuration contract across local and production.
-- Earlier Postgres work remains in history but should be replaced by MySQL/MariaDB before the feature closes.
+- MySQL/MariaDB is the only supported runtime database path after production cutover.
 
 ## Instructions for Completing Tasks
 
@@ -88,5 +88,5 @@
   - [x] 8.3 Replace remaining SQLite-backed route, DAO, service, and YouTube importer tests with MySQL-compatible harnesses or focused unit fakes.
   - [x] 8.4 Remove obsolete SQLite dependencies and type packages from `package.json` and `package-lock.json`.
   - [x] 8.5 Remove local generated SQLite/export artifacts such as `.data/` and `build/` from the working tree after confirming they are not needed for rollback.
-  - [ ] 8.6 Update docs, task notes, and environment examples so MySQL/MariaDB is the only supported runtime database path.
+  - [x] 8.6 Update docs, task notes, and environment examples so MySQL/MariaDB is the only supported runtime database path.
   - [ ] 8.7 Run full validation (`npm run check`, `npm run typecheck`, `npm run test`) and fix any fallout from removing SQLite.

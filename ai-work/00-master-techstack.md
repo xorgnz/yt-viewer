@@ -144,7 +144,7 @@ This document is the shared application-wide source of truth for the stack used 
 
 - Use SvelteKit routes and server handlers for admin CRUD, import workflows, viewer queries, and history endpoints.
 - Keep schema and migration logic explicit in the repository.
-- Complete a full SQLite-to-MySQL/MariaDB migration in `08-online-deploy`, including local development runtime alignment.
+- Keep local and production runtime aligned on MySQL/MariaDB after the completed `08-online-deploy` cutover.
 - Keep local and production database behavior aligned through one MySQL/MariaDB-backed data model.
 - Use Docker Compose locally for MariaDB lifecycle and Cloud Run + Secret Manager in production.
 - Implement watch-completion logic in shared helpers so viewer behavior is consistent.
