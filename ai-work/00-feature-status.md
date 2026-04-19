@@ -1,8 +1,8 @@
 # Feature Status
 
-**Current Feature:** `08-online-deploy`
-**Current Branch:** `main`
-**Last Updated:** `2026-04-17`
+**Current Feature:** `09-stable-db-ids`
+**Current Branch:** `feature/09-stable-db-ids`
+**Last Updated:** `2026-04-19`
 
 ## Shared Feature-State Contract
 
@@ -65,5 +65,5 @@ Additional guidance:
 | `05-db-migrations` | `feature/05-db-migrations` | `completed` | `2026-04-07` | `2026-04-10` | Forward-only database migration infrastructure for evolving local app data safely across releases |
 | `06-video-select` | `feature/06-video-select` | `completed` | `2026-04-08` | `2026-04-10` | Multi-select video actions in the viewer using range and additive selection |
 | `07-refactoring` | `feature/07-refactoring` | `completed` | `2026-04-10` | `2026-04-17` | Repository refactoring work after the migration feature completion |
-| `08-online-deploy` | `feature/08-online-deploy` | `active` | `2026-04-17` | | New block of work for deployment online |
-| `09-stable-db-ids` | `feature/09-stable-db-ids` | `planned` | `2026-04-19` | | Refactor database relationships away from brittle generated serial row IDs |
+| `08-online-deploy` | `feature/08-online-deploy` | `completed` | `2026-04-17` | `2026-04-19` | New block of work for deployment online |
+| `09-stable-db-ids` | `feature/09-stable-db-ids` | `active` | `2026-04-19` | | Refactor database relationships away from brittle generated serial row IDs |
