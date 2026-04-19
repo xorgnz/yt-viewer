@@ -1,11 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import type { MySqlQueryResult } from '../../src/lib/daos/shared/MySqlPoolWrapper';
 import { MySqlDAO, MySqlSqlBinder } from '../../src/lib/daos/shared/MySqlDAO';
-
-type QueryCall = {
-    text: string;
-    values: unknown[];
-};
+import { MockMySqlProvider } from '../helpers/MockMySqlProvider';
 
 class MockMySqlDAO extends MySqlDAO
 {
@@ -28,25 +23,6 @@ class MockMySqlDAO extends MySqlDAO
     ): Promise<T[]>
     {
         return this.listRows<T>(sql, params);
-    }
-}
-
-class MockQueryProvider
-{
-    readonly calls: QueryCall[] = [];
-
-    async query<T extends Record<string, unknown>>(text: string, values: unknown[]): Promise<MySqlQueryResult<T>>
-    {
-        this.calls.push({ text, values });
-
-        return {
-            affectedRows: 2,
-            insertId: 0,
-            rows: [
-                { id: 1, name: 'first' },
-                { id: 2, name: 'second' }
-            ] as unknown as T[],
-        };
     }
 }
 
@@ -88,7 +64,13 @@ describe('MySqlSqlBinder', () => {
 
 describe('MySqlDAO', () => {
     it('runs statements through the shared parameter binder', async () => {
-        const provider = new MockQueryProvider();
+        const provider = new MockMySqlProvider(() => MockMySqlProvider.result(
+            [
+                { id: 1, name: 'first' },
+                { id: 2, name: 'second' }
+            ],
+            { affectedRows: 2 }
+        ));
         const dao = new MockMySqlDAO(provider as never);
 
         const rowCount = await dao.runSql(
@@ -109,7 +91,10 @@ describe('MySqlDAO', () => {
     });
 
     it('maps first-row and all-row query results', async () => {
-        const provider = new MockQueryProvider();
+        const provider = new MockMySqlProvider(() => MockMySqlProvider.result([
+            { id: 1, name: 'first' },
+            { id: 2, name: 'second' }
+        ]));
         const dao = new MockMySqlDAO(provider as never);
 
         await expect(dao.getRow<{ id: number; name: string }>(

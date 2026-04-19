@@ -5,43 +5,25 @@ import { MySqlHistoryDAO } from '../../src/lib/daos/historyDAO';
 import { MySqlProfileDAO } from '../../src/lib/daos/profileDAO';
 import { MySqlHistoryReadRepository } from '../../src/lib/daos/readers/HistoryReadRepository';
 import { MySqlViewerVideoReadRepository } from '../../src/lib/daos/readers/ViewerVideoReadRepository';
-import type { MySqlQueryResult } from '../../src/lib/daos/shared/MySqlPoolWrapper';
 import { MySqlSourceChannelDAO } from '../../src/lib/daos/sourceChannelDAO';
 import { MySqlVideoDAO } from '../../src/lib/daos/videoDAO';
 import { MySqlVirtualChannelAssignmentVideoSelectionDAO } from '../../src/lib/daos/virtualChannelAssignmentVideoSelectionDAO';
 import { MySqlVirtualChannelDAO } from '../../src/lib/daos/virtualChannelDAO';
-
-type QueryCall = {
-    text: string;
-    values: unknown[];
-};
-
-class MockQueryProvider
-{
-    readonly calls: QueryCall[] = [];
-
-    async query<T extends object>(text: string, values: unknown[] = []): Promise<MySqlQueryResult<T>>
-    {
-        this.calls.push({ text, values });
-
-        return {
-            affectedRows: 1,
-            insertId: 42,
-            rows: [
-                {
-                    id: 42,
-                    count: 2,
-                    youtube_id: 'yt-1',
-                    name: 'Demo',
-                }
-            ] as T[],
-        };
-    }
-}
+import { MockMySqlProvider } from '../helpers/MockMySqlProvider';
 
 describe('MySQL DAO modules', () => {
     it('runs DAO and reader methods through MySQL-bound SQL', async () => {
-        const provider = new MockQueryProvider();
+        const provider = new MockMySqlProvider(() => MockMySqlProvider.result([
+            {
+                id: 42,
+                count: 2,
+                youtube_id: 'yt-1',
+                name: 'Demo',
+            }
+        ], {
+            affectedRows: 1,
+            insertId: 42,
+        }));
 
         await new MySqlSourceChannelDAO(provider).upsert({
             youtube_id: 'channel-1',

@@ -1,72 +1,39 @@
 import { describe, expect, it } from 'vitest';
 import { MYSQL_CREATE_TABLE_META } from '../../src/lib/daos/_schema';
 import type { AsyncMigrationDefinition } from '../../src/lib/daos/migrations/migrationTypes';
-import type { MySqlQueryResult } from '../../src/lib/daos/shared/MySqlPoolWrapper';
 import { runCreateDatabaseWorkflow } from '../../scripts/create_database';
 import { runMigrationWorkflow } from '../../scripts/migrate_database';
+import { MockMySqlProvider } from '../helpers/MockMySqlProvider';
 
-type QueryCall = {
-    sql: string;
-    params?: unknown[];
-};
-
-function createQueryResult<T extends object>(rows: T[]): MySqlQueryResult<T>
+function createProvider(): MockMySqlProvider
 {
-    return {
-        rows,
-        affectedRows: rows.length,
-        insertId: 0,
-    };
-}
-
-class MockMySqlClient
-{
-    readonly calls: QueryCall[] = [];
-
-    async query<T extends object = Record<string, unknown>>(
-        sql: string,
-        params?: unknown[]
-    ): Promise<MySqlQueryResult<T>>
-    {
-        this.calls.push({ sql, params });
-
+    return new MockMySqlProvider((sql) => {
         if (sql.includes('SELECT value FROM _meta')) {
-            return createQueryResult([{ value: '7' }] as T[]);
+            return MockMySqlProvider.result([{ value: '7' }]);
         }
 
-        if (sql.includes('information_schema.tables')) {
-            return createQueryResult([] as T[]);
-        }
-
-        return createQueryResult([] as T[]);
-    }
-}
-
-function createProvider(client: MockMySqlClient)
-{
-    return {
-        query: client.query.bind(client),
-    };
+        return undefined;
+    });
 }
 
 describe('database setup scripts', () => {
     it('bootstraps the latest MySQL schema without SQLite file operations', async () => {
-        const client = new MockMySqlClient();
+        const client = createProvider();
 
         await runCreateDatabaseWorkflow({
-            pool: createProvider(client),
+            pool: client,
         });
 
-        expect(client.calls[0].sql).toBe('START TRANSACTION');
-        expect(client.calls.some((call) => MYSQL_CREATE_TABLE_META.includes(call.sql))).toBe(true);
-        expect(client.calls.at(-1)?.sql).toBe('COMMIT');
+        expect(client.calls[0].text).toBe('START TRANSACTION');
+        expect(client.calls.some((call) => MYSQL_CREATE_TABLE_META.includes(call.text))).toBe(true);
+        expect(client.calls.at(-1)?.text).toBe('COMMIT');
     });
 
     it('runs registered MySQL migrations without SQLite file operations', async () => {
-        const client = new MockMySqlClient();
+        const client = createProvider();
 
         const result = await runMigrationWorkflow({
-            pool: createProvider(client),
+            pool: client,
         });
 
         expect(result.currentVersion).toBe(7);
@@ -78,13 +45,13 @@ describe('database setup scripts', () => {
                 name: 'add_migration_history',
             }
         ]);
-        expect(client.calls.map((call) => call.sql)).toContain('START TRANSACTION');
-        expect(client.calls.map((call) => call.sql)).toContain('COMMIT');
-        expect(client.calls.some((call) => call.sql.includes('INSERT INTO migration_history'))).toBe(true);
+        expect(client.calls.map((call) => call.text)).toContain('START TRANSACTION');
+        expect(client.calls.map((call) => call.text)).toContain('COMMIT');
+        expect(client.calls.some((call) => call.text.includes('INSERT INTO migration_history'))).toBe(true);
     });
 
     it('rolls back failed MySQL setup migrations', async () => {
-        const client = new MockMySqlClient();
+        const client = createProvider();
         const failingMigrations: AsyncMigrationDefinition[] = [
             {
                 version: 8,
@@ -96,13 +63,13 @@ describe('database setup scripts', () => {
         ];
 
         await expect(runMigrationWorkflow({
-            pool: createProvider(client),
+            pool: client,
             migrations: failingMigrations,
         })).rejects.toThrow('forced migration failure');
 
-        expect(client.calls.map((call) => call.sql)).toContain('START TRANSACTION');
-        expect(client.calls.map((call) => call.sql)).toContain('ROLLBACK');
-        expect(client.calls.map((call) => call.sql)).not.toContain('COMMIT');
+        expect(client.calls.map((call) => call.text)).toContain('START TRANSACTION');
+        expect(client.calls.map((call) => call.text)).toContain('ROLLBACK');
+        expect(client.calls.map((call) => call.text)).not.toContain('COMMIT');
     });
 });
 // apply-patch-anchor - do not delete
