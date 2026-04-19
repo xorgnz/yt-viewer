@@ -12,6 +12,8 @@
 - [ ] Create a Secret Manager secret containing the production MySQL/MariaDB `DATABASE_URL`.
    Default secret name expected by scripts: `yt-viewer-database-url`.
    Default version expected by scripts: `latest`.
+   Expected URL shape: `mysql://memeha5_ytviewer_user:<password>@www.meme-hazard.org:3306/memeha5_ytviewer`.
+   Use the password already provided out of band; do not write it to source-controlled files.
 - [ ] Grant the Cloud Run runtime service account permission to access that secret.
 - [ ] Ensure the local `gcloud` CLI is authenticated and configured for the chosen project.
 - [ ] Confirm which command should be used for deployment:

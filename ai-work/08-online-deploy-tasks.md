@@ -66,14 +66,14 @@
   - [x] 5.3 Remove or replace unrelated legacy deploy secret wiring so deploy scripts only set variables required for this app runtime.
   - [x] 5.4 Verify Cloud Run deploy arguments enforce `HOST=0.0.0.0`, runtime port compatibility, and expected buildpacks start behavior.
 
-- [ ] 6.0 Switch production persistence target from Postgres to InMotion MySQL/MariaDB
+- [x] 6.0 Switch production persistence target from Postgres to InMotion MySQL/MariaDB
   - [x] 6.1 Replace Postgres runtime dependencies and wrappers with a MySQL/MariaDB client layer using `mysql2` or an equivalent maintained Node driver.
   - [x] 6.2 Port schema bootstrap, migration registry, and forward migration execution from Postgres SQL to MySQL/MariaDB-compatible DDL and transactions.
   - [x] 6.3 Port DAO modules and read repositories from Postgres placeholders/result mapping to MySQL/MariaDB conventions while preserving return shapes.
   - [x] 6.4 Update server database-context wiring, runtime URL handling, and local command wrappers so app requests target MySQL/MariaDB.
   - [x] 6.5 Replace Docker Compose Postgres local runtime with MySQL/MariaDB-compatible local runtime and update `.env.sample` defaults.
   - [x] 6.6 Replace SQLite-to-Postgres migration tooling with SQLite-to-MySQL/MariaDB migration tooling, including deterministic ordering, idempotency guards, row-count reports, and integrity checks.
-  - [ ] 6.7 Update Cloud Run deployment scripts and user setup notes to name the MySQL/MariaDB `DATABASE_URL` secret contract and InMotion connection assumptions.
+  - [x] 6.7 Update Cloud Run deployment scripts and user setup notes to name the MySQL/MariaDB `DATABASE_URL` secret contract and InMotion connection assumptions.
 
 - [ ] 7.0 Remove obsolete Postgres implementation and validate MySQL/MariaDB runtime
   - [ ] 7.1 Remove Postgres-specific wrappers, adapters, tests, scripts, dependency entries, and documentation once MySQL/MariaDB runtime coverage passes.

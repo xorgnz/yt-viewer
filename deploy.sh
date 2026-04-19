@@ -49,7 +49,7 @@ else
 fi
 
 echo "Smoke testing..."
-PORT=8080 HOST=0.0.0.0 DATABASE_URL="postgres://yt_viewer:yt_viewer_dev@localhost:5432/yt_viewer?sslmode=disable" node build &
+PORT=8080 HOST=0.0.0.0 DATABASE_URL="mysql://yt_viewer:yt_viewer_dev@localhost:3306/yt_viewer" node build &
 pid=$!
 sleep 1
 if ! kill -0 "$pid" >/dev/null 2>&1; then

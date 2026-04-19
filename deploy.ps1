@@ -64,7 +64,7 @@ function Invoke-SmokeTest
     $startInfo.WorkingDirectory = (Get-Location).Path
     $startInfo.EnvironmentVariables["PORT"] = "8080"
     $startInfo.EnvironmentVariables["HOST"] = "0.0.0.0"
-    $startInfo.EnvironmentVariables["DATABASE_URL"] = "postgres://yt_viewer:yt_viewer_dev@localhost:5432/yt_viewer?sslmode=disable"
+    $startInfo.EnvironmentVariables["DATABASE_URL"] = "mysql://yt_viewer:yt_viewer_dev@localhost:3306/yt_viewer"
 
     $process = [System.Diagnostics.Process]::Start($startInfo)
 
