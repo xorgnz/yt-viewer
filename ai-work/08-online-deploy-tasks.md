@@ -87,6 +87,6 @@
   - [x] 8.2 Remove SQLite-only shared infrastructure, including file-layout, wrapper, DAO base, migration workflow, and SQLite migration adapter modules that no runtime or test path still needs.
   - [x] 8.3 Replace remaining SQLite-backed route, DAO, service, and YouTube importer tests with MySQL-compatible harnesses or focused unit fakes.
   - [x] 8.4 Remove obsolete SQLite dependencies and type packages from `package.json` and `package-lock.json`.
-  - [ ] 8.5 Remove local generated SQLite/export artifacts such as `.data/` and `build/` from the working tree after confirming they are not needed for rollback.
+  - [x] 8.5 Remove local generated SQLite/export artifacts such as `.data/` and `build/` from the working tree after confirming they are not needed for rollback.
   - [ ] 8.6 Update docs, task notes, and environment examples so MySQL/MariaDB is the only supported runtime database path.
   - [ ] 8.7 Run full validation (`npm run check`, `npm run typecheck`, `npm run test`) and fix any fallout from removing SQLite.
