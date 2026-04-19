@@ -1,21 +1,21 @@
-import type { MySqlQueryResult } from '../../src/lib/daos/shared/MySqlPoolWrapper';
+import type { DatabaseQueryResult } from '../../src/lib/daos/shared/DatabasePool';
 
-export type MockMySqlQueryCall = {
+export type MockQueryCall = {
     text: string;
     values: unknown[];
 };
 
-export type MockMySqlResultFactory = (
+export type MockQueryResultFactory = (
     text: string,
     values: unknown[]
-) => MySqlQueryResult<object> | undefined;
+) => DatabaseQueryResult<object> | undefined;
 
-export class MockMySqlProvider
+export class MockQueryProvider
 {
-    readonly calls: MockMySqlQueryCall[] = [];
-    private readonly resultFactory: MockMySqlResultFactory;
+    readonly calls: MockQueryCall[] = [];
+    private readonly resultFactory: MockQueryResultFactory;
 
-    constructor(resultFactory?: MockMySqlResultFactory)
+    constructor(resultFactory?: MockQueryResultFactory)
     {
         this.resultFactory = resultFactory || (() => undefined);
     }
@@ -23,11 +23,11 @@ export class MockMySqlProvider
     async query<T extends object = Record<string, unknown>>(
         text: string,
         values: unknown[] = []
-    ): Promise<MySqlQueryResult<T>>
+    ): Promise<DatabaseQueryResult<T>>
     {
         this.calls.push({ text, values });
 
-        return (this.resultFactory(text, values) || MockMySqlProvider.result<T>([])) as MySqlQueryResult<T>;
+        return (this.resultFactory(text, values) || MockQueryProvider.result<T>([])) as DatabaseQueryResult<T>;
     }
 
     static result<T extends object>(
@@ -36,7 +36,7 @@ export class MockMySqlProvider
             affectedRows?: number;
             insertId?: number;
         }
-    ): MySqlQueryResult<T>
+    ): DatabaseQueryResult<T>
     {
         return {
             rows,

@@ -1,10 +1,10 @@
-import { MySqlFlagsDAO } from '$lib/daos/flagsDAO';
-import { MySqlHistoryDAO } from '$lib/daos/historyDAO';
-import { MySqlProfileDAO } from '$lib/daos/profileDAO';
-import { MySqlViewerVideoReadRepository } from '$lib/daos/readers/ViewerVideoReadRepository';
-import type { MySqlPoolWrapper } from '$lib/daos/shared/MySqlPoolWrapper';
-import { MySqlVideoDAO } from '$lib/daos/videoDAO';
-import { MySqlVirtualChannelDAO } from '$lib/daos/virtualChannelDAO';
+import { FlagsDAO } from '$lib/daos/flagsDAO';
+import { HistoryDAO } from '$lib/daos/historyDAO';
+import { ProfileDAO } from '$lib/daos/profileDAO';
+import { ViewerVideoReadRepository } from '$lib/daos/readers/ViewerVideoReadRepository';
+import type { DatabasePool } from '$lib/daos/shared/DatabasePool';
+import { VideoDAO } from '$lib/daos/videoDAO';
+import { VirtualChannelDAO } from '$lib/daos/virtualChannelDAO';
 import { ServerProfileContext } from '$lib/server/ServerProfileContext';
 import { ViewerFlagService } from '$lib/server/viewer/ViewerFlagService';
 import { ViewerVirtualChannelService } from '$lib/server/viewer/ViewerVirtualChannelService';
@@ -30,12 +30,12 @@ export class ViewerServiceContext
         this.virtualChannelService = virtualChannelService;
     }
 
-    static async resolve(db: MySqlPoolWrapper, cookies: any): Promise<ViewerServiceContext>
+    static async resolve(db: DatabasePool, cookies: any): Promise<ViewerServiceContext>
     {
-        const profileContext = await ServerProfileContext.resolve(new MySqlProfileDAO(db), cookies);
-        const videoDAO = new MySqlVideoDAO(db);
-        const viewerVideoReadRepository = new MySqlViewerVideoReadRepository(db);
-        const flagsDAO = new MySqlFlagsDAO(db);
+        const profileContext = await ServerProfileContext.resolve(new ProfileDAO(db), cookies);
+        const videoDAO = new VideoDAO(db);
+        const viewerVideoReadRepository = new ViewerVideoReadRepository(db);
+        const flagsDAO = new FlagsDAO(db);
         const flagService = new ViewerFlagService(
             videoDAO,
             flagsDAO,
@@ -44,11 +44,11 @@ export class ViewerServiceContext
         const watchService = new ViewerWatchService(
             viewerVideoReadRepository,
             flagsDAO,
-            new MySqlHistoryDAO(db),
+            new HistoryDAO(db),
             profileContext
         );
         const virtualChannelService = new ViewerVirtualChannelService(
-            new MySqlVirtualChannelDAO(db),
+            new VirtualChannelDAO(db),
             profileContext
         );
 

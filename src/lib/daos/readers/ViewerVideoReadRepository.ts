@@ -1,4 +1,4 @@
-import { MySqlDAO } from '$lib/daos/shared/MySqlDAO';
+import { DAO } from '$lib/daos/shared/DAO';
 import {
     ViewerVideoQuerySpec,
     type ViewerVideoQueryFilters
@@ -22,7 +22,7 @@ export interface ViewerVideoRecord
     ignored: number;
 }
 
-export class MySqlViewerVideoReadRepository extends MySqlDAO
+export class ViewerVideoReadRepository extends DAO
 {
     async findAdjacentYoutubeIds(
         video: Pick<ViewerVideoRecord, 'id' | 'channel_id' | 'published_at'>,

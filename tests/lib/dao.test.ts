@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { MySqlDAO, MySqlSqlBinder } from '../../src/lib/daos/shared/MySqlDAO';
-import { MockMySqlProvider } from '../helpers/MockMySqlProvider';
+import { DAO, SqlBinder } from '../../src/lib/daos/shared/DAO';
+import { MockQueryProvider } from '../helpers/MockQueryProvider';
 
-class MockMySqlDAO extends MySqlDAO
+class MockDAO extends DAO
 {
     async runSql(sql: string, params?: unknown[] | Record<string, unknown>): Promise<number>
     {
@@ -26,9 +26,9 @@ class MockMySqlDAO extends MySqlDAO
     }
 }
 
-describe('MySqlSqlBinder', () => {
+describe('SqlBinder', () => {
     it('leaves positional question placeholders unchanged', () => {
-        const boundSql = MySqlSqlBinder.bind(
+        const boundSql = SqlBinder.bind(
             `SELECT * FROM videos WHERE channel_id = ? AND title <> '?' AND id > ?`,
             [10, 20]
         );
@@ -40,7 +40,7 @@ describe('MySqlSqlBinder', () => {
     });
 
     it('converts named placeholders and duplicates repeated values', () => {
-        const boundSql = MySqlSqlBinder.bind(
+        const boundSql = SqlBinder.bind(
             `SELECT :id AS id WHERE owner_id = :id AND name = :name AND note = ':name'`,
             {
                 id: 42,
@@ -55,7 +55,7 @@ describe('MySqlSqlBinder', () => {
     });
 
     it('does not replace named-looking tokens inside quoted MySQL identifiers', () => {
-        const boundSql = MySqlSqlBinder.bind(
+        const boundSql = SqlBinder.bind(
             'SELECT `:not_a_param` FROM profiles WHERE `key` = :key',
             {
                 key: 'default',
@@ -69,23 +69,23 @@ describe('MySqlSqlBinder', () => {
     });
 
     it('throws when a named placeholder has no value', () => {
-        expect(() => MySqlSqlBinder.bind(
+        expect(() => SqlBinder.bind(
             `SELECT * FROM videos WHERE id = :id`,
             {}
         )).toThrow('Missing SQL parameter ":id".');
     });
 });
 
-describe('MySqlDAO', () => {
+describe('DAO', () => {
     it('runs statements through the shared parameter binder', async () => {
-        const provider = new MockMySqlProvider(() => MockMySqlProvider.result(
+        const provider = new MockQueryProvider(() => MockQueryProvider.result(
             [
                 { id: 1, name: 'first' },
                 { id: 2, name: 'second' }
             ],
             { affectedRows: 2 }
         ));
-        const dao = new MockMySqlDAO(provider as never);
+        const dao = new MockDAO(provider as never);
 
         const rowCount = await dao.runSql(
             `UPDATE videos SET title = :title WHERE id = :id`,
@@ -105,11 +105,11 @@ describe('MySqlDAO', () => {
     });
 
     it('maps first-row and all-row query results', async () => {
-        const provider = new MockMySqlProvider(() => MockMySqlProvider.result([
+        const provider = new MockQueryProvider(() => MockQueryProvider.result([
             { id: 1, name: 'first' },
             { id: 2, name: 'second' }
         ]));
-        const dao = new MockMySqlDAO(provider as never);
+        const dao = new MockDAO(provider as never);
 
         await expect(dao.getRow<{ id: number; name: string }>(
             `SELECT * FROM profiles WHERE id = ?`,

@@ -1,5 +1,5 @@
-import { MySqlSourceChannelDAO } from '$lib/daos/sourceChannelDAO';
-import type { MySqlPoolWrapper } from '$lib/daos/shared/MySqlPoolWrapper';
+import { SourceChannelDAO } from '$lib/daos/sourceChannelDAO';
+import type { DatabasePool } from '$lib/daos/shared/DatabasePool';
 import { AdminSourceChannelLookupService } from '$lib/server/admin/AdminSourceChannelLookupService';
 import { AdminSourceChannelPageService } from '$lib/server/admin/AdminSourceChannelPageService';
 import { AdminSourceChannelYouTubeCoordinator } from '$lib/server/admin/AdminSourceChannelYouTubeCoordinator';
@@ -19,7 +19,7 @@ export class AdminSourceChannelServiceContext
         this.lookupService = lookupService;
     }
 
-    static resolve(db: MySqlPoolWrapper): AdminSourceChannelServiceContext
+    static resolve(db: DatabasePool): AdminSourceChannelServiceContext
     {
         const clientProvider = new AdminYouTubeClientProvider();
         const coordinator = new AdminSourceChannelYouTubeCoordinator();
@@ -27,7 +27,7 @@ export class AdminSourceChannelServiceContext
         return new AdminSourceChannelServiceContext(
             new AdminSourceChannelPageService(
                 db,
-                new MySqlSourceChannelDAO(db),
+                new SourceChannelDAO(db),
                 clientProvider,
                 coordinator
             ),

@@ -1,4 +1,4 @@
-import { MySqlDAO } from '$lib/daos/shared/MySqlDAO';
+import { DAO } from '$lib/daos/shared/DAO';
 import {
     HistorySessionReadQuerySpec,
     HistoryVideoSummaryReadQuerySpec,
@@ -32,7 +32,7 @@ export interface HistoryVideoSummaryRecord
     latest_last_updated_at: number;
 }
 
-export class MySqlHistoryReadRepository extends MySqlDAO
+export class HistoryReadRepository extends DAO
 {
     async listSessions(filters: HistoryReadFilters): Promise<HistorySessionRecord[]>
     {

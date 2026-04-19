@@ -1,10 +1,10 @@
-import { MySqlDAO } from '$lib/daos/shared/MySqlDAO';
+import { DAO } from '$lib/daos/shared/DAO';
 import type {
     VirtualChannelAssignmentVideoReviewState,
     VirtualChannelAssignmentVideoSelection
 } from '$lib/entities/virtualChannelAssignmentVideoSelection';
 
-export class MySqlVirtualChannelAssignmentVideoSelectionDAO extends MySqlDAO
+export class VirtualChannelAssignmentVideoSelectionDAO extends DAO
 {
     async setReviewState(
         assignment_id: number,

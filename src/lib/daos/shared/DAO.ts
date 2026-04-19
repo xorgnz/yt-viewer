@@ -1,17 +1,17 @@
-import type { MySqlPoolWrapper, MySqlQueryResult } from '$lib/daos/shared/MySqlPoolWrapper';
+import type { DatabasePool, DatabaseQueryResult } from '$lib/daos/shared/DatabasePool';
 
-export type MySqlSqlParams = unknown[] | Record<string, unknown>;
+export type SqlParams = unknown[] | Record<string, unknown>;
 
-export type MySqlBoundSql = {
+export type BoundSql = {
     text: string;
     values: unknown[];
 };
 
-type MySqlQueryProvider = Pick<MySqlPoolWrapper, 'query'>;
+type QueryProvider = Pick<DatabasePool, 'query'>;
 
-export class MySqlSqlBinder
+export class SqlBinder
 {
-    static bind(sql: string, params?: MySqlSqlParams): MySqlBoundSql
+    static bind(sql: string, params?: SqlParams): BoundSql
     {
         if (!params) {
             return {
@@ -27,13 +27,13 @@ export class MySqlSqlBinder
             };
         }
 
-        return MySqlSqlBinder.convertNamedPlaceholders(sql, params);
+        return SqlBinder.convertNamedPlaceholders(sql, params);
     }
 
     private static convertNamedPlaceholders(
         sql: string,
         params: Record<string, unknown>
-    ): MySqlBoundSql
+    ): BoundSql
     {
         const values: unknown[] = [];
         let output = '';
@@ -44,7 +44,7 @@ export class MySqlSqlBinder
             const nextChar = sql[index + 1];
 
             if (char === '\'' || char === '"' || char === '`') {
-                const quoted = MySqlSqlBinder.readQuotedText(sql, index, char);
+                const quoted = SqlBinder.readQuotedText(sql, index, char);
                 output += quoted.value;
                 index = quoted.endIndex;
                 continue;
@@ -54,7 +54,7 @@ export class MySqlSqlBinder
                 char !== ':'
                 || previousChar === ':'
                 || nextChar === ':'
-                || !MySqlSqlBinder.isIdentifierStart(nextChar)
+                || !SqlBinder.isIdentifierStart(nextChar)
             ) {
                 output += char;
                 continue;
@@ -63,7 +63,7 @@ export class MySqlSqlBinder
             const nameStart = index + 1;
             let nameEnd = nameStart + 1;
 
-            while (MySqlSqlBinder.isIdentifierPart(sql[nameEnd])) {
+            while (SqlBinder.isIdentifierPart(sql[nameEnd])) {
                 nameEnd += 1;
             }
 
@@ -129,22 +129,22 @@ export class MySqlSqlBinder
     }
 }
 
-export class MySqlDAO
+export class DAO
 {
-    protected readonly db: MySqlQueryProvider;
+    protected readonly db: QueryProvider;
 
-    constructor(db: MySqlQueryProvider)
+    constructor(db: QueryProvider)
     {
         this.db = db;
     }
 
-    protected async run(sql: string, params?: MySqlSqlParams): Promise<number>
+    protected async run(sql: string, params?: SqlParams): Promise<number>
     {
         const result = await this.query(sql, params);
         return result.affectedRows;
     }
 
-    protected async insert(sql: string, params?: MySqlSqlParams): Promise<number>
+    protected async insert(sql: string, params?: SqlParams): Promise<number>
     {
         const result = await this.query(sql, params);
         return result.insertId;
@@ -152,7 +152,7 @@ export class MySqlDAO
 
     protected async getOne<T extends object>(
         sql: string,
-        params?: MySqlSqlParams
+        params?: SqlParams
     ): Promise<T | undefined>
     {
         const result = await this.query<T>(sql, params);
@@ -161,7 +161,7 @@ export class MySqlDAO
 
     protected async listRows<T extends object>(
         sql: string,
-        params?: MySqlSqlParams
+        params?: SqlParams
     ): Promise<T[]>
     {
         const result = await this.query<T>(sql, params);
@@ -170,10 +170,10 @@ export class MySqlDAO
 
     protected async query<T extends object = Record<string, unknown>>(
         sql: string,
-        params?: MySqlSqlParams
-    ): Promise<MySqlQueryResult<T>>
+        params?: SqlParams
+    ): Promise<DatabaseQueryResult<T>>
     {
-        const boundSql = MySqlSqlBinder.bind(sql, params);
+        const boundSql = SqlBinder.bind(sql, params);
         return this.db.query<T>(boundSql.text, boundSql.values);
     }
 }

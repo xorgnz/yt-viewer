@@ -1,6 +1,6 @@
-import type { MySqlAssignmentDAO } from '$lib/daos/assignmentDAO';
-import type { MySqlSourceChannelDAO } from '$lib/daos/sourceChannelDAO';
-import type { MySqlVirtualChannelDAO } from '$lib/daos/virtualChannelDAO';
+import type { AssignmentDAO } from '$lib/daos/assignmentDAO';
+import type { SourceChannelDAO } from '$lib/daos/sourceChannelDAO';
+import type { VirtualChannelDAO } from '$lib/daos/virtualChannelDAO';
 import type { SourceChannel } from '$lib/entities/sourceChannel';
 import type { VirtualChannel } from '$lib/entities/virtualChannel';
 import type {
@@ -13,9 +13,9 @@ import type {
     AdminVirtualChannelServiceResult
 } from '$lib/server/admin/AdminVirtualChannelTypes';
 
-type AdminVirtualChannelDAO = Pick<MySqlVirtualChannelDAO, 'create' | 'get' | 'list' | 'remove' | 'rename'>;
-type AdminAssignmentDAO = Pick<MySqlAssignmentDAO, 'add' | 'listForVirtualChannel' | 'remove'>;
-type AdminSourceChannelDAO = Pick<MySqlSourceChannelDAO, 'get' | 'list'>;
+type AdminVirtualChannelDAO = Pick<VirtualChannelDAO, 'create' | 'get' | 'list' | 'remove' | 'rename'>;
+type AdminAssignmentDAO = Pick<AssignmentDAO, 'add' | 'listForVirtualChannel' | 'remove'>;
+type AdminSourceChannelDAO = Pick<SourceChannelDAO, 'get' | 'list'>;
 type AdminAssignmentRows = Awaited<ReturnType<AdminAssignmentDAO['listForVirtualChannel']>>;
 
 export interface CreateVirtualChannelInput

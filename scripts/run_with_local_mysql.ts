@@ -17,7 +17,7 @@ Existing DATABASE_URL values are preserved.
     exit(1);
 }
 
-async function assertMySqlReachable(databaseUrl: string): Promise<void>
+async function assertDatabaseReachable(databaseUrl: string): Promise<void>
 {
     let connection: Awaited<ReturnType<typeof createConnection>> | null = null;
 
@@ -49,7 +49,7 @@ async function main(): Promise<void>
         DATABASE_URL: env.DATABASE_URL || LOCAL_MYSQL_DATABASE_URL
     };
 
-    await assertMySqlReachable(childEnv.DATABASE_URL);
+    await assertDatabaseReachable(childEnv.DATABASE_URL);
 
     const child = spawn(command, args, {
         env: childEnv,

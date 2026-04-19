@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { MySqlPoolWrapper } from '$lib/daos/shared/MySqlPoolWrapper';
+import { DatabasePool } from '$lib/daos/shared/DatabasePool';
 
 type MockPoolState = {
     end: any;
@@ -41,7 +41,7 @@ vi.mock('mysql2/promise', () => {
     return { createPool };
 });
 
-describe('MySqlPoolWrapper', () => {
+describe('DatabasePool', () => {
     let previousDatabaseUrl: string | undefined;
 
     beforeEach(() => {
@@ -59,14 +59,14 @@ describe('MySqlPoolWrapper', () => {
 
     it('throws when no connection string is available', () => {
         delete process.env.DATABASE_URL;
-        const wrapper = new MySqlPoolWrapper();
+        const wrapper = new DatabasePool();
 
         expect(() => wrapper.open()).toThrow('MySQL pool requires DATABASE_URL to be set.');
     });
 
     it('creates a single pool instance and reuses it', async () => {
         process.env.DATABASE_URL = 'mysql://example-user:secret@localhost:3306/yt_viewer';
-        const wrapper = new MySqlPoolWrapper();
+        const wrapper = new DatabasePool();
 
         const firstPool = wrapper.open();
         const secondPool = wrapper.open();
@@ -79,7 +79,7 @@ describe('MySqlPoolWrapper', () => {
 
     it('releases connections after work succeeds and fails', async () => {
         process.env.DATABASE_URL = 'mysql://example-user:secret@localhost:3306/yt_viewer';
-        const wrapper = new MySqlPoolWrapper();
+        const wrapper = new DatabasePool();
 
         await wrapper.withConnection(async () => {
             return 42;
@@ -95,7 +95,7 @@ describe('MySqlPoolWrapper', () => {
 
     it('ends the current pool and clears cached state on close', async () => {
         process.env.DATABASE_URL = 'mysql://example-user:secret@localhost:3306/yt_viewer';
-        const wrapper = new MySqlPoolWrapper();
+        const wrapper = new DatabasePool();
         wrapper.open();
 
         await wrapper.close();

@@ -1,7 +1,7 @@
-import { MySqlDAO } from '$lib/daos/shared/MySqlDAO';
+import { DAO } from '$lib/daos/shared/DAO';
 import type { VirtualChannelAssignment, VirtualChannelAssignmentMode } from '$lib/entities/virtualChannelAssignment';
 
-export class MySqlAssignmentDAO extends MySqlDAO
+export class AssignmentDAO extends DAO
 {
     async add(
         source_channel_id: number,

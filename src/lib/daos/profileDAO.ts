@@ -1,7 +1,7 @@
-import { MySqlDAO } from '$lib/daos/shared/MySqlDAO';
+import { DAO } from '$lib/daos/shared/DAO';
 import type { Profile } from '$lib/entities/profile';
 
-export class MySqlProfileDAO extends MySqlDAO
+export class ProfileDAO extends DAO
 {
     async upsertByKey(key: string, name: string): Promise<void>
     {

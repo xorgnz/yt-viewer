@@ -1,58 +1,58 @@
 import type {
-    AsyncMigrationAdapter,
-    AsyncMigrationExecutionContext,
+    MigrationAdapter,
+    MigrationExecutionContext,
     RecordedMigrationState,
     SqlParams,
 } from '$lib/daos/migrations/migrationTypes';
-import { MYSQL_CREATE_TABLE_META } from '$lib/daos/_schema';
-import type { MySqlPoolWrapper } from '$lib/daos/shared/MySqlPoolWrapper';
-import { MySqlSqlBinder } from '$lib/daos/shared/MySqlDAO';
+import { CREATE_TABLE_META } from '$lib/daos/_schema';
+import type { DatabasePool } from '$lib/daos/shared/DatabasePool';
+import { SqlBinder } from '$lib/daos/shared/DAO';
 
-type MySqlClientProvider = Pick<MySqlPoolWrapper, 'query'>;
+type DatabaseClientProvider = Pick<DatabasePool, 'query'>;
 
-class MySqlMigrationExecutionContext implements AsyncMigrationExecutionContext
+class DatabaseMigrationExecutionContext implements MigrationExecutionContext
 {
-    private readonly provider: MySqlClientProvider;
+    private readonly provider: DatabaseClientProvider;
 
-    constructor(provider: MySqlClientProvider)
+    constructor(provider: DatabaseClientProvider)
     {
         this.provider = provider;
     }
 
     async exec(sql: string): Promise<void>
     {
-        for (const statement of MySqlMigrationAdapter.splitStatements(sql)) {
+        for (const statement of DatabaseMigrationAdapter.splitStatements(sql)) {
             await this.provider.query(statement);
         }
     }
 
     async run(sql: string, params?: SqlParams): Promise<void>
     {
-        const bound = MySqlSqlBinder.bind(sql, params);
+        const bound = SqlBinder.bind(sql, params);
         await this.provider.query(bound.text, bound.values);
     }
 
     async get<T>(sql: string, params?: SqlParams): Promise<T | undefined>
     {
-        const bound = MySqlSqlBinder.bind(sql, params);
+        const bound = SqlBinder.bind(sql, params);
         const result = await this.provider.query<T & Record<string, unknown>>(bound.text, bound.values);
         return result.rows[0] as T | undefined;
     }
 
     async all<T>(sql: string, params?: SqlParams): Promise<T[]>
     {
-        const bound = MySqlSqlBinder.bind(sql, params);
+        const bound = SqlBinder.bind(sql, params);
         const result = await this.provider.query<T & Record<string, unknown>>(bound.text, bound.values);
         return result.rows as T[];
     }
 }
 
-export class MySqlMigrationAdapter implements AsyncMigrationAdapter
+export class DatabaseMigrationAdapter implements MigrationAdapter
 {
-    private readonly provider: MySqlClientProvider;
+    private readonly provider: DatabaseClientProvider;
     private inTransaction = false;
 
-    constructor(provider: MySqlClientProvider)
+    constructor(provider: DatabaseClientProvider)
     {
         this.provider = provider;
     }
@@ -136,8 +136,8 @@ export class MySqlMigrationAdapter implements AsyncMigrationAdapter
 
     async setCurrentVersion(version: number): Promise<void>
     {
-        const context = new MySqlMigrationExecutionContext(this.provider);
-        await context.exec(MYSQL_CREATE_TABLE_META);
+        const context = new DatabaseMigrationExecutionContext(this.provider);
+        await context.exec(CREATE_TABLE_META);
         await this.provider.query(
             `
                 INSERT INTO _meta(\`key\`, value) VALUES('schema_version', ?)
@@ -148,7 +148,7 @@ export class MySqlMigrationAdapter implements AsyncMigrationAdapter
     }
 
     async runInTransaction<T>(
-        operation: (context: AsyncMigrationExecutionContext) => Promise<T> | T
+        operation: (context: MigrationExecutionContext) => Promise<T> | T
     ): Promise<T>
     {
         if (this.inTransaction) {
@@ -159,7 +159,7 @@ export class MySqlMigrationAdapter implements AsyncMigrationAdapter
         await this.provider.query('START TRANSACTION');
 
         try {
-            const context = new MySqlMigrationExecutionContext(this.provider);
+            const context = new DatabaseMigrationExecutionContext(this.provider);
             const result = await operation(context);
             await this.provider.query('COMMIT');
             return result;

@@ -1,6 +1,6 @@
-import { MySqlSourceChannelDAO } from '$lib/daos/sourceChannelDAO';
-import type { MySqlPoolWrapper } from '$lib/daos/shared/MySqlPoolWrapper';
-import { MySqlVideoDAO } from '$lib/daos/videoDAO';
+import { SourceChannelDAO } from '$lib/daos/sourceChannelDAO';
+import type { DatabasePool } from '$lib/daos/shared/DatabasePool';
+import { VideoDAO } from '$lib/daos/videoDAO';
 import {
     type ResolvedChannelReference,
     YouTubeChannelDataService,
@@ -30,13 +30,13 @@ export class AdminSourceChannelYouTubeCoordinator
         channelExternalId: string
     ): Promise<ImportResult>
     {
-        const mysqlDb = db as MySqlPoolWrapper;
+        const database = db as DatabasePool;
 
         return new YouTubeChannelImportService(
             client,
             new YouTubeChannelDataService(client),
-            new MySqlSourceChannelDAO(mysqlDb),
-            new MySqlVideoDAO(mysqlDb)
+            new SourceChannelDAO(database),
+            new VideoDAO(database)
         ).importChannel(channelExternalId);
     }
 }

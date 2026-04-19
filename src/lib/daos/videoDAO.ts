@@ -1,7 +1,7 @@
-import { MySqlDAO } from '$lib/daos/shared/MySqlDAO';
+import { DAO } from '$lib/daos/shared/DAO';
 import type { Video } from '$lib/entities/video';
 
-export class MySqlVideoDAO extends MySqlDAO
+export class VideoDAO extends DAO
 {
     async upsert(video: Omit<Video, 'id'> | Partial<Video> & { youtube_id: string; channel_id: number; title: string }): Promise<void>
     {

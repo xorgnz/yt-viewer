@@ -1,4 +1,4 @@
-import { MySqlDAO } from '$lib/daos/shared/MySqlDAO';
+import { DAO } from '$lib/daos/shared/DAO';
 import type { SourceChannel } from '$lib/entities/sourceChannel';
 
 export interface SourceChannelWithVideoStats extends SourceChannel
@@ -9,7 +9,7 @@ export interface SourceChannelWithVideoStats extends SourceChannel
     ignored_count: number;
 }
 
-export class MySqlSourceChannelDAO extends MySqlDAO
+export class SourceChannelDAO extends DAO
 {
     async upsert(channel: Omit<SourceChannel, 'id'> | Partial<SourceChannel> & { youtube_id: string; title: string }): Promise<void>
     {

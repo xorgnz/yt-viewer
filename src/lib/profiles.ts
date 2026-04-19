@@ -1,5 +1,5 @@
 import type { Cookies } from '@sveltejs/kit';
-import type { MySqlProfileDAO } from '$lib/daos/profileDAO';
+import type { ProfileDAO } from '$lib/daos/profileDAO';
 
 const PROFILE_DEFINITIONS = [
     { key: 'default', name: 'Adult' },
@@ -7,7 +7,7 @@ const PROFILE_DEFINITIONS = [
 ] as const;
 
 export type ProfileKey = (typeof PROFILE_DEFINITIONS)[number]['key'];
-type ProfileCatalogDAO = Pick<MySqlProfileDAO, 'upsertByKey'>;
+type ProfileCatalogDAO = Pick<ProfileDAO, 'upsertByKey'>;
 
 type ProfileSelectionCookies = Partial<Pick<Cookies, 'get' | 'set'>>;
 

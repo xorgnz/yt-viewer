@@ -2,16 +2,16 @@
 import { argv, exit } from 'node:process';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
-import { MYSQL_MIGRATIONS } from '$lib/daos/migrations/registry';
-import type { AsyncMigrationDefinition, MigrationRunResult } from '$lib/daos/migrations/migrationTypes';
+import { MIGRATIONS } from '$lib/daos/migrations/registry';
+import type { MigrationDefinition, MigrationRunResult } from '$lib/daos/migrations/migrationTypes';
 import { DatabaseMode } from '$lib/daos/shared/DatabaseMode';
-import { AsyncMigrationRunner } from '$lib/daos/shared/MigrationRunner';
-import { MySqlMigrationAdapter } from '$lib/daos/shared/MySqlMigrationAdapter';
-import { MySqlPoolWrapper } from '$lib/daos/shared/MySqlPoolWrapper';
+import { MigrationRunner } from '$lib/daos/shared/MigrationRunner';
+import { DatabaseMigrationAdapter } from '$lib/daos/shared/MigrationAdapter';
+import { DatabasePool } from '$lib/daos/shared/DatabasePool';
 import { requireDatabaseUrlForRuntime } from '$lib/server/RuntimeDatabaseUrl';
 
 type ModeArg = DatabaseMode.Dev | DatabaseMode.Live;
-type MySqlClientProvider = Pick<MySqlPoolWrapper, 'query'>;
+type DatabaseClientProvider = Pick<DatabasePool, 'query'>;
 
 function parseArgs(): { mode: ModeArg }
 {
@@ -61,7 +61,7 @@ function parseArgs(): { mode: ModeArg }
 function usage(error?: string): never
 {
     const script = path.basename(fileURLToPath(import.meta.url));
-    const message = `\nUsage:\n  ${script} --mode <dev|live>\n  ${script} <dev|live>\n\nRuns explicit forward-only MySQL/MariaDB migrations for the configured DATABASE_URL.\n- This command does not read, write, back up, or restore SQLite files.\n- Only dev and live databases are supported by this command.\n- The target MySQL/MariaDB database must already exist and contain schema metadata.\n- The command upgrades only to the latest supported version known to the app.\n`;
+    const message = `\nUsage:\n  ${script} --mode <dev|live>\n  ${script} <dev|live>\n\nRuns explicit forward-only MySQL/MariaDB migrations for the configured DATABASE_URL.\n- This command only applies registered forward migrations.\n- Only dev and live databases are supported by this command.\n- The target MySQL/MariaDB database must already exist and contain schema metadata.\n- The command upgrades only to the latest supported version known to the app.\n`;
 
     if (error) {
         console.error(`Error: ${error}\n`);
@@ -72,13 +72,13 @@ function usage(error?: string): never
 }
 
 export async function runMigrationWorkflow(options: {
-    pool: MySqlClientProvider;
-    migrations?: AsyncMigrationDefinition[];
+    pool: DatabaseClientProvider;
+    migrations?: MigrationDefinition[];
 }): Promise<MigrationRunResult>
 {
-    const runner = new AsyncMigrationRunner(
-        new MySqlMigrationAdapter(options.pool),
-        options.migrations || MYSQL_MIGRATIONS
+    const runner = new MigrationRunner(
+        new DatabaseMigrationAdapter(options.pool),
+        options.migrations || MIGRATIONS
     );
 
     return runner.runToLatest();
@@ -90,7 +90,7 @@ async function main(): Promise<void>
     const databaseUrl = requireDatabaseUrlForRuntime('Database migrate script', {
         allowMissingInTest: false,
     });
-    const pool = new MySqlPoolWrapper({ connectionString: databaseUrl });
+    const pool = new DatabasePool({ connectionString: databaseUrl });
 
     try {
         const result = await runMigrationWorkflow({ pool });

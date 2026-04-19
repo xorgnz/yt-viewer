@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { DatabaseMode } from '../../src/lib/daos/shared/DatabaseMode';
-import type { MySqlPoolWrapper } from '../../src/lib/daos/shared/MySqlPoolWrapper';
+import type { DatabasePool } from '../../src/lib/daos/shared/DatabasePool';
 import { ServerDatabaseContext } from '../../src/lib/server/ServerDatabaseContext';
 
 type MockPoolState = {
@@ -103,8 +103,8 @@ describe('ServerDatabaseContext', () => {
     });
 
     it('closes the wrapper after successful and failed work', async () => {
-        const successfulWrappers: Array<Pick<MySqlPoolWrapper, 'instance'>> = [];
-        const failingWrappers: Array<Pick<MySqlPoolWrapper, 'instance'>> = [];
+        const successfulWrappers: Array<Pick<DatabasePool, 'instance'>> = [];
+        const failingWrappers: Array<Pick<DatabasePool, 'instance'>> = [];
 
         await expect(ServerDatabaseContext.run(async ({ db }) => {
             successfulWrappers.push(db);

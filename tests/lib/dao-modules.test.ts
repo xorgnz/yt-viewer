@@ -1,19 +1,19 @@
 import { describe, expect, it } from 'vitest';
-import { MySqlAssignmentDAO } from '../../src/lib/daos/assignmentDAO';
-import { MySqlFlagsDAO } from '../../src/lib/daos/flagsDAO';
-import { MySqlHistoryDAO } from '../../src/lib/daos/historyDAO';
-import { MySqlProfileDAO } from '../../src/lib/daos/profileDAO';
-import { MySqlHistoryReadRepository } from '../../src/lib/daos/readers/HistoryReadRepository';
-import { MySqlViewerVideoReadRepository } from '../../src/lib/daos/readers/ViewerVideoReadRepository';
-import { MySqlSourceChannelDAO } from '../../src/lib/daos/sourceChannelDAO';
-import { MySqlVideoDAO } from '../../src/lib/daos/videoDAO';
-import { MySqlVirtualChannelAssignmentVideoSelectionDAO } from '../../src/lib/daos/virtualChannelAssignmentVideoSelectionDAO';
-import { MySqlVirtualChannelDAO } from '../../src/lib/daos/virtualChannelDAO';
-import { MockMySqlProvider } from '../helpers/MockMySqlProvider';
+import { AssignmentDAO } from '../../src/lib/daos/assignmentDAO';
+import { FlagsDAO } from '../../src/lib/daos/flagsDAO';
+import { HistoryDAO } from '../../src/lib/daos/historyDAO';
+import { ProfileDAO } from '../../src/lib/daos/profileDAO';
+import { HistoryReadRepository } from '../../src/lib/daos/readers/HistoryReadRepository';
+import { ViewerVideoReadRepository } from '../../src/lib/daos/readers/ViewerVideoReadRepository';
+import { SourceChannelDAO } from '../../src/lib/daos/sourceChannelDAO';
+import { VideoDAO } from '../../src/lib/daos/videoDAO';
+import { VirtualChannelAssignmentVideoSelectionDAO } from '../../src/lib/daos/virtualChannelAssignmentVideoSelectionDAO';
+import { VirtualChannelDAO } from '../../src/lib/daos/virtualChannelDAO';
+import { MockQueryProvider } from '../helpers/MockQueryProvider';
 
-describe('MySQL DAO modules', () => {
-    it('runs DAO and reader methods through MySQL-bound SQL', async () => {
-        const provider = new MockMySqlProvider(() => MockMySqlProvider.result([
+describe('DAO modules', () => {
+    it('runs DAO and reader methods through bound SQL', async () => {
+        const provider = new MockQueryProvider(() => MockQueryProvider.result([
             {
                 id: 42,
                 count: 2,
@@ -25,7 +25,7 @@ describe('MySQL DAO modules', () => {
             insertId: 42,
         }));
 
-        await new MySqlSourceChannelDAO(provider).upsert({
+        await new SourceChannelDAO(provider).upsert({
             youtube_id: 'channel-1',
             title: 'Channel',
             description: '',
@@ -33,22 +33,22 @@ describe('MySQL DAO modules', () => {
             published_at: null,
             last_refreshed_at: null,
         });
-        await new MySqlVideoDAO(provider).listExistingIds([1, 2]);
-        await new MySqlProfileDAO(provider).upsertByKey('default', 'Default');
-        await new MySqlVirtualChannelDAO(provider).create('Queue');
-        await new MySqlAssignmentDAO(provider).add(1, 2, 'all');
-        await new MySqlVirtualChannelAssignmentVideoSelectionDAO(provider).setReviewState(3, 4, 'included');
-        await new MySqlHistoryDAO(provider).createSession({
+        await new VideoDAO(provider).listExistingIds([1, 2]);
+        await new ProfileDAO(provider).upsertByKey('default', 'Default');
+        await new VirtualChannelDAO(provider).create('Queue');
+        await new AssignmentDAO(provider).add(1, 2, 'all');
+        await new VirtualChannelAssignmentVideoSelectionDAO(provider).setReviewState(3, 4, 'included');
+        await new HistoryDAO(provider).createSession({
             video_id: 1,
             profile_id: 2,
             session_started_at: 100,
             last_updated_at: 200,
             time_watched_seconds: 30,
         });
-        await new MySqlFlagsDAO(provider).set(1, 2, { watched: 1 });
-        await new MySqlViewerVideoReadRepository(provider).list({}, 2);
-        await new MySqlViewerVideoReadRepository(provider).count({ term: 'demo' }, 2);
-        await new MySqlHistoryReadRepository(provider).listVideoSummaries({ profileId: 2 });
+        await new FlagsDAO(provider).set(1, 2, { watched: 1 });
+        await new ViewerVideoReadRepository(provider).list({}, 2);
+        await new ViewerVideoReadRepository(provider).count({ term: 'demo' }, 2);
+        await new HistoryReadRepository(provider).listVideoSummaries({ profileId: 2 });
 
         expect(provider.calls.length).toBeGreaterThan(10);
         expect(provider.calls.every((call) => !call.text.includes('$1'))).toBe(true);

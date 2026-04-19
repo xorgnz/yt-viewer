@@ -6,24 +6,24 @@ import {
     type QueryResult
 } from 'mysql2/promise';
 
-type MySqlPoolWrapperOptions = {
+type DatabasePoolOptions = {
     connectionString?: string;
     poolConfig?: Omit<PoolOptions, 'uri'>;
 };
 
-export type MySqlQueryResult<T> = {
+export type DatabaseQueryResult<T> = {
     rows: T[];
     affectedRows: number;
     insertId: number;
 };
 
-export class MySqlPoolWrapper
+export class DatabasePool
 {
     private readonly connectionString: string;
     private readonly poolConfig: Omit<PoolOptions, 'uri'> | undefined;
     private pool: Pool | null = null;
 
-    constructor(options?: MySqlPoolWrapperOptions)
+    constructor(options?: DatabasePoolOptions)
     {
         this.connectionString = options?.connectionString?.trim() || process.env.DATABASE_URL?.trim() || '';
         this.poolConfig = options?.poolConfig;
@@ -63,10 +63,10 @@ export class MySqlPoolWrapper
     async query<T extends object = Record<string, unknown>>(
         text: string,
         values?: unknown[]
-    ): Promise<MySqlQueryResult<T>>
+    ): Promise<DatabaseQueryResult<T>>
     {
         const [result] = await this.open().execute<QueryResult>(text, (values || []) as never[]);
-        return MySqlPoolWrapper.mapResult<T>(result);
+        return DatabasePool.mapResult<T>(result);
     }
 
     async close(): Promise<void>
@@ -85,7 +85,7 @@ export class MySqlPoolWrapper
         return this.pool;
     }
 
-    private static mapResult<T extends object>(result: QueryResult): MySqlQueryResult<T>
+    private static mapResult<T extends object>(result: QueryResult): DatabaseQueryResult<T>
     {
         if (Array.isArray(result)) {
             return {

@@ -1,15 +1,15 @@
 import { describe, expect, it } from 'vitest';
-import { MYSQL_CREATE_TABLE_MIGRATION_HISTORY } from '../../src/lib/daos/_schema';
-import { MYSQL_MIGRATIONS } from '../../src/lib/daos/migrations/registry';
-import { MySqlMigrationAdapter } from '../../src/lib/daos/shared/MySqlMigrationAdapter';
-import { AsyncMigrationRunner } from '../../src/lib/daos/shared/MigrationRunner';
+import { CREATE_TABLE_MIGRATION_HISTORY } from '../../src/lib/daos/_schema';
+import { MIGRATIONS } from '../../src/lib/daos/migrations/registry';
+import { DatabaseMigrationAdapter } from '../../src/lib/daos/shared/MigrationAdapter';
+import { MigrationRunner } from '../../src/lib/daos/shared/MigrationRunner';
 
 type QueryCall = {
     sql: string;
     params?: unknown[];
 };
 
-class MockMySqlMigrationProvider
+class MockMigrationProvider
 {
     readonly calls: QueryCall[] = [];
 
@@ -43,8 +43,8 @@ class MockMySqlMigrationProvider
 
 describe('MigrationRunner', () => {
     it('runs pending MySQL migrations in a transaction with schema metadata updates', async () => {
-        const provider = new MockMySqlMigrationProvider();
-        const runner = new AsyncMigrationRunner(new MySqlMigrationAdapter(provider as never), MYSQL_MIGRATIONS);
+        const provider = new MockMigrationProvider();
+        const runner = new MigrationRunner(new DatabaseMigrationAdapter(provider as never), MIGRATIONS);
 
         const result = await runner.runToLatest();
 
@@ -61,14 +61,14 @@ describe('MigrationRunner', () => {
         });
         expect(provider.calls.map((call) => call.sql)).toContain('START TRANSACTION');
         expect(provider.calls.map((call) => call.sql)).toContain('COMMIT');
-        expect(provider.calls.some((call) => MYSQL_CREATE_TABLE_MIGRATION_HISTORY.includes(call.sql))).toBe(true);
+        expect(provider.calls.some((call) => CREATE_TABLE_MIGRATION_HISTORY.includes(call.sql))).toBe(true);
         expect(provider.calls.some((call) => call.sql.includes('INSERT INTO migration_history'))).toBe(true);
         expect(provider.calls.some((call) => call.sql.includes('ON DUPLICATE KEY UPDATE value=VALUES(value)'))).toBe(true);
         expect(provider.calls.some((call) => call.params?.[0] === '8')).toBe(true);
     });
 
     it('rolls back a failed MySQL migration transaction', async () => {
-        const provider = new MockMySqlMigrationProvider();
+        const provider = new MockMigrationProvider();
         const migrations = [
             {
                 version: 8,
@@ -78,7 +78,7 @@ describe('MigrationRunner', () => {
                 },
             }
         ];
-        const runner = new AsyncMigrationRunner(new MySqlMigrationAdapter(provider as never), migrations);
+        const runner = new MigrationRunner(new DatabaseMigrationAdapter(provider as never), migrations);
 
         await expect(runner.runToLatest()).rejects.toThrow('migration failed');
 

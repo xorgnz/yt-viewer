@@ -1,17 +1,17 @@
-import { MySqlProfileDAO } from '$lib/daos/profileDAO';
-import type { MySqlPoolWrapper } from '$lib/daos/shared/MySqlPoolWrapper';
+import { ProfileDAO } from '$lib/daos/profileDAO';
+import type { DatabasePool } from '$lib/daos/shared/DatabasePool';
 import { ServerProfileContext } from '$lib/server/ServerProfileContext';
 import { ViewerPageLoader } from '$lib/server/viewer/ViewerPageLoader';
 import { ViewerQueryParser } from '$lib/server/viewer/ViewerQueryParser';
 
 export class ViewerLoadService
 {
-    private readonly profileDAO: MySqlProfileDAO;
+    private readonly profileDAO: ProfileDAO;
     private readonly pageLoader: ViewerPageLoader;
 
-    constructor(db: MySqlPoolWrapper)
+    constructor(db: DatabasePool)
     {
-        this.profileDAO = new MySqlProfileDAO(db);
+        this.profileDAO = new ProfileDAO(db);
         this.pageLoader = new ViewerPageLoader(db);
     }
 

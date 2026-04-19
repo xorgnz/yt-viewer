@@ -1,6 +1,6 @@
-import { MySqlProfileDAO } from '$lib/daos/profileDAO';
-import { MySqlHistoryReadRepository } from '$lib/daos/readers/HistoryReadRepository';
-import { MySqlSourceChannelDAO } from '$lib/daos/sourceChannelDAO';
+import { ProfileDAO } from '$lib/daos/profileDAO';
+import { HistoryReadRepository } from '$lib/daos/readers/HistoryReadRepository';
+import { SourceChannelDAO } from '$lib/daos/sourceChannelDAO';
 import { ServerDatabaseContext } from '$lib/server/ServerDatabaseContext';
 import { ServerProfileContext } from '$lib/server/ServerProfileContext';
 
@@ -17,7 +17,7 @@ export const load = async ({ url, cookies }: { url: URL; cookies: any }) =>
 
     return ServerDatabaseContext.run(async ({ db }) => {
         // Resolve history against the active site-wide profile.
-        const profileContext = await ServerProfileContext.resolve(new MySqlProfileDAO(db), cookies);
+        const profileContext = await ServerProfileContext.resolve(new ProfileDAO(db), cookies);
         const filters = {
             profileKey: profileContext.activeProfileKey,
             mode,
@@ -28,8 +28,8 @@ export const load = async ({ url, cookies }: { url: URL; cookies: any }) =>
             offset: offset ? Number(offset) : 0
         } as const;
 
-        const historyReadRepository = new MySqlHistoryReadRepository(db);
-        const cDao = new MySqlSourceChannelDAO(db);
+        const historyReadRepository = new HistoryReadRepository(db);
+        const cDao = new SourceChannelDAO(db);
 
         const queryFilters = {
             profileId: profileContext.activeProfileId,

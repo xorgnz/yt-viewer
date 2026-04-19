@@ -1,9 +1,9 @@
-import { MySqlAssignmentDAO } from '$lib/daos/assignmentDAO';
-import { MySqlSourceChannelDAO } from '$lib/daos/sourceChannelDAO';
-import type { MySqlPoolWrapper } from '$lib/daos/shared/MySqlPoolWrapper';
-import { MySqlVideoDAO } from '$lib/daos/videoDAO';
-import { MySqlVirtualChannelAssignmentVideoSelectionDAO } from '$lib/daos/virtualChannelAssignmentVideoSelectionDAO';
-import { MySqlVirtualChannelDAO } from '$lib/daos/virtualChannelDAO';
+import { AssignmentDAO } from '$lib/daos/assignmentDAO';
+import { SourceChannelDAO } from '$lib/daos/sourceChannelDAO';
+import type { DatabasePool } from '$lib/daos/shared/DatabasePool';
+import { VideoDAO } from '$lib/daos/videoDAO';
+import { VirtualChannelAssignmentVideoSelectionDAO } from '$lib/daos/virtualChannelAssignmentVideoSelectionDAO';
+import { VirtualChannelDAO } from '$lib/daos/virtualChannelDAO';
 import { AdminVirtualChannelIndexService } from '$lib/server/admin/AdminVirtualChannelIndexService';
 import { AdminVirtualChannelManageService } from '$lib/server/admin/AdminVirtualChannelManageService';
 
@@ -21,13 +21,13 @@ export class AdminVirtualChannelServiceContext
         this.manageService = manageService;
     }
 
-    static resolve(db: MySqlPoolWrapper): AdminVirtualChannelServiceContext
+    static resolve(db: DatabasePool): AdminVirtualChannelServiceContext
     {
-        const virtualChannelDAO = new MySqlVirtualChannelDAO(db);
-        const assignmentDAO = new MySqlAssignmentDAO(db);
-        const sourceChannelDAO = new MySqlSourceChannelDAO(db);
-        const videoDAO = new MySqlVideoDAO(db);
-        const selectionDAO = new MySqlVirtualChannelAssignmentVideoSelectionDAO(db);
+        const virtualChannelDAO = new VirtualChannelDAO(db);
+        const assignmentDAO = new AssignmentDAO(db);
+        const sourceChannelDAO = new SourceChannelDAO(db);
+        const videoDAO = new VideoDAO(db);
+        const selectionDAO = new VirtualChannelAssignmentVideoSelectionDAO(db);
 
         return new AdminVirtualChannelServiceContext(
             new AdminVirtualChannelIndexService(

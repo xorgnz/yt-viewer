@@ -1,5 +1,5 @@
 import { DatabaseMode } from '$lib/daos/shared/DatabaseMode';
-import { MySqlPoolWrapper } from '$lib/daos/shared/MySqlPoolWrapper';
+import { DatabasePool } from '$lib/daos/shared/DatabasePool';
 import { requireDatabaseUrlForRuntime } from '$lib/server/RuntimeDatabaseUrl';
 
 export { DatabaseMode } from '$lib/daos/shared/DatabaseMode';
@@ -7,9 +7,9 @@ export { DatabaseMode } from '$lib/daos/shared/DatabaseMode';
 export class ServerDatabaseContext
 {
     readonly mode: DatabaseMode;
-    readonly db: MySqlPoolWrapper;
+    readonly db: DatabasePool;
 
-    private constructor(mode: DatabaseMode, db: MySqlPoolWrapper)
+    private constructor(mode: DatabaseMode, db: DatabasePool)
     {
         this.mode = mode;
         this.db = db;
@@ -37,7 +37,7 @@ export class ServerDatabaseContext
             nodeEnv,
             allowMissingInTest: false,
         });
-        const db = new MySqlPoolWrapper({ connectionString: databaseUrl });
+        const db = new DatabasePool({ connectionString: databaseUrl });
 
         db.open();
 

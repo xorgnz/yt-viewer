@@ -1,9 +1,9 @@
-import { MySqlDAO } from '$lib/daos/shared/MySqlDAO';
+import { DAO } from '$lib/daos/shared/DAO';
 import type { VideoFlags } from '$lib/entities/videoFlags';
 
 export type BulkFlagKind = 'ignored' | 'watched' | 'favorite';
 
-export class MySqlFlagsDAO extends MySqlDAO
+export class FlagsDAO extends DAO
 {
     private async ensureRows(videoIds: number[], profileId: number): Promise<void>
     {

@@ -1,15 +1,15 @@
 import { describe, expect, it } from 'vitest';
-import { MYSQL_CREATE_TABLE_META } from '../../src/lib/daos/_schema';
-import type { AsyncMigrationDefinition } from '../../src/lib/daos/migrations/migrationTypes';
+import { CREATE_TABLE_META } from '../../src/lib/daos/_schema';
+import type { MigrationDefinition } from '../../src/lib/daos/migrations/migrationTypes';
 import { runCreateDatabaseWorkflow } from '../../scripts/create_database';
 import { runMigrationWorkflow } from '../../scripts/migrate_database';
-import { MockMySqlProvider } from '../helpers/MockMySqlProvider';
+import { MockQueryProvider } from '../helpers/MockQueryProvider';
 
-function createProvider(): MockMySqlProvider
+function createProvider(): MockQueryProvider
 {
-    return new MockMySqlProvider((sql) => {
+    return new MockQueryProvider((sql) => {
         if (sql.includes('SELECT value FROM _meta')) {
-            return MockMySqlProvider.result([{ value: '7' }]);
+            return MockQueryProvider.result([{ value: '7' }]);
         }
 
         return undefined;
@@ -17,7 +17,7 @@ function createProvider(): MockMySqlProvider
 }
 
 describe('database setup scripts', () => {
-    it('bootstraps the latest MySQL schema without SQLite file operations', async () => {
+    it('bootstraps the latest database schema', async () => {
         const client = createProvider();
 
         await runCreateDatabaseWorkflow({
@@ -25,11 +25,11 @@ describe('database setup scripts', () => {
         });
 
         expect(client.calls[0].text).toBe('START TRANSACTION');
-        expect(client.calls.some((call) => MYSQL_CREATE_TABLE_META.includes(call.text))).toBe(true);
+        expect(client.calls.some((call) => CREATE_TABLE_META.includes(call.text))).toBe(true);
         expect(client.calls.at(-1)?.text).toBe('COMMIT');
     });
 
-    it('runs registered MySQL migrations without SQLite file operations', async () => {
+    it('runs registered database migrations', async () => {
         const client = createProvider();
 
         const result = await runMigrationWorkflow({
@@ -52,7 +52,7 @@ describe('database setup scripts', () => {
 
     it('rolls back failed MySQL setup migrations', async () => {
         const client = createProvider();
-        const failingMigrations: AsyncMigrationDefinition[] = [
+        const failingMigrations: MigrationDefinition[] = [
             {
                 version: 8,
                 name: 'broken_migration',

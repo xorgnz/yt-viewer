@@ -1,21 +1,21 @@
-import { MySqlViewerVideoReadRepository } from '$lib/daos/readers/ViewerVideoReadRepository';
-import { MySqlSourceChannelDAO } from '$lib/daos/sourceChannelDAO';
-import type { MySqlPoolWrapper } from '$lib/daos/shared/MySqlPoolWrapper';
-import { MySqlVirtualChannelDAO } from '$lib/daos/virtualChannelDAO';
+import { ViewerVideoReadRepository } from '$lib/daos/readers/ViewerVideoReadRepository';
+import { SourceChannelDAO } from '$lib/daos/sourceChannelDAO';
+import type { DatabasePool } from '$lib/daos/shared/DatabasePool';
+import { VirtualChannelDAO } from '$lib/daos/virtualChannelDAO';
 import type { ServerProfileContext } from '$lib/server/ServerProfileContext';
 import type { ViewerQueryFilters } from '$lib/server/viewer/ViewerQueryParser';
 
 export class ViewerPageLoader
 {
-    private readonly viewerVideoReadRepository: MySqlViewerVideoReadRepository;
-    private readonly sourceChannelDAO: MySqlSourceChannelDAO;
-    private readonly virtualChannelDAO: MySqlVirtualChannelDAO;
+    private readonly viewerVideoReadRepository: ViewerVideoReadRepository;
+    private readonly sourceChannelDAO: SourceChannelDAO;
+    private readonly virtualChannelDAO: VirtualChannelDAO;
 
-    constructor(db: MySqlPoolWrapper)
+    constructor(db: DatabasePool)
     {
-        this.viewerVideoReadRepository = new MySqlViewerVideoReadRepository(db);
-        this.sourceChannelDAO = new MySqlSourceChannelDAO(db);
-        this.virtualChannelDAO = new MySqlVirtualChannelDAO(db);
+        this.viewerVideoReadRepository = new ViewerVideoReadRepository(db);
+        this.sourceChannelDAO = new SourceChannelDAO(db);
+        this.virtualChannelDAO = new VirtualChannelDAO(db);
     }
 
     async load(filters: ViewerQueryFilters, profileContext: ServerProfileContext)

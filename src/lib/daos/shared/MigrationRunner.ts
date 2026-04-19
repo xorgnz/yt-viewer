@@ -1,6 +1,4 @@
 import type {
-    AsyncMigrationAdapter,
-    AsyncMigrationDefinition,
     MigrationAdapter,
     MigrationDefinition,
     MigrationRunResult,
@@ -112,92 +110,6 @@ export class MigrationRunner
     private readonly migrations: MigrationDefinition[];
 
     constructor(adapter: MigrationAdapter, migrations: MigrationDefinition[])
-    {
-        this.adapter = adapter;
-        this.migrations = sortMigrations(migrations);
-    }
-
-    runToLatest(): MigrationRunResult
-    {
-        // Discover the current state before deciding whether any work is required.
-        const currentVersion = this.adapter.getCurrentVersion();
-
-        if (currentVersion === null) {
-            throw new Error('Database schema version is unknown.');
-        }
-
-        if (!Number.isInteger(currentVersion) || currentVersion < 0) {
-            throw new Error(`Database schema version "${currentVersion}" is invalid.`);
-        }
-
-        if (this.migrations.length === 0) {
-            return {
-                currentVersion,
-                targetVersion: currentVersion,
-                appliedMigrations: [],
-                finalVersion: currentVersion,
-            };
-        }
-
-        // Compute the only supported destination and validate the source state.
-        const targetVersion = this.migrations[this.migrations.length - 1].version;
-        const firstRegisteredVersion = this.migrations[0].version;
-
-        if (currentVersion > targetVersion) {
-            throw new Error(
-                `Database schema version "${currentVersion}" is newer than the latest supported version "${targetVersion}".`
-            );
-        }
-
-        validateRecordedState(
-            this.adapter.getRecordedMigrationState(),
-            this.migrations,
-            currentVersion,
-            firstRegisteredVersion,
-            targetVersion
-        );
-
-        const pendingMigrations = this.migrations.filter((migration) => migration.version > currentVersion);
-        const appliedMigrations: MigrationRunResult['appliedMigrations'] = [];
-        let finalVersion = currentVersion;
-
-        // Apply each migration as an independent forward-only step.
-        for (const migration of pendingMigrations) {
-            if (migration.version !== finalVersion + 1) {
-                throw new Error(
-                    `No supported migration path from version "${finalVersion}" to version "${migration.version}".`
-                );
-            }
-
-            this.adapter.runInTransaction((context) => {
-                migration.apply(context);
-                this.adapter.recordSuccessfulMigration(migration.version, migration.name);
-                this.adapter.setCurrentVersion(migration.version);
-            });
-
-            appliedMigrations.push({
-                version: migration.version,
-                name: migration.name,
-            });
-
-            finalVersion = migration.version;
-        }
-
-        return {
-            currentVersion,
-            targetVersion,
-            appliedMigrations,
-            finalVersion,
-        };
-    }
-}
-
-export class AsyncMigrationRunner
-{
-    private readonly adapter: AsyncMigrationAdapter;
-    private readonly migrations: AsyncMigrationDefinition[];
-
-    constructor(adapter: AsyncMigrationAdapter, migrations: AsyncMigrationDefinition[])
     {
         this.adapter = adapter;
         this.migrations = sortMigrations(migrations);

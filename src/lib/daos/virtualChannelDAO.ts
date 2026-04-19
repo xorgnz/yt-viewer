@@ -1,7 +1,7 @@
-import { MySqlDAO } from '$lib/daos/shared/MySqlDAO';
+import { DAO } from '$lib/daos/shared/DAO';
 import { VirtualChannel } from '$lib/entities/virtualChannel';
 
-export class MySqlVirtualChannelDAO extends MySqlDAO
+export class VirtualChannelDAO extends DAO
 {
     async create(name: string): Promise<VirtualChannel>
     {

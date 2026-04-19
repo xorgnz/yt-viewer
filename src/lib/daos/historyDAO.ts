@@ -1,7 +1,7 @@
-import { MySqlDAO } from '$lib/daos/shared/MySqlDAO';
+import { DAO } from '$lib/daos/shared/DAO';
 import type { WatchHistory } from '$lib/entities/watchHistory';
 
-export class MySqlHistoryDAO extends MySqlDAO
+export class HistoryDAO extends DAO
 {
     async createSession(entry: {
         video_id: number;

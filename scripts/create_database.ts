@@ -4,12 +4,12 @@ import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 import { SCHEMA_VERSION } from '$lib/daos/_schema';
 import { DatabaseMode } from '$lib/daos/shared/DatabaseMode';
-import { MySqlLatestSchemaBootstrapper } from '$lib/daos/shared/LatestSchemaBootstrap';
-import { MySqlPoolWrapper } from '$lib/daos/shared/MySqlPoolWrapper';
+import { LatestSchemaBootstrapper } from '$lib/daos/shared/LatestSchemaBootstrap';
+import { DatabasePool } from '$lib/daos/shared/DatabasePool';
 import { requireDatabaseUrlForRuntime } from '$lib/server/RuntimeDatabaseUrl';
 
 type ModeArg = DatabaseMode;
-type MySqlClientProvider = Pick<MySqlPoolWrapper, 'query'>;
+type DatabaseClientProvider = Pick<DatabasePool, 'query'>;
 
 function parseArgs(): { mode: ModeArg }
 {
@@ -50,7 +50,7 @@ function parseArgs(): { mode: ModeArg }
 function usage(error?: string): never
 {
     const script = path.basename(fileURLToPath(import.meta.url));
-    const message = `\nUsage:\n  ${script} --mode <test|dev|live>\n  ${script} <test|dev|live>\n\nCreates or validates the MySQL/MariaDB schema for the configured DATABASE_URL using the latest schema bootstrap (v${SCHEMA_VERSION}).\n- This command does not create, delete, or reset SQLite files.\n- The target MySQL/MariaDB database must already exist and be reachable through DATABASE_URL.\n- The schema bootstrap is idempotent and records the latest schema version.\n`;
+    const message = `\nUsage:\n  ${script} --mode <test|dev|live>\n  ${script} <test|dev|live>\n\nCreates or validates the MySQL/MariaDB schema for the configured DATABASE_URL using the latest schema bootstrap (v${SCHEMA_VERSION}).\n- This command only creates or validates schema objects in the configured database.\n- The target MySQL/MariaDB database must already exist and be reachable through DATABASE_URL.\n- The schema bootstrap is idempotent and records the latest schema version.\n`;
 
     if (error) {
         console.error(`Error: ${error}\n`);
@@ -61,10 +61,10 @@ function usage(error?: string): never
 }
 
 export async function runCreateDatabaseWorkflow(options: {
-    pool: MySqlClientProvider;
+    pool: DatabaseClientProvider;
 }): Promise<void>
 {
-    await new MySqlLatestSchemaBootstrapper().apply(options.pool);
+    await new LatestSchemaBootstrapper().apply(options.pool);
 }
 
 async function main(): Promise<void>
@@ -73,7 +73,7 @@ async function main(): Promise<void>
     const databaseUrl = requireDatabaseUrlForRuntime('Database create script', {
         allowMissingInTest: false,
     });
-    const pool = new MySqlPoolWrapper({ connectionString: databaseUrl });
+    const pool = new DatabasePool({ connectionString: databaseUrl });
 
     try {
         await runCreateDatabaseWorkflow({ pool });
