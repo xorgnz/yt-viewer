@@ -49,8 +49,19 @@ describe('ViewerPageLoader', () => {
                 return 'default';
             }
         } as any);
+        const mysqlProvider = {
+            async query<T extends object>(sql: string, values: unknown[] = []) {
+                const rows = db.prepare(sql).all(...values) as T[];
+
+                return {
+                    rows,
+                    affectedRows: rows.length,
+                    insertId: 0,
+                };
+            }
+        };
         const filters = ViewerQueryParser.parse(new URL('http://localhost/viewer?term=Load'), profileContext.activeProfileKey);
-        const result = await new ViewerPageLoader(db as never).load(filters, profileContext);
+        const result = await new ViewerPageLoader(mysqlProvider as never).load(filters, profileContext);
 
         expect(result.filters.term).toBe('Load');
         expect(result.profileKey).toBe('default');
