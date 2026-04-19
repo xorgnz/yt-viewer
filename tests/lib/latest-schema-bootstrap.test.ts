@@ -1,8 +1,13 @@
 import Database from 'better-sqlite3';
 import { describe, expect, it } from 'vitest';
-import { POSTGRES_CREATE_TABLE_MIGRATION_HISTORY, POSTGRES_CREATE_TABLE_META, SCHEMA_VERSION } from '../../src/lib/daos/_schema';
+import {
+    POSTGRES_CREATE_TABLE_MIGRATION_HISTORY,
+    POSTGRES_CREATE_TABLE_META,
+    SCHEMA_VERSION
+} from '../../src/lib/daos/_schema';
 import {
     applyLatestSchemaBootstrap,
+    MySqlLatestSchemaBootstrapper,
     PostgresLatestSchemaBootstrapper
 } from '../../src/lib/daos/shared/LatestSchemaBootstrap';
 import { SchemaVersionDAO } from '../../src/lib/daos/schemaVersionDAO';
@@ -71,6 +76,45 @@ describe('applyLatestSchemaBootstrap', () => {
         await expect(new PostgresLatestSchemaBootstrapper().applyWithClient(client as never)).rejects.toThrow('boom');
 
         expect(queries).toEqual(['BEGIN', POSTGRES_CREATE_TABLE_META, 'ROLLBACK']);
+    });
+
+    it('applies the MySQL schema inside a transaction and records the latest version', async () => {
+        const queries: Array<{ sql: string; params?: unknown[] }> = [];
+        const provider = {
+            query: async (sql: string, params?: unknown[]) => {
+                queries.push({ sql, params });
+                return { rows: [], affectedRows: 0, insertId: 0 };
+            }
+        };
+
+        await new MySqlLatestSchemaBootstrapper().apply(provider);
+
+        expect(queries[0].sql).toBe('START TRANSACTION');
+        expect(queries.some((query) => query.sql.includes('CREATE TABLE IF NOT EXISTS _meta'))).toBe(true);
+        expect(queries.some((query) => query.sql.includes('CREATE TABLE IF NOT EXISTS migration_history'))).toBe(true);
+        expect(queries.at(-1)?.sql).toBe('COMMIT');
+        expect(queries.some((query) => query.params?.[0] === String(SCHEMA_VERSION))).toBe(true);
+    });
+
+    it('rolls back the MySQL schema transaction when bootstrap fails', async () => {
+        const queries: string[] = [];
+        const provider = {
+            query: async (sql: string) => {
+                queries.push(sql);
+
+                if (sql.includes('CREATE TABLE IF NOT EXISTS _meta')) {
+                    throw new Error('boom');
+                }
+
+                return { rows: [], affectedRows: 0, insertId: 0 };
+            }
+        };
+
+        await expect(new MySqlLatestSchemaBootstrapper().apply(provider)).rejects.toThrow('boom');
+
+        expect(queries[0]).toBe('START TRANSACTION');
+        expect(queries[1]).toContain('CREATE TABLE IF NOT EXISTS _meta');
+        expect(queries[2]).toBe('ROLLBACK');
     });
 });
 // apply-patch-anchor - do not delete

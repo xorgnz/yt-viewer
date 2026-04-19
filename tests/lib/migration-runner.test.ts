@@ -1,8 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import type { PoolClient, QueryResult, QueryResultRow } from 'pg';
 import { POSTGRES_CREATE_TABLE_MIGRATION_HISTORY } from '../../src/lib/daos/_schema';
-import { MIGRATIONS, POSTGRES_MIGRATIONS } from '../../src/lib/daos/migrations/registry';
+import { MIGRATIONS, MYSQL_MIGRATIONS, POSTGRES_MIGRATIONS } from '../../src/lib/daos/migrations/registry';
 import { SchemaVersionDAO } from '../../src/lib/daos/schemaVersionDAO';
+import { MySqlMigrationAdapter } from '../../src/lib/daos/shared/MySqlMigrationAdapter';
 import { AsyncMigrationRunner, MigrationRunner } from '../../src/lib/daos/shared/MigrationRunner';
 import { PostgresMigrationAdapter } from '../../src/lib/daos/shared/PostgresMigrationAdapter';
 import { SqliteMigrationAdapter } from '../../src/lib/daos/shared/SqliteMigrationAdapter';
@@ -42,6 +43,38 @@ class MockPostgresMigrationClient
         }
 
         return createQueryResult([]);
+    }
+}
+
+class MockMySqlMigrationProvider
+{
+    readonly calls: QueryCall[] = [];
+
+    async query<T extends Record<string, unknown>>(sql: string, params?: unknown[])
+    {
+        this.calls.push({ sql, params });
+
+        if (sql.includes('SELECT value FROM _meta')) {
+            return {
+                rows: [{ value: '7' }] as unknown as T[],
+                affectedRows: 0,
+                insertId: 0
+            };
+        }
+
+        if (sql.includes('information_schema.tables')) {
+            return {
+                rows: [] as T[],
+                affectedRows: 0,
+                insertId: 0
+            };
+        }
+
+        return {
+            rows: [] as T[],
+            affectedRows: 0,
+            insertId: 0
+        };
     }
 }
 
@@ -195,6 +228,50 @@ describe('MigrationRunner', () => {
         expect(client.calls.map((call) => call.sql)).toContain('BEGIN');
         expect(client.calls.map((call) => call.sql)).toContain('ROLLBACK');
         expect(client.calls.map((call) => call.sql)).not.toContain('COMMIT');
+    });
+
+    it('runs pending MySQL migrations in a transaction with schema metadata updates', async () => {
+        const provider = new MockMySqlMigrationProvider();
+        const runner = new AsyncMigrationRunner(new MySqlMigrationAdapter(provider), MYSQL_MIGRATIONS);
+
+        const result = await runner.runToLatest();
+
+        expect(result).toEqual({
+            currentVersion: 7,
+            targetVersion: 8,
+            appliedMigrations: [
+                {
+                    version: 8,
+                    name: 'add_migration_history',
+                }
+            ],
+            finalVersion: 8,
+        });
+        expect(provider.calls.map((call) => call.sql)).toContain('START TRANSACTION');
+        expect(provider.calls.map((call) => call.sql)).toContain('COMMIT');
+        expect(provider.calls.some((call) => call.sql.includes('CREATE TABLE IF NOT EXISTS migration_history'))).toBe(true);
+        expect(provider.calls.some((call) => call.sql.includes('INSERT INTO migration_history'))).toBe(true);
+        expect(provider.calls.some((call) => call.params?.[0] === '8')).toBe(true);
+    });
+
+    it('rolls back a failed MySQL migration transaction', async () => {
+        const provider = new MockMySqlMigrationProvider();
+        const migrations = [
+            {
+                version: 8,
+                name: 'broken_migration',
+                async apply() {
+                    throw new Error('migration failed');
+                },
+            }
+        ];
+        const runner = new AsyncMigrationRunner(new MySqlMigrationAdapter(provider), migrations);
+
+        await expect(runner.runToLatest()).rejects.toThrow('migration failed');
+
+        expect(provider.calls.map((call) => call.sql)).toContain('START TRANSACTION');
+        expect(provider.calls.map((call) => call.sql)).toContain('ROLLBACK');
+        expect(provider.calls.map((call) => call.sql)).not.toContain('COMMIT');
     });
 });
 // apply-patch-anchor - do not delete
