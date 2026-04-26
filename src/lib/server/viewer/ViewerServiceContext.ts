@@ -7,6 +7,7 @@ import { VideoDAO } from '$lib/daos/videoDAO';
 import { VirtualChannelDAO } from '$lib/daos/virtualChannelDAO';
 import { ServerProfileContext } from '$lib/server/ServerProfileContext';
 import { ViewerFlagService } from '$lib/server/viewer/ViewerFlagService';
+import { ViewerRecommendationService } from '$lib/server/viewer/ViewerRecommendationService';
 import { ViewerVirtualChannelService } from '$lib/server/viewer/ViewerVirtualChannelService';
 import { ViewerWatchService } from '$lib/server/viewer/ViewerWatchService';
 
@@ -41,11 +42,16 @@ export class ViewerServiceContext
             flagsDAO,
             profileContext.activeProfileId
         );
+        const recommendationService = new ViewerRecommendationService(
+            viewerVideoReadRepository,
+            profileContext.activeProfileId
+        );
         const watchService = new ViewerWatchService(
             viewerVideoReadRepository,
             flagsDAO,
             new HistoryDAO(db),
-            profileContext
+            profileContext,
+            recommendationService
         );
         const virtualChannelService = new ViewerVirtualChannelService(
             new VirtualChannelDAO(db),

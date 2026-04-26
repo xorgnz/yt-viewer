@@ -1,9 +1,11 @@
 <script lang="ts">
+    import { createEventDispatcher } from 'svelte';
     import ThumbnailImage from '$lib/components/ThumbnailImage.svelte';
     import {
-        ViewerVideoDisplayPresenter,
-        type ViewerFlagToggleHandler
+        ViewerVideoDisplayPresenter
     } from '$lib/viewer/display';
+    import { VideoMutationService } from '$lib/viewer/VideoMutationService';
+    import type { ViewerSelectionFlagKind, ViewerSelectionFlagValue } from '$lib/viewer/selection/types';
     import type {
         ViewerCardClickHandler,
         ViewerCardMouseDownHandler,
@@ -11,26 +13,55 @@
     } from '$lib/viewer/types';
 
     export let video: ViewerVideo;
+    export let watchHref: string | null = null;
     export let isSelected = false;
+    export let videoMutationService: VideoMutationService | null = null;
     export let onCardClick: ViewerCardClickHandler | null = null;
     export let onCardMouseDown: ViewerCardMouseDownHandler | null = null;
-    export let onToggleFlag: ViewerFlagToggleHandler | null = null;
+    const dispatch = createEventDispatcher<{
+        videochange: ViewerVideo;
+    }>();
+    let currentVideo = video;
+    let flagMutationPending = false;
 
-    let presenter = new ViewerVideoDisplayPresenter(video);
+    let presenter = new ViewerVideoDisplayPresenter(currentVideo);
     let displayState = presenter.getState();
 
-    $: presenter = new ViewerVideoDisplayPresenter(video);
+    $: currentVideo = video;
+    $: presenter = new ViewerVideoDisplayPresenter(currentVideo);
     $: displayState = presenter.getState();
+    $: resolvedWatchHref = watchHref || displayState.watchHref;
 
-    function handleFlagClick(
+    async function handleFlagClick(
         event: MouseEvent,
-        kind: 'watched' | 'favorite' | 'ignored',
-        value: 0 | 1
-    ): void
+        kind: ViewerSelectionFlagKind,
+        value: ViewerSelectionFlagValue
+    ): Promise<void>
     {
         event.preventDefault();
         event.stopPropagation();
-        onToggleFlag?.(video.id, kind, value);
+
+        if (flagMutationPending || !videoMutationService) {
+            return;
+        }
+
+        flagMutationPending = true;
+
+        try
+        {
+            const updatedVideo = await videoMutationService.toggleVideoFlag(currentVideo, kind, value);
+
+            if (!updatedVideo) {
+                return;
+            }
+
+            currentVideo = updatedVideo;
+            dispatch('videochange', updatedVideo);
+        }
+        finally
+        {
+            flagMutationPending = false;
+        }
     }
 </script>
 
@@ -48,27 +79,28 @@
     on:mousedown={(event) => onCardMouseDown?.(event, video.id)}
     on:click={(event) => onCardClick?.(event, video.id)}
     on:keydown={(event) => onCardClick?.(event, video.id)}
-    title={video.title}
+    title={currentVideo.title}
 >
-    <a class="thumb" href={displayState.watchHref} aria-label={displayState.openLabel}>
+    <a class="thumb" href={resolvedWatchHref} aria-label={displayState.openLabel}>
         {#if isSelected}
             <span class="selection-indicator" aria-hidden="true">&#10003;</span>
         {/if}
-        {#if video.thumbnail_url}
-            <ThumbnailImage src={video.thumbnail_url} alt={video.title} className="img-thumb" />
+        {#if currentVideo.thumbnail_url}
+            <ThumbnailImage src={currentVideo.thumbnail_url} alt={currentVideo.title} className="img-thumb" />
         {:else}
             <div class="placeholder"></div>
         {/if}
     </a>
     <div class="meta">
-        <a class="title" href={displayState.watchHref}>{video.title}</a>
+        <a class="title" href={resolvedWatchHref}>{currentVideo.title}</a>
         <div class="channel-row">
             <div class="actions">
                 <button
                     type="button"
                     class="icon favorite"
-                    class:active={!!video.favorite}
-                    aria-pressed={!!video.favorite}
+                    class:active={!!currentVideo.favorite}
+                    aria-pressed={!!currentVideo.favorite}
+                    disabled={flagMutationPending || !videoMutationService}
                     title={presenter.getToggleTitle('favorite')}
                     on:click={(event) => handleFlagClick(event, 'favorite', presenter.getNextFlagValue('favorite'))}
                 >
@@ -78,8 +110,9 @@
                 <button
                     type="button"
                     class="icon watched"
-                    class:active={!!video.watched}
-                    aria-pressed={!!video.watched}
+                    class:active={!!currentVideo.watched}
+                    aria-pressed={!!currentVideo.watched}
+                    disabled={flagMutationPending || !videoMutationService}
                     title={presenter.getToggleTitle('watched')}
                     on:click={(event) => handleFlagClick(event, 'watched', presenter.getNextFlagValue('watched'))}
                 >
@@ -89,8 +122,9 @@
                 <button
                     type="button"
                     class="icon ignored"
-                    class:active={!!video.ignored}
-                    aria-pressed={!!video.ignored}
+                    class:active={!!currentVideo.ignored}
+                    aria-pressed={!!currentVideo.ignored}
+                    disabled={flagMutationPending || !videoMutationService}
                     title={presenter.getToggleTitle('ignored')}
                     on:click={(event) => handleFlagClick(event, 'ignored', presenter.getNextFlagValue('ignored'))}
                 >
@@ -98,7 +132,7 @@
                     <span class="sr-only">{presenter.getToggleLabel('ignored')}</span>
                 </button>
             </div>
-            <div class="chan">{video.channel_title}</div>
+            <div class="chan">{currentVideo.channel_title}</div>
         </div>
         <div class="pub">{displayState.publishedDate}</div>
     </div>

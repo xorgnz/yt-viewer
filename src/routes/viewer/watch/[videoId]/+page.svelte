@@ -1,5 +1,8 @@
 <script lang="ts">
+    import VideoCard from '$lib/components/VideoCard.svelte';
     import {onMount, onDestroy} from 'svelte';
+    import { VideoMutationService } from '$lib/viewer/VideoMutationService';
+    import type { ViewerVideo } from '$lib/viewer/types';
 
     export let data: {
         video: {
@@ -17,11 +20,13 @@
             favorite: number;
             ignored: number;
         };
+        recommendations: ViewerVideo[];
         profileId: number;
         profileKey: string;
         profileName: string;
         previousVideoYoutubeId: string | null;
         nextVideoYoutubeId: string | null;
+        currentGroupId: number | null;
     };
 
     let watched = !!data.video.watched;
@@ -41,9 +46,14 @@
     let lastHistoryActivityAt: number | null = null;
     let watchMutationPending = false;
     let activeVideoYoutubeId = data.video.youtube_id;
+    let recommendations = data.recommendations;
+    const videoMutationService = new VideoMutationService({
+        toggleFlagAction: '?/toggleFlag'
+    });
     const HISTORY_SESSION_GAP_MS = 5 * 60 * 1000;
 
     $: showWatched = watched || (thresholdReached && !suppressThresholdWatch);
+    $: recommendations = data.recommendations;
 
     $: if (data.video.youtube_id !== activeVideoYoutubeId)
     {
@@ -81,6 +91,25 @@
         {
             return '';
         }
+    }
+
+    function buildWatchHref(videoYoutubeId: string | null): string
+    {
+        if (!videoYoutubeId) {
+            return '#';
+        }
+
+        const query = new URLSearchParams();
+
+        if (data.currentGroupId != null)
+        {
+            query.set('groupId', String(data.currentGroupId));
+        }
+
+        const queryString = query.toString();
+        return queryString
+            ? `/viewer/watch/${videoYoutubeId}?${queryString}`
+            : `/viewer/watch/${videoYoutubeId}`;
     }
 
     function resetForVideoChange(serverWatched: boolean)
@@ -313,19 +342,11 @@
             ? (favorite ? 0 : 1)
             : (ignored ? 0 : 1);
 
-        const formData = new FormData();
-        formData.set('videoId', String(data.video.id));
-        formData.set('kind', kind);
-        formData.set('value', String(nextValue));
-
         try
         {
-            const response = await fetch('?/toggleFlag', {
-                method: 'POST',
-                body: formData
-            });
+            const updatedVideo = await videoMutationService.toggleVideoFlag(data.video, kind, nextValue);
 
-            if (!response.ok) {
+            if (!updatedVideo) {
                 return;
             }
 
@@ -340,6 +361,11 @@
         {
             // Ignore transient toggle failures and keep current flag display.
         }
+    }
+
+    function handleRecommendationVideoChange(video: ViewerVideo)
+    {
+        recommendations = recommendations.map((item) => item.id === video.id ? video : item);
     }
 
     onMount(() =>
@@ -439,7 +465,7 @@
     <div id="div_player_flex_wrapper">
         <div id="div_player_frame">
             {#if data.previousVideoYoutubeId}
-                <a id="a_player_nav_prev" href={`/viewer/watch/${data.previousVideoYoutubeId}`}
+                <a id="a_player_nav_prev" href={buildWatchHref(data.previousVideoYoutubeId)}
                    aria-label="Previous video">
                     <svg id="svg_player_nav_prev" viewBox="0 0 24 96" aria-hidden="true" focusable="false">
                         <polyline points="18,8 6,48 18,88"></polyline>
@@ -452,7 +478,7 @@
             <div id="player" title={data.video.title}></div>
 
             {#if data.nextVideoYoutubeId}
-                <a id="a_player_nav_next" href={`/viewer/watch/${data.nextVideoYoutubeId}`} aria-label="Next video">
+                <a id="a_player_nav_next" href={buildWatchHref(data.nextVideoYoutubeId)} aria-label="Next video">
                     <svg id="svg_player_nav_next" viewBox="0 0 24 96" aria-hidden="true" focusable="false">
                         <polyline points="6,8 18,48 6,88"></polyline>
                     </svg>
@@ -518,6 +544,30 @@
                 <pre>{data.video.description}</pre>
             </details>
         {/if}
+
+        <section id="section_recommendations_panel">
+            <div id="div_recommendations_header">
+                <h2 id="h2_recommendations">Recommended Next</h2>
+                <p id="p_recommendations_hint" class="muted">
+                    Seeded picks from the current {data.currentGroupId != null ? 'virtual channel' : 'available video pool'}.
+                </p>
+            </div>
+
+            {#if recommendations.length === 0}
+                <p class="muted">No recommendations are available for this video yet.</p>
+            {:else}
+                <div id="div_recommendations_grid">
+                    {#each recommendations as recommendation}
+                        <VideoCard
+                            video={recommendation}
+                            watchHref={buildWatchHref(recommendation.youtube_id)}
+                            {videoMutationService}
+                            on:videochange={(event) => handleRecommendationVideoChange(event.detail)}
+                        />
+                    {/each}
+                </div>
+            {/if}
+        </section>
     </div>
 </div>
 
@@ -753,6 +803,32 @@
         font-size: 0.95rem;
         line-height: 1.5;
         white-space: pre-wrap;
+    }
+
+    #section_recommendations_panel {
+        margin-top: 1.5rem;
+        padding-top: 1.25rem;
+        border-top: 1px solid var(--border);
+    }
+
+    #div_recommendations_header {
+        margin-bottom: 1rem;
+    }
+
+    #h2_recommendations {
+        margin-bottom: 0.35rem;
+    }
+
+    #p_recommendations_hint {
+        margin-bottom: 0;
+    }
+
+    #div_recommendations_grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(min(100%, 250px), 320px));
+        justify-content: start;
+        align-items: start;
+        gap: 1rem;
     }
 
     @media (max-width: 900px) {

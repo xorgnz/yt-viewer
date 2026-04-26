@@ -1,7 +1,7 @@
 <script lang="ts">
     import { browser } from '$app/environment';
-    import { deserialize } from '$app/forms';
     import { goto } from '$app/navigation';
+    import { VideoMutationService } from '$lib/viewer/VideoMutationService';
     import {
         viewerBulkActions
     } from '$lib/viewer/bulkActions';
@@ -28,7 +28,6 @@
     import type {
         ViewerSelectionControlState,
         ViewerSelectionFlagKind,
-        ViewerSelectionFlagValue,
         ViewerSelectionVideoSnapshot,
         ViewerSelectionState
     } from '$lib/viewer/selection/types';
@@ -61,73 +60,26 @@
     let ignoredControlState: ViewerSelectionControlState = 'unchecked';
     let bulkActionPending = false;
     let bulkActionFeedback: BulkActionFeedback | null = null;
-
-    type ViewerBulkActionOutcome = 'full_success' | 'partial_success' | 'failed';
-
-    type ViewerBulkActionResultData = {
-        ok: boolean;
-        outcome: ViewerBulkActionOutcome;
-        message: string;
-        succeededIds: number[];
-    };
-
-    function isRecord(value: unknown): value is Record<string, unknown>
-    {
-        return typeof value === 'object' && value !== null;
-    }
-
-    function readViewerActionFailureMessage(result: unknown, fallback: string): string
-    {
-        if (!isRecord(result)) {
-            return fallback;
-        }
-
-        const data = result.data;
-        if (!isRecord(data)) {
-            return fallback;
-        }
-
-        if (typeof data.message !== 'string' || data.message.trim().length === 0) {
-            return fallback;
-        }
-
-        return data.message;
-    }
-
-    function parseViewerBulkActionResultData(value: unknown): ViewerBulkActionResultData | null
-    {
-        if (!isRecord(value)) {
-            return null;
-        }
-
-        const { ok, outcome, message, succeededIds } = value;
-        if (typeof ok !== 'boolean') {
-            return null;
-        }
-
-        if (outcome !== 'full_success' && outcome !== 'partial_success' && outcome !== 'failed') {
-            return null;
-        }
-
-        if (typeof message !== 'string') {
-            return null;
-        }
-
-        if (!Array.isArray(succeededIds) || succeededIds.some((id) => typeof id !== 'number')) {
-            return null;
-        }
-
-        return {
-            ok,
-            outcome,
-            message,
-            succeededIds
-        };
-    }
+    const videoMutationService = new VideoMutationService();
 
     function buildPageHref(page: number): string
     {
         return viewerPageState.buildViewerPageHref(f, page);
+    }
+
+    function buildVideoWatchHref(video: ViewerVideo): string
+    {
+        const query = new URLSearchParams();
+
+        if (f.groupId != null)
+        {
+            query.set('groupId', String(f.groupId));
+        }
+
+        const queryString = query.toString();
+        return queryString
+            ? `/viewer/watch/${video.youtube_id}?${queryString}`
+            : `/viewer/watch/${video.youtube_id}`;
     }
 
     function clearPendingApply()
@@ -240,28 +192,9 @@
         selectionState = viewerSelectionStateManager.clear(selectionState);
     }
 
-    async function handleCardFlagToggle(videoId: number, kind: ViewerSelectionFlagKind, value: ViewerSelectionFlagValue)
+    function handleVisibleVideoChange(video: ViewerVideo)
     {
-        if (bulkActionPending) {
-            return;
-        }
-
-        const form = new FormData();
-        form.set('videoId', String(videoId));
-        form.set('kind', kind);
-        form.set('value', String(value));
-
-        const response = await fetch('?/toggleFlag', {
-            method: 'POST',
-            body: form
-        });
-        const result = deserialize(await response.text());
-
-        if (result.type !== 'success' || !result.data) {
-            return;
-        }
-
-        visibleVideos = viewerBulkActions.updateVisibleVideoFlag(visibleVideos, videoId, kind, value);
+        visibleVideos = visibleVideos.map((item) => item.id === video.id ? video : item);
     }
 
     async function handleBulkFlagToggle(kind: ViewerSelectionFlagKind, controlState: ViewerSelectionControlState)
@@ -274,27 +207,18 @@
 
         try {
             const nextValue = viewerBulkActions.getNextBulkFlagValue(controlState);
-            const form = new FormData();
-            form.set('kind', kind);
-            form.set('value', String(nextValue));
-            form.set('videoIds', selectionState.selectedVideoIds.join(','));
-            form.set('selectionContextKey', selectionState.contextKey);
-            form.set('selectedCount', String(selectionState.selectedVideoIds.length));
-            form.set('spansMultiplePages', offPageSelectedCount > 0 ? '1' : '0');
-
-            const response = await fetch('?/bulkUpdateFlags', {
-                method: 'POST',
-                body: form
+            const actionResult = await videoMutationService.bulkUpdateFlags({
+                kind,
+                value: nextValue,
+                videoIds: selectionState.selectedVideoIds,
+                selectionContextKey: selectionState.contextKey,
+                selectedCount: selectionState.selectedVideoIds.length,
+                spansMultiplePages: offPageSelectedCount > 0
             });
-            const result = deserialize(await response.text());
-            const failureMessage = readViewerActionFailureMessage(result, 'Bulk update failed.');
-            const actionResult = result.type === 'success'
-                ? parseViewerBulkActionResultData(result.data)
-                : null;
 
             if (!actionResult) {
                 bulkActionFeedback = {
-                    message: failureMessage,
+                    message: 'Bulk update failed.',
                     tone: 'error',
                     undo: null
                 };
@@ -304,7 +228,7 @@
             const undo = viewerBulkActions.buildViewerSelectionUndoPayload(selectionState);
 
             bulkActionFeedback = {
-                message: String(actionResult.message || failureMessage),
+                message: String(actionResult.message || 'Bulk update failed.'),
                 tone: viewerBulkActions.getBulkActionFeedbackTone(actionResult.outcome, actionResult.ok),
                 undo
             };
@@ -336,24 +260,15 @@
 
         try {
             const undo = bulkActionFeedback.undo;
-            const form = new FormData();
-            form.set('videoIds', undo.requestedVideoIds.join(','));
-            form.set('originalStates', JSON.stringify(undo.originalStates));
-            form.set('selectionContextKey', selectionState.contextKey);
-
-            const response = await fetch('?/restoreSelectionState', {
-                method: 'POST',
-                body: form
+            const actionResult = await videoMutationService.restoreSelectionState({
+                requestedVideoIds: undo.requestedVideoIds,
+                undo,
+                selectionContextKey: selectionState.contextKey
             });
-            const result = deserialize(await response.text());
-            const failureMessage = readViewerActionFailureMessage(result, 'Bulk undo failed.');
-            const actionResult = result.type === 'success'
-                ? parseViewerBulkActionResultData(result.data)
-                : null;
 
             if (!actionResult) {
                 bulkActionFeedback = {
-                    message: failureMessage,
+                    message: 'Bulk undo failed.',
                     tone: 'error',
                     undo
                 };
@@ -373,7 +288,7 @@
             visibleVideos = viewerBulkActions.restoreVisibleVideoSnapshots(visibleVideos, restoredSnapshots);
 
             bulkActionFeedback = {
-                message: String(actionResult.message || failureMessage),
+                message: String(actionResult.message || 'Bulk undo failed.'),
                 tone: viewerBulkActions.getBulkActionFeedbackTone(actionResult.outcome, actionResult.ok),
                 undo: actionResult.outcome === 'full_success' ? null : undo
             };
@@ -493,9 +408,11 @@
     <ViewerResultsGrid
         videos={visibleVideos}
         selectedVideoIds={selectionState.selectedVideoIds}
+        {buildVideoWatchHref}
+        {videoMutationService}
         onCardMouseDown={handleCardMouseDown}
         onCardClick={handleCardClick}
-        onToggleFlag={handleCardFlagToggle}
+        onVideoChange={handleVisibleVideoChange}
     />
 </div>
 

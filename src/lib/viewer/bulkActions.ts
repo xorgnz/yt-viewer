@@ -112,31 +112,11 @@ function restoreVisibleVideoSnapshots(
     });
 }
 
-function updateVisibleVideoFlag(
-    videos: ViewerVideo[],
-    videoId: number,
-    kind: ViewerSelectionFlagKind,
-    value: ViewerSelectionFlagValue
-): ViewerVideo[]
-{
-    return videos.map((video) => {
-        if (video.id !== videoId) {
-            return video;
-        }
-
-        return {
-            ...video,
-            [kind]: value
-        };
-    });
-}
-
 export const viewerBulkActions = {
     getNextBulkFlagValue,
     getBulkActionFeedbackTone,
     buildViewerSelectionUndoPayload,
     applyBulkFlagToVisibleVideos,
-    restoreVisibleVideoSnapshots,
-    updateVisibleVideoFlag
+    restoreVisibleVideoSnapshots
 };
 // apply-patch-anchor - do not delete

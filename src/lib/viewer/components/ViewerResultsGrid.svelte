@@ -1,8 +1,6 @@
 <script lang="ts">
     import VideoCard from '$lib/components/VideoCard.svelte';
-    import type {
-        ViewerFlagToggleHandler
-    } from '$lib/viewer/display';
+    import { VideoMutationService } from '$lib/viewer/VideoMutationService';
     import type {
         ViewerCardClickHandler,
         ViewerCardMouseDownHandler,
@@ -11,9 +9,11 @@
 
     export let videos: ViewerVideo[] = [];
     export let selectedVideoIds: number[] = [];
+    export let buildVideoWatchHref: ((video: ViewerVideo) => string) | null = null;
+    export let videoMutationService: VideoMutationService | null = null;
     export let onCardMouseDown: ViewerCardMouseDownHandler | null = null;
     export let onCardClick: ViewerCardClickHandler | null = null;
-    export let onToggleFlag: ViewerFlagToggleHandler | null = null;
+    export let onVideoChange: ((video: ViewerVideo) => void) | null = null;
 </script>
 
 <section class="panel viewer-results-panel">
@@ -24,10 +24,12 @@
             {#each videos as video}
                 <VideoCard
                     {video}
+                    watchHref={buildVideoWatchHref ? buildVideoWatchHref(video) : null}
+                    {videoMutationService}
                     isSelected={selectedVideoIds.includes(video.id)}
                     onCardMouseDown={onCardMouseDown}
                     onCardClick={onCardClick}
-                    onToggleFlag={onToggleFlag}
+                    on:videochange={(event) => onVideoChange?.(event.detail)}
                 />
             {/each}
         </div>

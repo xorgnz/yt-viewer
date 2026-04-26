@@ -4,6 +4,7 @@ import {
     ViewerVideoReadRepository,
     type ViewerVideoRecord
 } from '$lib/daos/readers/ViewerVideoReadRepository';
+import { ViewerRecommendationService } from '$lib/server/viewer/ViewerRecommendationService';
 import type { ServerProfileContext } from '$lib/server/ServerProfileContext';
 
 const HISTORY_SESSION_GAP_MS = 5 * 60 * 1000;
@@ -12,8 +13,10 @@ type ViewerWatchVideo = ViewerVideoRecord;
 
 export type ViewerWatchLoadModel = {
     video: ViewerWatchVideo;
+    recommendations: ViewerWatchVideo[];
     previousVideoYoutubeId: string | null;
     nextVideoYoutubeId: string | null;
+    currentGroupId: number | null;
     profileId: number;
     profileKey: string;
     profileName: string;
@@ -33,21 +36,24 @@ export class ViewerWatchService
     private readonly flagsDAO: FlagsDAO;
     private readonly historyDAO: HistoryDAO;
     private readonly profileContext: ServerProfileContext;
+    private readonly recommendationService: ViewerRecommendationService;
 
     constructor(
         viewerVideoReadRepository: ViewerVideoReadRepository,
         flagsDAO: FlagsDAO,
         historyDAO: HistoryDAO,
-        profileContext: ServerProfileContext
+        profileContext: ServerProfileContext,
+        recommendationService: ViewerRecommendationService
     )
     {
         this.viewerVideoReadRepository = viewerVideoReadRepository;
         this.flagsDAO = flagsDAO;
         this.historyDAO = historyDAO;
         this.profileContext = profileContext;
+        this.recommendationService = recommendationService;
     }
 
-    async load(videoYoutubeId: string): Promise<ViewerWatchLoadModel | null>
+    async load(videoYoutubeId: string, groupId: number | null): Promise<ViewerWatchLoadModel | null>
     {
         const video = await this.loadVideo(videoYoutubeId);
         if (!video) {
@@ -61,8 +67,10 @@ export class ViewerWatchService
 
         return {
             video,
+            recommendations: await this.recommendationService.load(video, groupId),
             previousVideoYoutubeId: adjacent.previousYoutubeId,
             nextVideoYoutubeId: adjacent.nextYoutubeId,
+            currentGroupId: groupId,
             profileId: this.profileContext.activeProfileId,
             profileKey: this.profileContext.activeProfileKey,
             profileName: this.profileContext.activeProfileName
