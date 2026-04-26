@@ -93,6 +93,17 @@ describe('DatabasePool', () => {
         expect(hoisted.poolStates[0].release).toHaveBeenCalledTimes(2);
     });
 
+    it('verifies connectivity through a real pooled connection', async () => {
+        process.env.DATABASE_URL = 'mysql://example-user:secret@localhost:3306/yt_viewer';
+        const wrapper = new DatabasePool();
+
+        await expect(wrapper.verifyConnection()).resolves.toBeUndefined();
+
+        expect(hoisted.poolStates.length).toBe(1);
+        expect(hoisted.poolStates[0].getConnection).toHaveBeenCalledTimes(1);
+        expect(hoisted.poolStates[0].release).toHaveBeenCalledTimes(1);
+    });
+
     it('ends the current pool and clears cached state on close', async () => {
         process.env.DATABASE_URL = 'mysql://example-user:secret@localhost:3306/yt_viewer';
         const wrapper = new DatabasePool();

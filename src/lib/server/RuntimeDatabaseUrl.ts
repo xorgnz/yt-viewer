@@ -3,12 +3,13 @@ export function requireDatabaseUrlForRuntime(
     options?: {
         nodeEnv?: string | undefined;
         allowMissingInTest?: boolean;
+        databaseUrl?: string | undefined;
     }
 ): string
 {
     const nodeEnv = (options?.nodeEnv ?? process.env.NODE_ENV ?? 'development').toLowerCase();
     const allowMissingInTest = options?.allowMissingInTest ?? true;
-    const databaseUrl = process.env.DATABASE_URL?.trim();
+    const databaseUrl = options?.databaseUrl?.trim() || process.env.DATABASE_URL?.trim();
 
     if (databaseUrl) {
         return databaseUrl;

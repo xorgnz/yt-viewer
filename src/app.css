@@ -633,6 +633,29 @@ main {
     color: #ff8f8f;
 }
 
+.error-state {
+    max-width: 56rem;
+}
+
+.error-kicker {
+    margin-bottom: var(--space-3);
+    color: var(--warning);
+    font-size: 0.85rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+}
+
+.error-detail {
+    margin-top: var(--space-4);
+    padding: var(--space-4);
+    border: 1px solid rgba(199, 70, 70, 0.35);
+    border-radius: var(--radius-sm);
+    overflow-x: auto;
+    background: rgba(0, 0, 0, 0.22);
+    color: #ffd6d6;
+    white-space: pre-wrap;
+}
+
 .sr-only {
     position: absolute;
     width: 1px;

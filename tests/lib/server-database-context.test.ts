@@ -1,11 +1,13 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { DatabaseMode } from '../../src/lib/daos/shared/DatabaseMode';
-import type { DatabasePool } from '../../src/lib/daos/shared/DatabasePool';
+import { DatabasePool } from '../../src/lib/daos/shared/DatabasePool';
 import { ServerDatabaseContext } from '../../src/lib/server/ServerDatabaseContext';
 
 type MockPoolState = {
     end: () => Promise<void>;
     execute: () => Promise<Array<Array<{ value: number }>>>;
+    getConnection: () => Promise<{ release: () => void }>;
+    release: () => void;
 };
 
 const hoisted = vi.hoisted(() => {
@@ -25,7 +27,11 @@ vi.mock('mysql2/promise', () => {
                 end: vi.fn(async () => {}),
                 execute: vi.fn(async () => {
                     return [[{ value: 1 }]];
-                })
+                }),
+                getConnection: vi.fn(async () => {
+                    return { release: this.state.release };
+                }),
+                release: vi.fn()
             };
 
             hoisted.poolStates.push(this.state);
@@ -39,6 +45,11 @@ vi.mock('mysql2/promise', () => {
         execute(): Promise<Array<Array<{ value: number }>>>
         {
             return this.state.execute();
+        }
+
+        getConnection(): Promise<{ release: () => void }>
+        {
+            return this.state.getConnection();
         }
     }
 
@@ -60,6 +71,8 @@ describe('ServerDatabaseContext', () => {
     });
 
     afterEach(() => {
+        vi.restoreAllMocks();
+
         if (previousNodeEnv === undefined) {
             delete process.env.NODE_ENV;
         } else {
@@ -99,7 +112,7 @@ describe('ServerDatabaseContext', () => {
         process.env.NODE_ENV = 'development';
         delete process.env.DATABASE_URL;
 
-        expect(() => ServerDatabaseContext.open('development')).toThrow('Server runtime database access requires DATABASE_URL to be set.');
+        expect(() => ServerDatabaseContext.open('development', '')).toThrow('Server runtime database access requires DATABASE_URL to be set.');
     });
 
     it('closes the wrapper after successful and failed work', async () => {
@@ -125,6 +138,38 @@ describe('ServerDatabaseContext', () => {
 
         expect(failingWrappers).toHaveLength(1);
         expect(failingWrappers[0].instance).toBeNull();
+    });
+
+    it('surfaces a clear error when DATABASE_URL is unreachable', async () => {
+        hoisted.poolStates.length = 0;
+        process.env.NODE_ENV = 'development';
+
+        vi.spyOn(DatabasePool.prototype, 'verifyConnection').mockRejectedValueOnce(new Error('connect ECONNREFUSED 127.0.0.1:3306'));
+
+        await expect(ServerDatabaseContext.run(async () => {
+            return 42;
+        })).rejects.toMatchObject({
+            status: 503,
+            body: {
+                message: 'Unable to reach database. Check the configured DATABASE_URL and confirm the runtime database is reachable. Remember to run npm run db:compose:up and wait for the database service to become healthy. Connection error: connect ECONNREFUSED 127.0.0.1:3306'
+            }
+        });
+    });
+
+    it('uses deployment guidance for unreachable production databases', async () => {
+        hoisted.poolStates.length = 0;
+        process.env.NODE_ENV = 'production';
+
+        vi.spyOn(DatabasePool.prototype, 'verifyConnection').mockRejectedValueOnce(new Error('Access denied for user'));
+
+        await expect(ServerDatabaseContext.run(async () => {
+            return 42;
+        })).rejects.toMatchObject({
+            status: 503,
+            body: {
+                message: 'Unable to reach database. Please contact an administrator Connection error: Access denied for user'
+            }
+        });
     });
 });
 // apply-patch-anchor - do not delete

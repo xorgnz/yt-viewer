@@ -32,5 +32,14 @@ describe('requireDatabaseUrlForRuntime', () => {
 
         expect(requireDatabaseUrlForRuntime('runtime')).toBe('');
     });
+
+    it('prefers an explicitly provided database URL over process.env', () => {
+        process.env.NODE_ENV = 'development';
+        delete process.env.DATABASE_URL;
+
+        expect(requireDatabaseUrlForRuntime('runtime', {
+            databaseUrl: 'mysql://provided-user:secret@localhost:3306/provided_db'
+        })).toBe('mysql://provided-user:secret@localhost:3306/provided_db');
+    });
 });
 // apply-patch-anchor - do not delete

@@ -60,6 +60,11 @@ export class DatabasePool
         }
     }
 
+    async verifyConnection(): Promise<void>
+    {
+        await this.withConnection(async () => undefined);
+    }
+
     async query<T extends object = Record<string, unknown>>(
         text: string,
         values?: unknown[]
