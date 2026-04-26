@@ -403,6 +403,12 @@ main {
     box-shadow: var(--shadow-md);
 }
 
+.profile-panel form {
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+}
+
 .profile-switcher[data-profile-tone="adult"] .profile-panel {
     border-color: rgba(177, 108, 181, 0.4);
     background:
@@ -413,6 +419,38 @@ main {
     border-color: rgba(255, 177, 101, 0.42);
     background:
         linear-gradient(180deg, rgba(227, 123, 44, 0.14), rgba(24, 27, 31, 0.98));
+}
+
+.profile-switch-error {
+    padding: 0.55rem 0.65rem;
+    border: 1px solid rgba(255, 191, 126, 0.5);
+    border-radius: var(--radius-sm);
+    background: rgba(123, 34, 24, 0.38);
+    color: #ffe5d2;
+    font-size: 0.84rem;
+    line-height: 1.35;
+}
+
+.profile-panel input[type="password"] {
+    width: 100%;
+    display: block;
+    box-sizing: border-box;
+    padding: 0.7rem 0.8rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: rgba(14, 18, 24, 0.78);
+    color: var(--text);
+    font: inherit;
+}
+
+.profile-panel input[type="password"]::placeholder {
+    color: var(--text-soft);
+}
+
+.profile-panel input[type="password"]:focus {
+    outline: 2px solid rgba(255, 255, 255, 0.16);
+    outline-offset: 1px;
+    border-color: var(--border-strong);
 }
 
 .profile-panel button {

@@ -14,10 +14,17 @@ type ProfileSelectionCookies = Partial<Pick<Cookies, 'get' | 'set'>>;
 export class ProfileCatalog
 {
     static readonly DEFAULT_KEY: ProfileKey = 'default';
+    static readonly CHILD_KEY: ProfileKey = 'child';
 
     static isProfileKey(value: string | null | undefined): value is ProfileKey
     {
         return PROFILE_DEFINITIONS.some((profile) => profile.key === value);
+    }
+
+    static requiresAdultPassword(currentProfileKey: ProfileKey, nextProfileKey: ProfileKey): boolean
+    {
+        return currentProfileKey === ProfileCatalog.CHILD_KEY
+            && nextProfileKey === ProfileCatalog.DEFAULT_KEY;
     }
 
     static async ensureProfiles(profileDAO: ProfileCatalogDAO): Promise<void>
@@ -73,6 +80,13 @@ export class ProfileReturnPathPolicy
         }
 
         return value;
+    }
+
+    static withError(returnTo: string, errorCode: string): string
+    {
+        const url = new URL(returnTo, 'http://local');
+        url.searchParams.set('profileSwitchError', errorCode);
+        return `${url.pathname}${url.search}`;
     }
 }
 // apply-patch-anchor - do not delete

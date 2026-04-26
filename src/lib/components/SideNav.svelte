@@ -12,6 +12,11 @@
     {
         return profileKey === 'child' ? 'child' : 'adult';
     }
+
+    function requiresAdultPassword(profileKey: string): boolean
+    {
+        return activeProfileKey === 'child' && profileKey === 'default';
+    }
 </script>
 
 <aside class="side-nav" aria-label="Primary Navigation">
@@ -41,10 +46,23 @@
         </summary>
 
         <div class="profile-panel">
+            {#if $page.url.searchParams.get('profileSwitchError') === 'adult-password'}
+                <div class="profile-switch-error" role="alert">Adult profile password required.</div>
+            {/if}
+
             {#each profiles as profile}
                 <form method="post" action="/profile">
                     <input type="hidden" name="profile" value={profile.key} />
                     <input type="hidden" name="returnTo" value={$page.url.pathname + $page.url.search} />
+                    {#if requiresAdultPassword(profile.key)}
+                        <input
+                            type="password"
+                            name="password"
+                            placeholder="Adult password"
+                            autocomplete="current-password"
+                            required
+                        />
+                    {/if}
                     <button
                         type="submit"
                         class:profile-option={true}
