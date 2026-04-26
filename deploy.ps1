@@ -4,6 +4,8 @@ param(
     [string]$Region = "us-west1",
     [string]$DatabaseUrlSecretName = "yt-viewer-database-url",
     [string]$DatabaseUrlSecretVersion = "latest",
+    [string]$YouTubeApiKeySecretName = "yt-viewer-youtube-api-key",
+    [string]$YouTubeApiKeySecretVersion = "latest",
     [string]$ServiceAccount = "yt-viewer-runner@trond-personal-tools.iam.gserviceaccount.com"
 )
 
@@ -146,7 +148,7 @@ gcloud run deploy $ServiceName `
     --allow-unauthenticated `
     --set-build-env-vars "GOOGLE_NODE_RUN_SCRIPTS=" `
     --set-env-vars "HOST=0.0.0.0" `
-    --update-secrets "DATABASE_URL=$DatabaseUrlSecretName`:$DatabaseUrlSecretVersion" `
+    --update-secrets "DATABASE_URL=$DatabaseUrlSecretName`:$DatabaseUrlSecretVersion,YOUTUBE_API_KEY=$YouTubeApiKeySecretName`:$YouTubeApiKeySecretVersion" `
     --service-account=$ServiceAccount `
     --port=8080 `
     --memory=2Gi
