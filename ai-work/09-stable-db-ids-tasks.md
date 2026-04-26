@@ -21,9 +21,9 @@
   - [x] 1.3. Identify stable identifier needs, join/state-table composite key candidates, and any public/API/UI contracts that expose generated row IDs.
 
 - [ ] 2 - Propose exact database changes for user validation before implementation.
-  - [ ] 2.1. Draft `ai-work/09-stable-db-ids-db-change-plan.md` with the exact planned table, column, key, index, and foreign key changes.
-  - [ ] 2.2. Include the proposed stable ID source for each entity, including YouTube-derived IDs, natural-key-derived IDs, and composite-key tables.
-  - [ ] 2.3. Include the planned production migration sequence and rollback/backup expectations.
+  - [x] 2.1. Draft `ai-work/09-stable-db-ids-db-change-plan.md` with the exact planned table, column, key, index, and foreign key changes.
+  - [x] 2.2. Include the proposed stable ID source for each entity, including YouTube-derived IDs, natural-key-derived IDs, and composite-key tables.
+  - [x] 2.3. Include the planned production migration sequence and rollback/backup expectations.
   - [ ] 2.4. Present the plan to the user and wait for explicit approval before making schema edits, migration scripts, or production database changes.
 
 - [ ] 3 - Update the application schema and setup path after database-change approval.
