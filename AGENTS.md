@@ -1,13 +1,17 @@
-# Project Guidelines
+# AGENTS.md
 
 ## Project Workflow
 
-- Do not begin implementation or multi-step work without an explicit user request.
+- Do not begin implementation, editing, cleanup, refactoring, file moves, exports, commits, or any other work unless the user explicitly asks for that work.
+- Do not treat a question, discussion, review, observation, or rough idea as permission to make changes.
+- Do not expand a request into adjacent work, opportunistic fixes, or related improvements unless the user explicitly asks for them.
+- If the user's intent is ambiguous, ask for confirmation before doing the work.
+- When the user asks for a plan, proposal, review, explanation, or recommendation, stop at that output unless the user separately instructs you to execute it.
 If a request is ambiguous, ask one concise clarifying question before proceeding.
 - Work step-by-step and avoid combining unrelated changes in a single pass.
 - Prefer repo-aware tools and minimal, traceable edits over broad rewrites.
 - You may refer to repository files directly with `@` file references when the UI supports them.
-- For rule-driven work, prefer short requests such as `Rule: @ai-rules/5-create-tasks.md` and `Feature: 01-some-feature`.
+- For rule-driven work, prefer short requests such as `Rule: @ai-rules/05-create-tasks.md` and `Feature: 01-some-feature`.
 - If the user says `rule 1`, `rule 2`, `rule 3`, and so on, treat that as an instruction to run the corresponding rule rather than merely describing it.
 - Any time the user asks you to execute a rule, look through the relevant instructions in `ai-rules/` before proceeding.
 - After recognizing a numbered rule invocation, parse the remaining tokens against that rule's documented arguments before applying generic feature, task, or free-form inference.

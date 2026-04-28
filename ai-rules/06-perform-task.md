@@ -1,6 +1,6 @@
 ---
-version: 1.2.5
-timestamp: 2026-04-17 09:24
+version: 1.3.0
+timestamp: 2026-04-19 00:00
 ---
 # Rule: Performing a Task for the Active Feature
 
@@ -16,15 +16,16 @@ timestamp: 2026-04-17 09:24
 
 - Use `/ai-work/00-feature-status.md` as the source of truth for:
   - the active feature
-  - whether a feature is planned, active, paused, or completed
+  - whether a feature is future, planned, active, paused, completed, or archived
 
 ### Non-Active Features
 
 - If no feature is currently active, do not perform implementation work and tell the user to activate or switch to a feature first
+- Treat `future` features as backlog notes, not currently executable work
 - Treat `paused` features as resumable but not currently editable
 - Tell the user to switch features first by using the feature-change workflow if they want to resume a paused feature
-- Treat completed features as read-only by default
-- Refuse to modify scope, PRD, tasks, or implementation for a completed feature unless the user explicitly asks for an exception
+- Treat completed and archived features as read-only by default
+- Refuse to modify scope, PRD, tasks, or implementation for a completed or archived feature unless the user explicitly asks for an exception
 
 ## Task Selection Process
 

@@ -1,13 +1,13 @@
 ---
-version: 1.3.3
-timestamp: 2026-04-17 09:22
+version: 1.4.0
+timestamp: 2026-04-19 00:00
 ---
 # Rule: Creating a High-Level Project Scope
 
 ## Prerequisites
 
 - A feature tag must already exist
-- `/ai-work/00-feature-status.md` must identify the feature as the current active feature or an explicitly selected planned feature
+- `/ai-work/00-feature-status.md` must identify the feature as the current active feature, an explicitly selected planned feature, or an explicitly selected future feature
 
 ## Process
 
@@ -17,8 +17,10 @@ timestamp: 2026-04-17 09:22
    - Read `/ai-work/00-feature-status.md`
    - Use the active feature by default
    - If the user names a different feature and it is `planned`, scope creation may proceed without activating that feature
-   - If the user names a different feature and it is `paused` or `completed`, only proceed if they explicitly ask for an exception
+   - If the user explicitly names a `future` feature, scope creation may proceed without activating that feature
+   - If the user names a different feature and it is `paused`, `completed`, or `archived`, only proceed if they explicitly ask for an exception
    - Only require the feature-change workflow when the user wants a different feature to become the active working feature
+   - Do not bring future features into scope planning for other features unless the user explicitly names the future feature as relevant
 
 2. **Ask Discovery Questions**
    - Guide the user through a focused set of questions about vision, boundaries, and constraints
