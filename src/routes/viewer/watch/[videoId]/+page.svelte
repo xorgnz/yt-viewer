@@ -538,43 +538,38 @@
             </div>
         </div>
 
-        {#if data.video.description}
-            <details id="details_description_panel" class="desc">
-                <summary>Description</summary>
-                <pre>{data.video.description}</pre>
-            </details>
-        {/if}
-
-        <section id="section_recommendations_panel">
-            <div id="div_recommendations_header">
-                <h2 id="h2_recommendations">Recommended Next</h2>
-                <p id="p_recommendations_hint" class="muted">
-                    Seeded picks from the current {data.currentGroupId != null ? 'virtual channel' : 'available video pool'}.
-                </p>
-            </div>
-
-            {#if recommendations.length === 0}
-                <p class="muted">No recommendations are available for this video yet.</p>
-            {:else}
-                <div id="div_recommendations_grid">
-                    {#each recommendations as recommendation}
-                        <VideoCard
-                            video={recommendation}
-                            watchHref={buildWatchHref(recommendation.youtube_id)}
-                            {videoMutationService}
-                            on:videochange={(event) => handleRecommendationVideoChange(event.detail)}
-                        />
-                    {/each}
-                </div>
-            {/if}
-        </section>
     </div>
+
+    <section id="section_recommendations_panel">
+        {#if recommendations.length === 0}
+            <p class="muted">No recommendations are available for this video yet.</p>
+        {:else}
+            <div id="div_recommendations_grid">
+                {#each recommendations as recommendation}
+                    <VideoCard
+                        video={recommendation}
+                        watchHref={buildWatchHref(recommendation.youtube_id)}
+                        {videoMutationService}
+                        on:videochange={(event) => handleRecommendationVideoChange(event.detail)}
+                    />
+                {/each}
+            </div>
+        {/if}
+    </section>
+
+    {#if data.video.description}
+        <section id="section_description_panel">
+            <div id="div_description_header">
+                <h2 id="h2_description">Description</h2>
+            </div>
+            <pre id="pre_video_description">{data.video.description}</pre>
+        </section>
+    {/if}
 </div>
 
 <style>
     #div_viewer_panel {
-        --viewer-panel-height: calc(100vh - 48px);
-        height: var(--viewer-panel-height);
+        height: 100%;
         display: flex;
         flex-direction: column;
         gap: 20px;
@@ -613,7 +608,7 @@
     }
 
     #div_player_flex_wrapper {
-        --player-flex-wrapper-height: calc(var(--viewer-panel-height) - 470px);
+        --player-flex-wrapper-height: 66vh;
         width: 100%;
         min-width: 438px;
         min-height: 245px;
@@ -670,15 +665,12 @@
     }
 
     #div_video_meta_panel {
-        min-height: 400px;
-        flex: 1;
         display: block;
         border: 1px solid var(--border);
         padding: 1rem 1.1rem;
         border-radius: var(--radius);
         box-sizing: border-box;
         background-color: var(--bg-panel);
-        overflow: auto;
     }
 
     #div_title_row {
@@ -786,18 +778,32 @@
         font-weight: 400;
     }
 
-    #details_description_panel summary {
-        cursor: pointer;
+    #section_recommendations_panel {
+        border: 1px solid var(--border);
+        padding: 1rem 1.1rem;
+        border-radius: var(--radius);
+        box-sizing: border-box;
+        background-color: var(--bg-panel);
     }
 
-    #details_description_panel[open] {
-        min-height: 0;
-        display: flex;
-        flex-direction: column;
+    #section_description_panel {
+        border: 1px solid var(--border);
+        padding: 1rem 1.1rem;
+        border-radius: var(--radius);
+        box-sizing: border-box;
+        background-color: var(--bg-panel);
     }
 
-    #details_description_panel pre {
-        max-height: 10rem;
+    #div_description_header {
+        margin-bottom: 1rem;
+    }
+
+    #h2_description {
+        margin-bottom: 0;
+    }
+
+    #pre_video_description {
+        margin: 0;
         color: var(--text-muted);
         font-family: var(--font-body);
         font-size: 0.95rem;
@@ -805,28 +811,10 @@
         white-space: pre-wrap;
     }
 
-    #section_recommendations_panel {
-        margin-top: 1.5rem;
-        padding-top: 1.25rem;
-        border-top: 1px solid var(--border);
-    }
-
-    #div_recommendations_header {
-        margin-bottom: 1rem;
-    }
-
-    #h2_recommendations {
-        margin-bottom: 0.35rem;
-    }
-
-    #p_recommendations_hint {
-        margin-bottom: 0;
-    }
-
     #div_recommendations_grid {
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(min(100%, 250px), 320px));
-        justify-content: start;
+        grid-template-columns: repeat(auto-fit, minmax(min(100%, 250px), 320px));
+        justify-content: center;
         align-items: start;
         gap: 1rem;
     }
