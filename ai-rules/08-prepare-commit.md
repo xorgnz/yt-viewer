@@ -1,6 +1,6 @@
 ---
-version: 1.10.4
-timestamp: 2026-04-17 10:35
+version: 1.11.0
+timestamp: 2026-04-19 00:00
 ---
 # Rule: Prepare a Commit for Approval
 
@@ -85,9 +85,9 @@ Apply these gates when Step 2 selects the commit mode and selected context.
 - When task-scoped or tracked-feature-scoped context may apply, read `/ai-work/00-feature-status.md` and follow the feature-state contract in that file.
 - Use the active tracked feature as the default tracked-feature context unless the user explicitly identifies another tracked feature for follow-up commit labeling, or the commit is repo-scoped
 - Main-task commits and task-scoped or tracked-feature-scoped ad hoc `feat` commits require an active tracked feature
-- Do not prepare main-task commits or task-scoped/tracked-feature-scoped ad hoc `feat` commits for paused or completed tracked features unless the user explicitly asks for an exception
-- For `management`, an explicit tracked-feature selector may reference a `planned`, non-active, or completed tracked feature without activating it
-- Non-`mgmt` follow-up prefixes may reference a non-active or completed tracked feature as commit context when the rule otherwise permits that scope
+- Do not prepare main-task commits or task-scoped/tracked-feature-scoped ad hoc `feat` commits for future, paused, completed, or archived tracked features unless the user explicitly asks for an exception
+- For `management`, an explicit tracked-feature selector may reference a `future`, `planned`, non-active, completed, or archived tracked feature without activating it
+- Non-`mgmt` follow-up prefixes may reference a non-active, completed, or archived tracked feature as commit context when the rule otherwise permits that scope
 - Repo-scoped follow-up commits and repo-scoped ad hoc `feat` commits do not require an active tracked feature or task list
 
 ## Step 2 - Select prefix and commit mode

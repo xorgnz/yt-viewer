@@ -1,14 +1,14 @@
 ---
-version: 1.4.1
-timestamp: 2026-04-13 00:00
+version: 1.5.0
+timestamp: 2026-04-19 00:00
 ---
 # Rule: Generating a Task List from User Requirements
 
 ## Prerequisites
 
 - A feature tag must exist
-- `/ai-work/00-feature-status.md` must identify the feature as `active` or an explicitly selected `planned` feature
-- The feature must not be marked `paused` or `completed`
+- `/ai-work/00-feature-status.md` must identify the feature as `active`, an explicitly selected `planned` feature, or an explicitly selected `future` feature
+- The feature must not be marked `paused`, `completed`, or `archived`
 - A PRD must exist at `/ai-work/{feature-tag}-prd.md`
 - The master tech stack must exist at `/ai-work/00-master-techstack.md`
 
@@ -23,13 +23,15 @@ timestamp: 2026-04-13 00:00
 1. Read `/ai-work/00-feature-status.md`
 2. Use the active feature by default
 3. If the user names a different feature and it is `planned`, task generation may proceed without activating that feature
-4. If the user names a different feature and it is `paused` or `completed`, stop and tell the user rule 5 does not run on that feature state
-5. Only require the feature-change workflow when the user wants a different feature to become the active working feature
-6. Analyze the PRD and master tech stack
+4. If the user explicitly names a `future` feature, task generation may proceed without activating that feature
+5. If the user names a different feature and it is `paused`, `completed`, or `archived`, stop and tell the user rule 5 does not run on that feature state
+6. Only require the feature-change workflow when the user wants a different feature to become the active working feature
+7. Do not bring future features into task planning for other features unless the user explicitly names the future feature as relevant
+8. Analyze the PRD and master tech stack
    - Treat the PRD as the implementation-facing boundary and requirements document
-7. Generate the task list in one pass, using parent tasks and sub-tasks only where they improve execution clarity
-8. Identify relevant files and tests when that context will materially help implementation
-9. Save the completed task list to `/ai-work/{feature-tag}-tasks.md`
+9. Generate the task list in one pass, using parent tasks and sub-tasks only where they improve execution clarity
+10. Identify relevant files and tests when that context will materially help implementation
+11. Save the completed task list to `/ai-work/{feature-tag}-tasks.md`
 
 ## Output Format
 
