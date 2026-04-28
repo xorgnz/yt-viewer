@@ -414,6 +414,14 @@
         onCardClick={handleCardClick}
         onVideoChange={handleVisibleVideoChange}
     />
+
+    <ViewerPagination
+        totalCount={data.totalCount}
+        {totalPages}
+        {currentPage}
+        {visiblePages}
+        {buildPageHref}
+    />
 </div>
 
 <style>
