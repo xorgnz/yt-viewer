@@ -2,6 +2,8 @@ import type {
     ViewerSelectionFlagValue
 } from '$lib/viewer/selection/types';
 
+export type ViewerSort = 'newest' | 'oldest' | 'title_asc' | 'title_desc';
+
 export type ViewerFilters = {
     term?: string;
     watched: 'all' | 'watched' | 'unwatched';
@@ -12,6 +14,7 @@ export type ViewerFilters = {
     dateToInput: string;
     channelId: number | null;
     groupId: number | null;
+    sort: ViewerSort;
     limit: number;
     offset: number;
 };
@@ -80,6 +83,7 @@ export type ViewerFilterInputState = {
     dateFromInput: string;
     dateToInput: string;
     channelIdInput: string;
+    sortMode: ViewerSort;
     limitInput: string;
     watchedMode: ViewerFilters['watched'];
     showIgnored: boolean;

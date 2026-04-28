@@ -1,3 +1,5 @@
+import type { ViewerSort } from '$lib/viewer/types';
+
 export interface ViewerVideoQueryFilters
 {
     term?: string;
@@ -7,6 +9,7 @@ export interface ViewerVideoQueryFilters
     ignored?: 'hide' | 'show';
     channelId?: number | null;
     groupId?: number | null;
+    sort?: ViewerSort;
     limit?: number;
     offset?: number;
 }
@@ -52,6 +55,20 @@ export class ViewerVideoQuerySpec
             limit: this.resolveLimit(),
             offset: this.resolveOffset()
         };
+    }
+
+    getOrderBySql(): string
+    {
+        switch (this.resolveSort()) {
+            case 'oldest':
+                return 'v.published_at IS NULL ASC, v.published_at ASC, v.id ASC';
+            case 'title_asc':
+                return 'LOWER(v.title) ASC, v.published_at IS NULL ASC, v.published_at DESC, v.id ASC';
+            case 'title_desc':
+                return 'LOWER(v.title) DESC, v.published_at IS NULL ASC, v.published_at DESC, v.id DESC';
+            default:
+                return 'v.published_at IS NULL ASC, v.published_at DESC, v.id DESC';
+        }
     }
 
     private buildCoreQueryParts(): ViewerVideoQueryParts
@@ -125,6 +142,18 @@ export class ViewerVideoQuerySpec
     private resolveOffset(): number
     {
         return Math.max(0, this.filters.offset ?? 0);
+    }
+
+    private resolveSort(): ViewerSort
+    {
+        switch (this.filters.sort) {
+            case 'oldest':
+            case 'title_asc':
+            case 'title_desc':
+                return this.filters.sort;
+            default:
+                return 'newest';
+        }
     }
 }
 // apply-patch-anchor - do not delete

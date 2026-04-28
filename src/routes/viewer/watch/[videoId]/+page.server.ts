@@ -2,19 +2,18 @@ import { error, fail } from '@sveltejs/kit';
 import { ServerDatabaseContext } from '$lib/server/ServerDatabaseContext';
 import { ServerActionForm } from '$lib/server/ServerActionForm';
 import { ViewerActionParser } from '$lib/server/viewer/ViewerActionParser';
+import { ViewerQueryParser } from '$lib/server/viewer/ViewerQueryParser';
 import { ViewerServiceContext } from '$lib/server/viewer/ViewerServiceContext';
 
 export const load = async ({ params, cookies, url }: { params: { videoId: string }, cookies: any, url: URL }) =>
 {
     const videoId = String(params.videoId || '').trim();
     if (!videoId) throw error(400, 'Missing videoId');
-    const groupIdParam = url.searchParams.get('groupId');
-    const parsedGroupId = groupIdParam ? Number(groupIdParam) : null;
-    const groupId = Number.isFinite(parsedGroupId) ? parsedGroupId : null;
 
     return ServerDatabaseContext.run(async ({ db }) => {
         const serviceContext = await ViewerServiceContext.resolve(db, cookies);
-        const result = await serviceContext.watchService.load(videoId, groupId);
+        const filters = ViewerQueryParser.parse(url, serviceContext.profileContext.activeProfileKey);
+        const result = await serviceContext.watchService.load(videoId, filters);
         if (!result) throw error(404, 'Video not found');
 
         return result;

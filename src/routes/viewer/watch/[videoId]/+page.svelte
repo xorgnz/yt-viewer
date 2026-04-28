@@ -2,7 +2,8 @@
     import VideoCard from '$lib/components/VideoCard.svelte';
     import {onMount, onDestroy} from 'svelte';
     import { VideoMutationService } from '$lib/viewer/VideoMutationService';
-    import type { ViewerVideo } from '$lib/viewer/types';
+    import { viewerPageState } from '$lib/viewer/pageState';
+    import type { ViewerFilters, ViewerVideo } from '$lib/viewer/types';
 
     export let data: {
         video: {
@@ -21,6 +22,7 @@
             ignored: number;
         };
         recommendations: ViewerVideo[];
+        navigationFilters: ViewerFilters;
         profileId: number;
         profileKey: string;
         profileName: string;
@@ -99,17 +101,7 @@
             return '#';
         }
 
-        const query = new URLSearchParams();
-
-        if (data.currentGroupId != null)
-        {
-            query.set('groupId', String(data.currentGroupId));
-        }
-
-        const queryString = query.toString();
-        return queryString
-            ? `/viewer/watch/${videoYoutubeId}?${queryString}`
-            : `/viewer/watch/${videoYoutubeId}`;
+        return viewerPageState.buildViewerWatchHref(data.navigationFilters, videoYoutubeId);
     }
 
     function resetForVideoChange(serverWatched: boolean)

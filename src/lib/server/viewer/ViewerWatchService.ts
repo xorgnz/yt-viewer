@@ -4,6 +4,7 @@ import {
     ViewerVideoReadRepository,
     type ViewerVideoRecord
 } from '$lib/daos/readers/ViewerVideoReadRepository';
+import type { ViewerQueryFilters } from '$lib/server/viewer/ViewerQueryParser';
 import { ViewerRecommendationService } from '$lib/server/viewer/ViewerRecommendationService';
 import type { ServerProfileContext } from '$lib/server/ServerProfileContext';
 
@@ -17,6 +18,7 @@ export type ViewerWatchLoadModel = {
     previousVideoYoutubeId: string | null;
     nextVideoYoutubeId: string | null;
     currentGroupId: number | null;
+    navigationFilters: ViewerQueryFilters;
     profileId: number;
     profileKey: string;
     profileName: string;
@@ -53,7 +55,7 @@ export class ViewerWatchService
         this.recommendationService = recommendationService;
     }
 
-    async load(videoYoutubeId: string, groupId: number | null): Promise<ViewerWatchLoadModel | null>
+    async load(videoYoutubeId: string, filters: ViewerQueryFilters): Promise<ViewerWatchLoadModel | null>
     {
         const video = await this.loadVideo(videoYoutubeId);
         if (!video) {
@@ -61,16 +63,27 @@ export class ViewerWatchService
         }
 
         const adjacent = await this.viewerVideoReadRepository.findAdjacentYoutubeIds(
-            video,
+            { youtube_id: video.youtube_id },
+            {
+                term: filters.term,
+                dateFrom: filters.dateFrom,
+                dateTo: filters.dateTo,
+                watched: filters.watched,
+                ignored: filters.ignored,
+                channelId: filters.channelId,
+                groupId: filters.groupId,
+                sort: filters.sort
+            },
             this.profileContext.activeProfileId
         );
 
         return {
             video,
-            recommendations: await this.recommendationService.load(video, groupId),
+            recommendations: await this.recommendationService.load(video, filters.groupId),
             previousVideoYoutubeId: adjacent.previousYoutubeId,
             nextVideoYoutubeId: adjacent.nextYoutubeId,
-            currentGroupId: groupId,
+            currentGroupId: filters.groupId,
+            navigationFilters: filters,
             profileId: this.profileContext.activeProfileId,
             profileKey: this.profileContext.activeProfileKey,
             profileName: this.profileContext.activeProfileName

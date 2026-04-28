@@ -2,7 +2,8 @@
     import DatePicker from '$lib/components/DatePicker.svelte';
     import type {
         ViewerChannel,
-        ViewerFilters
+        ViewerFilters,
+        ViewerSort
     } from '$lib/viewer/types';
 
     export let filters: ViewerFilters;
@@ -13,6 +14,7 @@
     export let dateFromInput = '';
     export let dateToInput = '';
     export let channelIdInput = '';
+    export let sortMode: ViewerSort = 'newest';
     export let limitInput = '';
     export let watchedMode: ViewerFilters['watched'] = 'all';
     export let showIgnored = false;
@@ -21,6 +23,7 @@
     export let onTextKeydown: (event: KeyboardEvent) => void = () => undefined;
     export let onDateCommit: () => void = () => undefined;
     export let onChannelChange: () => void = () => undefined;
+    export let onSortChange: () => void = () => undefined;
     export let onLimitInput: () => void = () => undefined;
     export let onWatchedOnlyChange: (event: Event) => void = () => undefined;
     export let onShowIgnoredChange: () => void = () => undefined;
@@ -68,6 +71,15 @@
                     {#each channels as channel}
                         <option value={channel.id}>{channel.title}</option>
                     {/each}
+                </select>
+            </label>
+            <label class="boxed-field compact-sort-field">
+                <span class="boxed-field-label">Sort</span>
+                <select name="sort" bind:value={sortMode} on:change={onSortChange}>
+                    <option value="newest">Newest first</option>
+                    <option value="oldest">Oldest first</option>
+                    <option value="title_asc">Title A-Z</option>
+                    <option value="title_desc">Title Z-A</option>
                 </select>
             </label>
             <label class="boxed-field compact-field">
@@ -153,6 +165,10 @@
     .compact-search-field,
     .compact-channel-field {
         flex: 0 1 22rem;
+    }
+
+    .compact-sort-field {
+        flex: 0 0 12rem;
     }
 
     .filter-row {

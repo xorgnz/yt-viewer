@@ -34,9 +34,28 @@ function buildViewerPageHref(filters: ViewerFilters, page: number): string
         dateTo: filters.dateToInput,
         channelId: filters.channelId != null ? String(filters.channelId) : '',
         groupId: filters.groupId != null ? String(filters.groupId) : '',
+        sort: filters.sort,
         limit: String(filters.limit),
         offset: String((page - 1) * filters.limit)
     }).toString()}`;
+}
+
+function buildViewerWatchHref(filters: ViewerFilters, videoYoutubeId: string): string
+{
+    const query = new URLSearchParams({
+        term: filters.term || '',
+        watched: filters.watched,
+        ignored: filters.ignored,
+        dateFrom: filters.dateFromInput,
+        dateTo: filters.dateToInput,
+        channelId: filters.channelId != null ? String(filters.channelId) : '',
+        groupId: filters.groupId != null ? String(filters.groupId) : '',
+        sort: filters.sort
+    }).toString();
+
+    return query
+        ? `/viewer/watch/${videoYoutubeId}?${query}`
+        : `/viewer/watch/${videoYoutubeId}`;
 }
 
 function getViewerVisiblePages(current: number, total: number): ViewerVisiblePage[]
@@ -95,6 +114,7 @@ function deriveViewerFilterInputState(filters: ViewerFilters): ViewerFilterInput
         dateFromInput: filters.dateFromInput,
         dateToInput: filters.dateToInput,
         channelIdInput: filters.channelId != null ? String(filters.channelId) : '',
+        sortMode: filters.sort,
         limitInput: String(filters.limit),
         watchedMode: filters.watched,
         showIgnored: filters.ignored === 'show'
@@ -114,6 +134,7 @@ function buildViewerFilterQuery(
         dateTo: inputState.dateToInput,
         channelId: inputState.channelIdInput,
         groupId: filters.groupId != null ? String(filters.groupId) : '',
+        sort: inputState.sortMode,
         limit: inputState.limitInput,
         offset: '0'
     });
@@ -164,6 +185,7 @@ function deriveViewerSelectionSummary(state: ViewerSelectionState): ViewerSelect
 
 export const viewerPageState = {
     buildViewerPageHref,
+    buildViewerWatchHref,
     deriveViewerPaginationState,
     deriveViewerFilterInputState,
     buildViewerFilterQuery,

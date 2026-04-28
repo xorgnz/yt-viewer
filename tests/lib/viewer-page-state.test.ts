@@ -19,6 +19,7 @@ describe('viewer page state helpers', () => {
             dateToInput: '',
             channelId: null,
             groupId: null,
+            sort: 'newest',
             limit: 10,
             offset: 0,
             ...overrides
@@ -46,6 +47,7 @@ describe('viewer page state helpers', () => {
         expect(query.get('showIgnored')).toBe('1');
         expect(query.get('channelId')).toBe('22');
         expect(query.get('groupId')).toBe('4');
+        expect(query.get('sort')).toBe('newest');
         expect(query.get('limit')).toBe('25');
         expect(query.get('offset')).toBe('0');
     });
@@ -72,7 +74,8 @@ describe('viewer page state helpers', () => {
             dateFromInput: '',
             dateToInput: '',
             channelId: null,
-            groupId: null
+            groupId: null,
+            sort: 'newest'
         });
         const pageOneVideos = [
             { id: 1, watched: 0 as const, favorite: 0 as const, ignored: 0 as const },
@@ -95,6 +98,27 @@ describe('viewer page state helpers', () => {
         expect(summary.watchedControlState).toBe('mixed');
         expect(summary.favoriteControlState).toBe('mixed');
         expect(summary.ignoredControlState).toBe('unchecked');
+    });
+
+    it('builds watch hrefs with the current viewer filters and sort', () => {
+        const href = viewerPageState.buildViewerWatchHref(createFilters({
+            term: 'ramen',
+            watched: 'unwatched',
+            ignored: 'show',
+            channelId: 7,
+            groupId: 3,
+            sort: 'title_desc'
+        }), 'abc123');
+
+        const url = new URL(`http://localhost${href}`);
+
+        expect(url.pathname).toBe('/viewer/watch/abc123');
+        expect(url.searchParams.get('term')).toBe('ramen');
+        expect(url.searchParams.get('watched')).toBe('unwatched');
+        expect(url.searchParams.get('ignored')).toBe('show');
+        expect(url.searchParams.get('channelId')).toBe('7');
+        expect(url.searchParams.get('groupId')).toBe('3');
+        expect(url.searchParams.get('sort')).toBe('title_desc');
     });
 });
 // apply-patch-anchor - do not delete

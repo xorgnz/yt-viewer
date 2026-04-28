@@ -11,6 +11,7 @@ describe('ViewerQueryParser', () => {
         expect(filters).toMatchObject({
             watched: 'unwatched',
             ignored: 'hide',
+            sort: 'newest',
             dateFromInput: '',
             dateToInput: '',
             channelId: null,
@@ -32,7 +33,7 @@ describe('ViewerQueryParser', () => {
 
     it('parses date boundaries and numeric filters from the query string', () => {
         const filters = ViewerQueryParser.parse(
-            new URL('http://localhost/viewer?dateFrom=2026-04-01&dateTo=2026-04-02&channelId=3&groupId=8&limit=25&offset=50'),
+            new URL('http://localhost/viewer?dateFrom=2026-04-01&dateTo=2026-04-02&channelId=3&groupId=8&sort=title_desc&limit=25&offset=50'),
             'default'
         );
 
@@ -40,6 +41,7 @@ describe('ViewerQueryParser', () => {
         expect(filters.dateTo).toBe(new Date(2026, 3, 2, 23, 59, 59, 999).getTime());
         expect(filters.channelId).toBe(3);
         expect(filters.groupId).toBe(8);
+        expect(filters.sort).toBe('title_desc');
         expect(filters.limit).toBe(25);
         expect(filters.offset).toBe(50);
     });

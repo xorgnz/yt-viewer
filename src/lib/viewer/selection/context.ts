@@ -12,6 +12,7 @@ export class ViewerSelectionContext
     public readonly dateToInput: string;
     public readonly channelId: number | null;
     public readonly groupId: number | null;
+    public readonly sort: string;
 
     public constructor(input: ViewerSelectionContextInput)
     {
@@ -23,6 +24,7 @@ export class ViewerSelectionContext
         this.dateToInput = input.dateToInput;
         this.channelId = input.channelId;
         this.groupId = input.groupId;
+        this.sort = input.sort;
     }
 
     public static createKey(input: ViewerSelectionContextInput): string
@@ -40,7 +42,8 @@ export class ViewerSelectionContext
             dateFrom: this.dateFromInput,
             dateTo: this.dateToInput,
             channelId: this.channelId != null ? String(this.channelId) : '',
-            groupId: this.groupId != null ? String(this.groupId) : ''
+            groupId: this.groupId != null ? String(this.groupId) : '',
+            sort: this.sort
         }).toString();
     }
 }

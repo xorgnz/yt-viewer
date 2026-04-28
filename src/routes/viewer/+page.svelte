@@ -1,6 +1,7 @@
 <script lang="ts">
     import { browser } from '$app/environment';
     import { goto } from '$app/navigation';
+    import { onMount } from 'svelte';
     import { VideoMutationService } from '$lib/viewer/VideoMutationService';
     import {
         viewerBulkActions
@@ -13,12 +14,14 @@
         FILTER_DEBOUNCE_MS,
         viewerPageState
     } from '$lib/viewer/pageState';
+    import { viewerSortSession } from '$lib/viewer/sortSession';
     import {
         viewerSelectionInteractions
     } from '$lib/viewer/selectionInteractions';
     import type {
         BulkActionFeedback,
         ViewerPageData,
+        ViewerSort,
         ViewerVideo,
         ViewerVisiblePage
     } from '$lib/viewer/types';
@@ -44,6 +47,7 @@
     let dateFromInput = '';
     let dateToInput = '';
     let channelIdInput = '';
+    let sortMode: ViewerSort = 'newest';
     let limitInput = '';
     let watchedMode: 'all' | 'watched' | 'unwatched' = 'all';
     let showIgnored = false;
@@ -60,6 +64,7 @@
     let ignoredControlState: ViewerSelectionControlState = 'unchecked';
     let bulkActionPending = false;
     let bulkActionFeedback: BulkActionFeedback | null = null;
+    let sortPreferenceInitialized = false;
     const videoMutationService = new VideoMutationService();
 
     function buildPageHref(page: number): string
@@ -69,17 +74,7 @@
 
     function buildVideoWatchHref(video: ViewerVideo): string
     {
-        const query = new URLSearchParams();
-
-        if (f.groupId != null)
-        {
-            query.set('groupId', String(f.groupId));
-        }
-
-        const queryString = query.toString();
-        return queryString
-            ? `/viewer/watch/${video.youtube_id}?${queryString}`
-            : `/viewer/watch/${video.youtube_id}`;
+        return viewerPageState.buildViewerWatchHref(f, video.youtube_id);
     }
 
     function clearPendingApply()
@@ -121,6 +116,11 @@
     }
 
     function handleImmediateFilterChange()
+    {
+        void applyFiltersNow();
+    }
+
+    function handleSortChange()
     {
         void applyFiltersNow();
     }
@@ -300,7 +300,7 @@
     $: f = data.filters;
     $: visibleVideos = data.videos;
     $: currentPageSelectionVideos = viewerPageState.createViewerSelectionSnapshots(visibleVideos);
-    $: ({ termInput, dateFromInput, dateToInput, channelIdInput, limitInput, watchedMode, showIgnored } =
+    $: ({ termInput, dateFromInput, dateToInput, channelIdInput, sortMode, limitInput, watchedMode, showIgnored } =
         viewerPageState.deriveViewerFilterInputState(f));
     $: activeVirtualChannel = viewerPageState.findActiveViewerGroup(data.groups, f.groupId);
     $: ({ totalPages, currentPage, visiblePages } = viewerPageState.deriveViewerPaginationState(f, data.totalCount));
@@ -315,7 +315,8 @@
             dateFromInput: f.dateFromInput,
             dateToInput: f.dateToInput,
             channelId: f.channelId,
-            groupId: f.groupId
+            groupId: f.groupId,
+            sort: f.sort
         });
         const nextCurrentPageVideoIds = currentPageSelectionVideos.map((video) => video.id);
         const contextChanged = selectionState.contextKey !== nextContextKey;
@@ -357,6 +358,38 @@
     $: if (!hasActiveSelection && bulkActionFeedback) {
         bulkActionFeedback = null;
     }
+
+    onMount(() =>
+    {
+        const currentUrl = new URL(window.location.href);
+        const hasSortParam = currentUrl.searchParams.has('sort');
+        const storedSort = viewerSortSession.load();
+
+        if (!hasSortParam && storedSort && storedSort !== f.sort) {
+            sortMode = storedSort;
+            void goto(`?${viewerPageState.buildViewerFilterQuery(f, {
+                termInput,
+                dateFromInput,
+                dateToInput,
+                channelIdInput,
+                sortMode: storedSort,
+                limitInput,
+                watchedMode,
+                showIgnored
+            })}`, {
+                replaceState: true,
+                keepFocus: true,
+                noScroll: true
+            });
+            return;
+        }
+
+        sortPreferenceInitialized = true;
+    });
+
+    $: if (browser && sortPreferenceInitialized) {
+        viewerSortSession.persist(f.sort);
+    }
 </script>
 
 <svelte:window on:click={handleViewerBackgroundClick} />
@@ -371,6 +404,7 @@
         bind:dateFromInput
         bind:dateToInput
         bind:channelIdInput
+        bind:sortMode
         bind:limitInput
         bind:watchedMode
         bind:showIgnored
@@ -379,6 +413,7 @@
         onTextKeydown={handleFilterKeydown}
         onDateCommit={handleImmediateFilterChange}
         onChannelChange={handleImmediateFilterChange}
+        onSortChange={handleSortChange}
         onLimitInput={scheduleApply}
         onWatchedOnlyChange={handleWatchedOnlyChange}
         onShowIgnoredChange={handleImmediateFilterChange}

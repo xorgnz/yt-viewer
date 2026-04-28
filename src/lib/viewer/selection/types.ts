@@ -38,5 +38,6 @@ export interface ViewerSelectionContextInput
     dateToInput: string;
     channelId: number | null;
     groupId: number | null;
+    sort: string;
 }
 // apply-patch-anchor - do not delete

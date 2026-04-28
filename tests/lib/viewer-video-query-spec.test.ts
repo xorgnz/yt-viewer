@@ -11,6 +11,7 @@ describe('ViewerVideoQuerySpec', () => {
             ignored: 'hide',
             channelId: 3,
             groupId: 8,
+            sort: 'title_asc',
             limit: 5000,
             offset: -10
         }, 12);
@@ -36,6 +37,7 @@ describe('ViewerVideoQuerySpec', () => {
         });
         expect(queryParts.limit).toBe(1000);
         expect(queryParts.offset).toBe(0);
+        expect(spec.getOrderBySql()).toBe('LOWER(v.title) ASC, v.published_at IS NULL ASC, v.published_at DESC, v.id ASC');
     });
 
     it('defaults to hiding ignored videos without extra joins when no group filter is active', () => {
@@ -49,6 +51,7 @@ describe('ViewerVideoQuerySpec', () => {
         expect(queryParts.params).toEqual({
             profileId: 7
         });
+        expect(spec.getOrderBySql()).toBe('v.published_at IS NULL ASC, v.published_at DESC, v.id DESC');
     });
 });
 // apply-patch-anchor - do not delete

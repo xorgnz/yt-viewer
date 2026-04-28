@@ -25,76 +25,46 @@ export interface ViewerVideoRecord
 export class ViewerVideoReadRepository extends DAO
 {
     async findAdjacentYoutubeIds(
-        video: Pick<ViewerVideoRecord, 'id' | 'channel_id' | 'published_at'>,
+        video: Pick<ViewerVideoRecord, 'youtube_id'>,
+        filters: ViewerVideoQueryFilters,
         profileId: number
     ): Promise<{ previousYoutubeId: string | null; nextYoutubeId: string | null }>
     {
-        const params = {
-            currentId: video.id,
-            channelId: video.channel_id,
-            currentPublishedAt: video.published_at ?? 0,
-            currentPublishedAtIsNull: video.published_at == null ? 1 : 0,
-            profileId
-        };
+        const querySpec = new ViewerVideoQuerySpec(filters, profileId);
+        const { whereSql, groupJoin, selectionJoin, params } = querySpec.buildCountQueryParts();
+        const orderBySql = querySpec.getOrderBySql();
 
-        const previousSql = `
-            SELECT v.youtube_id AS youtube_id
-            FROM videos v
-            LEFT JOIN video_flags vf ON (vf.video_id = v.id AND vf.profile_id = :profileId)
-            WHERE v.channel_id = :channelId
-              AND v.id <> :currentId
-              AND COALESCE(vf.ignored, 0) = 0
-              AND (
-                CASE WHEN v.published_at IS NULL THEN 1 ELSE 0 END < :currentPublishedAtIsNull
-                OR (
-                    CASE WHEN v.published_at IS NULL THEN 1 ELSE 0 END = :currentPublishedAtIsNull
-                    AND COALESCE(v.published_at, 0) < :currentPublishedAt
-                )
-                OR (
-                    CASE WHEN v.published_at IS NULL THEN 1 ELSE 0 END = :currentPublishedAtIsNull
-                    AND COALESCE(v.published_at, 0) = :currentPublishedAt
-                    AND v.id < :currentId
-                )
-              )
-            ORDER BY
-                CASE WHEN v.published_at IS NULL THEN 1 ELSE 0 END DESC,
-                v.published_at DESC,
-                v.id DESC
+        const sql = `
+            SELECT
+                ordered.previous_youtube_id AS previous_youtube_id,
+                ordered.next_youtube_id AS next_youtube_id
+            FROM (
+                SELECT
+                    v.youtube_id,
+                    LAG(v.youtube_id) OVER (ORDER BY ${orderBySql}) AS previous_youtube_id,
+                    LEAD(v.youtube_id) OVER (ORDER BY ${orderBySql}) AS next_youtube_id
+                FROM videos v
+                JOIN source_channels c ON c.id = v.channel_id
+                LEFT JOIN video_flags vf ON (vf.video_id = v.id AND vf.profile_id = :profileId)
+                ${groupJoin}
+                ${selectionJoin}
+                ${whereSql}
+            ) ordered
+            WHERE ordered.youtube_id = :currentYoutubeId
             LIMIT 1
         `;
 
-        const nextSql = `
-            SELECT v.youtube_id AS youtube_id
-            FROM videos v
-            LEFT JOIN video_flags vf ON (vf.video_id = v.id AND vf.profile_id = :profileId)
-            WHERE v.channel_id = :channelId
-              AND v.id <> :currentId
-              AND COALESCE(vf.ignored, 0) = 0
-              AND (
-                CASE WHEN v.published_at IS NULL THEN 1 ELSE 0 END > :currentPublishedAtIsNull
-                OR (
-                    CASE WHEN v.published_at IS NULL THEN 1 ELSE 0 END = :currentPublishedAtIsNull
-                    AND COALESCE(v.published_at, 0) > :currentPublishedAt
-                )
-                OR (
-                    CASE WHEN v.published_at IS NULL THEN 1 ELSE 0 END = :currentPublishedAtIsNull
-                    AND COALESCE(v.published_at, 0) = :currentPublishedAt
-                    AND v.id > :currentId
-                )
-              )
-            ORDER BY
-                CASE WHEN v.published_at IS NULL THEN 1 ELSE 0 END ASC,
-                v.published_at ASC,
-                v.id ASC
-            LIMIT 1
-        `;
-
-        const previousRow = await this.getOne<{ youtube_id: string }>(previousSql, params);
-        const nextRow = await this.getOne<{ youtube_id: string }>(nextSql, params);
+        const adjacentRow = await this.getOne<{
+            previous_youtube_id: string | null;
+            next_youtube_id: string | null;
+        }>(sql, {
+            ...params,
+            currentYoutubeId: video.youtube_id
+        });
 
         return {
-            previousYoutubeId: previousRow?.youtube_id ?? null,
-            nextYoutubeId: nextRow?.youtube_id ?? null
+            previousYoutubeId: adjacentRow?.previous_youtube_id ?? null,
+            nextYoutubeId: adjacentRow?.next_youtube_id ?? null
         };
     }
 
@@ -130,6 +100,7 @@ export class ViewerVideoReadRepository extends DAO
     {
         const querySpec = new ViewerVideoQuerySpec(filters, profileId);
         const { whereSql, groupJoin, selectionJoin, params, limit, offset } = querySpec.buildListQueryParts();
+        const orderBySql = querySpec.getOrderBySql();
 
         const sql = `
             SELECT
@@ -153,7 +124,7 @@ export class ViewerVideoReadRepository extends DAO
             ${groupJoin}
             ${selectionJoin}
             ${whereSql}
-            ORDER BY v.published_at IS NULL ASC, v.published_at DESC, v.id DESC
+            ORDER BY ${orderBySql}
             LIMIT :limit OFFSET :offset
         `;
 

@@ -1,3 +1,5 @@
+import type { ViewerSort } from '$lib/viewer/types';
+
 export type ViewerWatchedFilter = 'all' | 'watched' | 'unwatched';
 export type ViewerIgnoredFilter = 'hide' | 'show';
 
@@ -11,6 +13,7 @@ export type ViewerQueryFilters = {
     dateToInput: string;
     channelId: number | null;
     groupId: number | null;
+    sort: ViewerSort;
     limit: number;
     offset: number;
 };
@@ -25,6 +28,7 @@ export class ViewerQueryParser
         const showIgnored = url.searchParams.get('showIgnored');
         const dateFromInput = url.searchParams.get('dateFrom')?.trim() || '';
         const dateToInput = url.searchParams.get('dateTo')?.trim() || '';
+        const sort = ViewerQueryParser.parseSort(url.searchParams.get('sort'));
 
         // Preserve the legacy watched/ignored query compatibility while normalizing the final filters.
         const watchedParam = unwatchedOnly === '1'
@@ -44,6 +48,7 @@ export class ViewerQueryParser
             dateToInput,
             channelId: ViewerQueryParser.parseOptionalNumber(url.searchParams.get('channelId')),
             groupId: ViewerQueryParser.parseOptionalNumber(url.searchParams.get('groupId')),
+            sort,
             limit: ViewerQueryParser.parseOptionalNumber(url.searchParams.get('limit')) ?? 200,
             offset: ViewerQueryParser.parseOptionalNumber(url.searchParams.get('offset')) ?? 0
         };
@@ -52,6 +57,18 @@ export class ViewerQueryParser
     private static parseOptionalNumber(value: string | null): number | null
     {
         return value ? Number(value) : null;
+    }
+
+    private static parseSort(value: string | null): ViewerSort
+    {
+        switch ((value || '').trim()) {
+            case 'oldest':
+            case 'title_asc':
+            case 'title_desc':
+                return value as ViewerSort;
+            default:
+                return 'newest';
+        }
     }
 
     private static parseDateOnly(value: string | null, boundary: 'start' | 'end'): number | null
