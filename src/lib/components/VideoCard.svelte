@@ -315,15 +315,20 @@
 
     .thumb {
         position: relative;
-        aspect-ratio: 16/9;
+        width: 100%;
+        height: 180px;
         background: #111;
-        display: block;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
     }
 
     .thumb :global(.img-thumb) {
         width: 100%;
         height: 100%;
-        object-fit: cover;
+        object-fit: contain;
+        object-position: center;
         display: block;
     }
 
