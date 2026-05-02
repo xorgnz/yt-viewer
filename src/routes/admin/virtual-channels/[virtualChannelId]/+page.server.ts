@@ -46,7 +46,72 @@ function parseReviewState(value: FormDataEntryValue | null): VirtualChannelAssig
     return value === 'included' || value === 'ignored' ? value : 'not_yet_reviewed';
 }
 
+function parseDailyTimerMode(value: FormDataEntryValue | null): 'unlimited' | 'capped'
+{
+    return value === 'capped' ? 'capped' : 'unlimited';
+}
+
 export const actions: Actions = {
+    saveTimerSettings: async ({ params, request }) => {
+        const virtualChannelId = parseVirtualChannelId(params.virtualChannelId);
+        if (!virtualChannelId) {
+            throw error(404, 'Virtual channel not found');
+        }
+
+        const form = await ServerActionForm.fromRequest(request);
+        const timerMode = parseDailyTimerMode(form.getRaw('timer_mode'));
+        const dailyTimerMaxInput = form.getTrimmedString('daily_timer_max');
+
+        if (timerMode === 'capped') {
+            if (!dailyTimerMaxInput) {
+                return fail(400, {
+                    action: 'saveTimerSettings',
+                    message: 'Daily timer minutes are required when the timer is enabled.',
+                    timerMode,
+                    dailyTimerMaxInput
+                });
+            }
+
+            const parsedDailyTimerMax = Number(dailyTimerMaxInput);
+            if (!Number.isInteger(parsedDailyTimerMax) || parsedDailyTimerMax <= 0) {
+                return fail(400, {
+                    action: 'saveTimerSettings',
+                    message: 'Daily timer minutes must be a positive whole number.',
+                    timerMode,
+                    dailyTimerMaxInput
+                });
+            }
+
+            return ServerDatabaseContext.run(async ({ db }) => {
+                const serviceContext = AdminVirtualChannelServiceContext.resolve(db);
+                const result = await serviceContext.manageService.updateTimerSettings({
+                    virtualChannelId,
+                    dailyTimerMax: parsedDailyTimerMax
+                });
+
+                if (!result.ok) {
+                    throw error(result.error.status, result.error.message);
+                }
+
+                throw redirect(303, result.data.redirectTo);
+            });
+        }
+
+        return ServerDatabaseContext.run(async ({ db }) => {
+            const serviceContext = AdminVirtualChannelServiceContext.resolve(db);
+            const result = await serviceContext.manageService.updateTimerSettings({
+                virtualChannelId,
+                dailyTimerMax: null
+            });
+
+            if (!result.ok) {
+                throw error(result.error.status, result.error.message);
+            }
+
+            throw redirect(303, result.data.redirectTo);
+        });
+    },
+
     addAssociation: async ({ params, request }) => {
         // Validate the route and submitted source channel reference.
         const virtualChannelId = parseVirtualChannelId(params.virtualChannelId);

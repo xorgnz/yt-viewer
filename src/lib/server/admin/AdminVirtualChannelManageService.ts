@@ -19,7 +19,7 @@ import type {
     AdminVirtualChannelServiceResult
 } from '$lib/server/admin/AdminVirtualChannelTypes';
 
-type AdminVirtualChannelDAO = Pick<VirtualChannelDAO, 'get'>;
+type AdminVirtualChannelDAO = Pick<VirtualChannelDAO, 'get' | 'updateDailyTimerMax'>;
 type AdminAssignmentDAO = Pick<AssignmentDAO, 'add' | 'get' | 'listForVirtualChannel' | 'remove' | 'updateMode'>;
 type AdminSourceChannelDAO = Pick<SourceChannelDAO, 'get' | 'list'>;
 type AdminVideoDAO = Pick<VideoDAO, 'get' | 'listByChannel'>;
@@ -69,6 +69,12 @@ export interface BulkUpdateAdminVideoReviewStateInput
     videoIds: number[];
     reviewState: VirtualChannelAssignmentVideoReviewState;
     returnQuery: string;
+}
+
+export interface UpdateAdminVirtualChannelTimerInput
+{
+    virtualChannelId: number;
+    dailyTimerMax: number | null;
 }
 
 export class AdminVirtualChannelManageService
@@ -262,6 +268,23 @@ export class AdminVirtualChannelManageService
             data: {
                 redirectTo: this.buildManagePath(input.virtualChannelId, input.returnQuery)
             }
+        };
+    }
+
+    async updateTimerSettings(input: UpdateAdminVirtualChannelTimerInput): Promise<AdminVirtualChannelServiceResult<
+        AdminVirtualChannelRedirect,
+        AdminVirtualChannelServiceError<'virtual_channel_not_found'>
+    >>
+    {
+        if (!await this.virtualChannelDAO.get(input.virtualChannelId)) {
+            return this.buildError('virtual_channel_not_found', 404, 'Virtual channel not found');
+        }
+
+        await this.virtualChannelDAO.updateDailyTimerMax(input.virtualChannelId, input.dailyTimerMax);
+
+        return {
+            ok: true,
+            data: { redirectTo: this.buildManagePath(input.virtualChannelId) }
         };
     }
 

@@ -1,69 +1,27 @@
 <script lang="ts">
-    export let data: {
-        virtualChannel: {
-            id: number;
-            name: string;
-        };
-        associatedSourceChannels: Array<{
-            assignment: {
-                id: number;
-                source_channel_id: number;
-                virtual_channel_id: number;
-                mode: 'all' | 'long_only' | 'selected_only';
-                created_at: number;
-                updated_at: number;
-            };
-            sourceChannel: {
-                id: number;
-                youtube_id: string;
-                title: string;
-                description?: string;
-                thumbnail_url?: string | null;
-                published_at?: number | null;
-                last_refreshed_at?: number | null;
-            } | null;
-            automaticVideos: Array<{
-                id: number;
-                youtube_id: string;
-                channel_id: number;
-                title: string;
-                description?: string;
-                published_at?: number | null;
-                duration_seconds?: number | null;
-                thumbnail_url?: string | null;
-                length_classification?: 'long' | 'short' | 'unknown' | null;
-            }>;
-            selectedOnlyVideos: Array<{
-                id: number;
-                youtube_id: string;
-                channel_id: number;
-                title: string;
-                description?: string;
-                published_at?: number | null;
-                duration_seconds?: number | null;
-                thumbnail_url?: string | null;
-                length_classification?: 'long' | 'short' | 'unknown' | null;
-                review_state: 'included' | 'ignored' | 'not_yet_reviewed';
-            }>;
-            selectedOnlyCounts: {
-                included: number;
-                ignored: number;
-                not_yet_reviewed: number;
-            } | null;
-            reviewStateFilter: 'all' | 'not_yet_reviewed';
-            regexFilter: string;
-            videoTypeFilter: 'all' | 'long' | 'short' | 'unknown';
-        }>;
-        availableSourceChannels: Array<{
-            id: number;
-            youtube_id: string;
-            title: string;
-            description?: string;
-            thumbnail_url?: string | null;
-            published_at?: number | null;
-            last_refreshed_at?: number | null;
-        }>;
+    import type { ActionData, PageData } from './$types';
+
+    export let data: PageData;
+    export let form: ActionData;
+
+    type TimerFormState = {
+        action?: string;
+        message?: string;
+        timerMode?: 'unlimited' | 'capped';
+        dailyTimerMaxInput?: string;
     };
+
+    let timerFormState: TimerFormState | null = null;
+    let timerFormMode: 'unlimited' | 'capped' = 'unlimited';
+    let timerFormInput = '';
+
+    $: timerFormState = form && typeof form === 'object' ? form as TimerFormState : null;
+    $: timerFormMode = timerFormState?.action === 'saveTimerSettings'
+        ? (timerFormState.timerMode ?? 'unlimited')
+        : (data.virtualChannel.dailyTimerMax == null ? 'unlimited' : 'capped');
+    $: timerFormInput = timerFormState?.action === 'saveTimerSettings'
+        ? (timerFormState.dailyTimerMaxInput ?? '')
+        : (data.virtualChannel.dailyTimerMax == null ? '' : String(data.virtualChannel.dailyTimerMax));
 
     const associatedSourceChannelIds = new Set(
         data.associatedSourceChannels.map((item) => item.assignment.source_channel_id)
@@ -201,6 +159,47 @@
                 <p class="muted">{availableForAssociation.length} imported source channel(s) ready to attach.</p>
             </div>
         </div>
+    </section>
+
+    <section class="panel stack">
+        <div>
+            <h2>Timer Settings</h2>
+            <p class="muted">Leave the channel uncapped or set a daily playback allowance in whole minutes.</p>
+        </div>
+
+        <form method="post" action="?/saveTimerSettings" class="fields">
+            <label>
+                Timer mode
+                <select name="timer_mode">
+                    <option value="unlimited" selected={timerFormMode === 'unlimited'}>Unlimited</option>
+                    <option value="capped" selected={timerFormMode === 'capped'}>Daily limit</option>
+                </select>
+            </label>
+
+            <label>
+                Daily minutes
+                <input
+                    type="number"
+                    name="daily_timer_max"
+                    min="1"
+                    step="1"
+                    value={timerFormInput}
+                    placeholder="Leave blank for unlimited"
+                />
+            </label>
+
+            {#if timerFormState?.action === 'saveTimerSettings' && timerFormState.message}
+                <p class="error-text">{timerFormState.message}</p>
+            {:else if data.virtualChannel.dailyTimerMax == null}
+                <p class="muted">This virtual channel is currently unlimited.</p>
+            {:else}
+                <p class="muted">Current daily limit: {data.virtualChannel.dailyTimerMax} minute(s).</p>
+            {/if}
+
+            <div class="inline-actions">
+                <button type="submit">Save Timer Settings</button>
+            </div>
+        </form>
     </section>
 
     <section class="panel stack">

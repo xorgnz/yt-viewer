@@ -38,11 +38,11 @@
   - [x] 3.2 - Prevent further playback selection for capped channels while leaving unlimited channels unchanged.
   - [x] 3.3 - Stop playback and return a deterministic capped-state result once the allowance is exhausted.
 
-- [ ] 4 - Add timer management to the virtual channel admin UI
-  - [ ] 4.1 - Add a dedicated timer section to the virtual channel edit page.
-  - [ ] 4.2 - Support uncapped mode and minute-based allowance entry.
-  - [ ] 4.3 - Validate invalid values and preserve user-entered state on form errors.
-  - [ ] 4.4 - Persist timer changes through the existing server action flow.
+- [x] 4 - Add timer management to the virtual channel admin UI
+  - [x] 4.1 - Add a dedicated timer section to the virtual channel edit page.
+  - [x] 4.2 - Support uncapped mode and minute-based allowance entry.
+  - [x] 4.3 - Validate invalid values and preserve user-entered state on form errors.
+  - [x] 4.4 - Persist timer changes through the existing server action flow.
 
 - [ ] 5 - Reflect capped state in the viewer channel list and video list
   - [ ] 5.1 - Update viewer virtual-channel loading so capped channels remain visible but are marked unavailable.
