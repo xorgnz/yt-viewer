@@ -71,6 +71,7 @@ Additional guidance:
 | `08-online-deploy` | `feature/08-online-deploy` | `completed` | `2026-04-17` | `2026-04-19` | New block of work for deployment online |
 | `09-stable-db-ids` | `feature/09-stable-db-ids` | `paused` | `2026-04-19` | | Refactor database relationships away from brittle generated serial row IDs |
 | `10-timers` | `feature/10-timers` | `active` | `2026-04-28` | | Add playback timers to cap how long channels can play within a defined period |
+| `11-viewer-structure-refactor` | `feature/11-viewer-structure-refactor` | `planned` | `2026-05-02` | | Refactor the viewer-layer structure into clearer class-based boundaries with stronger module delineation |
 | `xx-rec-modes` |  | `future` | `2026-04-28` | | Add recommendation modes to control how channel content is selected or prioritized |
 | `xx-shorts-mgmt` |  | `future` | `2026-04-28` | | Identify YouTube Shorts from duration and API data, allow manual overrides, and support Shorts-aware filtering |
 | `xx-channel-mgmt` |  | `future` | `2026-04-28` | | Add channel management UI for aggregate review, video list browsing, and channel tracking tools |
