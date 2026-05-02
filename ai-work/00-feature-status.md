@@ -1,8 +1,8 @@
 # Feature Status
 
-**Current Feature:** `09-stable-db-ids`
-**Current Branch:** `feature/09-stable-db-ids`
-**Last Updated:** `2026-04-19`
+**Current Feature:** `10-timers`
+**Current Branch:** `feature/10-timers`
+**Last Updated:** `2026-05-01`
 
 ## Shared Feature-State Contract
 
@@ -11,7 +11,7 @@ This document is the feature-state source of truth for workflow rules that depen
 ### Source of Truth
 
 - Use this file to determine the current active feature and expected branch.
-- Use this file to determine whether a feature is `planned`, `active`, `paused`, or `completed`.
+- Use this file to determine whether a feature is `planned`, `active`, `paused`, `future`, or `completed`.
 - When a workflow rule references the shared feature-state contract, this section is the contract it should follow.
 
 ### Allowed Status Values
@@ -19,6 +19,7 @@ This document is the feature-state source of truth for workflow rules that depen
 - `planned` - Feature tag exists, but the feature has not yet become active on a working branch.
 - `active` - The current feature being worked on and the branch that should be checked out.
 - `paused` - A previously active feature with resumable work that is not currently the active feature.
+- `future` - A backlog feature note that is intentionally not part of the current working queue.
 - `completed` - Feature work has been merged or otherwise closed and should be treated as read-only by default.
 
 ### Allowed Transitions
@@ -31,6 +32,7 @@ This document is the feature-state source of truth for workflow rules that depen
 Additional guidance:
 
 - `planned` may remain non-active while still being used for planning documents when a rule explicitly allows that.
+- `future` may remain non-active as backlog planning without affecting the current active feature.
 - `completed` features are read-only by default unless the user explicitly asks for an exception.
 - `no active feature` is allowed only before the first feature is activated, or after closing the active feature when no replacement feature is activated in the same flow.
 - `paused` is the status left behind when an unfinished active feature is replaced by a different active feature.
@@ -52,6 +54,7 @@ Additional guidance:
 - `planned` - Feature tag exists, but the feature has not yet become active on a working branch
 - `active` - The current feature being worked on and the branch that should be checked out
 - `paused` - A previously active feature with resumable work that is not currently the active feature
+- `future` - A backlog feature note that is intentionally not part of the current working queue
 - `completed` - Feature work has been merged or otherwise closed and should be treated as read-only by default
 
 ## Features
@@ -66,4 +69,9 @@ Additional guidance:
 | `06-video-select` | `feature/06-video-select` | `completed` | `2026-04-08` | `2026-04-10` | Multi-select video actions in the viewer using range and additive selection |
 | `07-refactoring` | `feature/07-refactoring` | `completed` | `2026-04-10` | `2026-04-17` | Repository refactoring work after the migration feature completion |
 | `08-online-deploy` | `feature/08-online-deploy` | `completed` | `2026-04-17` | `2026-04-19` | New block of work for deployment online |
-| `09-stable-db-ids` | `feature/09-stable-db-ids` | `active` | `2026-04-19` | | Refactor database relationships away from brittle generated serial row IDs |
+| `09-stable-db-ids` | `feature/09-stable-db-ids` | `paused` | `2026-04-19` | | Refactor database relationships away from brittle generated serial row IDs |
+| `10-timers` | `feature/10-timers` | `active` | `2026-04-28` | | Add playback timers to cap how long channels can play within a defined period |
+| `xx-rec-modes` |  | `future` | `2026-04-28` | | Add recommendation modes to control how channel content is selected or prioritized |
+| `xx-shorts-mgmt` |  | `future` | `2026-04-28` | | Identify YouTube Shorts from duration and API data, allow manual overrides, and support Shorts-aware filtering |
+| `xx-channel-mgmt` |  | `future` | `2026-04-28` | | Add channel management UI for aggregate review, video list browsing, and channel tracking tools |
+| `xx-video-channels` |  | `future` | `2026-04-30` | | Virtual channels built from an arbitrary list of videos rather than full source channels |
