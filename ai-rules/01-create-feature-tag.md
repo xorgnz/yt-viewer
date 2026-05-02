@@ -1,6 +1,6 @@
 ---
-version: 1.5.0
-timestamp: 2026-04-30 00:00
+version: 1.6.0
+timestamp: 2026-05-02 00:00
 ---
 # Rule: Creating a Feature Tag
 
@@ -10,9 +10,8 @@ This project supports only one active feature at a time.
 
 - The active feature must be tracked in `/ai-work/00-feature-status.md`
 - Other unfinished features may exist in a `paused` state, but they are not the current working feature
-- Future features may exist in a `future` state, but they are backlog notes rather than current working features
-- If another feature is already active, do not create a new working feature until the user explicitly switches or closes the current one using the feature-change workflow
-- Creating an explicitly requested future feature is allowed while another feature is active because future features are not current working features
+- Planned features may exist while another feature is active because `planned` means queued work rather than the current execution target
+- Future features may exist in a `future` state, but they are backlog notes rather than normal queued work
 
 ## Feature Tag Format
 
@@ -38,8 +37,6 @@ Examples:
 
 1. **Check Feature Status**
    - Read `/ai-work/00-feature-status.md` if it exists
-   - If it shows an active feature, do not create a new working feature without explicit user direction to change or close features first
-   - If the user explicitly asks to create a future feature, the active-feature restriction does not block recording that future feature
 
 2. **Determine the Next Sequence Number**
    - Review existing feature-tagged files in `/ai-work`
