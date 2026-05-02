@@ -22,38 +22,38 @@
 
 ## Tasks
 
-- [x] 1. Add virtual-channel timer persistence
-  - [x] 1.1 Review the existing virtual channel schema, entity, and DAO shape to identify the smallest storage change for an optional daily minute allowance.
-  - [x] 1.2 Add forward-only database migration support for the timer fields needed on virtual channels.
-  - [x] 1.3 Update the virtual channel entity and DAO read/write paths so timer settings persist cleanly and remain optional.
+- [x] 1 - Add virtual-channel timer persistence
+  - [x] 1.1 - Review the existing virtual channel schema, entity, and DAO shape to identify the smallest storage change for an optional daily minute allowance.
+  - [x] 1.2 - Add forward-only database migration support for the timer fields needed on virtual channels.
+  - [x] 1.3 - Update the virtual channel entity and DAO read/write paths so timer settings persist cleanly and remain optional.
 
-- [x] 2. Add deterministic timer-usage calculation from watch history
-  - [x] 2.1 Inspect the existing `watch_history` structure and session-update behavior to define the exact aggregate query needed for per-channel daily usage.
-  - [x] 2.2 Add DAO support to calculate consumed watch time for a virtual channel within a day window.
-  - [x] 2.3 Define one timezone source for day-boundary calculations in implementation, using existing app configuration if present and otherwise one shared fallback.
-  - [x] 2.4 Add focused tests for day-window aggregation, unlimited channels, and edge conditions around reset boundaries.
+- [x] 2 - Add deterministic timer-usage calculation from watch history
+  - [x] 2.1 - Inspect the existing `watch_history` structure and session-update behavior to define the exact aggregate query needed for per-channel daily usage.
+  - [x] 2.2 - Add DAO support to calculate consumed watch time for a virtual channel within a day window.
+  - [x] 2.3 - Define one timezone source for day-boundary calculations in implementation, using existing app configuration if present and otherwise one shared fallback.
+  - [x] 2.4 - Add focused tests for day-window aggregation, unlimited channels, and edge conditions around reset boundaries.
 
-- [x] 3. Enforce timer caps in viewer services
-  - [x] 3.1 Update viewer service logic to derive capped/unlimited state for a virtual channel from persisted timer settings and watch-history usage.
-  - [x] 3.2 Prevent further playback selection for capped channels while leaving unlimited channels unchanged.
-  - [x] 3.3 Stop playback and return a deterministic capped-state result once the allowance is exhausted.
+- [x] 3 - Enforce timer caps in viewer services
+  - [x] 3.1 - Update viewer service logic to derive capped/unlimited state for a virtual channel from persisted timer settings and watch-history usage.
+  - [x] 3.2 - Prevent further playback selection for capped channels while leaving unlimited channels unchanged.
+  - [x] 3.3 - Stop playback and return a deterministic capped-state result once the allowance is exhausted.
 
-- [ ] 4. Add timer management to the virtual channel admin UI
-  - [ ] 4.1 Add a dedicated timer section to the virtual channel edit page.
-  - [ ] 4.2 Support uncapped mode and minute-based allowance entry.
-  - [ ] 4.3 Validate invalid values and preserve user-entered state on form errors.
-  - [ ] 4.4 Persist timer changes through the existing server action flow.
+- [ ] 4 - Add timer management to the virtual channel admin UI
+  - [ ] 4.1 - Add a dedicated timer section to the virtual channel edit page.
+  - [ ] 4.2 - Support uncapped mode and minute-based allowance entry.
+  - [ ] 4.3 - Validate invalid values and preserve user-entered state on form errors.
+  - [ ] 4.4 - Persist timer changes through the existing server action flow.
 
-- [ ] 5. Reflect capped state in the viewer channel list and video list
-  - [ ] 5.1 Update viewer virtual-channel loading so capped channels remain visible but are marked unavailable.
-  - [ ] 5.2 Grey out capped channels in the channel list and block selection interactions.
-  - [ ] 5.3 Keep the capped channel’s video list visible while rendering videos as disabled and non-clickable.
+- [ ] 5 - Reflect capped state in the viewer channel list and video list
+  - [ ] 5.1 - Update viewer virtual-channel loading so capped channels remain visible but are marked unavailable.
+  - [ ] 5.2 - Grey out capped channels in the channel list and block selection interactions.
+  - [ ] 5.3 - Keep the capped channel's video list visible while rendering videos as disabled and non-clickable.
 
-- [ ] 6. Add playback-limit messaging in the player flow
-  - [ ] 6.1 Add a player-visible status message for timer exhaustion.
-  - [ ] 6.2 Make the watch page stop or refuse playback cleanly when the channel is capped.
+- [ ] 6 - Add playback-limit messaging in the player flow
+  - [ ] 6.1 - Add a player-visible status message for timer exhaustion.
+  - [ ] 6.2 - Make the watch page stop or refuse playback cleanly when the channel is capped.
 
-- [ ] 7. Validate the feature with targeted automated checks
-  - [ ] 7.1 Add or update tests for migration and DAO behavior around optional timer settings.
-  - [ ] 7.2 Add service-level tests for capped-state calculation and enforcement from watch-history aggregates.
-  - [ ] 7.3 Add focused route or UI coverage for disabled channel/video presentation where the current test stack supports it.
+- [ ] 7 - Validate the feature with targeted automated checks
+  - [ ] 7.1 - Add or update tests for migration and DAO behavior around optional timer settings.
+  - [ ] 7.2 - Add service-level tests for capped-state calculation and enforcement from watch-history aggregates.
+  - [ ] 7.3 - Add focused route or UI coverage for disabled channel/video presentation where the current test stack supports it.
