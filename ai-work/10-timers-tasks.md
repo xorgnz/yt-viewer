@@ -33,10 +33,10 @@
   - [x] 2.3 Define one timezone source for day-boundary calculations in implementation, using existing app configuration if present and otherwise one shared fallback.
   - [x] 2.4 Add focused tests for day-window aggregation, unlimited channels, and edge conditions around reset boundaries.
 
-- [ ] 3. Enforce timer caps in viewer services
-  - [ ] 3.1 Update viewer service logic to derive capped/unlimited state for a virtual channel from persisted timer settings and watch-history usage.
-  - [ ] 3.2 Prevent further playback selection for capped channels while leaving unlimited channels unchanged.
-  - [ ] 3.3 Stop playback and return a deterministic capped-state result once the allowance is exhausted.
+- [x] 3. Enforce timer caps in viewer services
+  - [x] 3.1 Update viewer service logic to derive capped/unlimited state for a virtual channel from persisted timer settings and watch-history usage.
+  - [x] 3.2 Prevent further playback selection for capped channels while leaving unlimited channels unchanged.
+  - [x] 3.3 Stop playback and return a deterministic capped-state result once the allowance is exhausted.
 
 - [ ] 4. Add timer management to the virtual channel admin UI
   - [ ] 4.1 Add a dedicated timer section to the virtual channel edit page.

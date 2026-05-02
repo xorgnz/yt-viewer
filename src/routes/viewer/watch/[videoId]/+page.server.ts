@@ -14,9 +14,9 @@ export const load = async ({ params, cookies, url }: { params: { videoId: string
         const serviceContext = await ViewerServiceContext.resolve(db, cookies);
         const filters = ViewerQueryParser.parse(url, serviceContext.profileContext.activeProfileKey);
         const result = await serviceContext.watchService.load(videoId, filters);
-        if (!result) throw error(404, 'Video not found');
+        if (!result.ok) throw error(result.status, result.message);
 
-        return result;
+        return result.data;
     });
 };
 
@@ -47,6 +47,7 @@ export const actions = {
         if (!videoYoutubeId) return fail(400, { message: 'Missing videoId' });
 
         const form = await ServerActionForm.fromRequest(request);
+        const groupId = form.getPositiveInteger('groupId');
         const watchSeconds = form.getNumber('watchSeconds', 0);
         if (!Number.isFinite(watchSeconds) || watchSeconds <= 5) {
             return fail(400, { message: 'Insufficient watch time for history session' });
@@ -56,10 +57,24 @@ export const actions = {
             const serviceContext = await ViewerServiceContext.resolve(db, cookies);
             const result = await serviceContext.watchService.createHistorySession(
                 videoYoutubeId,
-                watchSeconds
+                watchSeconds,
+                groupId
             );
 
             if (!result.ok) {
+                if (result.code === 'timer_capped') {
+                    return new Response(JSON.stringify({
+                        message: result.message,
+                        code: result.code
+                    }), {
+                        status: result.status,
+                        headers: {
+                            'content-type': 'application/json',
+                            'x-viewer-timer-state': 'capped'
+                        }
+                    });
+                }
+
                 return fail(result.status, { message: result.message });
             }
 
@@ -74,6 +89,7 @@ export const actions = {
         if (!videoYoutubeId) return fail(400, { message: 'Missing videoId' });
 
         const form = await ServerActionForm.fromRequest(request);
+        const groupId = form.getPositiveInteger('groupId');
         const watchSeconds = form.getNumber('watchSeconds', 0);
         if (!Number.isFinite(watchSeconds) || watchSeconds < 0) {
             return fail(400, { message: 'Invalid watch time' });
@@ -83,10 +99,24 @@ export const actions = {
             const serviceContext = await ViewerServiceContext.resolve(db, cookies);
             const result = await serviceContext.watchService.updateHistoryProgress(
                 videoYoutubeId,
-                watchSeconds
+                watchSeconds,
+                groupId
             );
 
             if (!result.ok) {
+                if (result.code === 'timer_capped') {
+                    return new Response(JSON.stringify({
+                        message: result.message,
+                        code: result.code
+                    }), {
+                        status: result.status,
+                        headers: {
+                            'content-type': 'application/json',
+                            'x-viewer-timer-state': 'capped'
+                        }
+                    });
+                }
+
                 return fail(result.status, { message: result.message });
             }
 

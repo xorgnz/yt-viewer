@@ -6,6 +6,7 @@ import {
 } from '$lib/daos/readers/ViewerVideoReadRepository';
 import type { ViewerQueryFilters } from '$lib/server/viewer/ViewerQueryParser';
 import { ViewerRecommendationService } from '$lib/server/viewer/ViewerRecommendationService';
+import type { ViewerVirtualChannelService } from '$lib/server/viewer/ViewerVirtualChannelService';
 import type { ServerProfileContext } from '$lib/server/ServerProfileContext';
 
 const HISTORY_SESSION_GAP_MS = 5 * 60 * 1000;
@@ -26,6 +27,20 @@ export type ViewerWatchLoadModel = {
 
 export type ViewerWatchResult =
     | { ok: true }
+    | {
+        ok: false;
+        status: 404 | 409;
+        message: string;
+        code:
+            | 'video_not_found'
+            | 'virtual_channel_not_found'
+            | 'timer_capped'
+            | 'history_session_not_found'
+            | 'history_session_inactive';
+    };
+
+export type ViewerWatchLoadResult =
+    | { ok: true; data: ViewerWatchLoadModel }
     | { ok: false; status: 404 | 409; message: string };
 
 export type ViewerWatchFlagResult =
@@ -39,13 +54,15 @@ export class ViewerWatchService
     private readonly historyDAO: HistoryDAO;
     private readonly profileContext: ServerProfileContext;
     private readonly recommendationService: ViewerRecommendationService;
+    private readonly virtualChannelService: Pick<ViewerVirtualChannelService, 'getGroupById'>;
 
     constructor(
         viewerVideoReadRepository: ViewerVideoReadRepository,
         flagsDAO: FlagsDAO,
         historyDAO: HistoryDAO,
         profileContext: ServerProfileContext,
-        recommendationService: ViewerRecommendationService
+        recommendationService: ViewerRecommendationService,
+        virtualChannelService: Pick<ViewerVirtualChannelService, 'getGroupById'>
     )
     {
         this.viewerVideoReadRepository = viewerVideoReadRepository;
@@ -53,13 +70,26 @@ export class ViewerWatchService
         this.historyDAO = historyDAO;
         this.profileContext = profileContext;
         this.recommendationService = recommendationService;
+        this.virtualChannelService = virtualChannelService;
     }
 
-    async load(videoYoutubeId: string, filters: ViewerQueryFilters): Promise<ViewerWatchLoadModel | null>
+    async load(videoYoutubeId: string, filters: ViewerQueryFilters): Promise<ViewerWatchLoadResult>
     {
+        if (filters.groupId != null) {
+            const group = await this.virtualChannelService.getGroupById(filters.groupId);
+
+            if (!group) {
+                return { ok: false, status: 404, message: 'Virtual channel not found' };
+            }
+
+            if (group.timerState === 'capped') {
+                return { ok: false, status: 409, message: 'Virtual channel timer limit reached' };
+            }
+        }
+
         const video = await this.loadVideo(videoYoutubeId);
         if (!video) {
-            return null;
+            return { ok: false, status: 404, message: 'Video not found' };
         }
 
         const adjacent = await this.viewerVideoReadRepository.findAdjacentYoutubeIds(
@@ -78,23 +108,36 @@ export class ViewerWatchService
         );
 
         return {
-            video,
-            recommendations: await this.recommendationService.load(video, filters.groupId),
-            previousVideoYoutubeId: adjacent.previousYoutubeId,
-            nextVideoYoutubeId: adjacent.nextYoutubeId,
-            currentGroupId: filters.groupId,
-            navigationFilters: filters,
-            profileId: this.profileContext.activeProfileId,
-            profileKey: this.profileContext.activeProfileKey,
-            profileName: this.profileContext.activeProfileName
+            ok: true,
+            data: {
+                video,
+                recommendations: await this.recommendationService.load(video, filters.groupId),
+                previousVideoYoutubeId: adjacent.previousYoutubeId,
+                nextVideoYoutubeId: adjacent.nextYoutubeId,
+                currentGroupId: filters.groupId,
+                navigationFilters: filters,
+                profileId: this.profileContext.activeProfileId,
+                profileKey: this.profileContext.activeProfileKey,
+                profileName: this.profileContext.activeProfileName
+            }
         };
     }
 
-    async createHistorySession(videoYoutubeId: string, watchSeconds: number, now = Date.now()): Promise<ViewerWatchResult>
+    async createHistorySession(
+        videoYoutubeId: string,
+        watchSeconds: number,
+        groupId: number | null,
+        now = Date.now()
+    ): Promise<ViewerWatchResult>
     {
+        const groupCheck = await this.ensureGroupAllowsPlayback(groupId);
+        if (!groupCheck.ok) {
+            return groupCheck;
+        }
+
         const video = await this.loadVideo(videoYoutubeId);
         if (!video) {
-            return { ok: false, status: 404, message: 'Video not found' };
+            return { ok: false, status: 404, message: 'Video not found', code: 'video_not_found' };
         }
 
         const latestSession = await this.historyDAO.findMostRecentSession(video.id, this.profileContext.activeProfileId);
@@ -118,29 +161,59 @@ export class ViewerWatchService
             });
         }
 
+        const postWriteGroupCheck = await this.ensureGroupAllowsPlayback(groupId);
+        if (!postWriteGroupCheck.ok) {
+            return postWriteGroupCheck;
+        }
+
         return { ok: true };
     }
 
-    async updateHistoryProgress(videoYoutubeId: string, watchSeconds: number, now = Date.now()): Promise<ViewerWatchResult>
+    async updateHistoryProgress(
+        videoYoutubeId: string,
+        watchSeconds: number,
+        groupId: number | null,
+        now = Date.now()
+    ): Promise<ViewerWatchResult>
     {
+        const groupCheck = await this.ensureGroupAllowsPlayback(groupId);
+        if (!groupCheck.ok) {
+            return groupCheck;
+        }
+
         const video = await this.loadVideo(videoYoutubeId);
         if (!video) {
-            return { ok: false, status: 404, message: 'Video not found' };
+            return { ok: false, status: 404, message: 'Video not found', code: 'video_not_found' };
         }
 
         const session = await this.historyDAO.findMostRecentSession(video.id, this.profileContext.activeProfileId);
         if (!session) {
-            return { ok: false, status: 404, message: 'History session not found' };
+            return {
+                ok: false,
+                status: 404,
+                message: 'History session not found',
+                code: 'history_session_not_found'
+            };
         }
 
         if ((now - session.last_updated_at) > HISTORY_SESSION_GAP_MS) {
-            return { ok: false, status: 409, message: 'History session is no longer active' };
+            return {
+                ok: false,
+                status: 409,
+                message: 'History session is no longer active',
+                code: 'history_session_inactive'
+            };
         }
 
         await this.historyDAO.updateSessionProgress(session.id, {
             last_updated_at: now,
             time_watched_seconds: Math.floor(watchSeconds)
         });
+
+        const postWriteGroupCheck = await this.ensureGroupAllowsPlayback(groupId);
+        if (!postWriteGroupCheck.ok) {
+            return postWriteGroupCheck;
+        }
 
         return { ok: true };
     }
@@ -165,6 +238,34 @@ export class ViewerWatchService
     private async loadVideo(videoYoutubeId: string): Promise<ViewerWatchVideo | null>
     {
         return await this.viewerVideoReadRepository.getByYoutubeId(videoYoutubeId, this.profileContext.activeProfileId) || null;
+    }
+
+    private async ensureGroupAllowsPlayback(groupId: number | null): Promise<ViewerWatchResult>
+    {
+        if (groupId == null) {
+            return { ok: true };
+        }
+
+        const group = await this.virtualChannelService.getGroupById(groupId);
+        if (!group) {
+            return {
+                ok: false,
+                status: 404,
+                message: 'Virtual channel not found',
+                code: 'virtual_channel_not_found'
+            };
+        }
+
+        if (group.timerState === 'capped') {
+            return {
+                ok: false,
+                status: 409,
+                message: 'Virtual channel timer limit reached',
+                code: 'timer_capped'
+            };
+        }
+
+        return { ok: true };
     }
 }
 // apply-patch-anchor - do not delete

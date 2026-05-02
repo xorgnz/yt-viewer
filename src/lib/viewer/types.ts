@@ -47,7 +47,15 @@ export type ViewerChannel = {
 export type ViewerGroup = {
     id: number;
     name: string;
+    dailyTimerMax: number | null;
+    timerState: ViewerGroupTimerState;
+    timerUsageSeconds: number;
+    timerRemainingSeconds: number | null;
+    timerWindowStartMs: number;
+    timerWindowEndMs: number;
 };
+
+export type ViewerGroupTimerState = 'unlimited' | 'available' | 'capped';
 
 export type ViewerPageData = {
     filters: ViewerFilters;

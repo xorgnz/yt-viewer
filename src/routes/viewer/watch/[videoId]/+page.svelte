@@ -47,6 +47,7 @@
     let lastPersistedWatchSeconds = 0;
     let lastHistoryActivityAt: number | null = null;
     let watchMutationPending = false;
+    let timerPlaybackBlocked = false;
     let activeVideoYoutubeId = data.video.youtube_id;
     let recommendations = data.recommendations;
     const videoMutationService = new VideoMutationService({
@@ -120,6 +121,7 @@
         historySessionCreated = false;
         lastPersistedWatchSeconds = 0;
         lastHistoryActivityAt = null;
+        timerPlaybackBlocked = false;
     }
 
     function startPolling()
@@ -196,6 +198,13 @@
 
     function setPlaybackActive(active: boolean)
     {
+        if (timerPlaybackBlocked)
+        {
+            isActivelyPlaying = false;
+            lastPlaybackTickAt = null;
+            return;
+        }
+
         if (active && lastHistoryActivityAt != null && (Date.now() - lastHistoryActivityAt) > HISTORY_SESSION_GAP_MS)
         {
             elapsedWatchSeconds = 0;
@@ -208,10 +217,34 @@
         lastPlaybackTickAt = Date.now();
     }
 
+    function handleTimerCapReached()
+    {
+        timerPlaybackBlocked = true;
+        historySessionCreated = false;
+        isActivelyPlaying = false;
+        lastHistoryActivityAt = null;
+        stopPolling();
+
+        try
+        {
+            if (player && typeof player.pauseVideo === 'function')
+            {
+                player.pauseVideo();
+            }
+        }
+        catch
+        {
+            // Ignore transient player API failures while stopping capped playback.
+        }
+    }
+
     async function createHistorySession()
     {
         const formData = new FormData();
         formData.set('watchSeconds', String(Math.floor(elapsedWatchSeconds)));
+        if (data.currentGroupId != null) {
+            formData.set('groupId', String(data.currentGroupId));
+        }
 
         try
         {
@@ -222,6 +255,11 @@
             if (!response.ok)
             {
                 historySessionCreated = false;
+
+                if (response.headers.get('x-viewer-timer-state') === 'capped') {
+                    handleTimerCapReached();
+                }
+
                 return;
             }
             lastPersistedWatchSeconds = Math.floor(elapsedWatchSeconds);
@@ -237,6 +275,9 @@
     {
         const formData = new FormData();
         formData.set('watchSeconds', String(Math.floor(elapsedWatchSeconds)));
+        if (data.currentGroupId != null) {
+            formData.set('groupId', String(data.currentGroupId));
+        }
 
         try
         {
@@ -248,6 +289,10 @@
             {
                 lastPersistedWatchSeconds = Math.floor(elapsedWatchSeconds);
                 lastHistoryActivityAt = Date.now();
+            }
+            else if (response.headers.get('x-viewer-timer-state') === 'capped')
+            {
+                handleTimerCapReached();
             }
             else if (response.status === 409)
             {
@@ -383,6 +428,12 @@
 
                             if (e.data === YT.PlayerState.PLAYING)
                             {
+                                if (timerPlaybackBlocked)
+                                {
+                                    handleTimerCapReached();
+                                    return;
+                                }
+
                                 setPlaybackActive(true);
                                 startPolling();
                                 return;
