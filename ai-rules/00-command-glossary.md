@@ -1,6 +1,6 @@
 ---
-version: 1.1.0
-timestamp: 2026-04-17 09:20
+version: 1.2.0
+timestamp: 2026-04-30 00:00
 ---
 # Rule Command Glossary
 
@@ -36,6 +36,7 @@ timestamp: 2026-04-17 09:20
   - rule 4 before documenting a new shared tech-stack decision
   - rule 6 before starting task execution when explicit task approval is not already present
   - rule 8 before creating a commit, unless the same command includes `approve` or `approved`
+  - rule 11 before writing or updating `/ai-work/00-project-overview.md`
 - Rule 7 command selection is a choice prompt, not an approval gate.
 - Do not ask additional approval prompts for normal reads/edits inside the agent's standard workspace permissions.
 - Environment/tool permission prompts are separate from workflow approval gates and should be requested only when a command cannot run under normal agent permissions.

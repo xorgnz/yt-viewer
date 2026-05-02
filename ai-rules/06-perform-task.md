@@ -1,6 +1,6 @@
 ---
-version: 1.3.0
-timestamp: 2026-04-19 00:00
+version: 1.5.0
+timestamp: 2026-04-30 00:00
 ---
 # Rule: Performing a Task for the Active Feature
 
@@ -54,6 +54,9 @@ Use the active feature from `/ai-work/00-feature-status.md` as the default and e
 - Do not silently move to the next task
 - Do not ask extra approval prompts beyond task-start approval; routine in-task edits under normal workspace permissions do not require additional approval requests
 - Before implementation, read `/ai-work/00-master-techstack.md` when it exists and apply any relevant shared technology decisions alongside the PRD and task list
+- Before implementation, if `/ai-work/00-architecture.md` exists, read it once as part of the initial task context
+- After that initial read, do not keep re-reading `/ai-work/00-architecture.md` during normal task execution unless the user explicitly asks for that or the flow of work clearly requires revisiting the document
+- If implementation materially changes architecture, clarifies a structural decision, or reveals that the architecture record is stale, update `/ai-work/00-architecture.md` as part of the task work
 
 ## Progress Tracking
 
@@ -67,7 +70,7 @@ As each task or sub-task is completed:
 ## General Working Principles
 
 1. Prefer editing existing files over creating new ones unless creation is required
-2. Use the PRD as the implementation-facing feature document and the master tech stack as the shared technology baseline when it exists
+2. Use the PRD as the implementation-facing feature document, the master tech stack as the shared technology baseline when it exists, and the architecture document as the shared structural baseline when it exists
 3. Run validation as appropriate using the testing rule
 4. Ask clarifying questions if task requirements are ambiguous
 5. Do not expand scope without approval

@@ -1,4 +1,5 @@
-# AGENTS.md
+﻿# AGENTS.md
+
 
 ## Project Workflow
 
@@ -8,6 +9,7 @@
 - If the user's intent is ambiguous, ask for confirmation before doing the work.
 - When the user asks for a plan, proposal, review, explanation, or recommendation, stop at that output unless the user separately instructs you to execute it.
 If a request is ambiguous, ask one concise clarifying question before proceeding.
+
 - Work step-by-step and avoid combining unrelated changes in a single pass.
 - Prefer repo-aware tools and minimal, traceable edits over broad rewrites.
 - You may refer to repository files directly with `@` file references when the UI supports them.
@@ -17,6 +19,10 @@ If a request is ambiguous, ask one concise clarifying question before proceeding
 - After recognizing a numbered rule invocation, parse the remaining tokens against that rule's documented arguments before applying generic feature, task, or free-form inference.
 - If a token matches both a reserved rule argument and a possible feature alias, task label, or free-form description, prefer the reserved rule argument unless the user explicitly identifies the other target, for example with `feature <tag>`.
 - Shortcut workflow phrases documented in `ai-rules/` may also be used directly. For example, `Run the 6-7-8 subtask flow for task 3` refers to the workflow defined in `@ai-rules/00-subtask-flow-6-7-8.md`.
+- A project may have `ai-work/00-project-overview.md` as an overview document. If this document exists, consult it at the beginning of the session and whenever the user directs that behavior.
+- A project may have `ai-work/00-architecture.md` as an architecture record. If this document exists, consult it at the beginning of the session and whenever the user directs that behavior.
+- Do not automatically consult `ai-work/00-project-overview.md` later in an already-started session merely because you are consulting guidelines again.
+- Do not automatically consult `ai-work/00-architecture.md` later in an already-started session merely because you are consulting guidelines again.
 
 ## Approval Style
 
@@ -159,3 +165,4 @@ Do only what the user explicitly asks. Do not propose follow-on work, suggest ne
 ### Validation
 
 - When practical, run the repository's existing style or check command after CSS edits.
+

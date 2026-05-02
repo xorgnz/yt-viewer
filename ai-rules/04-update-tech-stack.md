@@ -1,6 +1,6 @@
 ---
-version: 1.3.0
-timestamp: 2026-04-19 00:00
+version: 1.4.1
+timestamp: 2026-04-30 00:00
 ---
 # Rule: Technology Stack Selection and Documentation
 
@@ -19,7 +19,9 @@ timestamp: 2026-04-19 00:00
 6. Do not bring future features into tech-stack planning for other features unless the user explicitly names the future feature as relevant
 7. Review the selected feature PRD
 8. If `/ai-work/00-master-techstack.md` exists, treat it as the application-wide technology source of truth and compare needs against it
-9. Identify only the technology decision points that actually matter
-10. Present 2-3 viable options with a recommendation where a decision is needed
-11. Wait for user confirmation before documenting any new shared decision in `/ai-work/00-master-techstack.md`
-12. Update `/ai-work/00-master-techstack.md` only when the feature introduces a new shared technology or architecture choice
+9. If `/ai-work/00-architecture.md` exists, read it and treat it as the current architectural vision and structural decision record
+10. Identify only the technology decision points that actually matter
+11. Present 2-3 viable options with a recommendation where a decision is needed
+12. Wait for user confirmation before documenting any new shared decision in `/ai-work/00-master-techstack.md`
+13. Update `/ai-work/00-master-techstack.md` only when the feature introduces a new shared technology choice
+14. When an approved tech-stack decision also affects architecture, update `/ai-work/00-architecture.md` so the architecture record reflects that decision and its structural implications

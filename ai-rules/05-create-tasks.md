@@ -1,6 +1,6 @@
 ---
-version: 1.5.0
-timestamp: 2026-04-19 00:00
+version: 1.7.0
+timestamp: 2026-04-30 00:00
 ---
 # Rule: Generating a Task List from User Requirements
 
@@ -29,9 +29,11 @@ timestamp: 2026-04-19 00:00
 7. Do not bring future features into task planning for other features unless the user explicitly names the future feature as relevant
 8. Analyze the PRD and master tech stack
    - Treat the PRD as the implementation-facing boundary and requirements document
+   - If `/ai-work/00-architecture.md` exists, read it and use it to shape task boundaries, sequencing, and integration expectations
 9. Generate the task list in one pass, using parent tasks and sub-tasks only where they improve execution clarity
 10. Identify relevant files and tests when that context will materially help implementation
-11. Save the completed task list to `/ai-work/{feature-tag}-tasks.md`
+11. Include architecture-related tasks when the feature requires structural work, boundary changes, or updates to the architectural record
+12. Save the completed task list to `/ai-work/{feature-tag}-tasks.md`
 
 ## Output Format
 

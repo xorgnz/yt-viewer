@@ -1,5 +1,5 @@
 ---
-version: 1.8.0
+version: 1.9.0
 timestamp: 2026-04-19 00:00
 ---
 # Rule: Switch, Activate, Pause, Close, or Archive a Feature
@@ -31,7 +31,7 @@ This rule does **not** independently create new features.
 - Feature creation belongs to rule `01-create-feature-tag.md`
 - This rule handles feature-state changes: `switch`, `activate`, `promote future`, `close`, and `archive`
 - Archiving is a state change that also moves the archived feature's planning documents
-- Future features use `xx-` tags and represent work that may be pursued eventually but is not ready for normal planning or execution
+- Future features use `fNN-` tags and represent work that may be pursued eventually but is not ready for normal planning or execution
 - Do not offer standalone `pause` as a primary workflow action; use `switch` to leave a feature paused, or `close` to end active work without selecting a replacement
 - If the user says `create and activate`, treat that as a convenience flow:
   1. invoke rule 1 to create the feature tag and feature entry
@@ -40,7 +40,7 @@ This rule does **not** independently create new features.
 ## Core Rules
 
 1. Only one feature may be `active` at a time
-2. `future` means tagged as `xx-{identifier}`, optional to pursue, and not ready for normal planning or execution
+2. `future` means tagged as `fNN-{identifier}`, optional to pursue, and not ready for normal planning or execution
 3. `paused` means previously active, unfinished, and resumable
 4. `planned` means defined but not yet started as the active working feature
 5. Completed and archived features are read-only by default
@@ -74,9 +74,9 @@ Use this only when the user explicitly asks to promote a future feature into nor
 
 1. Read `/ai-work/00-feature-status.md`
 2. Confirm the feature exists and is marked `future`
-3. Confirm the feature tag uses the `xx-` prefix
+3. Confirm the feature tag uses the `fNN-` future-feature format
 4. Determine the next numeric feature sequence using normal feature tags only
-5. Identify existing `/ai-work/xx-{identifier}-*.md` planning documents
+5. Identify existing `/ai-work/fNN-{identifier}-*.md` planning documents for that future feature
 6. Determine the destination filenames using the new numeric feature tag
 7. If any destination file already exists, stop before changing status or moving files and ask the user how to resolve the conflict
 8. Rename the identified planning documents to use the new numeric feature tag
@@ -165,13 +165,13 @@ AI: "Active feature is now `03-user-auth`."
 ```
 
 ```text
-User: "Promote future feature xx-analytics-ideas to planned"
+User: "Promote future feature f01-analytics-ideas to planned"
 
 AI: [Reads 00-feature-status.md]
 AI: [Determines the next numeric feature tag]
-AI: [Renames xx-analytics-ideas planning documents to the numeric feature tag]
+AI: [Renames f01-analytics-ideas planning documents to the numeric feature tag]
 AI: [Marks the feature planned under the numeric feature tag]
-AI: "Feature `xx-analytics-ideas` is now planned as `04-analytics-ideas`."
+AI: "Feature `f01-analytics-ideas` is now planned as `04-analytics-ideas`."
 ```
 
 ```text
