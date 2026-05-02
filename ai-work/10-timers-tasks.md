@@ -27,11 +27,11 @@
   - [x] 1.2 Add forward-only database migration support for the timer fields needed on virtual channels.
   - [x] 1.3 Update the virtual channel entity and DAO read/write paths so timer settings persist cleanly and remain optional.
 
-- [ ] 2. Add deterministic timer-usage calculation from watch history
-  - [ ] 2.1 Inspect the existing `watch_history` structure and session-update behavior to define the exact aggregate query needed for per-channel daily usage.
-  - [ ] 2.2 Add DAO support to calculate consumed watch time for a virtual channel within a day window.
-  - [ ] 2.3 Define one timezone source for day-boundary calculations in implementation, using existing app configuration if present and otherwise one shared fallback.
-  - [ ] 2.4 Add focused tests for day-window aggregation, unlimited channels, and edge conditions around reset boundaries.
+- [x] 2. Add deterministic timer-usage calculation from watch history
+  - [x] 2.1 Inspect the existing `watch_history` structure and session-update behavior to define the exact aggregate query needed for per-channel daily usage.
+  - [x] 2.2 Add DAO support to calculate consumed watch time for a virtual channel within a day window.
+  - [x] 2.3 Define one timezone source for day-boundary calculations in implementation, using existing app configuration if present and otherwise one shared fallback.
+  - [x] 2.4 Add focused tests for day-window aggregation, unlimited channels, and edge conditions around reset boundaries.
 
 - [ ] 3. Enforce timer caps in viewer services
   - [ ] 3.1 Update viewer service logic to derive capped/unlimited state for a virtual channel from persisted timer settings and watch-history usage.
