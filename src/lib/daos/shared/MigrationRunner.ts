@@ -85,11 +85,17 @@ function validateRecordedState(
     }
 
     if (successfulMigrations.length === 0) {
+        if (currentVersion === targetVersion) {
+            return;
+        }
+
+        if (currentVersion === firstRegisteredVersion) {
+            return;
+        }
+
         if (currentVersion !== targetVersion) {
             throw new Error('Migration metadata is empty for a database that is not already at the latest supported version.');
         }
-
-        return;
     }
 
     const highestSuccessfulVersion = successfulMigrations.reduce(
