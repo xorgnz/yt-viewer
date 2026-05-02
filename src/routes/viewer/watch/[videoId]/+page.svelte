@@ -29,6 +29,7 @@
         previousVideoYoutubeId: string | null;
         nextVideoYoutubeId: string | null;
         currentGroupId: number | null;
+        playbackBlockedMessage: string | null;
     };
 
     let watched = !!data.video.watched;
@@ -48,6 +49,7 @@
     let lastHistoryActivityAt: number | null = null;
     let watchMutationPending = false;
     let timerPlaybackBlocked = false;
+    let timerStatusMessage: string | null = data.playbackBlockedMessage;
     let activeVideoYoutubeId = data.video.youtube_id;
     let recommendations = data.recommendations;
     const videoMutationService = new VideoMutationService({
@@ -57,11 +59,13 @@
 
     $: showWatched = watched || (thresholdReached && !suppressThresholdWatch);
     $: recommendations = data.recommendations;
+    $: timerStatusMessage = data.playbackBlockedMessage;
+    $: timerPlaybackBlocked = !!timerStatusMessage;
 
     $: if (data.video.youtube_id !== activeVideoYoutubeId)
     {
         activeVideoYoutubeId = data.video.youtube_id;
-        resetForVideoChange(!!data.video.watched);
+        resetForVideoChange(!!data.video.watched, data.playbackBlockedMessage);
 
         if (player && typeof player.cueVideoById === 'function')
         {
@@ -105,7 +109,7 @@
         return viewerPageState.buildViewerWatchHref(data.navigationFilters, videoYoutubeId);
     }
 
-    function resetForVideoChange(serverWatched: boolean)
+    function resetForVideoChange(serverWatched: boolean, playbackBlockedMessage: string | null)
     {
         stopPolling();
         watched = serverWatched;
@@ -121,7 +125,8 @@
         historySessionCreated = false;
         lastPersistedWatchSeconds = 0;
         lastHistoryActivityAt = null;
-        timerPlaybackBlocked = false;
+        timerStatusMessage = playbackBlockedMessage;
+        timerPlaybackBlocked = !!playbackBlockedMessage;
     }
 
     function startPolling()
@@ -217,8 +222,9 @@
         lastPlaybackTickAt = Date.now();
     }
 
-    function handleTimerCapReached()
+    function handleTimerCapReached(message = 'Daily timer limit reached for this virtual channel.')
     {
+        timerStatusMessage = message;
         timerPlaybackBlocked = true;
         historySessionCreated = false;
         isActivelyPlaying = false;
@@ -407,6 +413,13 @@
 
     onMount(() =>
     {
+        if (timerPlaybackBlocked)
+        {
+            return () => {
+                stopPolling();
+            };
+        }
+
         function createPlayer()
         {
             if ((window as any).YT && (window as any).YT.Player)
@@ -516,6 +529,12 @@
                 </a>
             {:else}
                 <span id="a_player_nav_prev" aria-hidden="true"></span>
+            {/if}
+
+            {#if timerStatusMessage}
+                <div id="div_player_status" aria-live="polite">
+                    <p>{timerStatusMessage}</p>
+                </div>
             {/if}
 
             <div id="player" title={data.video.title}></div>
@@ -665,6 +684,7 @@
         --managed-width: min(var(--free-width), var(--constrained-width));
         flex: 1;
         display: flex;
+        position: relative;
         align-items: stretch;
         justify-content: center;
     }
@@ -693,6 +713,30 @@
         border: 2px solid #909090;
         border-radius: var(--radius);
         box-shadow: var(--shadow-md);
+    }
+
+    #div_player_status {
+        width: var(--managed-width);
+        max-height: var(--player-flex-wrapper-height);
+        display: flex;
+        position: absolute;
+        z-index: 3;
+        align-items: center;
+        justify-content: center;
+        border: 2px solid rgba(229, 115, 115, 0.92);
+        border-radius: var(--radius);
+        padding: 1.5rem;
+        box-sizing: border-box;
+        background-color: rgba(24, 24, 24, 0.92);
+        color: var(--text);
+        text-align: center;
+    }
+
+    #div_player_status p {
+        margin: 0;
+        font-size: 1rem;
+        font-weight: 600;
+        line-height: 1.4;
     }
 
     #svg_player_nav_prev,

@@ -14,7 +14,9 @@ export const load = async ({ params, cookies, url }: { params: { videoId: string
         const serviceContext = await ViewerServiceContext.resolve(db, cookies);
         const filters = ViewerQueryParser.parse(url, serviceContext.profileContext.activeProfileKey);
         const result = await serviceContext.watchService.load(videoId, filters);
-        if (!result.ok) throw error(result.status, result.message);
+        if (!result.ok) {
+            throw error(result.status, result.message);
+        }
 
         return result.data;
     });

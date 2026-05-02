@@ -19,6 +19,7 @@ export type ViewerWatchLoadModel = {
     previousVideoYoutubeId: string | null;
     nextVideoYoutubeId: string | null;
     currentGroupId: number | null;
+    playbackBlockedMessage: string | null;
     navigationFilters: ViewerQueryFilters;
     profileId: number;
     profileKey: string;
@@ -75,6 +76,8 @@ export class ViewerWatchService
 
     async load(videoYoutubeId: string, filters: ViewerQueryFilters): Promise<ViewerWatchLoadResult>
     {
+        let playbackBlockedMessage: string | null = null;
+
         if (filters.groupId != null) {
             const group = await this.virtualChannelService.getGroupById(filters.groupId);
 
@@ -83,7 +86,7 @@ export class ViewerWatchService
             }
 
             if (group.timerState === 'capped') {
-                return { ok: false, status: 409, message: 'Virtual channel timer limit reached' };
+                playbackBlockedMessage = 'Daily timer limit reached for this virtual channel.';
             }
         }
 
@@ -115,6 +118,7 @@ export class ViewerWatchService
                 previousVideoYoutubeId: adjacent.previousYoutubeId,
                 nextVideoYoutubeId: adjacent.nextYoutubeId,
                 currentGroupId: filters.groupId,
+                playbackBlockedMessage,
                 navigationFilters: filters,
                 profileId: this.profileContext.activeProfileId,
                 profileKey: this.profileContext.activeProfileKey,

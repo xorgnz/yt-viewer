@@ -49,9 +49,9 @@
   - [x] 5.2 - Grey out capped channels in the channel list and block selection interactions.
   - [x] 5.3 - Keep the capped channel's video list visible while rendering videos as disabled and non-clickable.
 
-- [ ] 6 - Add playback-limit messaging in the player flow
-  - [ ] 6.1 - Add a player-visible status message for timer exhaustion.
-  - [ ] 6.2 - Make the watch page stop or refuse playback cleanly when the channel is capped.
+- [x] 6 - Add playback-limit messaging in the player flow
+  - [x] 6.1 - Add a player-visible status message for timer exhaustion.
+  - [x] 6.2 - Make the watch page stop or refuse playback cleanly when the channel is capped.
 
 - [ ] 7 - Validate the feature with targeted automated checks
   - [ ] 7.1 - Add or update tests for migration and DAO behavior around optional timer settings.
