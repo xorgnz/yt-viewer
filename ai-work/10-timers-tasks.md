@@ -22,10 +22,10 @@
 
 ## Tasks
 
-- [ ] 1. Add virtual-channel timer persistence
-  - [ ] 1.1 Review the existing virtual channel schema, entity, and DAO shape to identify the smallest storage change for an optional daily minute allowance.
-  - [ ] 1.2 Add forward-only database migration support for the timer fields needed on virtual channels.
-  - [ ] 1.3 Update the virtual channel entity and DAO read/write paths so timer settings persist cleanly and remain optional.
+- [x] 1. Add virtual-channel timer persistence
+  - [x] 1.1 Review the existing virtual channel schema, entity, and DAO shape to identify the smallest storage change for an optional daily minute allowance.
+  - [x] 1.2 Add forward-only database migration support for the timer fields needed on virtual channels.
+  - [x] 1.3 Update the virtual channel entity and DAO read/write paths so timer settings persist cleanly and remain optional.
 
 - [ ] 2. Add deterministic timer-usage calculation from watch history
   - [ ] 2.1 Inspect the existing `watch_history` structure and session-update behavior to define the exact aggregate query needed for per-channel daily usage.
