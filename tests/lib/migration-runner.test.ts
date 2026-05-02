@@ -50,21 +50,25 @@ describe('MigrationRunner', () => {
 
         expect(result).toEqual({
             currentVersion: 7,
-            targetVersion: 8,
+            targetVersion: 9,
             appliedMigrations: [
                 {
                     version: 8,
                     name: 'add_migration_history',
+                },
+                {
+                    version: 9,
+                    name: 'add_virtual_channel_daily_timer_max',
                 }
             ],
-            finalVersion: 8,
+            finalVersion: 9,
         });
         expect(provider.calls.map((call) => call.sql)).toContain('START TRANSACTION');
         expect(provider.calls.map((call) => call.sql)).toContain('COMMIT');
         expect(provider.calls.some((call) => CREATE_TABLE_MIGRATION_HISTORY.includes(call.sql))).toBe(true);
         expect(provider.calls.some((call) => call.sql.includes('INSERT INTO migration_history'))).toBe(true);
         expect(provider.calls.some((call) => call.sql.includes('ON DUPLICATE KEY UPDATE value=VALUES(value)'))).toBe(true);
-        expect(provider.calls.some((call) => call.params?.[0] === '8')).toBe(true);
+        expect(provider.calls.some((call) => call.params?.[0] === '9')).toBe(true);
     });
 
     it('rolls back a failed MySQL migration transaction', async () => {
