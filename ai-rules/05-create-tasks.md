@@ -1,6 +1,6 @@
 ---
-version: 1.7.0
-timestamp: 2026-04-30 00:00
+version: 1.8.0
+timestamp: 2026-05-02 00:00
 ---
 # Rule: Generating a Task List from User Requirements
 
@@ -44,3 +44,29 @@ The task list must include:
 The task list may also include supporting sections such as `## Relevant Files` when they add real value.
 
 Tasks must use markdown checkboxes. Use hierarchical numbering only when it improves readability.
+
+When using numbered tasks with checkboxes, do not write entries in the form `[ ] 1. Task name` because many markdown renderers parse that poorly.
+
+Use this form instead:
+
+- top-level tasks: `[ ] 1 - Task name`
+- subtasks: two-space indent followed by `[ ] 1.1 - Subtask name`
+
+Use a hyphen between the task number and the task text for both tasks and subtasks.
+Indent subtasks beneath their parent tasks so the hierarchy is visually clear.
+
+## Example Task List
+
+```md
+## Tasks
+
+- [ ] 1 - Set up authentication flow
+  - [ ] 1.1 - Add login route and request handling
+  - [ ] 1.2 - Add session validation middleware
+  - [ ] 1.3 - Add authentication tests
+
+- [ ] 2 - Integrate user profile loading
+  - [ ] 2.1 - Add profile data loader
+  - [ ] 2.2 - Render profile state in the UI
+  - [ ] 2.3 - Add validation coverage for profile loading
+```
