@@ -44,10 +44,10 @@
   - [x] 4.3 - Validate invalid values and preserve user-entered state on form errors.
   - [x] 4.4 - Persist timer changes through the existing server action flow.
 
-- [ ] 5 - Reflect capped state in the viewer channel list and video list
-  - [ ] 5.1 - Update viewer virtual-channel loading so capped channels remain visible but are marked unavailable.
-  - [ ] 5.2 - Grey out capped channels in the channel list and block selection interactions.
-  - [ ] 5.3 - Keep the capped channel's video list visible while rendering videos as disabled and non-clickable.
+- [x] 5 - Reflect capped state in the viewer channel list and video list
+  - [x] 5.1 - Update viewer virtual-channel loading so capped channels remain visible but are marked unavailable.
+  - [x] 5.2 - Grey out capped channels in the channel list and block selection interactions.
+  - [x] 5.3 - Keep the capped channel's video list visible while rendering videos as disabled and non-clickable.
 
 - [ ] 6 - Add playback-limit messaging in the player flow
   - [ ] 6.1 - Add a player-visible status message for timer exhaustion.

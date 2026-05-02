@@ -39,6 +39,7 @@
 
     let f = data.filters;
     let activeVirtualChannel = viewerPageState.findActiveViewerGroup(data.groups, f.groupId);
+    let activeVirtualChannelIsCapped = false;
     const today = new Date().toISOString().slice(0, 10);
     let totalPages = 1;
     let currentPage = 1;
@@ -92,6 +93,7 @@
             dateFromInput,
             dateToInput,
             channelIdInput,
+            sortMode,
             limitInput,
             watchedMode,
             showIgnored
@@ -303,6 +305,7 @@
     $: ({ termInput, dateFromInput, dateToInput, channelIdInput, sortMode, limitInput, watchedMode, showIgnored } =
         viewerPageState.deriveViewerFilterInputState(f));
     $: activeVirtualChannel = viewerPageState.findActiveViewerGroup(data.groups, f.groupId);
+    $: activeVirtualChannelIsCapped = activeVirtualChannel?.timerState === 'capped';
     $: ({ totalPages, currentPage, visiblePages } = viewerPageState.deriveViewerPaginationState(f, data.totalCount));
     $: ({ hasActiveSelection, selectedCount, offPageSelectedCount, watchedControlState, favoriteControlState, ignoredControlState } =
         viewerPageState.deriveViewerSelectionSummary(selectionState));
@@ -443,6 +446,7 @@
     <ViewerResultsGrid
         videos={visibleVideos}
         selectedVideoIds={selectionState.selectedVideoIds}
+        disabled={activeVirtualChannelIsCapped}
         {buildVideoWatchHref}
         {videoMutationService}
         onCardMouseDown={handleCardMouseDown}

@@ -1,9 +1,10 @@
 <script lang="ts">
+    import type { ViewerGroup } from '$lib/viewer/types';
+
     export let data: {
-        groups: Array<{ id: number; name: string }>;
+        groups: ViewerGroup[];
         profileKey: string;
     };
-
 </script>
 
 <div class="page stack">
@@ -14,10 +15,17 @@
         {:else}
             <div class="grid">
                 {#each data.groups as g}
-                    <a class="group" href={`/viewer?${new URLSearchParams({ groupId: String(g.id) }).toString()}`}>
-                        <div class="name">{g.name}</div>
-                        <div class="hint">View videos from this virtual channel</div>
-                    </a>
+                    {#if g.timerState === 'capped'}
+                        <div class="group group-capped" aria-disabled="true">
+                            <div class="name">{g.name}</div>
+                            <div class="hint">Daily timer limit reached</div>
+                        </div>
+                    {:else}
+                        <a class="group" href={`/viewer?${new URLSearchParams({ groupId: String(g.id) }).toString()}`}>
+                            <div class="name">{g.name}</div>
+                            <div class="hint">View videos from this virtual channel</div>
+                        </a>
+                    {/if}
                 {/each}
             </div>
         {/if}
@@ -44,11 +52,23 @@
         transition: transform 0.1s ease, background 0.15s ease, border-color 0.15s ease;
     }
 
+    .group.group-capped {
+        opacity: 0.55;
+        cursor: default;
+        box-shadow: none;
+    }
+
     .group:hover {
         transform: translateY(-1px);
         background: var(--bg-elevated);
         border-color: var(--border-strong);
         color: var(--text);
+    }
+
+    .group.group-capped:hover {
+        transform: none;
+        background: var(--bg-panel);
+        border-color: var(--border);
     }
 
     .name {

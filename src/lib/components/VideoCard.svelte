@@ -14,6 +14,7 @@
 
     export let video: ViewerVideo;
     export let watchHref: string | null = null;
+    export let disabled = false;
     export let isSelected = false;
     export let videoMutationService: VideoMutationService | null = null;
     export let onCardClick: ViewerCardClickHandler | null = null;
@@ -30,7 +31,7 @@
     $: currentVideo = video;
     $: presenter = new ViewerVideoDisplayPresenter(currentVideo);
     $: displayState = presenter.getState();
-    $: resolvedWatchHref = watchHref || displayState.watchHref;
+    $: resolvedWatchHref = disabled ? null : (watchHref || displayState.watchHref);
 
     async function handleFlagClick(
         event: MouseEvent,
@@ -41,7 +42,7 @@
         event.preventDefault();
         event.stopPropagation();
 
-        if (flagMutationPending || !videoMutationService) {
+        if (disabled || flagMutationPending || !videoMutationService) {
             return;
         }
 
@@ -63,10 +64,33 @@
             flagMutationPending = false;
         }
     }
+
+    function handleCardActivation(event: MouseEvent | KeyboardEvent): void
+    {
+        if (disabled) {
+            event.preventDefault();
+            event.stopPropagation();
+            return;
+        }
+
+        onCardClick?.(event, video.id);
+    }
+
+    function handleCardPointerDown(event: MouseEvent): void
+    {
+        if (disabled) {
+            event.preventDefault();
+            event.stopPropagation();
+            return;
+        }
+
+        onCardMouseDown?.(event, video.id);
+    }
 </script>
 
 <div
     class="card"
+    class:card-disabled={disabled}
     class:card-ignored={displayState.isIgnored}
     class:card-favorite-watched={displayState.isFavoriteWatched}
     class:card-favorite={displayState.isFavoriteOnly}
@@ -74,14 +98,22 @@
     class:card-selected={isSelected}
     data-selected={isSelected ? '1' : '0'}
     role="button"
-    tabindex="0"
+    tabindex={disabled ? -1 : 0}
     aria-pressed={isSelected}
-    on:mousedown={(event) => onCardMouseDown?.(event, video.id)}
-    on:click={(event) => onCardClick?.(event, video.id)}
-    on:keydown={(event) => onCardClick?.(event, video.id)}
+    aria-disabled={disabled}
+    on:mousedown={handleCardPointerDown}
+    on:click={handleCardActivation}
+    on:keydown={handleCardActivation}
     title={currentVideo.title}
 >
-    <a class="thumb" href={resolvedWatchHref} aria-label={displayState.openLabel}>
+    <a
+        class="thumb"
+        href={resolvedWatchHref}
+        aria-label={displayState.openLabel}
+        tabindex={disabled ? -1 : undefined}
+        aria-disabled={disabled}
+        on:click|preventDefault={disabled ? () => undefined : undefined}
+    >
         {#if isSelected}
             <span class="selection-indicator" aria-hidden="true">&#10003;</span>
         {/if}
@@ -92,7 +124,15 @@
         {/if}
     </a>
     <div class="meta">
-        <a class="title" href={resolvedWatchHref}>{currentVideo.title}</a>
+        <a
+            class="title"
+            href={resolvedWatchHref}
+            tabindex={disabled ? -1 : undefined}
+            aria-disabled={disabled}
+            on:click|preventDefault={disabled ? () => undefined : undefined}
+        >
+            {currentVideo.title}
+        </a>
         <div class="channel-row">
             <div class="actions">
                 <button
@@ -100,7 +140,7 @@
                     class="icon favorite"
                     class:active={!!currentVideo.favorite}
                     aria-pressed={!!currentVideo.favorite}
-                    disabled={flagMutationPending || !videoMutationService}
+                    disabled={disabled || flagMutationPending || !videoMutationService}
                     title={presenter.getToggleTitle('favorite')}
                     on:click={(event) => handleFlagClick(event, 'favorite', presenter.getNextFlagValue('favorite'))}
                 >
@@ -112,7 +152,7 @@
                     class="icon watched"
                     class:active={!!currentVideo.watched}
                     aria-pressed={!!currentVideo.watched}
-                    disabled={flagMutationPending || !videoMutationService}
+                    disabled={disabled || flagMutationPending || !videoMutationService}
                     title={presenter.getToggleTitle('watched')}
                     on:click={(event) => handleFlagClick(event, 'watched', presenter.getNextFlagValue('watched'))}
                 >
@@ -124,7 +164,7 @@
                     class="icon ignored"
                     class:active={!!currentVideo.ignored}
                     aria-pressed={!!currentVideo.ignored}
-                    disabled={flagMutationPending || !videoMutationService}
+                    disabled={disabled || flagMutationPending || !videoMutationService}
                     title={presenter.getToggleTitle('ignored')}
                     on:click={(event) => handleFlagClick(event, 'ignored', presenter.getNextFlagValue('ignored'))}
                 >
@@ -219,9 +259,17 @@
             0 0 0 3px rgba(59, 130, 246, 0.35);
     }
 
+    .card.card-disabled {
+        opacity: 0.52;
+    }
+
     .card a {
         color: inherit;
         text-decoration: none;
+    }
+
+    .card.card-disabled a {
+        cursor: default;
     }
 
     .actions {
