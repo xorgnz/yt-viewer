@@ -53,7 +53,7 @@
   - [x] 6.1 - Add a player-visible status message for timer exhaustion.
   - [x] 6.2 - Make the watch page stop or refuse playback cleanly when the channel is capped.
 
-- [ ] 7 - Validate the feature with targeted automated checks
-  - [ ] 7.1 - Add or update tests for migration and DAO behavior around optional timer settings.
-  - [ ] 7.2 - Add service-level tests for capped-state calculation and enforcement from watch-history aggregates.
-  - [ ] 7.3 - Add focused route or UI coverage for disabled channel/video presentation where the current test stack supports it.
+- [x] 7 - Validate the feature with targeted automated checks
+  - [x] 7.1 - Add or update tests for migration and DAO behavior around optional timer settings.
+  - [x] 7.2 - Add service-level tests for capped-state calculation and enforcement from watch-history aggregates.
+  - [x] 7.3 - Add focused route or UI coverage for disabled channel/video presentation where the current test stack supports it.
