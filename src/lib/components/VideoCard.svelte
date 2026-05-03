@@ -86,6 +86,16 @@
 
         onCardMouseDown?.(event, video.id);
     }
+
+    function handleLinkClick(event: MouseEvent): void
+    {
+        if (!disabled) {
+            return;
+        }
+
+        event.preventDefault();
+        event.stopPropagation();
+    }
 </script>
 
 <div
@@ -112,7 +122,7 @@
         aria-label={displayState.openLabel}
         tabindex={disabled ? -1 : undefined}
         aria-disabled={disabled}
-        on:click|preventDefault={disabled ? () => undefined : undefined}
+        on:click={handleLinkClick}
     >
         {#if isSelected}
             <span class="selection-indicator" aria-hidden="true">&#10003;</span>
@@ -129,7 +139,7 @@
             href={resolvedWatchHref}
             tabindex={disabled ? -1 : undefined}
             aria-disabled={disabled}
-            on:click|preventDefault={disabled ? () => undefined : undefined}
+            on:click={handleLinkClick}
         >
             {currentVideo.title}
         </a>
