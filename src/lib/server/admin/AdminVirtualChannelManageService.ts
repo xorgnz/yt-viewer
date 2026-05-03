@@ -6,9 +6,13 @@ import type {
 } from '$lib/daos/virtualChannelAssignmentVideoSelectionDAO';
 import type { VirtualChannelDAO } from '$lib/daos/virtualChannelDAO';
 import type { VirtualChannelAssignment } from '$lib/entities/virtualChannelAssignment';
+import type { VirtualChannelAssignmentFields } from '$lib/entities/virtualChannelAssignment';
 import type { VirtualChannelAssignmentMode } from '$lib/entities/virtualChannelAssignment';
 import type { VirtualChannelAssignmentVideoReviewState } from '$lib/entities/virtualChannelAssignmentVideoSelection';
 import type { SourceChannel } from '$lib/entities/sourceChannel';
+import type { SourceChannelFields } from '$lib/entities/sourceChannel';
+import type { VirtualChannelFields } from '$lib/entities/virtualChannel';
+import type { VideoFields } from '$lib/entities/video';
 import type {
     AdminAssociatedSourceChannelView,
     AdminReviewStateFilter,
@@ -123,9 +127,17 @@ export class AdminVirtualChannelManageService
         return {
             ok: true,
             data: {
-                virtualChannel,
+                virtualChannel: this.toVirtualChannelFields(virtualChannel),
                 associatedSourceChannels,
-                availableSourceChannels
+                availableSourceChannels: availableSourceChannels.map((channel) => ({
+                    id: channel.id,
+                    youtube_id: channel.youtube_id,
+                    title: channel.title,
+                    description: channel.description,
+                    thumbnail_url: channel.thumbnail_url,
+                    published_at: channel.published_at,
+                    last_refreshed_at: channel.last_refreshed_at,
+                }))
             }
         };
     }
@@ -327,9 +339,9 @@ export class AdminVirtualChannelManageService
             };
 
         return {
-            assignment,
-            sourceChannel: sourceChannelsById.get(assignment.source_channel_id) ?? null,
-            automaticVideos,
+            assignment: this.toAssignmentFields(assignment),
+            sourceChannel: this.toSourceChannelFields(sourceChannelsById.get(assignment.source_channel_id) ?? null),
+            automaticVideos: automaticVideos.map((video) => this.toVideoFields(video)),
             selectedOnlyVideos,
             selectedOnlyCounts,
             reviewStateFilter: this.getReviewStateFilter(searchParams, assignment.id),
@@ -378,6 +390,63 @@ export class AdminVirtualChannelManageService
     private getErrorMessage(error: unknown, fallback: string): string
     {
         return error instanceof Error ? error.message : fallback;
+    }
+
+    private toVirtualChannelFields(value: {
+        id: number;
+        name: string;
+        dailyTimerMax: number | null;
+    }): VirtualChannelFields
+    {
+        return {
+            id: value.id,
+            name: value.name,
+            dailyTimerMax: value.dailyTimerMax,
+        };
+    }
+
+    private toAssignmentFields(value: VirtualChannelAssignment): VirtualChannelAssignmentFields
+    {
+        return {
+            id: value.id,
+            source_channel_id: value.source_channel_id,
+            virtual_channel_id: value.virtual_channel_id,
+            mode: value.mode,
+            created_at: value.created_at,
+            updated_at: value.updated_at,
+        };
+    }
+
+    private toSourceChannelFields(value: SourceChannel | null): SourceChannelFields | null
+    {
+        if (!value) {
+            return null;
+        }
+
+        return {
+            id: value.id,
+            youtube_id: value.youtube_id,
+            title: value.title,
+            description: value.description,
+            thumbnail_url: value.thumbnail_url,
+            published_at: value.published_at,
+            last_refreshed_at: value.last_refreshed_at,
+        };
+    }
+
+    private toVideoFields(value: VideoFields): VideoFields
+    {
+        return {
+            id: value.id,
+            youtube_id: value.youtube_id,
+            channel_id: value.channel_id,
+            title: value.title,
+            description: value.description,
+            published_at: value.published_at,
+            duration_seconds: value.duration_seconds,
+            thumbnail_url: value.thumbnail_url,
+            length_classification: value.length_classification,
+        };
     }
 }
 // apply-patch-anchor - do not delete

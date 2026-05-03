@@ -52,7 +52,7 @@ describe('viewer timer services', () => {
             () => Date.UTC(2026, 4, 2, 15, 0, 0)
         );
 
-        const groups = await service.loadGroups();
+        const groups = await service.loadVirtualChannels();
 
         expect(groups).toHaveLength(2);
         expect(groups[0]).toMatchObject({
@@ -97,11 +97,11 @@ describe('viewer timer services', () => {
             createProfileContext(),
             recommendationService,
             {
-                getGroupById: vi.fn(async () => ({
+                getVirtualChannelById: vi.fn(async () => ({
                     id: 8,
                     name: 'Timers',
                     dailyTimerMax: 1,
-                    timerState: 'capped',
+                    timerState: 'capped' as const,
                     timerUsageSeconds: 60,
                     timerRemainingSeconds: 0,
                     timerWindowStartMs: 100,
@@ -155,7 +155,7 @@ describe('viewer timer services', () => {
                 id: 9,
                 name: 'Timers',
                 dailyTimerMax: 1,
-                timerState: 'available',
+                timerState: 'available' as const,
                 timerUsageSeconds: 50,
                 timerRemainingSeconds: 10,
                 timerWindowStartMs: 100,
@@ -165,7 +165,7 @@ describe('viewer timer services', () => {
                 id: 9,
                 name: 'Timers',
                 dailyTimerMax: 1,
-                timerState: 'capped',
+                timerState: 'capped' as const,
                 timerUsageSeconds: 60,
                 timerRemainingSeconds: 0,
                 timerWindowStartMs: 100,
@@ -177,7 +177,7 @@ describe('viewer timer services', () => {
             historyDAO as never,
             createProfileContext(),
             {} as never,
-            { getGroupById: availableThenCapped }
+            { getVirtualChannelById: availableThenCapped }
         );
 
         const cappedResult = await service.updateHistoryProgress('video-5', 60, 9, 8000);
@@ -211,11 +211,11 @@ describe('viewer timer services', () => {
             createProfileContext(),
             {} as never,
             {
-                getGroupById: vi.fn(async () => ({
+                getVirtualChannelById: vi.fn(async () => ({
                     id: 9,
                     name: 'Timers',
                     dailyTimerMax: 1,
-                    timerState: 'available',
+                    timerState: 'available' as const,
                     timerUsageSeconds: 50,
                     timerRemainingSeconds: 10,
                     timerWindowStartMs: 100,

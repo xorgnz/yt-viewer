@@ -1,4 +1,4 @@
-export type ChannelFields = {
+export type SourceChannelFields = {
     id: number;
     youtube_id: string;
     title: string;
@@ -18,7 +18,7 @@ export class SourceChannel
     readonly published_at?: number | null; // unix epoch ms
     readonly last_refreshed_at?: number | null; // unix epoch ms
 
-    constructor(data: ChannelFields)
+    constructor(data: SourceChannelFields)
     {
         this.id = data.id;
         this.youtube_id = data.youtube_id;

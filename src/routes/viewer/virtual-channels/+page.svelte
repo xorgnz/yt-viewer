@@ -1,8 +1,8 @@
 <script lang="ts">
-    import type { ViewerGroup } from '$lib/viewer/types';
+    import type { ViewerVirtualChannel } from '$lib/viewer/types';
 
     export let data: {
-        groups: ViewerGroup[];
+        groups: ViewerVirtualChannel[];
         profileKey: string;
     };
 </script>

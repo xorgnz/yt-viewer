@@ -1,7 +1,7 @@
 import type {
     ViewerFilterInputState,
     ViewerFilters,
-    ViewerGroup,
+    ViewerVirtualChannel,
     ViewerPaginationState,
     ViewerVideo,
     ViewerVisiblePage
@@ -150,7 +150,10 @@ function buildViewerFilterQuery(
     return params.toString();
 }
 
-function findActiveViewerGroup(groups: ViewerGroup[], groupId: number | null): ViewerGroup | null
+function findActiveVirtualChannel(
+    groups: ViewerVirtualChannel[],
+    groupId: number | null
+): ViewerVirtualChannel | null
 {
     return groups.find((group) => group.id === groupId) ?? null;
 }
@@ -189,7 +192,7 @@ export const viewerPageState = {
     deriveViewerPaginationState,
     deriveViewerFilterInputState,
     buildViewerFilterQuery,
-    findActiveViewerGroup,
+    findActiveVirtualChannel,
     createViewerSelectionSnapshots,
     deriveViewerSelectionSummary
 };

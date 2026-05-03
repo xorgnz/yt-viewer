@@ -131,6 +131,11 @@ describe('viewer watch route', () => {
         } as never);
 
         expect(result).toBeInstanceOf(Response);
+
+        if (!(result instanceof Response)) {
+            throw new Error('Expected a Response from the capped timer action.');
+        }
+
         expect(result.status).toBe(409);
         expect(result.headers.get('x-viewer-timer-state')).toBe('capped');
         await expect(result.json()).resolves.toEqual({

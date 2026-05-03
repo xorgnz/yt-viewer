@@ -3,7 +3,7 @@
     import {onMount, onDestroy} from 'svelte';
     import { VideoMutationService } from '$lib/viewer/VideoMutationService';
     import { viewerPageState } from '$lib/viewer/pageState';
-    import type { ViewerFilters, ViewerVideo } from '$lib/viewer/types';
+    import type { ViewerFilters, ViewerVirtualChannel, ViewerVideo } from '$lib/viewer/types';
 
     export let data: {
         video: {
@@ -29,6 +29,7 @@
         previousVideoYoutubeId: string | null;
         nextVideoYoutubeId: string | null;
         currentGroupId: number | null;
+        activeVirtualChannel: ViewerVirtualChannel | null;
         playbackBlockedMessage: string | null;
     };
 

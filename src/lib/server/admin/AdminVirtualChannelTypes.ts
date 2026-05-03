@@ -1,8 +1,8 @@
-import type { SourceChannel } from '$lib/entities/sourceChannel';
-import type { VirtualChannelAssignment } from '$lib/entities/virtualChannelAssignment';
+import type { SourceChannelFields } from '$lib/entities/sourceChannel';
+import type { VirtualChannelAssignmentFields } from '$lib/entities/virtualChannelAssignment';
 import type { VirtualChannelAssignmentVideoReviewState } from '$lib/entities/virtualChannelAssignmentVideoSelection';
-import type { VirtualChannel } from '$lib/entities/virtualChannel';
-import type { Video, VideoFields } from '$lib/entities/video';
+import type { VirtualChannelFields } from '$lib/entities/virtualChannel';
+import type { VideoFields } from '$lib/entities/video';
 
 export type AdminVideoTypeFilter = 'all' | 'long' | 'short' | 'unknown';
 export type AdminReviewStateFilter = 'all' | 'not_yet_reviewed';
@@ -33,8 +33,8 @@ export type AdminVirtualChannelServiceResult<
 
 export interface AdminInlineAssociation
 {
-    assignment: VirtualChannelAssignment;
-    sourceChannel: SourceChannel | null;
+    assignment: VirtualChannelAssignmentFields;
+    sourceChannel: SourceChannelFields | null;
 }
 
 export interface AdminVirtualChannelRow
@@ -42,13 +42,13 @@ export interface AdminVirtualChannelRow
     id: number;
     name: string;
     associatedSourceChannels: AdminInlineAssociation[];
-    availableSourceChannels: SourceChannel[];
+    availableSourceChannels: SourceChannelFields[];
 }
 
 export interface AdminVirtualChannelIndexPageData
 {
     groups: AdminVirtualChannelRow[];
-    availableSourceChannels: SourceChannel[];
+    availableSourceChannels: SourceChannelFields[];
 }
 
 export interface AdminVirtualChannelInlineMutationData
@@ -77,9 +77,9 @@ export interface AdminSelectedOnlyCounts
 
 export interface AdminAssociatedSourceChannelView
 {
-    assignment: VirtualChannelAssignment;
-    sourceChannel: SourceChannel | null;
-    automaticVideos: Video[];
+    assignment: VirtualChannelAssignmentFields;
+    sourceChannel: SourceChannelFields | null;
+    automaticVideos: VideoFields[];
     selectedOnlyVideos: AdminSelectedOnlyVideo[];
     selectedOnlyCounts: AdminSelectedOnlyCounts | null;
     reviewStateFilter: AdminReviewStateFilter;
@@ -89,8 +89,8 @@ export interface AdminAssociatedSourceChannelView
 
 export interface AdminVirtualChannelManagePageData
 {
-    virtualChannel: VirtualChannel;
+    virtualChannel: VirtualChannelFields;
     associatedSourceChannels: AdminAssociatedSourceChannelView[];
-    availableSourceChannels: SourceChannel[];
+    availableSourceChannels: SourceChannelFields[];
 }
 // apply-patch-anchor - do not delete

@@ -8,6 +8,7 @@ import type { ViewerQueryFilters } from '$lib/server/viewer/ViewerQueryParser';
 import { ViewerRecommendationService } from '$lib/server/viewer/ViewerRecommendationService';
 import type { ViewerVirtualChannelService } from '$lib/server/viewer/ViewerVirtualChannelService';
 import type { ServerProfileContext } from '$lib/server/ServerProfileContext';
+import type { ViewerVirtualChannel } from '$lib/viewer/types';
 
 const HISTORY_SESSION_GAP_MS = 5 * 60 * 1000;
 
@@ -19,6 +20,7 @@ export type ViewerWatchLoadModel = {
     previousVideoYoutubeId: string | null;
     nextVideoYoutubeId: string | null;
     currentGroupId: number | null;
+    activeVirtualChannel: ViewerVirtualChannel | null;
     playbackBlockedMessage: string | null;
     navigationFilters: ViewerQueryFilters;
     profileId: number;
@@ -55,7 +57,7 @@ export class ViewerWatchService
     private readonly historyDAO: HistoryDAO;
     private readonly profileContext: ServerProfileContext;
     private readonly recommendationService: ViewerRecommendationService;
-    private readonly virtualChannelService: Pick<ViewerVirtualChannelService, 'getGroupById'>;
+    private readonly virtualChannelService: Pick<ViewerVirtualChannelService, 'getVirtualChannelById'>;
 
     constructor(
         viewerVideoReadRepository: ViewerVideoReadRepository,
@@ -63,7 +65,7 @@ export class ViewerWatchService
         historyDAO: HistoryDAO,
         profileContext: ServerProfileContext,
         recommendationService: ViewerRecommendationService,
-        virtualChannelService: Pick<ViewerVirtualChannelService, 'getGroupById'>
+        virtualChannelService: Pick<ViewerVirtualChannelService, 'getVirtualChannelById'>
     )
     {
         this.viewerVideoReadRepository = viewerVideoReadRepository;
@@ -77,13 +79,16 @@ export class ViewerWatchService
     async load(videoYoutubeId: string, filters: ViewerQueryFilters): Promise<ViewerWatchLoadResult>
     {
         let playbackBlockedMessage: string | null = null;
+        let activeVirtualChannel: ViewerVirtualChannel | null = null;
 
         if (filters.groupId != null) {
-            const group = await this.virtualChannelService.getGroupById(filters.groupId);
+            const group = await this.virtualChannelService.getVirtualChannelById(filters.groupId);
 
             if (!group) {
                 return { ok: false, status: 404, message: 'Virtual channel not found' };
             }
+
+            activeVirtualChannel = group;
 
             if (group.timerState === 'capped') {
                 playbackBlockedMessage = 'Daily timer limit reached for this virtual channel.';
@@ -118,6 +123,7 @@ export class ViewerWatchService
                 previousVideoYoutubeId: adjacent.previousYoutubeId,
                 nextVideoYoutubeId: adjacent.nextYoutubeId,
                 currentGroupId: filters.groupId,
+                activeVirtualChannel,
                 playbackBlockedMessage,
                 navigationFilters: filters,
                 profileId: this.profileContext.activeProfileId,
@@ -250,7 +256,7 @@ export class ViewerWatchService
             return { ok: true };
         }
 
-        const group = await this.virtualChannelService.getGroupById(groupId);
+        const group = await this.virtualChannelService.getVirtualChannelById(groupId);
         if (!group) {
             return {
                 ok: false,

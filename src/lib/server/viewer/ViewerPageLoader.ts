@@ -35,8 +35,11 @@ export class ViewerPageLoader
             this.viewerVideoReadRepository.list(filters, profileContext.activeProfileId),
             this.viewerVideoReadRepository.count(filters, profileContext.activeProfileId),
             this.sourceChannelDAO.list(),
-            virtualChannelService.loadGroups()
+            virtualChannelService.loadVirtualChannels()
         ]);
+        const activeVirtualChannel = filters.groupId == null
+            ? null
+            : groups.find((group) => group.id === filters.groupId) ?? null;
 
         return {
             filters,
@@ -44,6 +47,7 @@ export class ViewerPageLoader
             totalCount,
             channels,
             groups,
+            activeVirtualChannel,
             profileId: profileContext.activeProfileId,
             profileKey: profileContext.activeProfileKey,
             profileName: profileContext.activeProfileName

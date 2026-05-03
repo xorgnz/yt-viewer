@@ -2,7 +2,7 @@ import type { HistoryDAO } from '$lib/daos/historyDAO';
 import type { VirtualChannelDAO } from '$lib/daos/virtualChannelDAO';
 import { AppTimezonePolicy } from '$lib/server/AppTimezonePolicy';
 import type { ServerProfileContext } from '$lib/server/ServerProfileContext';
-import type { ViewerGroup, ViewerGroupTimerState } from '$lib/viewer/types';
+import type { ViewerVirtualChannel, ViewerVirtualChannelTimerState } from '$lib/viewer/types';
 
 export class ViewerVirtualChannelService
 {
@@ -27,12 +27,12 @@ export class ViewerVirtualChannelService
     async loadNavigation()
     {
         return {
-            groups: await this.loadGroups(),
+            groups: await this.loadVirtualChannels(),
             profileKey: this.profileContext.activeProfileKey
         };
     }
 
-    async loadGroups(): Promise<ViewerGroup[]>
+    async loadVirtualChannels(): Promise<ViewerVirtualChannel[]>
     {
         const groups = await this.virtualChannelDAO.list();
         const timezone = AppTimezonePolicy.configuredTimezone;
@@ -42,7 +42,7 @@ export class ViewerVirtualChannelService
         return await Promise.all(groups.map((group) => this.buildGroupView(group, window)));
     }
 
-    async getGroupById(groupId: number): Promise<ViewerGroup | null>
+    async getVirtualChannelById(groupId: number): Promise<ViewerVirtualChannel | null>
     {
         const group = await this.virtualChannelDAO.get(groupId);
         if (!group) {
@@ -157,7 +157,7 @@ export class ViewerVirtualChannelService
             dailyTimerMax: number | null;
         },
         window: { startMs: number; endMs: number }
-    ): Promise<ViewerGroup>
+    ): Promise<ViewerVirtualChannel>
     {
         const dailyTimerMax = group.dailyTimerMax;
 
@@ -166,7 +166,7 @@ export class ViewerVirtualChannelService
                 id: group.id,
                 name: group.name,
                 dailyTimerMax: null,
-                timerState: 'unlimited' as ViewerGroupTimerState,
+                timerState: 'unlimited' as ViewerVirtualChannelTimerState,
                 timerUsageSeconds: 0,
                 timerRemainingSeconds: null,
                 timerWindowStartMs: window.startMs,
