@@ -1,6 +1,17 @@
 <script lang="ts">
     import { page } from '$app/stores';
 
+    type NavVirtualChannel = {
+        id: number;
+        name: string;
+        dailyTimerMax: number | null;
+        timerState: 'unlimited' | 'available' | 'capped';
+        timerUsageSeconds: number;
+        timerRemainingSeconds: number | null;
+        timerWindowStartMs: number;
+        timerWindowEndMs: number;
+    };
+
     // Simple side navigation used across all pages
     export let appName: string = 'YT Viewer';
     export let profiles: Array<{ id: number; key: string; name: string }> = [];
@@ -17,6 +28,32 @@
     {
         return activeProfileKey === 'child' && profileKey === 'default';
     }
+
+    function readActiveVirtualChannel(value: unknown): NavVirtualChannel | null
+    {
+        if (!value || typeof value !== 'object') {
+            return null;
+        }
+
+        const candidate = value as Partial<NavVirtualChannel>;
+
+        if (
+            typeof candidate.id !== 'number' ||
+            typeof candidate.name !== 'string' ||
+            (candidate.dailyTimerMax !== null && typeof candidate.dailyTimerMax !== 'number') ||
+            (candidate.timerState !== 'unlimited' && candidate.timerState !== 'available' && candidate.timerState !== 'capped') ||
+            typeof candidate.timerUsageSeconds !== 'number' ||
+            (candidate.timerRemainingSeconds !== null && typeof candidate.timerRemainingSeconds !== 'number') ||
+            typeof candidate.timerWindowStartMs !== 'number' ||
+            typeof candidate.timerWindowEndMs !== 'number'
+        ) {
+            return null;
+        }
+
+        return candidate as NavVirtualChannel;
+    }
+
+    $: activeVirtualChannel = readActiveVirtualChannel($page.data.activeVirtualChannel);
 </script>
 
 <aside class="side-nav" aria-label="Primary Navigation">
@@ -38,6 +75,13 @@
             <a href="/admin/login">Admin</a>
         {/if}
     </nav>
+
+    {#if activeVirtualChannel}
+        <section class="nav-virtual-channel" aria-label="Active virtual channel">
+            <div class="nav-virtual-channel-label">Virtual Channel</div>
+            <div class="nav-virtual-channel-name">{activeVirtualChannel.name}</div>
+        </section>
+    {/if}
 
     <details class="profile-switcher" data-profile-tone={profileTone(activeProfileKey)}>
         <summary class="profile-chip">
