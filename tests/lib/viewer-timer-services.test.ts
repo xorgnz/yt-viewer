@@ -38,12 +38,13 @@ describe('viewer timer services', () => {
     it('derives unlimited and capped virtual-channel timer states from watch-history aggregates', async () => {
         const list = vi.fn(async () => ([
             new VirtualChannel({ id: 1, name: 'Unlimited', dailyTimerMax: null }),
-            new VirtualChannel({ id: 2, name: 'Capped', dailyTimerMax: 1 })
+            new VirtualChannel({ id: 2, name: 'Capped', dailyTimerMax: 60 })
         ]));
         const historyDAO = {
             getVirtualChannelWatchSecondsInWindow: vi.fn(async (_profileId: number, virtualChannelId: number) => {
                 return virtualChannelId === 2 ? 60 : 0;
-            })
+            }),
+            resetVirtualChannelWatchSecondsInWindow: vi.fn(async () => undefined)
         };
         const service = new ViewerVirtualChannelService(
             { get: vi.fn(), list },
@@ -100,7 +101,7 @@ describe('viewer timer services', () => {
                 getVirtualChannelById: vi.fn(async () => ({
                     id: 8,
                     name: 'Timers',
-                    dailyTimerMax: 1,
+                    dailyTimerMax: 60,
                     timerState: 'capped' as const,
                     timerUsageSeconds: 60,
                     timerRemainingSeconds: 0,
@@ -154,7 +155,7 @@ describe('viewer timer services', () => {
             .mockResolvedValueOnce({
                 id: 9,
                 name: 'Timers',
-                dailyTimerMax: 1,
+                dailyTimerMax: 60,
                 timerState: 'available' as const,
                 timerUsageSeconds: 50,
                 timerRemainingSeconds: 10,
@@ -164,7 +165,7 @@ describe('viewer timer services', () => {
             .mockResolvedValueOnce({
                 id: 9,
                 name: 'Timers',
-                dailyTimerMax: 1,
+                dailyTimerMax: 60,
                 timerState: 'capped' as const,
                 timerUsageSeconds: 60,
                 timerRemainingSeconds: 0,
@@ -214,7 +215,7 @@ describe('viewer timer services', () => {
                 getVirtualChannelById: vi.fn(async () => ({
                     id: 9,
                     name: 'Timers',
-                    dailyTimerMax: 1,
+                    dailyTimerMax: 60,
                     timerState: 'available' as const,
                     timerUsageSeconds: 50,
                     timerRemainingSeconds: 10,

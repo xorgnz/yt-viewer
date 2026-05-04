@@ -1,5 +1,6 @@
 <script lang="ts">
     import { onMount } from 'svelte';
+    import { page } from '$app/stores';
     import { SideNavVirtualChannelPanelPresenter } from '$lib/components/SideNavVirtualChannelPanelPresenter';
     import type { SideNavVirtualChannelViewModel } from '$lib/components/SideNavVirtualChannelPanelViewModel';
 
@@ -51,6 +52,11 @@
             <div class="nav-virtual-channel-usage">{presenter.getTimerUsageLabel()}</div>
             <div class="nav-virtual-channel-usage">{presenter.getTimerRemainingLabel()}</div>
         </div>
+        <form method="POST" action="/viewer/debug/reset-virtual-channel-timer" class="nav-virtual-channel-debug-form">
+            <input type="hidden" name="virtualChannelId" value={liveVirtualChannel.id} />
+            <input type="hidden" name="returnTo" value={$page.url.pathname + $page.url.search} />
+            <button type="submit" class="nav-virtual-channel-debug-button">Reset Debug</button>
+        </form>
     {:else}
         <div class="nav-virtual-channel-name nav-virtual-channel-name-muted">No channel selected</div>
     {/if}
@@ -108,6 +114,25 @@
         color: var(--text-muted);
         font-size: 0.84rem;
         line-height: 1.35;
+    }
+
+    .nav-virtual-channel-debug-form {
+        margin-top: var(--space-2);
+    }
+
+    .nav-virtual-channel-debug-button {
+        width: 100%;
+        min-height: 2rem;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border: 1px solid var(--border-strong);
+        border-radius: var(--radius-sm);
+        padding: 0.35rem 0.6rem;
+        background: rgba(255, 255, 255, 0.08);
+        color: var(--text);
+        font-size: 0.8rem;
+        line-height: 1.2;
     }
 </style>
 <!-- apply-patch-anchor - do not delete -->

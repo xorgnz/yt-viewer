@@ -29,30 +29,30 @@ describe('SideNavVirtualChannelPanelPresenter', () => {
         }));
 
         expect(presenter.getTimerModeLabel()).toBe('Unlimited');
-        expect(presenter.getTimerUsageLabel()).toBe('Used today: 31 min');
+        expect(presenter.getTimerUsageLabel()).toBe('Consumed: 1860 sec');
     });
 
     it('formats available limited virtual channel status and remaining time', () => {
         const presenter = new SideNavVirtualChannelPanelPresenter(createViewModel({
             dailyTimerMax: 90,
             timerState: 'available',
-            timerUsageSeconds: 1800,
-            timerRemainingSeconds: 3600
+            timerUsageSeconds: 18,
+            timerRemainingSeconds: 72
         }));
 
-        expect(presenter.getTimerModeLabel()).toBe('Daily limit: 90 min');
-        expect(presenter.getTimerUsageLabel()).toBe('Remaining: 60 min');
+        expect(presenter.getTimerModeLabel()).toBe('Daily limit: 90 sec');
+        expect(presenter.getTimerUsageLabel()).toBe('Consumed: 18 sec');
     });
 
     it('formats capped virtual channel status and consumed usage', () => {
         const presenter = new SideNavVirtualChannelPanelPresenter(createViewModel({
             dailyTimerMax: 45,
             timerState: 'capped',
-            timerUsageSeconds: 2700,
+            timerUsageSeconds: 45,
             timerRemainingSeconds: 0
         }));
 
         expect(presenter.getTimerModeLabel()).toBe('Limit reached');
-        expect(presenter.getTimerUsageLabel()).toBe('Used today: 45 / 45 min');
+        expect(presenter.getTimerUsageLabel()).toBe('Consumed: 45 sec');
     });
 });

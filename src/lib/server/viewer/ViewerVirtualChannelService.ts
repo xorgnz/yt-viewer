@@ -7,13 +7,13 @@ import type { ViewerVirtualChannel, ViewerVirtualChannelTimerState } from '$lib/
 export class ViewerVirtualChannelService
 {
     private readonly virtualChannelDAO: Pick<VirtualChannelDAO, 'get' | 'list'>;
-    private readonly historyDAO: Pick<HistoryDAO, 'getVirtualChannelWatchSecondsInWindow'>;
+    private readonly historyDAO: Pick<HistoryDAO, 'getVirtualChannelWatchSecondsInWindow' | 'resetVirtualChannelWatchSecondsInWindow'>;
     private readonly profileContext: ServerProfileContext;
     private readonly nowProvider: () => number;
 
     constructor(
         virtualChannelDAO: Pick<VirtualChannelDAO, 'get' | 'list'>,
-        historyDAO: Pick<HistoryDAO, 'getVirtualChannelWatchSecondsInWindow'>,
+        historyDAO: Pick<HistoryDAO, 'getVirtualChannelWatchSecondsInWindow' | 'resetVirtualChannelWatchSecondsInWindow'>,
         profileContext: ServerProfileContext,
         nowProvider: () => number = () => Date.now()
     )
@@ -54,6 +54,27 @@ export class ViewerVirtualChannelService
         const window = ViewerVirtualChannelService.getCurrentDayWindow(now, timezone);
 
         return await this.buildGroupView(group, window);
+    }
+
+    async resetVirtualChannelTimer(virtualChannelId: number): Promise<boolean>
+    {
+        const group = await this.virtualChannelDAO.get(virtualChannelId);
+        if (!group) {
+            return false;
+        }
+
+        const timezone = AppTimezonePolicy.configuredTimezone;
+        const now = this.nowProvider();
+        const window = ViewerVirtualChannelService.getCurrentDayWindow(now, timezone);
+
+        await this.historyDAO.resetVirtualChannelWatchSecondsInWindow(
+            this.profileContext.activeProfileId,
+            virtualChannelId,
+            window.startMs,
+            window.endMs
+        );
+
+        return true;
     }
 
     private static getCurrentDayWindow(nowMs: number, timezone: string): { startMs: number; endMs: number }
@@ -180,7 +201,7 @@ export class ViewerVirtualChannelService
             window.startMs,
             window.endMs
         );
-        const timerMaxSeconds = dailyTimerMax * 60;
+        const timerMaxSeconds = dailyTimerMax;
         const timerRemainingSeconds = Math.max(0, timerMaxSeconds - timerUsageSeconds);
 
         return {

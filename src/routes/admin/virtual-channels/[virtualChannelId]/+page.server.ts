@@ -66,7 +66,7 @@ export const actions: Actions = {
             if (!dailyTimerMaxInput) {
                 return fail(400, {
                     action: 'saveTimerSettings',
-                    message: 'Daily timer minutes are required when the timer is enabled.',
+                    message: 'Daily timer seconds are required when the timer is enabled.',
                     timerMode,
                     dailyTimerMaxInput
                 });
@@ -76,7 +76,7 @@ export const actions: Actions = {
             if (!Number.isInteger(parsedDailyTimerMax) || parsedDailyTimerMax <= 0) {
                 return fail(400, {
                     action: 'saveTimerSettings',
-                    message: 'Daily timer minutes must be a positive whole number.',
+                    message: 'Daily timer seconds must be a positive whole number.',
                     timerMode,
                     dailyTimerMaxInput
                 });

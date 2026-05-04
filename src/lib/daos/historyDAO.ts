@@ -106,6 +106,33 @@ export class HistoryDAO extends DAO
 
         return row?.totalWatchSeconds ?? 0;
     }
+
+    async resetVirtualChannelWatchSecondsInWindow(
+        profileId: number,
+        virtualChannelId: number,
+        windowStartMs: number,
+        windowEndMs: number
+    ): Promise<void>
+    {
+        await this.run(`
+            DELETE FROM watch_history
+            WHERE profile_id = ?
+              AND video_id IN (
+                  SELECT v.id
+                  FROM videos v
+                  INNER JOIN virtual_channel_assignments a
+                      ON a.source_channel_id = v.channel_id
+                  WHERE a.virtual_channel_id = ?
+              )
+              AND last_updated_at >= ?
+              AND last_updated_at < ?
+        `, [
+            profileId,
+            virtualChannelId,
+            windowStartMs,
+            windowEndMs
+        ]);
+    }
 }
 // apply-patch-anchor - do not delete
 

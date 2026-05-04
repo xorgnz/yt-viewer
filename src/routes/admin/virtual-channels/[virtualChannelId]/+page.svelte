@@ -164,7 +164,7 @@
     <section class="panel stack">
         <div>
             <h2>Timer Settings</h2>
-            <p class="muted">Leave the channel uncapped or set a daily playback allowance in whole minutes.</p>
+            <p class="muted">Leave the channel uncapped or set a daily playback allowance in whole seconds.</p>
         </div>
 
         <form method="post" action="?/saveTimerSettings" class="fields">
@@ -177,7 +177,7 @@
             </label>
 
             <label>
-                Daily minutes
+                Daily seconds
                 <input
                     type="number"
                     name="daily_timer_max"
@@ -193,7 +193,7 @@
             {:else if data.virtualChannel.dailyTimerMax == null}
                 <p class="muted">This virtual channel is currently unlimited.</p>
             {:else}
-                <p class="muted">Current daily limit: {data.virtualChannel.dailyTimerMax} minute(s).</p>
+                <p class="muted">Current daily limit: {data.virtualChannel.dailyTimerMax} second(s).</p>
             {/if}
 
             <div class="inline-actions">

@@ -19,7 +19,7 @@ export class SideNavVirtualChannelPanelPresenter
             return 'Limit reached';
         }
 
-        return `Daily limit: ${this.formatSeconds(this.virtualChannel.dailyTimerMax * 60)} sec`;
+        return `Daily limit: ${this.formatSeconds(this.virtualChannel.dailyTimerMax)} sec`;
     }
 
     getTimerUsageLabel(): string
