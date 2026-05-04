@@ -1,46 +1,17 @@
 <script lang="ts">
+    import { SideNavVirtualChannelPanelPresenter } from '$lib/components/SideNavVirtualChannelPanelPresenter';
     import type { SideNavVirtualChannelViewModel } from '$lib/components/SideNavVirtualChannelPanelViewModel';
 
     export let virtualChannel: SideNavVirtualChannelViewModel;
-
-    function formatMinutesFromSeconds(seconds: number): string
-    {
-        return String(Math.max(0, Math.floor(seconds / 60)));
-    }
-
-    function getTimerModeLabel(channel: SideNavVirtualChannelViewModel): string
-    {
-        if (channel.timerState === 'unlimited' || channel.dailyTimerMax == null) {
-            return 'Unlimited';
-        }
-
-        if (channel.timerState === 'capped') {
-            return 'Limit reached';
-        }
-
-        return `Daily limit: ${channel.dailyTimerMax} min`;
-    }
-
-    function getTimerUsageLabel(channel: SideNavVirtualChannelViewModel): string
-    {
-        if (channel.timerState === 'unlimited' || channel.dailyTimerMax == null) {
-            return `Used today: ${formatMinutesFromSeconds(channel.timerUsageSeconds)} min`;
-        }
-
-        if (channel.timerState === 'capped') {
-            return `Used today: ${formatMinutesFromSeconds(channel.timerUsageSeconds)} / ${channel.dailyTimerMax} min`;
-        }
-
-        return `Remaining: ${formatMinutesFromSeconds(channel.timerRemainingSeconds ?? 0)} min`;
-    }
+    $: presenter = new SideNavVirtualChannelPanelPresenter(virtualChannel);
 </script>
 
 <section class="nav-virtual-channel" aria-label="Active virtual channel">
     <div class="nav-virtual-channel-label">Virtual Channel</div>
     <div class="nav-virtual-channel-name">{virtualChannel.name}</div>
     <div class="nav-virtual-channel-meta">
-        <div class="nav-virtual-channel-status">{getTimerModeLabel(virtualChannel)}</div>
-        <div class="nav-virtual-channel-usage">{getTimerUsageLabel(virtualChannel)}</div>
+        <div class="nav-virtual-channel-status">{presenter.getTimerModeLabel()}</div>
+        <div class="nav-virtual-channel-usage">{presenter.getTimerUsageLabel()}</div>
     </div>
 </section>
 
