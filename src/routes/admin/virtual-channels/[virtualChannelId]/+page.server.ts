@@ -5,6 +5,7 @@ import type { VirtualChannelAssignmentVideoReviewState } from '$lib/entities/vir
 import { ServerDatabaseContext } from '$lib/server/ServerDatabaseContext';
 import { ServerActionForm } from '$lib/server/ServerActionForm';
 import { AdminVirtualChannelServiceContext } from '$lib/server/admin/AdminVirtualChannelServiceContext';
+import { VirtualChannelAssignmentVideoReviewState as ReviewState } from '$lib/entities/virtualChannelAssignmentVideoSelection';
 
 export const load: PageServerLoad = async ({ params, url }) =>
 {
@@ -43,7 +44,7 @@ function parseAssignmentMode(value: FormDataEntryValue | null): VirtualChannelAs
 
 function parseReviewState(value: FormDataEntryValue | null): VirtualChannelAssignmentVideoReviewState
 {
-    return value === 'included' || value === 'ignored' ? value : 'not_yet_reviewed';
+    return value === ReviewState.Included || value === ReviewState.Ignored ? value : ReviewState.NotYetReviewed;
 }
 
 function parseDailyTimerMode(value: FormDataEntryValue | null): 'unlimited' | 'capped'

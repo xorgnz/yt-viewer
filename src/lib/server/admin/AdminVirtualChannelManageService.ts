@@ -8,6 +8,7 @@ import type { VirtualChannelDAO } from '$lib/daos/virtualChannelDAO';
 import type { VirtualChannelAssignment } from '$lib/entities/virtualChannelAssignment';
 import type { VirtualChannelAssignmentMode } from '$lib/entities/virtualChannelAssignment';
 import type { VirtualChannelAssignmentVideoReviewState } from '$lib/entities/virtualChannelAssignmentVideoSelection';
+import { VirtualChannelAssignmentVideoReviewState as ReviewState } from '$lib/entities/virtualChannelAssignmentVideoSelection';
 import type { SourceChannel } from '$lib/entities/sourceChannel';
 import type {
     AdminAssociatedSourceChannelView,
@@ -316,14 +317,14 @@ export class AdminVirtualChannelManageService
             ? []
             : sourceVideos.map((video) => ({
                 video,
-                review_state: selectionByVideoId.get(video.id)?.review_state ?? 'not_yet_reviewed'
+                reviewState: selectionByVideoId.get(video.id)?.review_state ?? ReviewState.NotYetReviewed
             }));
         const selectedOnlyCounts = assignment.mode !== 'selected_only'
             ? null
             : {
-                included: selectedOnlyVideos.filter((video) => video.review_state === 'included').length,
-                ignored: selectedOnlyVideos.filter((video) => video.review_state === 'ignored').length,
-                not_yet_reviewed: selectedOnlyVideos.filter((video) => video.review_state === 'not_yet_reviewed').length
+                included: selectedOnlyVideos.filter((video) => video.reviewState === ReviewState.Included).length,
+                ignored: selectedOnlyVideos.filter((video) => video.reviewState === ReviewState.Ignored).length,
+                notYetReviewed: selectedOnlyVideos.filter((video) => video.reviewState === ReviewState.NotYetReviewed).length
             };
 
         return {
@@ -340,9 +341,7 @@ export class AdminVirtualChannelManageService
 
     private getReviewStateFilter(searchParams: URLSearchParams, assignmentId: number): AdminReviewStateFilter
     {
-        return searchParams.get(`reviewStateFilter-${assignmentId}`) === 'not_yet_reviewed'
-            ? 'not_yet_reviewed'
-            : 'all';
+        return searchParams.get(`reviewStateFilter-${assignmentId}`) === 'notYetReviewed' ? 'notYetReviewed' : 'all';
     }
 
     private getVideoTypeFilter(searchParams: URLSearchParams, assignmentId: number): AdminVideoTypeFilter

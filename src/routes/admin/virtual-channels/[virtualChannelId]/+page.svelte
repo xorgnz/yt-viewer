@@ -1,6 +1,7 @@
 <script lang="ts">
     import type { ActionData, PageData } from './$types';
     import type { AdminSelectedOnlyVideoViewModel } from '$lib/server/admin/AdminVirtualChannelTypes';
+    import { VirtualChannelAssignmentVideoReviewState as ReviewState } from '$lib/entities/virtualChannelAssignmentVideoSelection';
 
     export let data: PageData;
     export let form: ActionData;
@@ -67,7 +68,7 @@
 
     function selectedOnlyQueryString(item: {
         assignment: { id: number };
-        reviewStateFilter: 'all' | 'not_yet_reviewed';
+        reviewStateFilter: 'all' | 'notYetReviewed';
         regexFilter: string;
         videoTypeFilter: 'all' | 'long' | 'short' | 'unknown';
     }): string
@@ -88,14 +89,14 @@
 
     function filteredSelectedOnlyVideos(
         videos: AdminSelectedOnlyVideoViewModel[],
-        reviewStateFilter: 'all' | 'not_yet_reviewed',
+        reviewStateFilter: 'all' | 'notYetReviewed',
         regexFilter: string,
         videoTypeFilter: 'all' | 'long' | 'short' | 'unknown'
     )
     {
         // Apply the review-state filter first so later bulk tools can target the shown rows.
-        let filteredVideos = reviewStateFilter === 'not_yet_reviewed'
-            ? videos.filter((video) => video.review_state === 'not_yet_reviewed')
+        let filteredVideos = reviewStateFilter === 'notYetReviewed'
+            ? videos.filter((video) => video.reviewState === ReviewState.NotYetReviewed)
             : videos;
 
         // Apply the video classification filter before regex matching.
@@ -360,7 +361,7 @@
                                                         <input
                                                             type="hidden"
                                                             name={`reviewStateFilter-${item.assignment.id}`}
-                                                            value="not_yet_reviewed"
+                                                            value="notYetReviewed"
                                                         />
                                                         <input
                                                             type="hidden"
@@ -375,7 +376,7 @@
                                                         <button type="submit" class="btn btn-secondary">
                                                             Not yet reviewed
                                                             {#if item.selectedOnlyCounts}
-                                                                ({item.selectedOnlyCounts.not_yet_reviewed})
+                                                                ({item.selectedOnlyCounts.notYetReviewed})
                                                             {/if}
                                                         </button>
                                                     </form>
@@ -478,7 +479,7 @@
                                                     </form>
                                                     <form method="post" action="?/bulkUpdateVideoReviewState" class="inline-form">
                                                         <input type="hidden" name="assignment_id" value={item.assignment.id} />
-                                                        <input type="hidden" name="review_state" value="not_yet_reviewed" />
+                                                        <input type="hidden" name="review_state" value="notYetReviewed" />
                                                         <input
                                                             type="hidden"
                                                             name="video_ids"
@@ -508,7 +509,7 @@
                                                     </form>
                                                     <form method="post" action="?/bulkUpdateVideoReviewState" class="inline-form">
                                                         <input type="hidden" name="assignment_id" value={item.assignment.id} />
-                                                        <input type="hidden" name="review_state" value="not_yet_reviewed" />
+                                                        <input type="hidden" name="review_state" value="notYetReviewed" />
                                                         <input
                                                             type="hidden"
                                                             name="video_ids"
@@ -562,7 +563,7 @@
                                                                     </td>
                                                                     <td>
                                                                         <div class="stack">
-                                                                            <div><code>{video.review_state}</code></div>
+                                                                            <div><code>{video.reviewState}</code></div>
                                                                             <div class="inline-actions">
                                                                                 <form method="post" action="?/setVideoReviewState" class="inline-form">
                                                                                     <input type="hidden" name="assignment_id" value={item.assignment.id} />
@@ -579,7 +580,7 @@
                                                                                 <form method="post" action="?/setVideoReviewState" class="inline-form">
                                                                                     <input type="hidden" name="assignment_id" value={item.assignment.id} />
                                                                                     <input type="hidden" name="video_id" value={video.video.id} />
-                                                                                    <input type="hidden" name="review_state" value="not_yet_reviewed" />
+                                                                                    <input type="hidden" name="review_state" value="notYetReviewed" />
                                                                                     <button type="submit" class="btn-secondary">Reset</button>
                                                                                 </form>
                                                                             </div>

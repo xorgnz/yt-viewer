@@ -5,7 +5,7 @@ import type { VirtualChannel } from '$lib/entities/virtualChannel';
 import type { Video } from '$lib/entities/video';
 
 export type AdminVideoTypeFilter = 'all' | 'long' | 'short' | 'unknown';
-export type AdminReviewStateFilter = 'all' | 'not_yet_reviewed';
+export type AdminReviewStateFilter = 'all' | 'notYetReviewed';
 
 export interface AdminVirtualChannelServiceError<TCode extends string = string>
 {
@@ -65,14 +65,14 @@ export interface AdminVirtualChannelRedirect
 export interface AdminSelectedOnlyVideoViewModel
 {
     video: Video;
-    review_state: VirtualChannelAssignmentVideoReviewState;
+    reviewState: VirtualChannelAssignmentVideoReviewState;
 }
 
 export interface AdminSelectedOnlyCounts
 {
     included: number;
     ignored: number;
-    not_yet_reviewed: number;
+    notYetReviewed: number;
 }
 
 export interface AdminAssociatedSourceChannelView

@@ -1,4 +1,9 @@
-export type VirtualChannelAssignmentVideoReviewState = 'included' | 'ignored' | 'not_yet_reviewed';
+export enum VirtualChannelAssignmentVideoReviewState
+{
+    Included = 'included',
+    Ignored = 'ignored',
+    NotYetReviewed = 'not_yet_reviewed'
+}
 
 export type VirtualChannelAssignmentVideoSelectionFields = {
     id: number;
@@ -38,9 +43,9 @@ export class VirtualChannelAssignmentVideoSelection
             typeof value.assignment_id === 'number' &&
             typeof value.video_id === 'number' &&
             (
-                value.review_state === 'included' ||
-                value.review_state === 'ignored' ||
-                value.review_state === 'not_yet_reviewed'
+                value.review_state === VirtualChannelAssignmentVideoReviewState.Included ||
+                value.review_state === VirtualChannelAssignmentVideoReviewState.Ignored ||
+                value.review_state === VirtualChannelAssignmentVideoReviewState.NotYetReviewed
             ) &&
             typeof value.created_at === 'number' &&
             typeof value.updated_at === 'number'
