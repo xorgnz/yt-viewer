@@ -28,23 +28,35 @@
 
         const candidate = value as Partial<SideNavVirtualChannelViewModel>;
 
-        if (
-            typeof candidate.id !== 'number' ||
-            typeof candidate.name !== 'string' ||
-            (candidate.dailyTimerMax !== null && typeof candidate.dailyTimerMax !== 'number') ||
-            (candidate.timerState !== 'unlimited' && candidate.timerState !== 'available' && candidate.timerState !== 'capped') ||
-            typeof candidate.timerUsageSeconds !== 'number' ||
-            (candidate.timerRemainingSeconds !== null && typeof candidate.timerRemainingSeconds !== 'number') ||
-            typeof candidate.timerWindowStartMs !== 'number' ||
-            typeof candidate.timerWindowEndMs !== 'number'
-        ) {
+        if (typeof candidate.id !== 'number' || typeof candidate.name !== 'string') {
             return null;
         }
 
-        return candidate as SideNavVirtualChannelViewModel;
+        // Normalize partial load payloads so nav rendering does not silently drop an active channel.
+        const dailyTimerMax = typeof candidate.dailyTimerMax === 'number' ? candidate.dailyTimerMax : null;
+        const timerUsageSeconds = typeof candidate.timerUsageSeconds === 'number' ? candidate.timerUsageSeconds : 0;
+        const timerRemainingSeconds = typeof candidate.timerRemainingSeconds === 'number'
+            ? candidate.timerRemainingSeconds
+            : (dailyTimerMax == null ? null : Math.max(0, (dailyTimerMax * 60) - timerUsageSeconds));
+        const timerState = candidate.timerState === 'unlimited' || candidate.timerState === 'available' || candidate.timerState === 'capped'
+            ? candidate.timerState
+            : (dailyTimerMax == null ? 'unlimited' : (timerRemainingSeconds === 0 ? 'capped' : 'available'));
+
+        return {
+            id: candidate.id,
+            name: candidate.name,
+            dailyTimerMax,
+            timerState,
+            timerUsageSeconds,
+            timerRemainingSeconds,
+            timerWindowStartMs: typeof candidate.timerWindowStartMs === 'number' ? candidate.timerWindowStartMs : 0,
+            timerWindowEndMs: typeof candidate.timerWindowEndMs === 'number' ? candidate.timerWindowEndMs : 0,
+        };
     }
 
     $: activeVirtualChannel = readActiveVirtualChannel($page.data.activeVirtualChannel);
+    $: shouldShowVirtualChannelPanel = $page.url.pathname === '/viewer'
+        || $page.url.pathname.startsWith('/viewer/');
 </script>
 
 <aside class="side-nav" aria-label="Primary Navigation">
@@ -67,7 +79,7 @@
         {/if}
     </nav>
 
-    {#if activeVirtualChannel}
+    {#if shouldShowVirtualChannelPanel}
         <SideNavVirtualChannelPanel virtualChannel={activeVirtualChannel} />
     {/if}
 

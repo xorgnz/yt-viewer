@@ -2,17 +2,23 @@
     import { SideNavVirtualChannelPanelPresenter } from '$lib/components/SideNavVirtualChannelPanelPresenter';
     import type { SideNavVirtualChannelViewModel } from '$lib/components/SideNavVirtualChannelPanelViewModel';
 
-    export let virtualChannel: SideNavVirtualChannelViewModel;
-    $: presenter = new SideNavVirtualChannelPanelPresenter(virtualChannel);
+    export let virtualChannel: SideNavVirtualChannelViewModel | null;
+    $: presenter = virtualChannel
+        ? new SideNavVirtualChannelPanelPresenter(virtualChannel)
+        : null;
 </script>
 
 <section class="nav-virtual-channel" aria-label="Active virtual channel">
     <div class="nav-virtual-channel-label">Virtual Channel</div>
-    <div class="nav-virtual-channel-name">{virtualChannel.name}</div>
-    <div class="nav-virtual-channel-meta">
-        <div class="nav-virtual-channel-status">{presenter.getTimerModeLabel()}</div>
-        <div class="nav-virtual-channel-usage">{presenter.getTimerUsageLabel()}</div>
-    </div>
+    {#if virtualChannel && presenter}
+        <div class="nav-virtual-channel-name">{virtualChannel.name}</div>
+        <div class="nav-virtual-channel-meta">
+            <div class="nav-virtual-channel-status">{presenter.getTimerModeLabel()}</div>
+            <div class="nav-virtual-channel-usage">{presenter.getTimerUsageLabel()}</div>
+        </div>
+    {:else}
+        <div class="nav-virtual-channel-name nav-virtual-channel-name-muted">No channel selected</div>
+    {/if}
 </section>
 
 <style>
@@ -48,6 +54,11 @@
         font-size: 0.98rem;
         font-weight: 600;
         line-height: 1.3;
+    }
+
+    .nav-virtual-channel-name-muted {
+        color: var(--text-muted);
+        font-weight: 500;
     }
 
     .nav-virtual-channel-meta {
