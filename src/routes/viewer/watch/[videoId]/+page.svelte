@@ -569,15 +569,6 @@
 
         window.addEventListener('pagehide', handlePageHide);
 
-        if (timerPlaybackBlocked)
-        {
-            return () => {
-                window.removeEventListener('pagehide', handlePageHide);
-                flushPendingHistory(activeVideoYoutubeId, true);
-                stopPolling();
-            };
-        }
-
         function createPlayer()
         {
             if ((window as any).YT && (window as any).YT.Player)
@@ -591,7 +582,14 @@
                         modestbranding: 1
                     },
                     events: {
-                        onReady: () => { startPolling(); },
+                        onReady: () => {
+                            if (timerPlaybackBlocked) {
+                                handleTimerCapReached();
+                                return;
+                            }
+
+                            startPolling();
+                        },
                         onStateChange: (e: any) =>
                         {
                             const YT = (window as any).YT;
@@ -692,13 +690,15 @@
                 <span id="a_player_nav_prev" aria-hidden="true"></span>
             {/if}
 
-            {#if timerStatusMessage}
-                <div id="div_player_status" aria-live="polite">
-                    <p>{timerStatusMessage}</p>
-                </div>
-            {/if}
+            <div id="div_player_surface">
+                {#if timerStatusMessage}
+                    <div id="div_player_status" aria-live="polite">
+                        <p>{timerStatusMessage}</p>
+                    </div>
+                {/if}
 
-            <div id="player" title={data.video.title}></div>
+                <div id="player" title={data.video.title}></div>
+            </div>
 
             {#if data.nextVideoYoutubeId}
                 <a id="a_player_nav_next" href={buildWatchHref(data.nextVideoYoutubeId)} aria-label="Next video">
@@ -861,9 +861,16 @@
         --managed-width: min(var(--free-width), var(--constrained-width));
         flex: 1;
         display: flex;
-        position: relative;
         align-items: stretch;
         justify-content: center;
+    }
+
+    #div_player_surface {
+        width: var(--managed-width);
+        max-height: var(--player-flex-wrapper-height);
+        display: block;
+        position: relative;
+        aspect-ratio: 16 / 9;
     }
 
     #a_player_nav_prev,
@@ -883,26 +890,26 @@
     }
 
     #player {
-        width: var(--managed-width);
-        max-height: var(--player-flex-wrapper-height);
+        width: 100%;
+        height: 100%;
         display: block;
-        aspect-ratio: 16 / 9;
         border: 2px solid #909090;
         border-radius: var(--radius);
         box-shadow: var(--shadow-md);
     }
 
     #div_player_status {
-        width: var(--managed-width);
-        max-height: var(--player-flex-wrapper-height);
+        width: 100%;
+        height: 100%;
         display: flex;
         position: absolute;
+        inset: 0;
         z-index: 3;
         align-items: center;
         justify-content: center;
         border: 2px solid rgba(229, 115, 115, 0.92);
         border-radius: var(--radius);
-        padding: 1.5rem;
+        padding: 2rem;
         box-sizing: border-box;
         background-color: rgba(24, 24, 24, 0.92);
         color: var(--text);
@@ -911,9 +918,10 @@
 
     #div_player_status p {
         margin: 0;
-        font-size: 1rem;
-        font-weight: 600;
-        line-height: 1.4;
+        max-width: 28rem;
+        font-size: clamp(1.75rem, 2.8vw, 3rem);
+        font-weight: 700;
+        line-height: 1.2;
     }
 
     #svg_player_nav_prev,
