@@ -146,6 +146,7 @@ Current standardized conventions include:
 - `*Service` for request-facing orchestration or business-workflow coordination
 - `*Fields` for plain field-value structures that represent an entity without transport or storage context
 - `*ViewModel` for UI-facing projection shapes prepared for rendering rather than domain behavior
+- `*Panel.svelte` for panel-style presentational components, with associated view-model files named to include the same concept plus the `ViewModel` suffix when a dedicated UI projection type is needed
 
 These suffixes should be used deliberately rather than mechanically. If a type or class does not clearly fit the role implied by the suffix, rename the object or choose a more accurate boundary.
 
