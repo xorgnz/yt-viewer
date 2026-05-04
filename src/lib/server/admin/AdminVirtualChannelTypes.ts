@@ -1,8 +1,8 @@
 import type { SourceChannel } from '$lib/entities/sourceChannel';
-import type { VirtualChannelAssignmentFields } from '$lib/entities/virtualChannelAssignment';
+import type { VirtualChannelAssignment } from '$lib/entities/virtualChannelAssignment';
 import type { VirtualChannelAssignmentVideoReviewState } from '$lib/entities/virtualChannelAssignmentVideoSelection';
 import type { VirtualChannel } from '$lib/entities/virtualChannel';
-import type { VideoFields } from '$lib/entities/video';
+import type { Video } from '$lib/entities/video';
 
 export type AdminVideoTypeFilter = 'all' | 'long' | 'short' | 'unknown';
 export type AdminReviewStateFilter = 'all' | 'not_yet_reviewed';
@@ -33,7 +33,7 @@ export type AdminVirtualChannelServiceResult<
 
 export interface AdminInlineAssociation
 {
-    assignment: VirtualChannelAssignmentFields;
+    assignment: VirtualChannelAssignment;
     sourceChannel: SourceChannel | null;
 }
 
@@ -64,7 +64,7 @@ export interface AdminVirtualChannelRedirect
 
 export interface AdminSelectedOnlyVideoViewModel
 {
-    video: VideoFields;
+    video: Video;
     review_state: VirtualChannelAssignmentVideoReviewState;
 }
 
@@ -77,9 +77,9 @@ export interface AdminSelectedOnlyCounts
 
 export interface AdminAssociatedSourceChannelView
 {
-    assignment: VirtualChannelAssignmentFields;
+    assignment: VirtualChannelAssignment;
     sourceChannel: SourceChannel | null;
-    automaticVideos: VideoFields[];
+    automaticVideos: Video[];
     selectedOnlyVideos: AdminSelectedOnlyVideoViewModel[];
     selectedOnlyCounts: AdminSelectedOnlyCounts | null;
     reviewStateFilter: AdminReviewStateFilter;
