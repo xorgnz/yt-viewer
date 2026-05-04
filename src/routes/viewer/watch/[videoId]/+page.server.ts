@@ -49,7 +49,7 @@ export const actions = {
         if (!videoYoutubeId) return fail(400, { message: 'Missing videoId' });
 
         const form = await ServerActionForm.fromRequest(request);
-        const groupId = form.getPositiveInteger('groupId');
+        const virtualChannelId = form.getPositiveInteger('virtualChannelId');
         const watchSeconds = form.getNumber('watchSeconds', 0);
         if (!Number.isFinite(watchSeconds) || watchSeconds <= 5) {
             return fail(400, { message: 'Insufficient watch time for history session' });
@@ -60,7 +60,7 @@ export const actions = {
             const result = await serviceContext.watchService.createHistorySession(
                 videoYoutubeId,
                 watchSeconds,
-                groupId
+                virtualChannelId
             );
 
             if (!result.ok) {
@@ -91,7 +91,7 @@ export const actions = {
         if (!videoYoutubeId) return fail(400, { message: 'Missing videoId' });
 
         const form = await ServerActionForm.fromRequest(request);
-        const groupId = form.getPositiveInteger('groupId');
+        const virtualChannelId = form.getPositiveInteger('virtualChannelId');
         const watchSeconds = form.getNumber('watchSeconds', 0);
         if (!Number.isFinite(watchSeconds) || watchSeconds < 0) {
             return fail(400, { message: 'Invalid watch time' });
@@ -102,7 +102,7 @@ export const actions = {
             const result = await serviceContext.watchService.updateHistoryProgress(
                 videoYoutubeId,
                 watchSeconds,
-                groupId
+                virtualChannelId
             );
 
             if (!result.ok) {

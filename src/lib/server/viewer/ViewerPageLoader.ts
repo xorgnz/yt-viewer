@@ -37,9 +37,9 @@ export class ViewerPageLoader
             this.sourceChannelDAO.list(),
             virtualChannelService.loadVirtualChannels()
         ]);
-        const activeVirtualChannel = filters.groupId == null
+        const activeVirtualChannel = filters.virtualChannelId == null
             ? null
-            : groups.find((group) => group.id === filters.groupId) ?? null;
+            : groups.find((group) => group.id === filters.virtualChannelId) ?? null;
 
         return {
             filters,

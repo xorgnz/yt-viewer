@@ -118,7 +118,7 @@ describe('viewer timer services', () => {
             dateFromInput: '',
             dateToInput: '',
             channelId: null,
-            groupId: 8,
+            virtualChannelId: 8,
             sort: 'newest',
             limit: 200,
             offset: 0
@@ -130,7 +130,7 @@ describe('viewer timer services', () => {
         }
 
         expect(result.data.playbackBlockedMessage).toBe('Daily timer limit reached for this virtual channel.');
-        expect(result.data.currentGroupId).toBe(8);
+        expect(result.data.currentVirtualChannelId).toBe(8);
         expect(result.data.nextVideoYoutubeId).toBe('video-4');
     });
 

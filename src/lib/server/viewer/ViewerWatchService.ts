@@ -19,7 +19,7 @@ export type ViewerWatchLoadModel = {
     recommendations: ViewerWatchVideo[];
     previousVideoYoutubeId: string | null;
     nextVideoYoutubeId: string | null;
-    currentGroupId: number | null;
+    currentVirtualChannelId: number | null;
     activeVirtualChannel: ViewerVirtualChannel | null;
     playbackBlockedMessage: string | null;
     navigationFilters: ViewerQueryFilters;
@@ -81,8 +81,8 @@ export class ViewerWatchService
         let playbackBlockedMessage: string | null = null;
         let activeVirtualChannel: ViewerVirtualChannel | null = null;
 
-        if (filters.groupId != null) {
-            const group = await this.virtualChannelService.getVirtualChannelById(filters.groupId);
+        if (filters.virtualChannelId != null) {
+            const group = await this.virtualChannelService.getVirtualChannelById(filters.virtualChannelId);
 
             if (!group) {
                 return { ok: false, status: 404, message: 'Virtual channel not found' };
@@ -109,7 +109,7 @@ export class ViewerWatchService
                 watched: filters.watched,
                 ignored: filters.ignored,
                 channelId: filters.channelId,
-                groupId: filters.groupId,
+                virtualChannelId: filters.virtualChannelId,
                 sort: filters.sort
             },
             this.profileContext.activeProfileId
@@ -119,10 +119,10 @@ export class ViewerWatchService
             ok: true,
             data: {
                 video,
-                recommendations: await this.recommendationService.load(video, filters.groupId),
+                recommendations: await this.recommendationService.load(video, filters.virtualChannelId),
                 previousVideoYoutubeId: adjacent.previousYoutubeId,
                 nextVideoYoutubeId: adjacent.nextYoutubeId,
-                currentGroupId: filters.groupId,
+                currentVirtualChannelId: filters.virtualChannelId,
                 activeVirtualChannel,
                 playbackBlockedMessage,
                 navigationFilters: filters,
@@ -136,11 +136,11 @@ export class ViewerWatchService
     async createHistorySession(
         videoYoutubeId: string,
         watchSeconds: number,
-        groupId: number | null,
+        virtualChannelId: number | null,
         now = Date.now()
     ): Promise<ViewerWatchResult>
     {
-        const groupCheck = await this.ensureGroupAllowsPlayback(groupId);
+        const groupCheck = await this.ensureGroupAllowsPlayback(virtualChannelId);
         if (!groupCheck.ok) {
             return groupCheck;
         }
@@ -171,7 +171,7 @@ export class ViewerWatchService
             });
         }
 
-        const postWriteGroupCheck = await this.ensureGroupAllowsPlayback(groupId);
+        const postWriteGroupCheck = await this.ensureGroupAllowsPlayback(virtualChannelId);
         if (!postWriteGroupCheck.ok) {
             return postWriteGroupCheck;
         }
@@ -182,11 +182,11 @@ export class ViewerWatchService
     async updateHistoryProgress(
         videoYoutubeId: string,
         watchSeconds: number,
-        groupId: number | null,
+        virtualChannelId: number | null,
         now = Date.now()
     ): Promise<ViewerWatchResult>
     {
-        const groupCheck = await this.ensureGroupAllowsPlayback(groupId);
+        const groupCheck = await this.ensureGroupAllowsPlayback(virtualChannelId);
         if (!groupCheck.ok) {
             return groupCheck;
         }
@@ -220,7 +220,7 @@ export class ViewerWatchService
             time_watched_seconds: Math.floor(watchSeconds)
         });
 
-        const postWriteGroupCheck = await this.ensureGroupAllowsPlayback(groupId);
+        const postWriteGroupCheck = await this.ensureGroupAllowsPlayback(virtualChannelId);
         if (!postWriteGroupCheck.ok) {
             return postWriteGroupCheck;
         }
@@ -250,13 +250,13 @@ export class ViewerWatchService
         return await this.viewerVideoReadRepository.getByYoutubeId(videoYoutubeId, this.profileContext.activeProfileId) || null;
     }
 
-    private async ensureGroupAllowsPlayback(groupId: number | null): Promise<ViewerWatchResult>
+    private async ensureGroupAllowsPlayback(virtualChannelId: number | null): Promise<ViewerWatchResult>
     {
-        if (groupId == null) {
+        if (virtualChannelId == null) {
             return { ok: true };
         }
 
-        const group = await this.virtualChannelService.getVirtualChannelById(groupId);
+        const group = await this.virtualChannelService.getVirtualChannelById(virtualChannelId);
         if (!group) {
             return {
                 ok: false,

@@ -318,7 +318,7 @@
             dateFromInput: f.dateFromInput,
             dateToInput: f.dateToInput,
             channelId: f.channelId,
-            groupId: f.groupId,
+            virtualChannelId: f.virtualChannelId,
             sort: f.sort
         });
         const nextCurrentPageVideoIds = currentPageSelectionVideos.map((video) => video.id);

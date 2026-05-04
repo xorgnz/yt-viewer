@@ -18,7 +18,7 @@ describe('viewer page state helpers', () => {
             dateFromInput: '',
             dateToInput: '',
             channelId: null,
-            groupId: null,
+            virtualChannelId: null,
             sort: 'newest',
             limit: 10,
             offset: 0,
@@ -27,7 +27,7 @@ describe('viewer page state helpers', () => {
     }
 
     it('builds filter query flags from input state', () => {
-        const filters = createFilters({ groupId: 4 });
+        const filters = createFilters({ virtualChannelId: 4 });
         const inputState = viewerPageState.deriveViewerFilterInputState({
             ...filters,
             term: 'space',
@@ -46,7 +46,7 @@ describe('viewer page state helpers', () => {
         expect(query.get('unwatchedOnly')).toBe('1');
         expect(query.get('showIgnored')).toBe('1');
         expect(query.get('channelId')).toBe('22');
-        expect(query.get('groupId')).toBe('4');
+        expect(query.get('virtualChannelId')).toBe('4');
         expect(query.get('sort')).toBe('newest');
         expect(query.get('limit')).toBe('25');
         expect(query.get('offset')).toBe('0');
@@ -74,7 +74,7 @@ describe('viewer page state helpers', () => {
             dateFromInput: '',
             dateToInput: '',
             channelId: null,
-            groupId: null,
+            virtualChannelId: null,
             sort: 'newest'
         });
         const pageOneVideos = [
@@ -106,7 +106,7 @@ describe('viewer page state helpers', () => {
             watched: 'unwatched',
             ignored: 'show',
             channelId: 7,
-            groupId: 3,
+            virtualChannelId: 3,
             sort: 'title_desc'
         }), 'abc123');
 
@@ -117,7 +117,7 @@ describe('viewer page state helpers', () => {
         expect(url.searchParams.get('watched')).toBe('unwatched');
         expect(url.searchParams.get('ignored')).toBe('show');
         expect(url.searchParams.get('channelId')).toBe('7');
-        expect(url.searchParams.get('groupId')).toBe('3');
+        expect(url.searchParams.get('virtualChannelId')).toBe('3');
         expect(url.searchParams.get('sort')).toBe('title_desc');
     });
 });

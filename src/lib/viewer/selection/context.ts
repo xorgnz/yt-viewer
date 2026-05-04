@@ -11,7 +11,7 @@ export class ViewerSelectionContext
     public readonly dateFromInput: string;
     public readonly dateToInput: string;
     public readonly channelId: number | null;
-    public readonly groupId: number | null;
+    public readonly virtualChannelId: number | null;
     public readonly sort: string;
 
     public constructor(input: ViewerSelectionContextInput)
@@ -23,7 +23,7 @@ export class ViewerSelectionContext
         this.dateFromInput = input.dateFromInput;
         this.dateToInput = input.dateToInput;
         this.channelId = input.channelId;
-        this.groupId = input.groupId;
+        this.virtualChannelId = input.virtualChannelId;
         this.sort = input.sort;
     }
 
@@ -42,7 +42,7 @@ export class ViewerSelectionContext
             dateFrom: this.dateFromInput,
             dateTo: this.dateToInput,
             channelId: this.channelId != null ? String(this.channelId) : '',
-            groupId: this.groupId != null ? String(this.groupId) : '',
+            virtualChannelId: this.virtualChannelId != null ? String(this.virtualChannelId) : '',
             sort: this.sort
         }).toString();
     }

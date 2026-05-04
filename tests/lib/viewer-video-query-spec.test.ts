@@ -10,7 +10,7 @@ describe('ViewerVideoQuerySpec', () => {
             watched: 'watched',
             ignored: 'hide',
             channelId: 3,
-            groupId: 8,
+            virtualChannelId: 8,
             sort: 'title_asc',
             limit: 5000,
             offset: -10
@@ -33,7 +33,7 @@ describe('ViewerVideoQuerySpec', () => {
             dateFrom: 100,
             dateTo: 200,
             channelId: 3,
-            groupId: 8
+            virtualChannelId: 8
         });
         expect(queryParts.limit).toBe(1000);
         expect(queryParts.offset).toBe(0);

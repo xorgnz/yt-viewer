@@ -27,7 +27,7 @@ const parseFiltersMock = vi.fn(() => ({
     dateFromInput: '',
     dateToInput: '',
     channelId: null,
-    groupId: 5,
+    virtualChannelId: 5,
     sort: 'newest',
     limit: 200,
     offset: 0
@@ -90,7 +90,7 @@ describe('viewer watch route', () => {
                 recommendations: [],
                 previousVideoYoutubeId: null,
                 nextVideoYoutubeId: null,
-                currentGroupId: 5,
+                currentVirtualChannelId: 5,
                 playbackBlockedMessage: 'Daily timer limit reached for this virtual channel.',
                 navigationFilters: parseFiltersMock(),
                 profileId: 3,
@@ -102,11 +102,11 @@ describe('viewer watch route', () => {
         const result = await routeModule.load({
             params: { videoId: 'video-1' },
             cookies: {},
-            url: new URL('http://localhost/viewer/watch/video-1?groupId=5')
+            url: new URL('http://localhost/viewer/watch/video-1?virtualChannelId=5')
         } as never);
 
         expect(result.playbackBlockedMessage).toBe('Daily timer limit reached for this virtual channel.');
-        expect(watchService.load).toHaveBeenCalledWith('video-1', expect.objectContaining({ groupId: 5 }));
+        expect(watchService.load).toHaveBeenCalledWith('video-1', expect.objectContaining({ virtualChannelId: 5 }));
     });
 
     it('returns a timer-capped response from the history-session action with the capped header', async () => {
@@ -119,7 +119,7 @@ describe('viewer watch route', () => {
 
         const form = new FormData();
         form.set('watchSeconds', '30');
-        form.set('groupId', '5');
+        form.set('virtualChannelId', '5');
 
         const result = await routeModule.actions.createHistorySession({
             request: new Request('http://localhost/viewer/watch/video-1', {

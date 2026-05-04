@@ -42,9 +42,9 @@ export class ViewerVirtualChannelService
         return await Promise.all(groups.map((group) => this.buildGroupView(group, window)));
     }
 
-    async getVirtualChannelById(groupId: number): Promise<ViewerVirtualChannel | null>
+    async getVirtualChannelById(virtualChannelId: number): Promise<ViewerVirtualChannel | null>
     {
-        const group = await this.virtualChannelDAO.get(groupId);
+        const group = await this.virtualChannelDAO.get(virtualChannelId);
         if (!group) {
             return null;
         }

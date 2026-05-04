@@ -115,8 +115,8 @@
                 />
                 <span>Show ignored</span>
             </label>
-            {#if filters.groupId != null}
-                <input type="hidden" name="groupId" value={filters.groupId} />
+            {#if filters.virtualChannelId != null}
+                <input type="hidden" name="virtualChannelId" value={filters.virtualChannelId} />
             {/if}
             <input type="hidden" name="offset" value="0" />
         </div>

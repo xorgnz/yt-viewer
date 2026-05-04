@@ -28,7 +28,7 @@
         profileName: string;
         previousVideoYoutubeId: string | null;
         nextVideoYoutubeId: string | null;
-        currentGroupId: number | null;
+        currentVirtualChannelId: number | null;
         activeVirtualChannel: ViewerVirtualChannel | null;
         playbackBlockedMessage: string | null;
     };
@@ -249,8 +249,8 @@
     {
         const formData = new FormData();
         formData.set('watchSeconds', String(Math.floor(elapsedWatchSeconds)));
-        if (data.currentGroupId != null) {
-            formData.set('groupId', String(data.currentGroupId));
+        if (data.currentVirtualChannelId != null) {
+            formData.set('virtualChannelId', String(data.currentVirtualChannelId));
         }
 
         try
@@ -282,8 +282,8 @@
     {
         const formData = new FormData();
         formData.set('watchSeconds', String(Math.floor(elapsedWatchSeconds)));
-        if (data.currentGroupId != null) {
-            formData.set('groupId', String(data.currentGroupId));
+        if (data.currentVirtualChannelId != null) {
+            formData.set('virtualChannelId', String(data.currentVirtualChannelId));
         }
 
         try

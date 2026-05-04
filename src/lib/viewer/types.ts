@@ -13,7 +13,7 @@ export type ViewerFilters = {
     dateFromInput: string;
     dateToInput: string;
     channelId: number | null;
-    groupId: number | null;
+    virtualChannelId: number | null;
     sort: ViewerSort;
     limit: number;
     offset: number;

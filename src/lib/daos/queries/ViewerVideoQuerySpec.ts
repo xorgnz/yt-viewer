@@ -8,7 +8,7 @@ export interface ViewerVideoQueryFilters
     watched?: 'all' | 'watched' | 'unwatched';
     ignored?: 'hide' | 'show';
     channelId?: number | null;
-    groupId?: number | null;
+    virtualChannelId?: number | null;
     sort?: ViewerSort;
     limit?: number;
     offset?: number;
@@ -102,10 +102,10 @@ export class ViewerVideoQuerySpec
         }
 
         // When a virtual channel is selected, honor assignment mode and selection rules.
-        if (this.filters.groupId != null) {
-            groupJoin = 'JOIN virtual_channel_assignments ga ON ga.source_channel_id = v.channel_id AND ga.virtual_channel_id = :groupId';
+        if (this.filters.virtualChannelId != null) {
+            groupJoin = 'JOIN virtual_channel_assignments ga ON ga.source_channel_id = v.channel_id AND ga.virtual_channel_id = :virtualChannelId';
             selectionJoin = 'LEFT JOIN virtual_channel_assignment_video_selections gavs ON (gavs.assignment_id = ga.id AND gavs.video_id = v.id)';
-            params.groupId = this.filters.groupId;
+            params.virtualChannelId = this.filters.virtualChannelId;
 
             where.push(`(
                 ga.mode = 'all'

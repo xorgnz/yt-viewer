@@ -21,7 +21,7 @@
                             <div class="hint">Daily timer limit reached</div>
                         </div>
                     {:else}
-                        <a class="group" href={`/viewer?${new URLSearchParams({ groupId: String(g.id) }).toString()}`}>
+                        <a class="group" href={`/viewer?${new URLSearchParams({ virtualChannelId: String(g.id) }).toString()}`}>
                             <div class="name">{g.name}</div>
                             <div class="hint">View videos from this virtual channel</div>
                         </a>

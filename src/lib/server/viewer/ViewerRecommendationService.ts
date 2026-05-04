@@ -17,20 +17,20 @@ export class ViewerRecommendationService
         this.profileId = profileId;
     }
 
-    async load(currentVideo: ViewerVideoRecord, groupId: number | null, limit = 8): Promise<ViewerVideoRecord[]>
+    async load(currentVideo: ViewerVideoRecord, virtualChannelId: number | null, limit = 8): Promise<ViewerVideoRecord[]>
     {
         const candidates = await this.viewerVideoReadRepository.list({
             watched: 'all',
             ignored: 'hide',
-            channelId: groupId == null ? currentVideo.channel_id : null,
-            groupId,
+            channelId: virtualChannelId == null ? currentVideo.channel_id : null,
+            virtualChannelId,
             limit: 1000,
             offset: 0
         }, this.profileId);
         const recommendationSeed = ViewerRecommendationService.hashString([
             'recommend',
             String(this.profileId),
-            String(groupId ?? currentVideo.channel_id),
+            String(virtualChannelId ?? currentVideo.channel_id),
             currentVideo.youtube_id
         ].join(':'));
 
