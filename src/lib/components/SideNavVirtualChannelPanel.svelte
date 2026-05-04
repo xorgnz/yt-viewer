@@ -1,20 +1,55 @@
 <script lang="ts">
+    import { onMount } from 'svelte';
     import { SideNavVirtualChannelPanelPresenter } from '$lib/components/SideNavVirtualChannelPanelPresenter';
     import type { SideNavVirtualChannelViewModel } from '$lib/components/SideNavVirtualChannelPanelViewModel';
 
     export let virtualChannel: SideNavVirtualChannelViewModel | null;
-    $: presenter = virtualChannel
-        ? new SideNavVirtualChannelPanelPresenter(virtualChannel)
+    let liveVirtualChannel: SideNavVirtualChannelViewModel | null = virtualChannel;
+
+    $: liveVirtualChannel = virtualChannel;
+    $: presenter = liveVirtualChannel
+        ? new SideNavVirtualChannelPanelPresenter(liveVirtualChannel)
         : null;
+
+    onMount(() => {
+        const onPlaybackTick = (event: Event) => {
+            const detail = (event as CustomEvent<{ virtualChannelId: number; deltaSeconds: number }>).detail;
+            if (!liveVirtualChannel || !detail || detail.virtualChannelId !== liveVirtualChannel.id) {
+                return;
+            }
+
+            if (liveVirtualChannel.dailyTimerMax == null || liveVirtualChannel.timerState === 'capped') {
+                return;
+            }
+
+            const deltaSeconds = Math.max(0, detail.deltaSeconds || 0);
+            const nextUsage = Math.max(0, liveVirtualChannel.timerUsageSeconds + deltaSeconds);
+            const nextRemaining = Math.max(0, (liveVirtualChannel.timerRemainingSeconds ?? 0) - deltaSeconds);
+            const nextState = nextRemaining === 0 ? 'capped' : 'available';
+
+            liveVirtualChannel = {
+                ...liveVirtualChannel,
+                timerUsageSeconds: nextUsage,
+                timerRemainingSeconds: nextRemaining,
+                timerState: nextState
+            };
+        };
+
+        window.addEventListener('viewer:playback-tick', onPlaybackTick as EventListener);
+        return () => {
+            window.removeEventListener('viewer:playback-tick', onPlaybackTick as EventListener);
+        };
+    });
 </script>
 
 <section class="nav-virtual-channel" aria-label="Active virtual channel">
     <div class="nav-virtual-channel-label">Virtual Channel</div>
-    {#if virtualChannel && presenter}
-        <div class="nav-virtual-channel-name">{virtualChannel.name}</div>
+    {#if liveVirtualChannel && presenter}
+        <div class="nav-virtual-channel-name">{liveVirtualChannel.name}</div>
         <div class="nav-virtual-channel-meta">
             <div class="nav-virtual-channel-status">{presenter.getTimerModeLabel()}</div>
             <div class="nav-virtual-channel-usage">{presenter.getTimerUsageLabel()}</div>
+            <div class="nav-virtual-channel-usage">{presenter.getTimerRemainingLabel()}</div>
         </div>
     {:else}
         <div class="nav-virtual-channel-name nav-virtual-channel-name-muted">No channel selected</div>

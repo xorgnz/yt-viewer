@@ -95,6 +95,14 @@ export class ViewerWatchService
             }
         }
 
+        console.info('[viewer-watch.load]', {
+            videoYoutubeId,
+            virtualChannelId: filters.virtualChannelId,
+            activeVirtualChannelUsageSeconds: activeVirtualChannel?.timerUsageSeconds ?? null,
+            activeVirtualChannelRemainingSeconds: activeVirtualChannel?.timerRemainingSeconds ?? null,
+            activeVirtualChannelState: activeVirtualChannel?.timerState ?? null
+        });
+
         const video = await this.loadVideo(videoYoutubeId);
         if (!video) {
             return { ok: false, status: 404, message: 'Video not found' };
@@ -140,8 +148,16 @@ export class ViewerWatchService
         now = Date.now()
     ): Promise<ViewerWatchResult>
     {
+        console.info('[viewer-watch.createHistorySession.start]', {
+            videoYoutubeId,
+            virtualChannelId,
+            watchSeconds: Math.floor(watchSeconds),
+            now
+        });
+
         const groupCheck = await this.ensureGroupAllowsPlayback(virtualChannelId);
         if (!groupCheck.ok) {
+            console.info('[viewer-watch.createHistorySession.blocked]', groupCheck);
             return groupCheck;
         }
 
@@ -155,6 +171,11 @@ export class ViewerWatchService
 
         if (latestSession && (now - latestSession.last_updated_at) <= HISTORY_SESSION_GAP_MS)
         {
+            console.info('[viewer-watch.createHistorySession.update-existing]', {
+                sessionId: latestSession.id,
+                previousLastUpdatedAt: latestSession.last_updated_at,
+                timeWatchedSeconds
+            });
             await this.historyDAO.updateSessionProgress(latestSession.id, {
                 last_updated_at: now,
                 time_watched_seconds: timeWatchedSeconds
@@ -162,6 +183,11 @@ export class ViewerWatchService
         }
         else
         {
+            console.info('[viewer-watch.createHistorySession.create-new]', {
+                videoId: video.id,
+                profileId: this.profileContext.activeProfileId,
+                timeWatchedSeconds
+            });
             await this.historyDAO.createSession({
                 video_id: video.id,
                 profile_id: this.profileContext.activeProfileId,
@@ -173,7 +199,18 @@ export class ViewerWatchService
 
         const postWriteGroupCheck = await this.ensureGroupAllowsPlayback(virtualChannelId);
         if (!postWriteGroupCheck.ok) {
+            console.info('[viewer-watch.createHistorySession.post-write-blocked]', postWriteGroupCheck);
             return postWriteGroupCheck;
+        }
+
+        if (virtualChannelId != null) {
+            const postWriteGroup = await this.virtualChannelService.getVirtualChannelById(virtualChannelId);
+            console.info('[viewer-watch.createHistorySession.complete]', {
+                virtualChannelId,
+                activeVirtualChannelUsageSeconds: postWriteGroup?.timerUsageSeconds ?? null,
+                activeVirtualChannelRemainingSeconds: postWriteGroup?.timerRemainingSeconds ?? null,
+                activeVirtualChannelState: postWriteGroup?.timerState ?? null
+            });
         }
 
         return { ok: true };
@@ -186,8 +223,16 @@ export class ViewerWatchService
         now = Date.now()
     ): Promise<ViewerWatchResult>
     {
+        console.info('[viewer-watch.updateHistoryProgress.start]', {
+            videoYoutubeId,
+            virtualChannelId,
+            watchSeconds: Math.floor(watchSeconds),
+            now
+        });
+
         const groupCheck = await this.ensureGroupAllowsPlayback(virtualChannelId);
         if (!groupCheck.ok) {
+            console.info('[viewer-watch.updateHistoryProgress.blocked]', groupCheck);
             return groupCheck;
         }
 
@@ -220,9 +265,25 @@ export class ViewerWatchService
             time_watched_seconds: Math.floor(watchSeconds)
         });
 
+        console.info('[viewer-watch.updateHistoryProgress.updated]', {
+            sessionId: session.id,
+            watchSeconds: Math.floor(watchSeconds)
+        });
+
         const postWriteGroupCheck = await this.ensureGroupAllowsPlayback(virtualChannelId);
         if (!postWriteGroupCheck.ok) {
+            console.info('[viewer-watch.updateHistoryProgress.post-write-blocked]', postWriteGroupCheck);
             return postWriteGroupCheck;
+        }
+
+        if (virtualChannelId != null) {
+            const postWriteGroup = await this.virtualChannelService.getVirtualChannelById(virtualChannelId);
+            console.info('[viewer-watch.updateHistoryProgress.complete]', {
+                virtualChannelId,
+                activeVirtualChannelUsageSeconds: postWriteGroup?.timerUsageSeconds ?? null,
+                activeVirtualChannelRemainingSeconds: postWriteGroup?.timerRemainingSeconds ?? null,
+                activeVirtualChannelState: postWriteGroup?.timerState ?? null
+            });
         }
 
         return { ok: true };

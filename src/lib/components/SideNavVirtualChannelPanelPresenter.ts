@@ -19,24 +19,33 @@ export class SideNavVirtualChannelPanelPresenter
             return 'Limit reached';
         }
 
-        return `Daily limit: ${this.virtualChannel.dailyTimerMax} min`;
+        return `Daily limit: ${this.formatSeconds(this.virtualChannel.dailyTimerMax * 60)} sec`;
     }
 
     getTimerUsageLabel(): string
     {
         if (this.virtualChannel.timerState === 'unlimited' || this.virtualChannel.dailyTimerMax == null) {
-            return `Used today: ${this.formatMinutesFromSeconds(this.virtualChannel.timerUsageSeconds)} min`;
+            return `Consumed: ${this.formatSeconds(this.virtualChannel.timerUsageSeconds)} sec`;
         }
 
         if (this.virtualChannel.timerState === 'capped') {
-            return `Used today: ${this.formatMinutesFromSeconds(this.virtualChannel.timerUsageSeconds)} / ${this.virtualChannel.dailyTimerMax} min`;
+            return `Consumed: ${this.formatSeconds(this.virtualChannel.timerUsageSeconds)} sec`;
         }
 
-        return `Remaining: ${this.formatMinutesFromSeconds(this.virtualChannel.timerRemainingSeconds ?? 0)} min`;
+        return `Consumed: ${this.formatSeconds(this.virtualChannel.timerUsageSeconds)} sec`;
     }
 
-    private formatMinutesFromSeconds(seconds: number): string
+    getTimerRemainingLabel(): string
     {
-        return String(Math.max(0, Math.floor(seconds / 60)));
+        if (this.virtualChannel.dailyTimerMax == null || this.virtualChannel.timerState === 'unlimited') {
+            return 'Remaining: unlimited';
+        }
+
+        return `Remaining: ${this.formatSeconds(this.virtualChannel.timerRemainingSeconds ?? 0)} sec`;
+    }
+
+    private formatSeconds(seconds: number): string
+    {
+        return String(Math.max(0, Math.floor(seconds)));
     }
 }

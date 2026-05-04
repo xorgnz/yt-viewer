@@ -5,6 +5,17 @@ import { ViewerActionParser } from '$lib/server/viewer/ViewerActionParser';
 import { ViewerQueryParser } from '$lib/server/viewer/ViewerQueryParser';
 import { ViewerServiceContext } from '$lib/server/viewer/ViewerServiceContext';
 
+function createJsonResponse(body: unknown, status = 200, headers?: Record<string, string>): Response
+{
+    return new Response(JSON.stringify(body), {
+        status,
+        headers: {
+            'content-type': 'application/json',
+            ...(headers || {})
+        }
+    });
+}
+
 export const load = async ({ params, cookies, url }: { params: { videoId: string }, cookies: any, url: URL }) =>
 {
     const videoId = String(params.videoId || '').trim();
@@ -46,13 +57,15 @@ export const actions = {
     async createHistorySession({ request, params, cookies }: { request: Request; params: { videoId: string }, cookies: any })
     {
         const videoYoutubeId = String(params.videoId || '').trim();
-        if (!videoYoutubeId) return fail(400, { message: 'Missing videoId' });
+        if (!videoYoutubeId) {
+            return createJsonResponse({ message: 'Missing videoId' }, 400);
+        }
 
         const form = await ServerActionForm.fromRequest(request);
         const virtualChannelId = form.getPositiveInteger('virtualChannelId');
         const watchSeconds = form.getNumber('watchSeconds', 0);
-        if (!Number.isFinite(watchSeconds) || watchSeconds <= 5) {
-            return fail(400, { message: 'Insufficient watch time for history session' });
+        if (!Number.isFinite(watchSeconds) || watchSeconds < 1) {
+            return createJsonResponse({ message: 'Insufficient watch time for history session' }, 400);
         }
 
         return ServerDatabaseContext.run(async ({ db }) => {
@@ -65,22 +78,21 @@ export const actions = {
 
             if (!result.ok) {
                 if (result.code === 'timer_capped') {
-                    return new Response(JSON.stringify({
+                    return createJsonResponse({
                         message: result.message,
                         code: result.code
-                    }), {
-                        status: result.status,
-                        headers: {
-                            'content-type': 'application/json',
-                            'x-viewer-timer-state': 'capped'
-                        }
+                    }, result.status, {
+                        'x-viewer-timer-state': 'capped'
                     });
                 }
 
-                return fail(result.status, { message: result.message });
+                return createJsonResponse({
+                    message: result.message,
+                    code: result.code
+                }, result.status);
             }
 
-            return result;
+            return createJsonResponse(result, 200);
         });
     },
 
@@ -88,13 +100,15 @@ export const actions = {
     async updateHistoryProgress({ request, params, cookies }: { request: Request; params: { videoId: string }, cookies: any })
     {
         const videoYoutubeId = String(params.videoId || '').trim();
-        if (!videoYoutubeId) return fail(400, { message: 'Missing videoId' });
+        if (!videoYoutubeId) {
+            return createJsonResponse({ message: 'Missing videoId' }, 400);
+        }
 
         const form = await ServerActionForm.fromRequest(request);
         const virtualChannelId = form.getPositiveInteger('virtualChannelId');
         const watchSeconds = form.getNumber('watchSeconds', 0);
         if (!Number.isFinite(watchSeconds) || watchSeconds < 0) {
-            return fail(400, { message: 'Invalid watch time' });
+            return createJsonResponse({ message: 'Invalid watch time' }, 400);
         }
 
         return ServerDatabaseContext.run(async ({ db }) => {
@@ -107,22 +121,21 @@ export const actions = {
 
             if (!result.ok) {
                 if (result.code === 'timer_capped') {
-                    return new Response(JSON.stringify({
+                    return createJsonResponse({
                         message: result.message,
                         code: result.code
-                    }), {
-                        status: result.status,
-                        headers: {
-                            'content-type': 'application/json',
-                            'x-viewer-timer-state': 'capped'
-                        }
+                    }, result.status, {
+                        'x-viewer-timer-state': 'capped'
                     });
                 }
 
-                return fail(result.status, { message: result.message });
+                return createJsonResponse({
+                    message: result.message,
+                    code: result.code
+                }, result.status);
             }
 
-            return result;
+            return createJsonResponse(result, 200);
         });
     },
 

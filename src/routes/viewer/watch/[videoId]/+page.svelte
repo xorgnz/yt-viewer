@@ -46,6 +46,8 @@
     let lastPlaybackTickAt: number | null = null;
     let elapsedWatchSeconds = 0;
     let historySessionCreated = false;
+    let historySessionCreatePending = false;
+    let historyProgressUpdatePending = false;
     let lastPersistedWatchSeconds = 0;
     let lastHistoryActivityAt: number | null = null;
     let watchMutationPending = false;
@@ -53,10 +55,14 @@
     let timerStatusMessage: string | null = data.playbackBlockedMessage;
     let activeVideoYoutubeId = data.video.youtube_id;
     let recommendations = data.recommendations;
+    let lastDebugEvent = 'init';
+    let lastDebugResponse = 'n/a';
     const videoMutationService = new VideoMutationService({
         toggleFlagAction: '?/toggleFlag'
     });
     const HISTORY_SESSION_GAP_MS = 5 * 60 * 1000;
+    const HISTORY_SESSION_CREATE_THRESHOLD_SECONDS = 1;
+    const HISTORY_SESSION_UPDATE_INTERVAL_SECONDS = 1;
 
     $: showWatched = watched || (thresholdReached && !suppressThresholdWatch);
     $: recommendations = data.recommendations;
@@ -65,6 +71,8 @@
 
     $: if (data.video.youtube_id !== activeVideoYoutubeId)
     {
+        lastDebugEvent = `route-change: flush ${activeVideoYoutubeId}`;
+        flushPendingHistory(activeVideoYoutubeId);
         activeVideoYoutubeId = data.video.youtube_id;
         resetForVideoChange(!!data.video.watched, data.playbackBlockedMessage);
 
@@ -112,6 +120,7 @@
 
     function resetForVideoChange(serverWatched: boolean, playbackBlockedMessage: string | null)
     {
+        lastDebugEvent = `resetForVideoChange: ${data.video.youtube_id}`;
         stopPolling();
         watched = serverWatched;
         favorite = !!data.video.favorite;
@@ -124,6 +133,8 @@
         isActivelyPlaying = false;
         elapsedWatchSeconds = 0;
         historySessionCreated = false;
+        historySessionCreatePending = false;
+        historyProgressUpdatePending = false;
         lastPersistedWatchSeconds = 0;
         lastHistoryActivityAt = null;
         timerStatusMessage = playbackBlockedMessage;
@@ -147,6 +158,15 @@
                 {
                     const deltaSeconds = Math.max(0, (now - lastPlaybackTickAt) / 1000);
                     elapsedWatchSeconds += deltaSeconds;
+
+                    if (data.currentVirtualChannelId != null && deltaSeconds > 0) {
+                        window.dispatchEvent(new CustomEvent('viewer:playback-tick', {
+                            detail: {
+                                virtualChannelId: data.currentVirtualChannelId,
+                                deltaSeconds
+                            }
+                        }));
+                    }
                 }
                 lastPlaybackTickAt = now;
 
@@ -154,15 +174,20 @@
                 let duration: number = Number(typeof player.getDuration === 'function' ? player.getDuration() : (data.video.duration_seconds || 0));
                 if (!duration || !Number.isFinite(duration) || duration <= 0) return;
 
-                if (!historySessionCreated && elapsedWatchSeconds > 5)
+                if (!historySessionCreated && !historySessionCreatePending && elapsedWatchSeconds >= HISTORY_SESSION_CREATE_THRESHOLD_SECONDS)
                 {
-                    historySessionCreated = true;
-                    createHistorySession();
+                    lastDebugEvent = `create-threshold: ${Math.floor(elapsedWatchSeconds)}s`;
+                    void createHistorySession();
                 }
 
-                if (historySessionCreated && (elapsedWatchSeconds - lastPersistedWatchSeconds) >= 10)
+                if (
+                    historySessionCreated
+                    && !historyProgressUpdatePending
+                    && (elapsedWatchSeconds - lastPersistedWatchSeconds) >= HISTORY_SESSION_UPDATE_INTERVAL_SECONDS
+                )
                 {
-                    updateHistoryProgress();
+                    lastDebugEvent = `update-threshold: ${Math.floor(elapsedWatchSeconds)}s`;
+                    void updateHistoryProgress();
                 }
 
                 const thresholdTime = duration < 120 ? duration * 0.75 : Math.max(0, duration - 30);
@@ -215,6 +240,8 @@
         {
             elapsedWatchSeconds = 0;
             historySessionCreated = false;
+            historySessionCreatePending = false;
+            historyProgressUpdatePending = false;
             lastPersistedWatchSeconds = 0;
             lastHistoryActivityAt = null;
         }
@@ -228,6 +255,8 @@
         timerStatusMessage = message;
         timerPlaybackBlocked = true;
         historySessionCreated = false;
+        historySessionCreatePending = false;
+        historyProgressUpdatePending = false;
         isActivelyPlaying = false;
         lastHistoryActivityAt = null;
         stopPolling();
@@ -255,13 +284,18 @@
 
         try
         {
+            const watchSeconds = Math.floor(elapsedWatchSeconds);
+            historySessionCreatePending = true;
+            lastDebugEvent = `createHistorySession: send ${watchSeconds}s`;
             const response = await fetch('?/createHistorySession', {
                 method: 'POST',
                 body: formData
             });
+            lastDebugResponse = `createHistorySession: ${response.status}`;
             if (!response.ok)
             {
                 historySessionCreated = false;
+                historySessionCreatePending = false;
 
                 if (response.headers.get('x-viewer-timer-state') === 'capped') {
                     handleTimerCapReached();
@@ -269,42 +303,125 @@
 
                 return;
             }
+            historySessionCreated = true;
+            historySessionCreatePending = false;
             lastPersistedWatchSeconds = Math.floor(elapsedWatchSeconds);
             lastHistoryActivityAt = Date.now();
+            lastDebugEvent = `createHistorySession: persisted ${lastPersistedWatchSeconds}s`;
         }
         catch
         {
             historySessionCreated = false;
+            historySessionCreatePending = false;
+            lastDebugResponse = 'createHistorySession: exception';
         }
     }
 
-    async function updateHistoryProgress()
+    function shouldFlushPendingHistory(): boolean
+    {
+        const persistedSeconds = Math.floor(lastPersistedWatchSeconds);
+        const currentSeconds = Math.floor(elapsedWatchSeconds);
+
+        if (currentSeconds <= persistedSeconds) {
+            return false;
+        }
+
+        if (!historySessionCreated) {
+            return currentSeconds >= HISTORY_SESSION_CREATE_THRESHOLD_SECONDS;
+        }
+
+        return currentSeconds > 0;
+    }
+
+    function buildHistoryProgressFormData(): FormData
     {
         const formData = new FormData();
         formData.set('watchSeconds', String(Math.floor(elapsedWatchSeconds)));
+
         if (data.currentVirtualChannelId != null) {
             formData.set('virtualChannelId', String(data.currentVirtualChannelId));
         }
 
+        return formData;
+    }
+
+    function flushPendingHistory(videoYoutubeId: string, keepalive = false)
+    {
+        if (!videoYoutubeId || !shouldFlushPendingHistory()) {
+            lastDebugEvent = `flush skipped: ${videoYoutubeId || 'none'}`;
+            return;
+        }
+
+        const currentSeconds = Math.floor(elapsedWatchSeconds);
+        const targetAction = historySessionCreated && Math.floor(lastPersistedWatchSeconds) > 0
+            ? 'updateHistoryProgress'
+            : 'createHistorySession';
+        const targetUrl = `?/` + targetAction;
+        lastDebugEvent = `flush ${targetAction}: ${videoYoutubeId} ${currentSeconds}s keepalive=${keepalive ? 'y' : 'n'}`;
+
+        void fetch(targetUrl, {
+            method: 'POST',
+            body: buildHistoryProgressFormData(),
+            keepalive
+        }).then((response) => {
+            lastDebugResponse = `flush ${targetAction}: ${response.status}`;
+            if (!response.ok) {
+                if (targetAction === 'createHistorySession') {
+                    historySessionCreatePending = false;
+                }
+                return;
+            }
+
+            lastPersistedWatchSeconds = currentSeconds;
+            lastHistoryActivityAt = Date.now();
+
+            if (targetAction === 'createHistorySession') {
+                historySessionCreated = true;
+                historySessionCreatePending = false;
+            }
+
+            lastDebugEvent = `flush ${targetAction}: persisted ${currentSeconds}s`;
+        }).catch(() => {
+            // Ignore final flush failures during teardown or route changes.
+            if (targetAction === 'createHistorySession') {
+                historySessionCreatePending = false;
+            }
+            lastDebugResponse = `flush ${targetAction}: exception`;
+        });
+    }
+
+    async function updateHistoryProgress()
+    {
         try
         {
+            const watchSeconds = Math.floor(elapsedWatchSeconds);
+            historyProgressUpdatePending = true;
+            lastDebugEvent = `updateHistoryProgress: send ${watchSeconds}s`;
             const response = await fetch('?/updateHistoryProgress', {
                 method: 'POST',
-                body: formData
+                body: buildHistoryProgressFormData()
             });
+            lastDebugResponse = `updateHistoryProgress: ${response.status}`;
             if (response.ok)
             {
                 lastPersistedWatchSeconds = Math.floor(elapsedWatchSeconds);
                 lastHistoryActivityAt = Date.now();
+                lastDebugEvent = `updateHistoryProgress: persisted ${lastPersistedWatchSeconds}s`;
             }
             else if (response.headers.get('x-viewer-timer-state') === 'capped')
             {
                 handleTimerCapReached();
             }
+            else if (response.status === 404)
+            {
+                historySessionCreated = false;
+                historySessionCreatePending = false;
+            }
             else if (response.status === 409)
             {
                 elapsedWatchSeconds = 0;
                 historySessionCreated = false;
+                historySessionCreatePending = false;
                 lastPersistedWatchSeconds = 0;
                 lastHistoryActivityAt = null;
             }
@@ -312,6 +429,11 @@
         catch
         {
             // Ignore transient progress-update failures and retry later.
+            lastDebugResponse = 'updateHistoryProgress: exception';
+        }
+        finally
+        {
+            historyProgressUpdatePending = false;
         }
     }
 
@@ -414,9 +536,17 @@
 
     onMount(() =>
     {
+        const handlePageHide = () => {
+            flushPendingHistory(activeVideoYoutubeId, true);
+        };
+
+        window.addEventListener('pagehide', handlePageHide);
+
         if (timerPlaybackBlocked)
         {
             return () => {
+                window.removeEventListener('pagehide', handlePageHide);
+                flushPendingHistory(activeVideoYoutubeId, true);
                 stopPolling();
             };
         }
@@ -479,6 +609,8 @@
 
         return () =>
         {
+            window.removeEventListener('pagehide', handlePageHide);
+            flushPendingHistory(activeVideoYoutubeId, true);
             stopPolling();
             try
             {
@@ -496,6 +628,7 @@
 
     onDestroy(() =>
     {
+        flushPendingHistory(activeVideoYoutubeId, true);
         stopPolling();
         try
         {
@@ -618,6 +751,22 @@
                 {/each}
             </div>
         {/if}
+    </section>
+
+    <section id="section_debug_panel">
+        <h2 id="h2_debug">Debug</h2>
+        <div id="div_debug_grid">
+            <div>video: {activeVideoYoutubeId}</div>
+            <div>virtualChannelId: {String(data.currentVirtualChannelId)}</div>
+            <div>elapsedWatchSeconds: {Math.floor(elapsedWatchSeconds)}</div>
+            <div>lastPersistedWatchSeconds: {Math.floor(lastPersistedWatchSeconds)}</div>
+            <div>historySessionCreated: {historySessionCreated ? 'true' : 'false'}</div>
+            <div>isActivelyPlaying: {isActivelyPlaying ? 'true' : 'false'}</div>
+            <div>route active usage: {data.activeVirtualChannel?.timerUsageSeconds ?? 'null'}</div>
+            <div>route active remaining: {data.activeVirtualChannel?.timerRemainingSeconds ?? 'null'}</div>
+            <div>lastDebugEvent: {lastDebugEvent}</div>
+            <div>lastDebugResponse: {lastDebugResponse}</div>
+        </div>
     </section>
 
     {#if data.video.description}
@@ -882,8 +1031,30 @@
         background-color: var(--bg-panel);
     }
 
+    #section_debug_panel {
+        border: 1px solid var(--border);
+        padding: 1rem 1.1rem;
+        border-radius: var(--radius);
+        box-sizing: border-box;
+        background-color: var(--bg-panel);
+    }
+
     #div_description_header {
         margin-bottom: 1rem;
+    }
+
+    #div_debug_grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 0.5rem 1rem;
+        color: var(--text-muted);
+        font-family: var(--font-mono, monospace);
+        font-size: 0.85rem;
+        line-height: 1.4;
+    }
+
+    #h2_debug {
+        margin-bottom: 0.8rem;
     }
 
     #h2_description {
