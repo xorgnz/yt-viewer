@@ -1,16 +1,7 @@
 <script lang="ts">
     import { page } from '$app/stores';
-
-    type NavVirtualChannel = {
-        id: number;
-        name: string;
-        dailyTimerMax: number | null;
-        timerState: 'unlimited' | 'available' | 'capped';
-        timerUsageSeconds: number;
-        timerRemainingSeconds: number | null;
-        timerWindowStartMs: number;
-        timerWindowEndMs: number;
-    };
+    import SideNavVirtualChannelPanel from '$lib/components/SideNavVirtualChannelPanel.svelte';
+    import type { SideNavVirtualChannelViewModel } from '$lib/components/SideNavVirtualChannelPanelViewModel';
 
     // Simple side navigation used across all pages
     export let appName: string = 'YT Viewer';
@@ -29,13 +20,13 @@
         return activeProfileKey === 'child' && profileKey === 'default';
     }
 
-    function readActiveVirtualChannel(value: unknown): NavVirtualChannel | null
+    function readActiveVirtualChannel(value: unknown): SideNavVirtualChannelViewModel | null
     {
         if (!value || typeof value !== 'object') {
             return null;
         }
 
-        const candidate = value as Partial<NavVirtualChannel>;
+        const candidate = value as Partial<SideNavVirtualChannelViewModel>;
 
         if (
             typeof candidate.id !== 'number' ||
@@ -50,38 +41,7 @@
             return null;
         }
 
-        return candidate as NavVirtualChannel;
-    }
-
-    function formatMinutesFromSeconds(seconds: number): string
-    {
-        return String(Math.max(0, Math.floor(seconds / 60)));
-    }
-
-    function getTimerModeLabel(channel: NavVirtualChannel): string
-    {
-        if (channel.timerState === 'unlimited' || channel.dailyTimerMax == null) {
-            return 'Unlimited';
-        }
-
-        if (channel.timerState === 'capped') {
-            return 'Limit reached';
-        }
-
-        return `Daily limit: ${channel.dailyTimerMax} min`;
-    }
-
-    function getTimerUsageLabel(channel: NavVirtualChannel): string
-    {
-        if (channel.timerState === 'unlimited' || channel.dailyTimerMax == null) {
-            return `Used today: ${formatMinutesFromSeconds(channel.timerUsageSeconds)} min`;
-        }
-
-        if (channel.timerState === 'capped') {
-            return `Used today: ${formatMinutesFromSeconds(channel.timerUsageSeconds)} / ${channel.dailyTimerMax} min`;
-        }
-
-        return `Remaining: ${formatMinutesFromSeconds(channel.timerRemainingSeconds ?? 0)} min`;
+        return candidate as SideNavVirtualChannelViewModel;
     }
 
     $: activeVirtualChannel = readActiveVirtualChannel($page.data.activeVirtualChannel);
@@ -108,14 +68,7 @@
     </nav>
 
     {#if activeVirtualChannel}
-        <section class="nav-virtual-channel" aria-label="Active virtual channel">
-            <div class="nav-virtual-channel-label">Virtual Channel</div>
-            <div class="nav-virtual-channel-name">{activeVirtualChannel.name}</div>
-            <div class="nav-virtual-channel-meta">
-                <div class="nav-virtual-channel-status">{getTimerModeLabel(activeVirtualChannel)}</div>
-                <div class="nav-virtual-channel-usage">{getTimerUsageLabel(activeVirtualChannel)}</div>
-            </div>
-        </section>
+        <SideNavVirtualChannelPanel virtualChannel={activeVirtualChannel} />
     {/if}
 
     <details class="profile-switcher" data-profile-tone={profileTone(activeProfileKey)}>
