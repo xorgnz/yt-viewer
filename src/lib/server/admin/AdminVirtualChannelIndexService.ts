@@ -255,7 +255,7 @@ export class AdminVirtualChannelIndexService
     }
 
     private buildVirtualChannelRow(
-        virtualChannel: Pick<VirtualChannel, 'id' | 'name'>,
+        virtualChannel: VirtualChannel,
         allSourceChannels: SourceChannel[],
         assignments: AdminAssignmentRows
     ): AdminVirtualChannelRow
@@ -270,8 +270,7 @@ export class AdminVirtualChannelIndexService
         const availableSourceChannels = allSourceChannels.filter((channel) => !associatedSourceChannelIds.has(channel.id));
 
         return {
-            id: virtualChannel.id,
-            name: virtualChannel.name,
+            virtualChannel,
             associatedSourceChannels,
             availableSourceChannels
         };

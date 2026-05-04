@@ -23,7 +23,7 @@
         }
 
         const group = value.group;
-        return Boolean(group && typeof group === 'object' && 'id' in group && 'name' in group);
+        return Boolean(group && typeof group === 'object' && 'virtualChannel' in group);
     }
 
     function readFailureGroupId(value: unknown, fallbackGroupId: number): number
@@ -53,7 +53,7 @@
     function updateInlineGroup(nextGroup: VirtualChannelGroup)
     {
         // Replace only the affected row so inline actions do not trigger a full reload.
-        groups = groups.map((group) => (group.id === nextGroup.id ? nextGroup : group));
+        groups = groups.map((group) => (group.virtualChannel.id === nextGroup.virtualChannel.id ? nextGroup : group));
     }
 
     function setInlineStatus(groupId: number | null | undefined, type: 'success' | 'error', text: string)
@@ -156,7 +156,7 @@
                         {#each groups as g}
                             <tr>
                                 <td>
-                                    <input name="name" form={`rename-${g.id}`} value={g.name} />
+                                    <input name="name" form={`rename-${g.virtualChannel.id}`} value={g.virtualChannel.name} />
                                 </td>
                                 <td>
                                     <div class="stack">
@@ -179,9 +179,9 @@
                                                                 method="post"
                                                                 action="?/removeAssociationInline"
                                                                 class="inline-form"
-                                                                use:enhance={enhanceInlineRemove(g.id)}
+                                                                use:enhance={enhanceInlineRemove(g.virtualChannel.id)}
                                                             >
-                                                                <input type="hidden" name="virtual_channel_id" value={g.id} />
+                                                                <input type="hidden" name="virtual_channel_id" value={g.virtualChannel.id} />
                                                                 <input type="hidden" name="source_channel_id" value={item.assignment.source_channel_id} />
                                                                 <button
                                                                     type="submit"
@@ -207,14 +207,14 @@
                                             {#if g.availableSourceChannels.length === 0}
                                                 <p class="muted">No imported source channels remaining.</p>
                                             {:else}
-                                                <form
-                                                    method="post"
-                                                    action="?/addAssociationInline"
-                                                    class="inline-actions"
-                                                    use:enhance={enhanceInlineAdd(g.id)}
-                                                >
-                                                    <input type="hidden" name="virtual_channel_id" value={g.id} />
-                                                    <select name="source_channel_id" required>
+                                                    <form
+                                                        method="post"
+                                                        action="?/addAssociationInline"
+                                                        class="inline-actions"
+                                                        use:enhance={enhanceInlineAdd(g.virtualChannel.id)}
+                                                    >
+                                                        <input type="hidden" name="virtual_channel_id" value={g.virtualChannel.id} />
+                                                        <select name="source_channel_id" required>
                                                         <option value="" selected disabled>Select source channel</option>
                                                         {#each g.availableSourceChannels as channel}
                                                             <option value={channel.id}>{channel.title} ({channel.youtube_id})</option>
@@ -225,22 +225,22 @@
                                             {/if}
                                         </div>
 
-                                        {#if inlineStatusByGroupId[g.id]}
-                                            <p class={inlineStatusByGroupId[g.id].type === 'error' ? 'error-text' : 'status'}>
-                                                {inlineStatusByGroupId[g.id].text}
+                                        {#if inlineStatusByGroupId[g.virtualChannel.id]}
+                                            <p class={inlineStatusByGroupId[g.virtualChannel.id].type === 'error' ? 'error-text' : 'status'}>
+                                                {inlineStatusByGroupId[g.virtualChannel.id].text}
                                             </p>
                                         {/if}
                                     </div>
                                 </td>
                                 <td>
                                     <div class="inline-actions">
-                                        <a href={`/admin/virtual-channels/${g.id}`} class="btn btn-secondary">Manage</a>
-                                        <form method="post" action="?/rename" id={`rename-${g.id}`} class="inline-form">
-                                            <input type="hidden" name="id" value={g.id} />
+                                        <a href={`/admin/virtual-channels/${g.virtualChannel.id}`} class="btn btn-secondary">Manage</a>
+                                        <form method="post" action="?/rename" id={`rename-${g.virtualChannel.id}`} class="inline-form">
+                                            <input type="hidden" name="id" value={g.virtualChannel.id} />
                                             <button type="submit">Save</button>
                                         </form>
                                         <form method="post" action="?/delete" class="inline-form">
-                                            <input type="hidden" name="id" value={g.id} />
+                                            <input type="hidden" name="id" value={g.virtualChannel.id} />
                                             <button
                                                 type="submit"
                                                 class="btn-danger"
