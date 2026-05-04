@@ -54,6 +54,7 @@
     let timerPlaybackBlocked = false;
     let timerStatusMessage: string | null = data.playbackBlockedMessage;
     let activeVideoYoutubeId = data.video.youtube_id;
+    let activeVirtualChannelUsageBaselineSeconds = data.activeVirtualChannel?.timerUsageSeconds ?? 0;
     let recommendations = data.recommendations;
     let lastDebugEvent = 'init';
     let lastDebugResponse = 'n/a';
@@ -68,6 +69,7 @@
     $: recommendations = data.recommendations;
     $: timerStatusMessage = data.playbackBlockedMessage;
     $: timerPlaybackBlocked = !!timerStatusMessage;
+    $: activeVirtualChannelUsageBaselineSeconds = data.activeVirtualChannel?.timerUsageSeconds ?? 0;
 
     $: if (data.video.youtube_id !== activeVideoYoutubeId)
     {
@@ -139,6 +141,25 @@
         lastHistoryActivityAt = null;
         timerStatusMessage = playbackBlockedMessage;
         timerPlaybackBlocked = !!playbackBlockedMessage;
+        activeVirtualChannelUsageBaselineSeconds = data.activeVirtualChannel?.timerUsageSeconds ?? 0;
+    }
+
+    function getLocalVirtualChannelUsageSeconds(): number
+    {
+        return activeVirtualChannelUsageBaselineSeconds + Math.floor(elapsedWatchSeconds);
+    }
+
+    function shouldLocallyCapPlayback(): boolean
+    {
+        if (!data.activeVirtualChannel || data.currentVirtualChannelId == null) {
+            return false;
+        }
+
+        if (data.activeVirtualChannel.dailyTimerMax == null) {
+            return false;
+        }
+
+        return getLocalVirtualChannelUsageSeconds() >= data.activeVirtualChannel.dailyTimerMax;
     }
 
     function startPolling()
@@ -166,6 +187,12 @@
                                 deltaSeconds
                             }
                         }));
+                    }
+
+                    if (shouldLocallyCapPlayback()) {
+                        lastDebugEvent = `local-cap: ${getLocalVirtualChannelUsageSeconds()}s`;
+                        handleTimerCapReached();
+                        return;
                     }
                 }
                 lastPlaybackTickAt = now;
