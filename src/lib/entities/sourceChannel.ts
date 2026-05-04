@@ -29,6 +29,19 @@ export class SourceChannel
         this.last_refreshed_at = data.last_refreshed_at;
     }
 
+    toFields(): SourceChannelFields
+    {
+        return {
+            id: this.id,
+            youtube_id: this.youtube_id,
+            title: this.title,
+            description: this.description,
+            thumbnail_url: this.thumbnail_url,
+            published_at: this.published_at,
+            last_refreshed_at: this.last_refreshed_at,
+        };
+    }
+
     static validate(value: any): value is SourceChannel
     {
         if (value instanceof SourceChannel) return true;

@@ -28,6 +28,18 @@ export class VirtualChannelAssignment
         this.updated_at = data.updated_at;
     }
 
+    toFields(): VirtualChannelAssignmentFields
+    {
+        return {
+            id: this.id,
+            source_channel_id: this.source_channel_id,
+            virtual_channel_id: this.virtual_channel_id,
+            mode: this.mode,
+            created_at: this.created_at,
+            updated_at: this.updated_at,
+        };
+    }
+
     static validate(value: any): value is VirtualChannelAssignment
     {
         if (value instanceof VirtualChannelAssignment) return true;

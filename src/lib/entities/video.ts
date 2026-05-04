@@ -37,6 +37,21 @@ export class Video
         this.length_classification = data.length_classification;
     }
 
+    toFields(): VideoFields
+    {
+        return {
+            id: this.id,
+            youtube_id: this.youtube_id,
+            channel_id: this.channel_id,
+            title: this.title,
+            description: this.description,
+            published_at: this.published_at,
+            duration_seconds: this.duration_seconds,
+            thumbnail_url: this.thumbnail_url,
+            length_classification: this.length_classification,
+        };
+    }
+
     static validate(value: any): value is Video
     {
         if (value instanceof Video) return true;

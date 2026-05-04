@@ -16,6 +16,15 @@ export class VirtualChannel
         this.dailyTimerMax = data.dailyTimerMax;
     }
 
+    toFields(): VirtualChannelFields
+    {
+        return {
+            id: this.id,
+            name: this.name,
+            dailyTimerMax: this.dailyTimerMax,
+        };
+    }
+
     static validate(value: any): value is VirtualChannel {
         if (value instanceof VirtualChannel) return true;
         return (
