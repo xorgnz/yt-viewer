@@ -53,6 +53,37 @@
         return candidate as NavVirtualChannel;
     }
 
+    function formatMinutesFromSeconds(seconds: number): string
+    {
+        return String(Math.max(0, Math.floor(seconds / 60)));
+    }
+
+    function getTimerModeLabel(channel: NavVirtualChannel): string
+    {
+        if (channel.timerState === 'unlimited' || channel.dailyTimerMax == null) {
+            return 'Unlimited';
+        }
+
+        if (channel.timerState === 'capped') {
+            return 'Limit reached';
+        }
+
+        return `Daily limit: ${channel.dailyTimerMax} min`;
+    }
+
+    function getTimerUsageLabel(channel: NavVirtualChannel): string
+    {
+        if (channel.timerState === 'unlimited' || channel.dailyTimerMax == null) {
+            return `Used today: ${formatMinutesFromSeconds(channel.timerUsageSeconds)} min`;
+        }
+
+        if (channel.timerState === 'capped') {
+            return `Used today: ${formatMinutesFromSeconds(channel.timerUsageSeconds)} / ${channel.dailyTimerMax} min`;
+        }
+
+        return `Remaining: ${formatMinutesFromSeconds(channel.timerRemainingSeconds ?? 0)} min`;
+    }
+
     $: activeVirtualChannel = readActiveVirtualChannel($page.data.activeVirtualChannel);
 </script>
 
@@ -80,6 +111,10 @@
         <section class="nav-virtual-channel" aria-label="Active virtual channel">
             <div class="nav-virtual-channel-label">Virtual Channel</div>
             <div class="nav-virtual-channel-name">{activeVirtualChannel.name}</div>
+            <div class="nav-virtual-channel-meta">
+                <div class="nav-virtual-channel-status">{getTimerModeLabel(activeVirtualChannel)}</div>
+                <div class="nav-virtual-channel-usage">{getTimerUsageLabel(activeVirtualChannel)}</div>
+            </div>
         </section>
     {/if}
 
