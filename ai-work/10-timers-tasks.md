@@ -61,6 +61,7 @@
 - [ ] 8 - Add virtual channel timer status to viewer navigation
   - [x] 8.1 - Extend viewer page and watch page data with the active virtual channel timer fields needed for navigation display.
   - [x] 8.2 - Render a compact virtual channel info panel in the left navigation above the profile section.
-  - [ ] 8.3 - Show the active channel name plus unlimited, limited, or capped status with current usage or remaining time.
-  - [ ] 8.4 - Keep the timer panel behavior and wording aligned between the main viewer page and the watch page.
-  - [ ] 8.5 - Validate unlimited, limited, and capped display states.
+  - [x] 8.3 - Show the active channel name plus unlimited, limited, or capped status with current usage or remaining time.
+  - [ ] 8.4 - Extract the virtual channel timer panel into its own component once the nav display fields and formatting behavior are stable.
+  - [ ] 8.5 - Keep the timer panel behavior and wording aligned between the main viewer page and the watch page.
+  - [ ] 8.6 - Validate unlimited, limited, and capped display states.
