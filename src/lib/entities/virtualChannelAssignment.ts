@@ -1,4 +1,9 @@
-export type VirtualChannelAssignmentMode = 'all' | 'long_only' | 'selected_only';
+export enum VirtualChannelAssignmentMode
+{
+    All = 'all',
+    LongOnly = 'long_only',
+    SelectedOnly = 'selected_only'
+}
 
 export type VirtualChannelAssignmentFields = {
     id: number;
@@ -49,7 +54,11 @@ export class VirtualChannelAssignment
             typeof value.id === 'number' &&
             typeof value.source_channel_id === 'number' &&
             typeof value.virtual_channel_id === 'number' &&
-            (value.mode === 'all' || value.mode === 'long_only' || value.mode === 'selected_only') &&
+            (
+                value.mode === VirtualChannelAssignmentMode.All ||
+                value.mode === VirtualChannelAssignmentMode.LongOnly ||
+                value.mode === VirtualChannelAssignmentMode.SelectedOnly
+            ) &&
             typeof value.created_at === 'number' &&
             typeof value.updated_at === 'number'
         );

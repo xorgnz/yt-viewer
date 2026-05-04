@@ -1,5 +1,5 @@
 import { DAO } from '$lib/daos/shared/DAO';
-import type { Video } from '$lib/entities/video';
+import { VideoLengthClassification, type Video } from '$lib/entities/video';
 
 export class VideoDAO extends DAO
 {
@@ -17,7 +17,7 @@ export class VideoDAO extends DAO
                 thumbnail_url=VALUES(thumbnail_url),
                 length_classification=VALUES(length_classification)
         `, {
-            length_classification: 'unknown',
+            length_classification: VideoLengthClassification.Unknown,
             ...(video as Record<string, unknown>)
         });
     }

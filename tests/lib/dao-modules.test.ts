@@ -9,6 +9,7 @@ import { SourceChannelDAO } from '../../src/lib/daos/sourceChannelDAO';
 import { VideoDAO } from '../../src/lib/daos/videoDAO';
 import { VirtualChannelAssignmentVideoSelectionDAO } from '../../src/lib/daos/virtualChannelAssignmentVideoSelectionDAO';
 import { VirtualChannelDAO } from '../../src/lib/daos/virtualChannelDAO';
+import { VirtualChannelAssignmentMode } from '../../src/lib/entities/virtualChannelAssignment';
 import { VirtualChannelAssignmentVideoReviewState } from '../../src/lib/entities/virtualChannelAssignmentVideoSelection';
 import { MockQueryProvider } from '../helpers/MockQueryProvider';
 
@@ -37,7 +38,7 @@ describe('DAO modules', () => {
         await new VideoDAO(provider).listExistingIds([1, 2]);
         await new ProfileDAO(provider).upsertByKey('default', 'Default');
         await new VirtualChannelDAO(provider).create('Queue');
-        await new AssignmentDAO(provider).add(1, 2, 'all');
+        await new AssignmentDAO(provider).add(1, 2, VirtualChannelAssignmentMode.All);
         await new VirtualChannelAssignmentVideoSelectionDAO(provider).setReviewState(3, 4, VirtualChannelAssignmentVideoReviewState.Included);
         await new HistoryDAO(provider).createSession({
             video_id: 1,

@@ -1,24 +1,13 @@
 import type { AssignmentDAO } from '$lib/daos/assignmentDAO';
 import type { SourceChannelDAO } from '$lib/daos/sourceChannelDAO';
 import type { VideoDAO } from '$lib/daos/videoDAO';
-import type {
-    VirtualChannelAssignmentVideoSelectionDAO
-} from '$lib/daos/virtualChannelAssignmentVideoSelectionDAO';
+import type { VirtualChannelAssignmentVideoSelectionDAO } from '$lib/daos/virtualChannelAssignmentVideoSelectionDAO';
 import type { VirtualChannelDAO } from '$lib/daos/virtualChannelDAO';
-import type { VirtualChannelAssignment } from '$lib/entities/virtualChannelAssignment';
-import type { VirtualChannelAssignmentMode } from '$lib/entities/virtualChannelAssignment';
-import type { VirtualChannelAssignmentVideoReviewState } from '$lib/entities/virtualChannelAssignmentVideoSelection';
-import { VirtualChannelAssignmentVideoReviewState as ReviewState } from '$lib/entities/virtualChannelAssignmentVideoSelection';
+import { VirtualChannelAssignmentMode, type VirtualChannelAssignment } from '$lib/entities/virtualChannelAssignment';
+import { VirtualChannelAssignmentVideoReviewState as ReviewState, type VirtualChannelAssignmentVideoReviewState } from '$lib/entities/virtualChannelAssignmentVideoSelection';
 import type { SourceChannel } from '$lib/entities/sourceChannel';
-import type {
-    AdminAssociatedSourceChannelView,
-    AdminReviewStateFilter,
-    AdminVideoTypeFilter,
-    AdminVirtualChannelManagePageData,
-    AdminVirtualChannelRedirect,
-    AdminVirtualChannelServiceError,
-    AdminVirtualChannelServiceResult
-} from '$lib/server/admin/AdminVirtualChannelTypes';
+import { VideoLengthClassification } from '$lib/entities/video';
+import { AdminReviewStateFilter as ReviewStateFilter, AdminVideoTypeFilter as VideoTypeFilter, type AdminAssociatedSourceChannelView, type AdminReviewStateFilter, type AdminVideoTypeFilter, type AdminVirtualChannelManagePageData, type AdminVirtualChannelRedirect, type AdminVirtualChannelServiceError, type AdminVirtualChannelServiceResult } from '$lib/server/admin/AdminVirtualChannelTypes';
 
 type AdminVirtualChannelDAO = Pick<VirtualChannelDAO, 'get' | 'updateDailyTimerMax'>;
 type AdminAssignmentDAO = Pick<AssignmentDAO, 'add' | 'get' | 'listForVirtualChannel' | 'remove' | 'updateMode'>;
@@ -211,7 +200,7 @@ export class AdminVirtualChannelManageService
             return this.buildError('assignment_not_found', 404, 'Assignment not found.');
         }
 
-        if (assignment.mode !== 'selected_only') {
+        if (assignment.mode !== VirtualChannelAssignmentMode.SelectedOnly) {
             return this.buildError(
                 'assignment_mode_invalid',
                 400,
@@ -245,7 +234,7 @@ export class AdminVirtualChannelManageService
             return this.buildError('assignment_not_found', 404, 'Assignment not found.');
         }
 
-        if (assignment.mode !== 'selected_only') {
+        if (assignment.mode !== VirtualChannelAssignmentMode.SelectedOnly) {
             return this.buildError(
                 'assignment_mode_invalid',
                 400,
@@ -298,28 +287,28 @@ export class AdminVirtualChannelManageService
         const regexFilter = searchParams.get(`regexFilter-${assignment.id}`)?.trim() ?? '';
         const videoTypeFilter = this.getVideoTypeFilter(searchParams, assignment.id);
         const sourceVideos = await this.videoDAO.listByChannel(assignment.source_channel_id);
-        const selectionRows = assignment.mode === 'selected_only'
+        const selectionRows = assignment.mode === VirtualChannelAssignmentMode.SelectedOnly
             ? await this.selectionDAO.listForAssignment(assignment.id)
             : [];
         const selectionByVideoId = new Map(selectionRows.map((row) => [row.video_id, row]));
 
         // Split automatic and selected-only display models so the route only renders.
-        const automaticVideos = assignment.mode === 'selected_only'
+        const automaticVideos = assignment.mode === VirtualChannelAssignmentMode.SelectedOnly
             ? []
             : sourceVideos.filter((video) => {
-                if (assignment.mode === 'all') {
+                if (assignment.mode === VirtualChannelAssignmentMode.All) {
                     return true;
                 }
 
-                return video.length_classification === 'long';
+                return video.length_classification === VideoLengthClassification.Long;
             });
-        const selectedOnlyVideos = assignment.mode !== 'selected_only'
+        const selectedOnlyVideos = assignment.mode !== VirtualChannelAssignmentMode.SelectedOnly
             ? []
             : sourceVideos.map((video) => ({
                 video,
                 reviewState: selectionByVideoId.get(video.id)?.review_state ?? ReviewState.NotYetReviewed
             }));
-        const selectedOnlyCounts = assignment.mode !== 'selected_only'
+        const selectedOnlyCounts = assignment.mode !== VirtualChannelAssignmentMode.SelectedOnly
             ? null
             : {
                 included: selectedOnlyVideos.filter((video) => video.reviewState === ReviewState.Included).length,
@@ -341,15 +330,17 @@ export class AdminVirtualChannelManageService
 
     private getReviewStateFilter(searchParams: URLSearchParams, assignmentId: number): AdminReviewStateFilter
     {
-        return searchParams.get(`reviewStateFilter-${assignmentId}`) === 'notYetReviewed' ? 'notYetReviewed' : 'all';
+        return searchParams.get(`reviewStateFilter-${assignmentId}`) === ReviewStateFilter.NotYetReviewed
+            ? ReviewStateFilter.NotYetReviewed
+            : ReviewStateFilter.All;
     }
 
     private getVideoTypeFilter(searchParams: URLSearchParams, assignmentId: number): AdminVideoTypeFilter
     {
         const value = searchParams.get(`videoTypeFilter-${assignmentId}`);
-        return value === 'long' || value === 'short' || value === 'unknown'
+        return value === VideoTypeFilter.Long || value === VideoTypeFilter.Short || value === VideoTypeFilter.Unknown
             ? value
-            : 'all';
+            : VideoTypeFilter.All;
     }
 
     private buildManagePath(virtualChannelId: number, returnQuery?: string): string

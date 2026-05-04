@@ -1,6 +1,6 @@
 import { error, fail, redirect } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
-import type { VirtualChannelAssignmentMode } from '$lib/entities/virtualChannelAssignment';
+import { VirtualChannelAssignmentMode } from '$lib/entities/virtualChannelAssignment';
 import type { VirtualChannelAssignmentVideoReviewState } from '$lib/entities/virtualChannelAssignmentVideoSelection';
 import { ServerDatabaseContext } from '$lib/server/ServerDatabaseContext';
 import { ServerActionForm } from '$lib/server/ServerActionForm';
@@ -39,7 +39,9 @@ function parseVirtualChannelId(value: string): number | null
 
 function parseAssignmentMode(value: FormDataEntryValue | null): VirtualChannelAssignmentMode
 {
-    return value === 'long_only' || value === 'selected_only' ? value : 'all';
+    return value === VirtualChannelAssignmentMode.LongOnly || value === VirtualChannelAssignmentMode.SelectedOnly
+        ? value
+        : VirtualChannelAssignmentMode.All;
 }
 
 function parseReviewState(value: FormDataEntryValue | null): VirtualChannelAssignmentVideoReviewState

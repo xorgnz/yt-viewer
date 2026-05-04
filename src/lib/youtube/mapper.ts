@@ -1,3 +1,4 @@
+import { VideoLengthClassification } from '$lib/entities/video';
 import type { ChannelsListResponse, PlaylistItemsListResponse, VideosListResponse } from './youTubeClient';
 
 export class YouTubeChannelUpsertMapper
@@ -89,13 +90,13 @@ export class YouTubeVideoUpsertMapper
         return (days * 86400) + (hours * 3600) + (minutes * 60) + seconds;
     }
 
-    private classifyLength(durationSeconds?: number | null): 'long' | 'short' | 'unknown'
+    private classifyLength(durationSeconds?: number | null): VideoLengthClassification
     {
         if (durationSeconds == null || durationSeconds <= 0) {
-            return 'unknown';
+            return VideoLengthClassification.Unknown;
         }
 
-        return durationSeconds <= 60 ? 'short' : 'long';
+        return durationSeconds <= 60 ? VideoLengthClassification.Short : VideoLengthClassification.Long;
     }
 
     private getBestThumbnailUrl(thumbnails?: Record<string, { url: string }>): string | null

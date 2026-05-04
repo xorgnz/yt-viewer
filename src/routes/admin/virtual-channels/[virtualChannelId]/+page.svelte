@@ -1,7 +1,13 @@
 <script lang="ts">
     import type { ActionData, PageData } from './$types';
     import type { AdminSelectedOnlyVideoViewModel } from '$lib/server/admin/AdminVirtualChannelTypes';
+    import {
+        AdminReviewStateFilter,
+        AdminVideoTypeFilter
+    } from '$lib/server/admin/AdminVirtualChannelTypes';
+    import { VirtualChannelAssignmentMode } from '$lib/entities/virtualChannelAssignment';
     import { VirtualChannelAssignmentVideoReviewState as ReviewState } from '$lib/entities/virtualChannelAssignmentVideoSelection';
+    import { VideoLengthClassification } from '$lib/entities/video';
 
     export let data: PageData;
     export let form: ActionData;
@@ -53,13 +59,13 @@
         return `${minutes}:${seconds.toString().padStart(2, '0')}`;
     }
 
-    function formatLengthClassification(lengthClassification?: 'long' | 'short' | 'unknown' | null): string
+    function formatLengthClassification(lengthClassification: VideoLengthClassification): string
     {
-        if (lengthClassification === 'long') {
+        if (lengthClassification === VideoLengthClassification.Long) {
             return 'Long';
         }
 
-        if (lengthClassification === 'short') {
+        if (lengthClassification === VideoLengthClassification.Short) {
             return 'Short';
         }
 
@@ -68,9 +74,9 @@
 
     function selectedOnlyQueryString(item: {
         assignment: { id: number };
-        reviewStateFilter: 'all' | 'notYetReviewed';
+        reviewStateFilter: AdminReviewStateFilter;
         regexFilter: string;
-        videoTypeFilter: 'all' | 'long' | 'short' | 'unknown';
+        videoTypeFilter: AdminVideoTypeFilter;
     }): string
     {
         const params = new URLSearchParams();
@@ -80,7 +86,7 @@
             params.set(`regexFilter-${item.assignment.id}`, item.regexFilter);
         }
 
-        if (item.videoTypeFilter !== 'all') {
+        if (item.videoTypeFilter !== AdminVideoTypeFilter.All) {
             params.set(`videoTypeFilter-${item.assignment.id}`, item.videoTypeFilter);
         }
 
@@ -89,21 +95,20 @@
 
     function filteredSelectedOnlyVideos(
         videos: AdminSelectedOnlyVideoViewModel[],
-        reviewStateFilter: 'all' | 'notYetReviewed',
+        reviewStateFilter: AdminReviewStateFilter,
         regexFilter: string,
-        videoTypeFilter: 'all' | 'long' | 'short' | 'unknown'
+        videoTypeFilter: AdminVideoTypeFilter
     )
     {
         // Apply the review-state filter first so later bulk tools can target the shown rows.
-        let filteredVideos = reviewStateFilter === 'notYetReviewed'
+        let filteredVideos = reviewStateFilter === AdminReviewStateFilter.NotYetReviewed
             ? videos.filter((video) => video.reviewState === ReviewState.NotYetReviewed)
             : videos;
 
         // Apply the video classification filter before regex matching.
-        if (videoTypeFilter !== 'all') {
+        if (videoTypeFilter !== AdminVideoTypeFilter.All) {
             filteredVideos = filteredVideos.filter((video) => {
-                const classification = video.video.length_classification ?? 'unknown';
-                return classification === videoTypeFilter;
+                return matchesVideoTypeFilter(video.video.length_classification, videoTypeFilter);
             });
         }
 
@@ -125,6 +130,18 @@
         } catch {
             return { videos: filteredVideos, hasInvalidRegex: true };
         }
+    }
+
+    function matchesVideoTypeFilter(
+        classification: VideoLengthClassification,
+        videoTypeFilter: AdminVideoTypeFilter
+    ): boolean
+    {
+        return (
+            (videoTypeFilter === AdminVideoTypeFilter.Long && classification === VideoLengthClassification.Long) ||
+            (videoTypeFilter === AdminVideoTypeFilter.Short && classification === VideoLengthClassification.Short) ||
+            classification === VideoLengthClassification.Unknown
+        );
     }
 </script>
 
@@ -216,9 +233,9 @@
                 <label>
                     Initial mode
                     <select name="mode">
-                        <option value="all">All videos</option>
-                        <option value="long_only">Long videos only</option>
-                        <option value="selected_only">Selected only</option>
+                        <option value={VirtualChannelAssignmentMode.All}>All videos</option>
+                        <option value={VirtualChannelAssignmentMode.LongOnly}>Long videos only</option>
+                        <option value={VirtualChannelAssignmentMode.SelectedOnly}>Selected only</option>
                     </select>
                 </label>
 
@@ -260,9 +277,9 @@
                                     >
                                         <input type="hidden" name="assignment_id" value={item.assignment.id} />
                                         <select name="mode" value={item.assignment.mode}>
-                                            <option value="all">All videos</option>
-                                            <option value="long_only">Long videos only</option>
-                                            <option value="selected_only">Selected only</option>
+                                            <option value={VirtualChannelAssignmentMode.All}>All videos</option>
+                                            <option value={VirtualChannelAssignmentMode.LongOnly}>Long videos only</option>
+                                            <option value={VirtualChannelAssignmentMode.SelectedOnly}>Selected only</option>
                                         </select>
                                         <button type="submit">Update Mode</button>
                                     </form>
@@ -285,7 +302,7 @@
                                     </form>
                                 </td>
                             </tr>
-                            {#if item.assignment.mode === 'all' || item.assignment.mode === 'long_only'}
+                            {#if item.assignment.mode === VirtualChannelAssignmentMode.All || item.assignment.mode === VirtualChannelAssignmentMode.LongOnly}
                                 <tr>
                                     <td colspan="4">
                                         <details>
@@ -319,14 +336,14 @@
                                                 </div>
                                             {/if}
 
-                                            {#if item.assignment.mode === 'long_only'}
+                                            {#if item.assignment.mode === VirtualChannelAssignmentMode.LongOnly}
                                                 <p class="muted">Videos with unknown type are excluded here until you review them manually in selected-only mode.</p>
                                             {/if}
                                         </details>
                                     </td>
                                 </tr>
                             {/if}
-                            {#if item.assignment.mode === 'selected_only'}
+                            {#if item.assignment.mode === VirtualChannelAssignmentMode.SelectedOnly}
                                 <tr>
                                     <td colspan="4">
                                         <details>
@@ -343,7 +360,7 @@
                                                         <input
                                                             type="hidden"
                                                             name={`reviewStateFilter-${item.assignment.id}`}
-                                                            value="all"
+                                                            value={AdminReviewStateFilter.All}
                                                         />
                                                         <input
                                                             type="hidden"
@@ -361,7 +378,7 @@
                                                         <input
                                                             type="hidden"
                                                             name={`reviewStateFilter-${item.assignment.id}`}
-                                                            value="notYetReviewed"
+                                                            value={AdminReviewStateFilter.NotYetReviewed}
                                                         />
                                                         <input
                                                             type="hidden"
@@ -428,10 +445,10 @@
                                                     <label>
                                                         Video type
                                                         <select name={`videoTypeFilter-${item.assignment.id}`}>
-                                                            <option value="all" selected={item.videoTypeFilter === 'all'}>All types</option>
-                                                            <option value="long" selected={item.videoTypeFilter === 'long'}>Long</option>
-                                                            <option value="short" selected={item.videoTypeFilter === 'short'}>Short</option>
-                                                            <option value="unknown" selected={item.videoTypeFilter === 'unknown'}>Unknown / needs review</option>
+                                                            <option value={AdminVideoTypeFilter.All} selected={item.videoTypeFilter === AdminVideoTypeFilter.All}>All types</option>
+                                                            <option value={AdminVideoTypeFilter.Long} selected={item.videoTypeFilter === AdminVideoTypeFilter.Long}>Long</option>
+                                                            <option value={AdminVideoTypeFilter.Short} selected={item.videoTypeFilter === AdminVideoTypeFilter.Short}>Short</option>
+                                                            <option value={AdminVideoTypeFilter.Unknown} selected={item.videoTypeFilter === AdminVideoTypeFilter.Unknown}>Unknown / needs review</option>
                                                         </select>
                                                     </label>
                                                     <div class="inline-actions">

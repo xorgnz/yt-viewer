@@ -4,8 +4,19 @@ import type { VirtualChannelAssignmentVideoReviewState } from '$lib/entities/vir
 import type { VirtualChannel } from '$lib/entities/virtualChannel';
 import type { Video } from '$lib/entities/video';
 
-export type AdminVideoTypeFilter = 'all' | 'long' | 'short' | 'unknown';
-export type AdminReviewStateFilter = 'all' | 'notYetReviewed';
+export enum AdminVideoTypeFilter
+{
+    All = 'all',
+    Long = 'long',
+    Short = 'short',
+    Unknown = 'unknown'
+}
+
+export enum AdminReviewStateFilter
+{
+    All = 'all',
+    NotYetReviewed = 'notYetReviewed'
+}
 
 export interface AdminVirtualChannelServiceError<TCode extends string = string>
 {
