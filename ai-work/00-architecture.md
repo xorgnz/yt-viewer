@@ -136,6 +136,19 @@ The repository has already moved away from putting too much logic in route files
 
 The project intentionally uses direct SQL helpers. The tradeoff is more explicit query maintenance, but clearer control over schema, joins, migrations, and production data changes.
 
+### Naming Conventions
+
+Use explicit suffixes where they clarify architectural role.
+
+Current standardized conventions include:
+
+- `*DAO` for persistence-boundary classes that own SQL translation and record mutation/access
+- `*Service` for request-facing orchestration or business-workflow coordination
+- `*Fields` for plain field-value structures that represent an entity without transport or storage context
+- `*ViewModel` for UI-facing projection shapes prepared for rendering rather than domain behavior
+
+These suffixes should be used deliberately rather than mechanically. If a type or class does not clearly fit the role implied by the suffix, rename the object or choose a more accurate boundary.
+
 ## Important Constraints
 
 ### Stable-ID Pressure
