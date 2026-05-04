@@ -43,14 +43,23 @@
     });
 </script>
 
-<section class="nav-virtual-channel" aria-label="Active virtual channel">
-    <div class="nav-virtual-channel-label">Virtual Channel</div>
+<section
+    class="nav-virtual-channel"
+    class:nav-virtual-channel-capped={liveVirtualChannel?.timerState === 'capped'}
+    aria-label="Active virtual channel"
+>
     {#if liveVirtualChannel && presenter}
         <div class="nav-virtual-channel-name">{liveVirtualChannel.name}</div>
         <div class="nav-virtual-channel-meta">
-            <div class="nav-virtual-channel-status">{presenter.getTimerModeLabel()}</div>
-            <div class="nav-virtual-channel-usage">{presenter.getTimerUsageLabel()}</div>
-            <div class="nav-virtual-channel-usage">{presenter.getTimerRemainingLabel()}</div>
+            {#if presenter.getTimerModeLabel()}
+                <div class="nav-virtual-channel-status">{presenter.getTimerModeLabel()}</div>
+            {/if}
+            <div class="nav-virtual-channel-timer-row">
+                <span class="nav-virtual-channel-consumed">{presenter.getConsumedDurationLabel()}</span>
+                {#if presenter.getTotalDurationLabel()}
+                    <span class="nav-virtual-channel-total">/ {presenter.getTotalDurationLabel()}</span>
+                {/if}
+            </div>
         </div>
         <form method="POST" action="/viewer/debug/reset-virtual-channel-timer" class="nav-virtual-channel-debug-form">
             <input type="hidden" name="virtualChannelId" value={liveVirtualChannel.id} />
@@ -82,11 +91,11 @@
         background: linear-gradient(180deg, rgba(227, 123, 44, 0.18), rgba(20, 22, 27, 0.94));
     }
 
-    .nav-virtual-channel-label {
-        color: var(--text-soft);
-        font-size: 0.72rem;
-        text-transform: uppercase;
-        letter-spacing: 0.08em;
+    :global(.app-layout[data-profile-tone="adult"]) .nav-virtual-channel.nav-virtual-channel-capped,
+    :global(.app-layout[data-profile-tone="child"]) .nav-virtual-channel.nav-virtual-channel-capped,
+    .nav-virtual-channel.nav-virtual-channel-capped {
+        border-color: rgba(214, 86, 86, 0.72);
+        background: linear-gradient(180deg, rgba(120, 22, 22, 0.56), rgba(36, 10, 12, 0.96));
     }
 
     .nav-virtual-channel-name {
@@ -109,11 +118,34 @@
         gap: 0.15rem;
     }
 
-    .nav-virtual-channel-status,
-    .nav-virtual-channel-usage {
+    .nav-virtual-channel-status {
         color: var(--text-muted);
         font-size: 0.84rem;
         line-height: 1.35;
+    }
+
+    .nav-virtual-channel-timer-row {
+        min-height: 2.4rem;
+        display: flex;
+        align-items: baseline;
+        gap: 0.28rem;
+        color: var(--text);
+        line-height: 1;
+        white-space: nowrap;
+    }
+
+    .nav-virtual-channel-consumed {
+        flex: 0 1 auto;
+        min-width: 0;
+        font-size: clamp(1.45rem, 5.4vh, 2.1rem);
+        font-weight: 700;
+    }
+
+    .nav-virtual-channel-total {
+        flex: 0 0 auto;
+        color: var(--text-muted);
+        font-size: clamp(0.8rem, 2.5vh, 1rem);
+        font-weight: 600;
     }
 
     .nav-virtual-channel-debug-form {
@@ -134,5 +166,6 @@
         font-size: 0.8rem;
         line-height: 1.2;
     }
+
 </style>
 <!-- apply-patch-anchor - do not delete -->

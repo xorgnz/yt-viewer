@@ -37,7 +37,7 @@
         const timerUsageSeconds = typeof candidate.timerUsageSeconds === 'number' ? candidate.timerUsageSeconds : 0;
         const timerRemainingSeconds = typeof candidate.timerRemainingSeconds === 'number'
             ? candidate.timerRemainingSeconds
-            : (dailyTimerMax == null ? null : Math.max(0, (dailyTimerMax * 60) - timerUsageSeconds));
+            : (dailyTimerMax == null ? null : Math.max(0, dailyTimerMax - timerUsageSeconds));
         const timerState = candidate.timerState === 'unlimited' || candidate.timerState === 'available' || candidate.timerState === 'capped'
             ? candidate.timerState
             : (dailyTimerMax == null ? 'unlimited' : (timerRemainingSeconds === 0 ? 'capped' : 'available'));

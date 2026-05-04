@@ -54,6 +54,7 @@
     let timerPlaybackBlocked = false;
     let timerStatusMessage: string | null = data.playbackBlockedMessage;
     let activeVideoYoutubeId = data.video.youtube_id;
+    let activeVirtualChannelId = data.currentVirtualChannelId;
     let activeVirtualChannelUsageBaselineSeconds = data.activeVirtualChannel?.timerUsageSeconds ?? 0;
     let recommendations = data.recommendations;
     let lastDebugEvent = 'init';
@@ -69,14 +70,28 @@
     $: recommendations = data.recommendations;
     $: timerStatusMessage = data.playbackBlockedMessage;
     $: timerPlaybackBlocked = !!timerStatusMessage;
-    $: activeVirtualChannelUsageBaselineSeconds = data.activeVirtualChannel?.timerUsageSeconds ?? 0;
 
     $: if (data.video.youtube_id !== activeVideoYoutubeId)
     {
+        const previousVirtualChannelId = activeVirtualChannelId;
+        const previousUsageSeconds = previousVirtualChannelId == null
+            ? 0
+            : getLocalVirtualChannelUsageSeconds();
+        const nextVirtualChannelId = data.currentVirtualChannelId;
+        const nextRouteUsageSeconds = data.activeVirtualChannel?.timerUsageSeconds ?? 0;
+        const nextUsageBaselineSeconds = previousVirtualChannelId != null && nextVirtualChannelId === previousVirtualChannelId
+            ? Math.max(nextRouteUsageSeconds, previousUsageSeconds)
+            : nextRouteUsageSeconds;
+
         lastDebugEvent = `route-change: flush ${activeVideoYoutubeId}`;
-        flushPendingHistory(activeVideoYoutubeId);
+        flushPendingHistory(activeVideoYoutubeId, false, previousVirtualChannelId);
         activeVideoYoutubeId = data.video.youtube_id;
-        resetForVideoChange(!!data.video.watched, data.playbackBlockedMessage);
+        resetForVideoChange(
+            !!data.video.watched,
+            data.playbackBlockedMessage,
+            nextVirtualChannelId,
+            nextUsageBaselineSeconds
+        );
 
         if (player && typeof player.cueVideoById === 'function')
         {
@@ -120,7 +135,12 @@
         return viewerPageState.buildViewerWatchHref(data.navigationFilters, videoYoutubeId);
     }
 
-    function resetForVideoChange(serverWatched: boolean, playbackBlockedMessage: string | null)
+    function resetForVideoChange(
+        serverWatched: boolean,
+        playbackBlockedMessage: string | null,
+        virtualChannelId: number | null,
+        usageBaselineSeconds: number
+    )
     {
         lastDebugEvent = `resetForVideoChange: ${data.video.youtube_id}`;
         stopPolling();
@@ -141,7 +161,8 @@
         lastHistoryActivityAt = null;
         timerStatusMessage = playbackBlockedMessage;
         timerPlaybackBlocked = !!playbackBlockedMessage;
-        activeVirtualChannelUsageBaselineSeconds = data.activeVirtualChannel?.timerUsageSeconds ?? 0;
+        activeVirtualChannelId = virtualChannelId;
+        activeVirtualChannelUsageBaselineSeconds = usageBaselineSeconds;
     }
 
     function getLocalVirtualChannelUsageSeconds(): number
@@ -301,6 +322,28 @@
         }
     }
 
+    async function readActionFailureData(response: Response): Promise<Record<string, unknown> | null>
+    {
+        try
+        {
+            const payload = await response.json();
+            if (!payload || typeof payload !== 'object') {
+                return null;
+            }
+
+            const maybeData = (payload as { data?: unknown }).data;
+            if (!maybeData || typeof maybeData !== 'object') {
+                return null;
+            }
+
+            return maybeData as Record<string, unknown>;
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
     async function createHistorySession()
     {
         const formData = new FormData();
@@ -324,8 +367,9 @@
                 historySessionCreated = false;
                 historySessionCreatePending = false;
 
-                if (response.headers.get('x-viewer-timer-state') === 'capped') {
-                    handleTimerCapReached();
+                const failureData = await readActionFailureData(response);
+                if (failureData?.timerState === 'capped') {
+                    handleTimerCapReached(typeof failureData.message === 'string' ? failureData.message : undefined);
                 }
 
                 return;
@@ -360,19 +404,19 @@
         return currentSeconds > 0;
     }
 
-    function buildHistoryProgressFormData(): FormData
+    function buildHistoryProgressFormData(virtualChannelId: number | null = activeVirtualChannelId): FormData
     {
         const formData = new FormData();
         formData.set('watchSeconds', String(Math.floor(elapsedWatchSeconds)));
 
-        if (data.currentVirtualChannelId != null) {
-            formData.set('virtualChannelId', String(data.currentVirtualChannelId));
+        if (virtualChannelId != null) {
+            formData.set('virtualChannelId', String(virtualChannelId));
         }
 
         return formData;
     }
 
-    function flushPendingHistory(videoYoutubeId: string, keepalive = false)
+    function flushPendingHistory(videoYoutubeId: string, keepalive = false, virtualChannelId: number | null = activeVirtualChannelId)
     {
         if (!videoYoutubeId || !shouldFlushPendingHistory()) {
             lastDebugEvent = `flush skipped: ${videoYoutubeId || 'none'}`;
@@ -388,7 +432,7 @@
 
         void fetch(targetUrl, {
             method: 'POST',
-            body: buildHistoryProgressFormData(),
+            body: buildHistoryProgressFormData(virtualChannelId),
             keepalive
         }).then((response) => {
             lastDebugResponse = `flush ${targetAction}: ${response.status}`;
@@ -435,22 +479,27 @@
                 lastHistoryActivityAt = Date.now();
                 lastDebugEvent = `updateHistoryProgress: persisted ${lastPersistedWatchSeconds}s`;
             }
-            else if (response.headers.get('x-viewer-timer-state') === 'capped')
+            else
             {
-                handleTimerCapReached();
-            }
-            else if (response.status === 404)
-            {
-                historySessionCreated = false;
-                historySessionCreatePending = false;
-            }
-            else if (response.status === 409)
-            {
-                elapsedWatchSeconds = 0;
-                historySessionCreated = false;
-                historySessionCreatePending = false;
-                lastPersistedWatchSeconds = 0;
-                lastHistoryActivityAt = null;
+                const failureData = await readActionFailureData(response);
+
+                if (failureData?.timerState === 'capped')
+                {
+                    handleTimerCapReached(typeof failureData.message === 'string' ? failureData.message : undefined);
+                }
+                else if (response.status === 404)
+                {
+                    historySessionCreated = false;
+                    historySessionCreatePending = false;
+                }
+                else if (response.status === 409)
+                {
+                    elapsedWatchSeconds = 0;
+                    historySessionCreated = false;
+                    historySessionCreatePending = false;
+                    lastPersistedWatchSeconds = 0;
+                    lastHistoryActivityAt = null;
+                }
             }
         }
         catch

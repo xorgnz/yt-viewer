@@ -109,7 +109,7 @@ describe('viewer watch route', () => {
         expect(watchService.load).toHaveBeenCalledWith('video-1', expect.objectContaining({ virtualChannelId: 5 }));
     });
 
-    it('returns a timer-capped response from the history-session action with the capped header', async () => {
+    it('returns a timer-capped failure payload from the history-session action', async () => {
         watchService.createHistorySession.mockResolvedValue({
             ok: false,
             status: 409,
@@ -130,17 +130,15 @@ describe('viewer watch route', () => {
             cookies: {}
         } as never);
 
-        expect(result).toBeInstanceOf(Response);
-
-        if (!(result instanceof Response)) {
-            throw new Error('Expected a Response from the capped timer action.');
+        if (!('status' in result) || !('data' in result)) {
+            throw new Error('Expected an ActionFailure from the capped timer action.');
         }
 
         expect(result.status).toBe(409);
-        expect(result.headers.get('x-viewer-timer-state')).toBe('capped');
-        await expect(result.json()).resolves.toEqual({
+        expect(result.data).toEqual({
             message: 'Virtual channel timer limit reached',
-            code: 'timer_capped'
+            code: 'timer_capped',
+            timerState: 'capped'
         });
         expect(watchService.createHistorySession).toHaveBeenCalledWith('video-1', 30, 5);
     });

@@ -15,37 +15,29 @@ export class SideNavVirtualChannelPanelPresenter
             return 'Unlimited';
         }
 
-        if (this.virtualChannel.timerState === 'capped') {
-            return 'Limit reached';
-        }
-
-        return `Daily limit: ${this.formatSeconds(this.virtualChannel.dailyTimerMax)} sec`;
+        return '';
     }
 
-    getTimerUsageLabel(): string
+    getConsumedDurationLabel(): string
     {
-        if (this.virtualChannel.timerState === 'unlimited' || this.virtualChannel.dailyTimerMax == null) {
-            return `Consumed: ${this.formatSeconds(this.virtualChannel.timerUsageSeconds)} sec`;
-        }
-
-        if (this.virtualChannel.timerState === 'capped') {
-            return `Consumed: ${this.formatSeconds(this.virtualChannel.timerUsageSeconds)} sec`;
-        }
-
-        return `Consumed: ${this.formatSeconds(this.virtualChannel.timerUsageSeconds)} sec`;
+        return this.formatDuration(this.virtualChannel.timerUsageSeconds);
     }
 
-    getTimerRemainingLabel(): string
+    getTotalDurationLabel(): string | null
     {
         if (this.virtualChannel.dailyTimerMax == null || this.virtualChannel.timerState === 'unlimited') {
-            return 'Remaining: unlimited';
+            return null;
         }
 
-        return `Remaining: ${this.formatSeconds(this.virtualChannel.timerRemainingSeconds ?? 0)} sec`;
+        return this.formatDuration(this.virtualChannel.dailyTimerMax);
     }
 
-    private formatSeconds(seconds: number): string
+    private formatDuration(seconds: number): string
     {
-        return String(Math.max(0, Math.floor(seconds)));
+        const normalizedSeconds = Math.max(0, Math.floor(seconds));
+        const minutes = Math.floor(normalizedSeconds / 60);
+        const remainderSeconds = normalizedSeconds % 60;
+
+        return `${minutes}:${String(remainderSeconds).padStart(2, '0')}`;
     }
 }

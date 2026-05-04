@@ -29,7 +29,8 @@ describe('SideNavVirtualChannelPanelPresenter', () => {
         }));
 
         expect(presenter.getTimerModeLabel()).toBe('Unlimited');
-        expect(presenter.getTimerUsageLabel()).toBe('Consumed: 1860 sec');
+        expect(presenter.getConsumedDurationLabel()).toBe('31:00');
+        expect(presenter.getTotalDurationLabel()).toBeNull();
     });
 
     it('formats available limited virtual channel status and remaining time', () => {
@@ -40,8 +41,9 @@ describe('SideNavVirtualChannelPanelPresenter', () => {
             timerRemainingSeconds: 72
         }));
 
-        expect(presenter.getTimerModeLabel()).toBe('Daily limit: 90 sec');
-        expect(presenter.getTimerUsageLabel()).toBe('Consumed: 18 sec');
+        expect(presenter.getTimerModeLabel()).toBe('');
+        expect(presenter.getConsumedDurationLabel()).toBe('0:18');
+        expect(presenter.getTotalDurationLabel()).toBe('1:30');
     });
 
     it('formats capped virtual channel status and consumed usage', () => {
@@ -52,7 +54,8 @@ describe('SideNavVirtualChannelPanelPresenter', () => {
             timerRemainingSeconds: 0
         }));
 
-        expect(presenter.getTimerModeLabel()).toBe('Limit reached');
-        expect(presenter.getTimerUsageLabel()).toBe('Consumed: 45 sec');
+        expect(presenter.getTimerModeLabel()).toBe('');
+        expect(presenter.getConsumedDurationLabel()).toBe('0:45');
+        expect(presenter.getTotalDurationLabel()).toBe('0:45');
     });
 });
