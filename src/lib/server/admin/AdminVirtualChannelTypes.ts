@@ -63,8 +63,9 @@ export interface AdminVirtualChannelRedirect
     redirectTo: string;
 }
 
-export interface AdminSelectedOnlyVideo extends VideoFields
+export interface AdminSelectedOnlyVideoViewModel
 {
+    video: VideoFields;
     review_state: VirtualChannelAssignmentVideoReviewState;
 }
 
@@ -80,7 +81,7 @@ export interface AdminAssociatedSourceChannelView
     assignment: VirtualChannelAssignmentFields;
     sourceChannel: SourceChannelFields | null;
     automaticVideos: VideoFields[];
-    selectedOnlyVideos: AdminSelectedOnlyVideo[];
+    selectedOnlyVideos: AdminSelectedOnlyVideoViewModel[];
     selectedOnlyCounts: AdminSelectedOnlyCounts | null;
     reviewStateFilter: AdminReviewStateFilter;
     regexFilter: string;

@@ -1,5 +1,6 @@
 <script lang="ts">
     import type { ActionData, PageData } from './$types';
+    import type { AdminSelectedOnlyVideoViewModel } from '$lib/server/admin/AdminVirtualChannelTypes';
 
     export let data: PageData;
     export let form: ActionData;
@@ -86,18 +87,7 @@
     }
 
     function filteredSelectedOnlyVideos(
-        videos: Array<{
-            id: number;
-            youtube_id: string;
-            channel_id: number;
-            title: string;
-            description?: string;
-            published_at?: number | null;
-            duration_seconds?: number | null;
-            thumbnail_url?: string | null;
-            length_classification?: 'long' | 'short' | 'unknown' | null;
-            review_state: 'included' | 'ignored' | 'not_yet_reviewed';
-        }>,
+        videos: AdminSelectedOnlyVideoViewModel[],
         reviewStateFilter: 'all' | 'not_yet_reviewed',
         regexFilter: string,
         videoTypeFilter: 'all' | 'long' | 'short' | 'unknown'
@@ -111,7 +101,7 @@
         // Apply the video classification filter before regex matching.
         if (videoTypeFilter !== 'all') {
             filteredVideos = filteredVideos.filter((video) => {
-                const classification = video.length_classification ?? 'unknown';
+                const classification = video.video.length_classification ?? 'unknown';
                 return classification === videoTypeFilter;
             });
         }
@@ -125,8 +115,8 @@
             const pattern = new RegExp(regexFilter, 'i');
 
             filteredVideos = filteredVideos.filter((video) => {
-                const title = video.title || '';
-                const description = video.description || '';
+                const title = video.video.title || '';
+                const description = video.video.description || '';
                 return pattern.test(title) || pattern.test(description);
             });
 
@@ -477,7 +467,7 @@
                                                         <input
                                                             type="hidden"
                                                             name="video_ids"
-                                                            value={visibleSelectedOnlyVideos.map((video) => video.id).join(',')}
+                                                            value={visibleSelectedOnlyVideos.map((video) => video.video.id).join(',')}
                                                         />
                                                         <input
                                                             type="hidden"
@@ -492,7 +482,7 @@
                                                         <input
                                                             type="hidden"
                                                             name="video_ids"
-                                                            value={visibleSelectedOnlyVideos.map((video) => video.id).join(',')}
+                                                            value={visibleSelectedOnlyVideos.map((video) => video.video.id).join(',')}
                                                         />
                                                         <input
                                                             type="hidden"
@@ -507,7 +497,7 @@
                                                         <input
                                                             type="hidden"
                                                             name="video_ids"
-                                                            value={visibleSelectedOnlyVideos.map((video) => video.id).join(',')}
+                                                            value={visibleSelectedOnlyVideos.map((video) => video.video.id).join(',')}
                                                         />
                                                         <input
                                                             type="hidden"
@@ -522,7 +512,7 @@
                                                         <input
                                                             type="hidden"
                                                             name="video_ids"
-                                                            value={visibleSelectedOnlyVideos.map((video) => video.id).join(',')}
+                                                            value={visibleSelectedOnlyVideos.map((video) => video.video.id).join(',')}
                                                         />
                                                         <input
                                                             type="hidden"
@@ -547,27 +537,27 @@
                                                                 <tr>
                                                                     <td>
                                                                         <div class="inline-actions">
-                                                                            {#if video.thumbnail_url}
+                                                                            {#if video.video.thumbnail_url}
                                                                                 <img
-                                                                                    src={video.thumbnail_url}
+                                                                                    src={video.video.thumbnail_url}
                                                                                     alt=""
                                                                                     width="96"
                                                                                     height="54"
                                                                                 />
                                                                             {/if}
                                                                             <div>
-                                                                                <div>{video.title}</div>
+                                                                                <div>{video.video.title}</div>
                                                                                 <div class="muted">
-                                                                                    {video.description || 'No description available.'}
+                                                                                    {video.video.description || 'No description available.'}
                                                                                 </div>
                                                                             </div>
                                                                         </div>
                                                                     </td>
                                                                     <td>
-                                                                        <div class="muted">Published: {formatTimestamp(video.published_at)}</div>
-                                                                        <div class="muted">Length: {formatDuration(video.duration_seconds)}</div>
+                                                                        <div class="muted">Published: {formatTimestamp(video.video.published_at)}</div>
+                                                                        <div class="muted">Length: {formatDuration(video.video.duration_seconds)}</div>
                                                                         <div class="muted">
-                                                                            Type: <code>{formatLengthClassification(video.length_classification)}</code>
+                                                                            Type: <code>{formatLengthClassification(video.video.length_classification)}</code>
                                                                         </div>
                                                                     </td>
                                                                     <td>
@@ -576,19 +566,19 @@
                                                                             <div class="inline-actions">
                                                                                 <form method="post" action="?/setVideoReviewState" class="inline-form">
                                                                                     <input type="hidden" name="assignment_id" value={item.assignment.id} />
-                                                                                    <input type="hidden" name="video_id" value={video.id} />
+                                                                                    <input type="hidden" name="video_id" value={video.video.id} />
                                                                                     <input type="hidden" name="review_state" value="included" />
                                                                                     <button type="submit">Include</button>
                                                                                 </form>
                                                                                 <form method="post" action="?/setVideoReviewState" class="inline-form">
                                                                                     <input type="hidden" name="assignment_id" value={item.assignment.id} />
-                                                                                    <input type="hidden" name="video_id" value={video.id} />
+                                                                                    <input type="hidden" name="video_id" value={video.video.id} />
                                                                                     <input type="hidden" name="review_state" value="ignored" />
                                                                                     <button type="submit" class="btn-secondary">Ignore</button>
                                                                                 </form>
                                                                                 <form method="post" action="?/setVideoReviewState" class="inline-form">
                                                                                     <input type="hidden" name="assignment_id" value={item.assignment.id} />
-                                                                                    <input type="hidden" name="video_id" value={video.id} />
+                                                                                    <input type="hidden" name="video_id" value={video.video.id} />
                                                                                     <input type="hidden" name="review_state" value="not_yet_reviewed" />
                                                                                     <button type="submit" class="btn-secondary">Reset</button>
                                                                                 </form>

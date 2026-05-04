@@ -315,7 +315,7 @@ export class AdminVirtualChannelManageService
         const selectedOnlyVideos = assignment.mode !== 'selected_only'
             ? []
             : sourceVideos.map((video) => ({
-                ...video,
+                video: video.toFields(),
                 review_state: selectionByVideoId.get(video.id)?.review_state ?? 'not_yet_reviewed'
             }));
         const selectedOnlyCounts = assignment.mode !== 'selected_only'
