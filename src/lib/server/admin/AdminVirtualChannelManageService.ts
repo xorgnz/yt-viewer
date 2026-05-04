@@ -123,9 +123,9 @@ export class AdminVirtualChannelManageService
         return {
             ok: true,
             data: {
-                virtualChannel: virtualChannel.toFields(),
+                virtualChannel,
                 associatedSourceChannels,
-                availableSourceChannels: availableSourceChannels.map((channel) => channel.toFields())
+                availableSourceChannels
             }
         };
     }
@@ -328,7 +328,7 @@ export class AdminVirtualChannelManageService
 
         return {
             assignment: assignment.toFields(),
-            sourceChannel: sourceChannelsById.get(assignment.source_channel_id)?.toFields() ?? null,
+            sourceChannel: sourceChannelsById.get(assignment.source_channel_id) ?? null,
             automaticVideos: automaticVideos.map((video) => video.toFields()),
             selectedOnlyVideos,
             selectedOnlyCounts,

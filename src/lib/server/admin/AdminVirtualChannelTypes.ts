@@ -1,7 +1,7 @@
-import type { SourceChannel, SourceChannelFields } from '$lib/entities/sourceChannel';
+import type { SourceChannel } from '$lib/entities/sourceChannel';
 import type { VirtualChannelAssignmentFields } from '$lib/entities/virtualChannelAssignment';
 import type { VirtualChannelAssignmentVideoReviewState } from '$lib/entities/virtualChannelAssignmentVideoSelection';
-import type { VirtualChannel, VirtualChannelFields } from '$lib/entities/virtualChannel';
+import type { VirtualChannel } from '$lib/entities/virtualChannel';
 import type { VideoFields } from '$lib/entities/video';
 
 export type AdminVideoTypeFilter = 'all' | 'long' | 'short' | 'unknown';
@@ -78,7 +78,7 @@ export interface AdminSelectedOnlyCounts
 export interface AdminAssociatedSourceChannelView
 {
     assignment: VirtualChannelAssignmentFields;
-    sourceChannel: SourceChannelFields | null;
+    sourceChannel: SourceChannel | null;
     automaticVideos: VideoFields[];
     selectedOnlyVideos: AdminSelectedOnlyVideoViewModel[];
     selectedOnlyCounts: AdminSelectedOnlyCounts | null;
@@ -89,8 +89,8 @@ export interface AdminAssociatedSourceChannelView
 
 export interface AdminVirtualChannelManagePageData
 {
-    virtualChannel: VirtualChannelFields;
+    virtualChannel: VirtualChannel;
     associatedSourceChannels: AdminAssociatedSourceChannelView[];
-    availableSourceChannels: SourceChannelFields[];
+    availableSourceChannels: SourceChannel[];
 }
 // apply-patch-anchor - do not delete
