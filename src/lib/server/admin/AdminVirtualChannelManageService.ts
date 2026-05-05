@@ -290,7 +290,7 @@ export class AdminVirtualChannelManageService
         const selectionRows = assignment.mode === VirtualChannelAssignmentMode.SelectedOnly
             ? await this.selectionDAO.listForAssignment(assignment.id)
             : [];
-        const selectionByVideoId = new Map(selectionRows.map((row) => [row.video_id, row]));
+        const selectionByVideoId = new Map(selectionRows.map((row) => [row.videoId, row]));
 
         // Split automatic and selected-only display models so the route only renders.
         const automaticVideos = assignment.mode === VirtualChannelAssignmentMode.SelectedOnly
@@ -306,7 +306,7 @@ export class AdminVirtualChannelManageService
             ? []
             : sourceVideos.map((video) => ({
                 video,
-                reviewState: selectionByVideoId.get(video.id)?.review_state ?? ReviewState.NotYetReviewed
+                reviewState: selectionByVideoId.get(video.id)?.reviewState ?? ReviewState.NotYetReviewed
             }));
         const selectedOnlyCounts = assignment.mode !== VirtualChannelAssignmentMode.SelectedOnly
             ? null
