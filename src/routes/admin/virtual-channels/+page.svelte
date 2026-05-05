@@ -172,7 +172,7 @@
                                                             <span>
                                                                 {item.sourceChannel?.title || 'Unknown source channel'}
                                                                 {#if item.sourceChannel}
-                                                                    <span class="muted">({item.sourceChannel.youtube_id})</span>
+                                                                    <span class="muted">({item.sourceChannel.youtubeId})</span>
                                                                 {/if}
                                                             </span>
                                                             <form
@@ -217,7 +217,7 @@
                                                         <select name="source_channel_id" required>
                                                         <option value="" selected disabled>Select source channel</option>
                                                         {#each g.availableSourceChannels as channel}
-                                                            <option value={channel.id}>{channel.title} ({channel.youtube_id})</option>
+                                                            <option value={channel.id}>{channel.title} ({channel.youtubeId})</option>
                                                         {/each}
                                                     </select>
                                                     <button type="submit">Add</button>

@@ -28,12 +28,12 @@ describe('DAO modules', () => {
         }));
 
         await new SourceChannelDAO(provider).upsert({
-            youtube_id: 'channel-1',
+            youtubeId: 'channel-1',
             title: 'Channel',
             description: '',
-            thumbnail_url: null,
-            published_at: null,
-            last_refreshed_at: null,
+            thumbnailUrl: null,
+            publishedAt: null,
+            lastRefreshedAt: null,
         });
         await new VideoDAO(provider).listExistingIds([1, 2]);
         await new ProfileDAO(provider).upsertByKey('default', 'Default');

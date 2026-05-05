@@ -9,11 +9,11 @@ export class YouTubeChannelUpsertMapper
         const publishedAt = snippet.publishedAt ? Date.parse(snippet.publishedAt) : null;
 
         return {
-            youtube_id: item.id,
+            youtubeId: item.id,
             title: snippet.title || '',
             description: snippet.description || '',
-            thumbnail_url: this.getBestThumbnailUrl(snippet.thumbnails),
-            published_at: Number.isFinite(publishedAt as any) ? (publishedAt as number) : null
+            thumbnailUrl: this.getBestThumbnailUrl(snippet.thumbnails),
+            publishedAt: Number.isFinite(publishedAt as any) ? (publishedAt as number) : null
         } as const;
     }
 

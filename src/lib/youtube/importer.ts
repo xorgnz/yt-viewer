@@ -56,9 +56,9 @@ export class YouTubeChannelImportService
         const channelUpsert = this.channelMapper.toChannelUpsert(channel);
         await this.sourceChannelDAO.upsert(channelUpsert);
 
-        const sourceChannel = await this.sourceChannelDAO.getByExternalId(channelUpsert.youtube_id);
+        const sourceChannel = await this.sourceChannelDAO.getByExternalId(channelUpsert.youtubeId);
         if (!sourceChannel) {
-            throw new Error(`Failed to resolve imported channel ${channelUpsert.youtube_id}.`);
+            throw new Error(`Failed to resolve imported channel ${channelUpsert.youtubeId}.`);
         }
 
         let videosUpserted = 0;

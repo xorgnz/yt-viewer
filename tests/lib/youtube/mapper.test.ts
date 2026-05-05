@@ -22,12 +22,12 @@ describe('youtube mapper (task 3.3)', () => {
         };
         const up = mapper.toChannelUpsert(item);
         expect(up).toMatchObject({
-            youtube_id: 'UC_123',
+            youtubeId: 'UC_123',
             title: 'SourceChannel Title',
             description: 'About this channel',
-            thumbnail_url: 'http://t.hi'
+            thumbnailUrl: 'http://t.hi'
         });
-        expect(typeof up.published_at === 'number' || up.published_at === null).toBe(true);
+        expect(typeof up.publishedAt === 'number' || up.publishedAt === null).toBe(true);
     });
 
     it('maps playlistItems item to video upsert payload with video metadata classification', () => {

@@ -79,11 +79,11 @@ export class AdminSourceChannelPageService
             const metadataPublishedAt = snippet.publishedAt ? Date.parse(snippet.publishedAt) : null;
 
             await this.sourceChannelDAO.upsert({
-                youtube_id: resolved.channelId,
+                youtubeId: resolved.channelId,
                 title: input.title || snippet.title || '',
                 description: input.description || snippet.description || '',
-                thumbnail_url: input.thumbnail_url || metadataThumbnailUrl,
-                published_at: input.published_at ?? (
+                thumbnailUrl: input.thumbnail_url || metadataThumbnailUrl,
+                publishedAt: input.published_at ?? (
                     Number.isFinite(metadataPublishedAt as number) ? (metadataPublishedAt as number) : null
                 )
             });
@@ -111,11 +111,11 @@ export class AdminSourceChannelPageService
         }
 
         await this.sourceChannelDAO.upsert({
-            youtube_id: existing.youtube_id,
+            youtubeId: existing.youtubeId,
             title: input.title,
             description: input.description,
-            thumbnail_url: input.thumbnail_url,
-            published_at: input.published_at
+            thumbnailUrl: input.thumbnail_url,
+            publishedAt: input.published_at
         });
 
         return {
@@ -157,7 +157,7 @@ export class AdminSourceChannelPageService
             const result = await this.youTubeCoordinator.importChannelFromYouTube(
                 this.db,
                 client,
-                existing.youtube_id
+                existing.youtubeId
             );
 
             if (result.channelId === null) {
@@ -174,7 +174,7 @@ export class AdminSourceChannelPageService
                 data: { redirectTo: AdminSourceChannelPageService.INDEX_PATH }
             };
         } catch (error: unknown) {
-            console.error('Refresh failed for channel', existing.youtube_id, error);
+            console.error('Refresh failed for channel', existing.youtubeId, error);
             return this.mapYouTubeRequestFailure(
                 error,
                 'Invalid request to YouTube. Please verify the channel ID and try again.'
