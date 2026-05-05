@@ -158,7 +158,7 @@ export class AdminVirtualChannelManageService
     >>
     {
         const assignment = await this.assignmentDAO.get(input.assignmentId);
-        if (!assignment || assignment.virtual_channel_id !== input.virtualChannelId) {
+        if (!assignment || assignment.virtualChannelId !== input.virtualChannelId) {
             return this.buildError('assignment_not_found', 404, 'Assignment not found.');
         }
 
@@ -175,11 +175,11 @@ export class AdminVirtualChannelManageService
     >>
     {
         const assignment = await this.assignmentDAO.get(input.assignmentId);
-        if (!assignment || assignment.virtual_channel_id !== input.virtualChannelId) {
+        if (!assignment || assignment.virtualChannelId !== input.virtualChannelId) {
             return this.buildError('assignment_not_found', 404, 'Assignment not found.');
         }
 
-        await this.assignmentDAO.remove(assignment.source_channel_id, assignment.virtual_channel_id);
+        await this.assignmentDAO.remove(assignment.sourceChannelId, assignment.virtualChannelId);
         return {
             ok: true,
             data: { redirectTo: this.buildManagePath(input.virtualChannelId) }
@@ -196,7 +196,7 @@ export class AdminVirtualChannelManageService
     >>
     {
         const assignment = await this.assignmentDAO.get(input.assignmentId);
-        if (!assignment || assignment.virtual_channel_id !== input.virtualChannelId) {
+        if (!assignment || assignment.virtualChannelId !== input.virtualChannelId) {
             return this.buildError('assignment_not_found', 404, 'Assignment not found.');
         }
 
@@ -209,7 +209,7 @@ export class AdminVirtualChannelManageService
         }
 
         const video = await this.videoDAO.get(input.videoId);
-        if (!video || video.channel_id !== assignment.source_channel_id) {
+        if (!video || video.channel_id !== assignment.sourceChannelId) {
             return this.buildError('video_not_found', 404, 'Video not found for this assignment.');
         }
 
@@ -230,7 +230,7 @@ export class AdminVirtualChannelManageService
     >>
     {
         const assignment = await this.assignmentDAO.get(input.assignmentId);
-        if (!assignment || assignment.virtual_channel_id !== input.virtualChannelId) {
+        if (!assignment || assignment.virtualChannelId !== input.virtualChannelId) {
             return this.buildError('assignment_not_found', 404, 'Assignment not found.');
         }
 
@@ -244,7 +244,7 @@ export class AdminVirtualChannelManageService
 
         for (const videoId of input.videoIds) {
             const video = await this.videoDAO.get(videoId);
-            if (!video || video.channel_id !== assignment.source_channel_id) {
+            if (!video || video.channel_id !== assignment.sourceChannelId) {
                 return this.buildError('video_not_found', 404, `Video ${videoId} is not available for this assignment.`);
             }
         }
@@ -286,7 +286,7 @@ export class AdminVirtualChannelManageService
     {
         const regexFilter = searchParams.get(`regexFilter-${assignment.id}`)?.trim() ?? '';
         const videoTypeFilter = this.getVideoTypeFilter(searchParams, assignment.id);
-        const sourceVideos = await this.videoDAO.listByChannel(assignment.source_channel_id);
+        const sourceVideos = await this.videoDAO.listByChannel(assignment.sourceChannelId);
         const selectionRows = assignment.mode === VirtualChannelAssignmentMode.SelectedOnly
             ? await this.selectionDAO.listForAssignment(assignment.id)
             : [];
@@ -318,7 +318,7 @@ export class AdminVirtualChannelManageService
 
         return {
             assignment,
-            sourceChannel: sourceChannelsById.get(assignment.source_channel_id) ?? null,
+            sourceChannel: sourceChannelsById.get(assignment.sourceChannelId) ?? null,
             automaticVideos,
             selectedOnlyVideos,
             selectedOnlyCounts,

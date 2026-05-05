@@ -32,7 +32,7 @@
         : (data.virtualChannel.dailyTimerMax == null ? '' : String(data.virtualChannel.dailyTimerMax));
 
     const associatedSourceChannelIds = new Set(
-        data.associatedSourceChannels.map((item) => item.assignment.source_channel_id)
+        data.associatedSourceChannels.map((item) => item.assignment.sourceChannelId)
     );
 
     const availableForAssociation = data.availableSourceChannels.filter(

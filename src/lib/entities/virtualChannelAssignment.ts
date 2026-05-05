@@ -17,31 +17,31 @@ export type VirtualChannelAssignmentFields = {
 export class VirtualChannelAssignment
 {
     readonly id: number;
-    readonly source_channel_id: number;
-    readonly virtual_channel_id: number;
+    readonly sourceChannelId: number;
+    readonly virtualChannelId: number;
     readonly mode: VirtualChannelAssignmentMode;
-    readonly created_at: number;
-    readonly updated_at: number;
+    readonly createdAt: number;
+    readonly updatedAt: number;
 
     constructor(data: VirtualChannelAssignmentFields)
     {
         this.id = data.id;
-        this.source_channel_id = data.source_channel_id;
-        this.virtual_channel_id = data.virtual_channel_id;
+        this.sourceChannelId = data.source_channel_id;
+        this.virtualChannelId = data.virtual_channel_id;
         this.mode = data.mode;
-        this.created_at = data.created_at;
-        this.updated_at = data.updated_at;
+        this.createdAt = data.created_at;
+        this.updatedAt = data.updated_at;
     }
 
     toFields(): VirtualChannelAssignmentFields
     {
         return {
             id: this.id,
-            source_channel_id: this.source_channel_id,
-            virtual_channel_id: this.virtual_channel_id,
+            source_channel_id: this.sourceChannelId,
+            virtual_channel_id: this.virtualChannelId,
             mode: this.mode,
-            created_at: this.created_at,
-            updated_at: this.updated_at,
+            created_at: this.createdAt,
+            updated_at: this.updatedAt,
         };
     }
 
@@ -52,15 +52,15 @@ export class VirtualChannelAssignment
             value &&
             typeof value === 'object' &&
             typeof value.id === 'number' &&
-            typeof value.source_channel_id === 'number' &&
-            typeof value.virtual_channel_id === 'number' &&
+            typeof value.sourceChannelId === 'number' &&
+            typeof value.virtualChannelId === 'number' &&
             (
                 value.mode === VirtualChannelAssignmentMode.All ||
                 value.mode === VirtualChannelAssignmentMode.LongOnly ||
                 value.mode === VirtualChannelAssignmentMode.SelectedOnly
             ) &&
-            typeof value.created_at === 'number' &&
-            typeof value.updated_at === 'number'
+            typeof value.createdAt === 'number' &&
+            typeof value.updatedAt === 'number'
         );
     }
 
@@ -68,11 +68,11 @@ export class VirtualChannelAssignment
     {
         return new VirtualChannelAssignment({
             id: (patch as any).id ?? this.id,
-            source_channel_id: (patch as any).source_channel_id ?? this.source_channel_id,
-            virtual_channel_id: (patch as any).virtual_channel_id ?? this.virtual_channel_id,
+            source_channel_id: (patch as any).sourceChannelId ?? this.sourceChannelId,
+            virtual_channel_id: (patch as any).virtualChannelId ?? this.virtualChannelId,
             mode: (patch as any).mode ?? this.mode,
-            created_at: (patch as any).created_at ?? this.created_at,
-            updated_at: (patch as any).updated_at ?? this.updated_at
+            created_at: (patch as any).createdAt ?? this.createdAt,
+            updated_at: (patch as any).updatedAt ?? this.updatedAt
         });
     }
 }

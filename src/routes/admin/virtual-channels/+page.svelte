@@ -182,7 +182,7 @@
                                                                 use:enhance={enhanceInlineRemove(g.virtualChannel.id)}
                                                             >
                                                                 <input type="hidden" name="virtual_channel_id" value={g.virtualChannel.id} />
-                                                                <input type="hidden" name="source_channel_id" value={item.assignment.source_channel_id} />
+                                                                <input type="hidden" name="source_channel_id" value={item.assignment.sourceChannelId} />
                                                                 <button
                                                                     type="submit"
                                                                     class="btn-danger"
