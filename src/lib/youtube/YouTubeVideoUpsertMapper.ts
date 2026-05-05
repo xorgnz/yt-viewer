@@ -1,13 +1,13 @@
-import { VideoLengthClassification } from '$lib/entities/video';
+import { Video, VideoLengthClassification } from '$lib/entities/video';
 import type { PlaylistItemsListResponse, VideosListResponse } from './youTubeClient';
 
 export class YouTubeVideoUpsertMapper
 {
-    toVideoUpsert(
+    static toVideo(
         item: PlaylistItemsListResponse['items'][number],
         channelId: number,
         videoMetadata?: VideosListResponse['items'][number]
-    )
+    ): Video
     {
         const snippet = item.snippet || {};
         const details = item.contentDetails || {};
@@ -16,22 +16,23 @@ export class YouTubeVideoUpsertMapper
         const videoId = details.videoId || snippet.resourceId?.videoId || '';
         const publishedAtValue = details.videoPublishedAt || snippet.publishedAt;
         const publishedAt = publishedAtValue ? Date.parse(publishedAtValue) : null;
-        const durationSeconds = this.parseDurationSeconds(metadataDetails.duration);
+        const durationSeconds = YouTubeVideoUpsertMapper.parseDurationSeconds(metadataDetails.duration);
 
-        return {
+        return new Video({
+            id: 0,
             youtube_id: videoId,
             channel_id: channelId,
             title: metadataSnippet.title || snippet.title || '',
             description: metadataSnippet.description || snippet.description || '',
             published_at: Number.isFinite(publishedAt as any) ? (publishedAt as number) : null,
             duration_seconds: durationSeconds,
-            thumbnail_url: this.getBestThumbnailUrl(metadataSnippet.thumbnails as any) ||
-                this.getBestThumbnailUrl(snippet.thumbnails as any),
-            length_classification: this.classifyLength(durationSeconds)
-        } as const;
+            thumbnail_url: YouTubeVideoUpsertMapper.getBestThumbnailUrl(metadataSnippet.thumbnails as any) ||
+                YouTubeVideoUpsertMapper.getBestThumbnailUrl(snippet.thumbnails as any),
+            length_classification: YouTubeVideoUpsertMapper.classifyLength(durationSeconds)
+        });
     }
 
-    private parseDurationSeconds(value?: string): number | null
+    private static parseDurationSeconds(value?: string): number | null
     {
         if (!value) {
             return null;
@@ -50,7 +51,7 @@ export class YouTubeVideoUpsertMapper
         return (days * 86400) + (hours * 3600) + (minutes * 60) + seconds;
     }
 
-    private classifyLength(durationSeconds?: number | null): VideoLengthClassification
+    private static classifyLength(durationSeconds?: number | null): VideoLengthClassification
     {
         if (durationSeconds == null || durationSeconds <= 0) {
             return VideoLengthClassification.Unknown;
@@ -59,7 +60,7 @@ export class YouTubeVideoUpsertMapper
         return durationSeconds <= 60 ? VideoLengthClassification.Short : VideoLengthClassification.Long;
     }
 
-    private getBestThumbnailUrl(thumbnails?: Record<string, { url: string }>): string | null
+    private static getBestThumbnailUrl(thumbnails?: Record<string, { url: string }>): string | null
     {
         if (!thumbnails) {
             return null;

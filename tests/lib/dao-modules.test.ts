@@ -10,6 +10,7 @@ import { VideoDAO } from '../../src/lib/daos/videoDAO';
 import { VirtualChannelAssignmentVideoSelectionDAO } from '../../src/lib/daos/virtualChannelAssignmentVideoSelectionDAO';
 import { VirtualChannelDAO } from '../../src/lib/daos/virtualChannelDAO';
 import { SourceChannel } from '../../src/lib/entities/sourceChannel';
+import { Video, VideoLengthClassification } from '../../src/lib/entities/video';
 import { VirtualChannelAssignmentMode } from '../../src/lib/entities/virtualChannelAssignment';
 import { VirtualChannelAssignmentVideoReviewState } from '../../src/lib/entities/virtualChannelAssignmentVideoSelection';
 import { MockQueryProvider } from '../helpers/MockQueryProvider';
@@ -36,6 +37,17 @@ describe('DAO modules', () => {
             thumbnail_url: null,
             published_at: null,
             last_refreshed_at: null
+        }));
+        await new VideoDAO(provider).create(new Video({
+            id: 0,
+            youtube_id: 'video-1',
+            channel_id: 1,
+            title: 'Video',
+            description: '',
+            published_at: null,
+            duration_seconds: null,
+            thumbnail_url: null,
+            length_classification: VideoLengthClassification.Unknown
         }));
         await new VideoDAO(provider).listExistingIds([1, 2]);
         await new ProfileDAO(provider).upsertByKey('default', 'Default');

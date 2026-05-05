@@ -1,8 +1,8 @@
 import type { SourceChannelDAO } from '../daos/sourceChannelDAO';
 import type { VideoDAO } from '../daos/videoDAO';
 import { SourceChannel } from '../entities/sourceChannel';
+import { YouTubeVideoUpsertMapper } from './YouTubeVideoUpsertMapper';
 import { YouTubeChannelDataService } from './fetch';
-import { YouTubeVideoUpsertMapper } from './mapper';
 import type { YouTubeClient } from './youTubeClient';
 
 export interface ImportResult
@@ -12,27 +12,24 @@ export interface ImportResult
 }
 
 type ImportSourceChannelDAO = Pick<SourceChannelDAO, 'create' | 'getByExternalId' | 'update'>;
-type ImportVideoDAO = Pick<VideoDAO, 'upsert'>;
+type ImportVideoDAO = Pick<VideoDAO, 'create' | 'getByExternalId' | 'update'>;
 
 export class YouTubeChannelImportService
 {
     private readonly channelDataService: YouTubeChannelDataService;
     private readonly sourceChannelDAO: ImportSourceChannelDAO;
     private readonly videoDAO: ImportVideoDAO;
-    private readonly videoMapper: YouTubeVideoUpsertMapper;
 
     constructor(
         client: YouTubeClient,
         channelDataService: YouTubeChannelDataService = new YouTubeChannelDataService(client),
         sourceChannelDAO: ImportSourceChannelDAO,
-        videoDAO: ImportVideoDAO,
-        videoMapper: YouTubeVideoUpsertMapper = new YouTubeVideoUpsertMapper()
+        videoDAO: ImportVideoDAO
     )
     {
         this.channelDataService = channelDataService;
         this.sourceChannelDAO = sourceChannelDAO;
         this.videoDAO = videoDAO;
-        this.videoMapper = videoMapper;
     }
 
     async importChannel(channelExternalId: string): Promise<ImportResult>
@@ -74,17 +71,22 @@ export class YouTubeChannelImportService
         let videosUpserted = 0;
         for (const item of videos) {
             const videoId = item.contentDetails?.videoId || item.snippet?.resourceId?.videoId || '';
-            const videoUpsert = this.videoMapper.toVideoUpsert(
+            const video = YouTubeVideoUpsertMapper.toVideo(
                 item,
                 sourceChannel.id,
                 videoMetadataById.get(videoId)
             );
 
-            if (!videoUpsert.youtube_id) {
+            if (!video.youtube_id) {
                 continue;
             }
 
-            await this.videoDAO.upsert(videoUpsert);
+            const existingVideo = await this.videoDAO.getByExternalId(video.youtube_id);
+            if (existingVideo) {
+                await this.videoDAO.update(existingVideo.with(video));
+            } else {
+                await this.videoDAO.create(video);
+            }
             videosUpserted++;
         }
 

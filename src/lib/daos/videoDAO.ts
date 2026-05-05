@@ -1,30 +1,64 @@
 import { DAO } from '$lib/daos/shared/DAO';
-import { VideoLengthClassification, type Video } from '$lib/entities/video';
+import { Video, type VideoFields } from '$lib/entities/video';
 
 export class VideoDAO extends DAO
 {
-    async upsert(video: Omit<Video, 'id'> | Partial<Video> & { youtube_id: string; channel_id: number; title: string }): Promise<void>
+    async create(video: Video): Promise<void>
     {
+        const fields = video.toFields();
+
+        await this.run(
+            `INSERT INTO videos(youtube_id, channel_id, title, description, published_at, duration_seconds, thumbnail_url, length_classification) VALUES(?,?,?,?,?,?,?,?)`,
+            [
+                fields.youtube_id,
+                fields.channel_id,
+                fields.title,
+                fields.description,
+                fields.published_at,
+                fields.duration_seconds,
+                fields.thumbnail_url,
+                fields.length_classification
+            ]
+        );
+    }
+
+    async update(video: Video): Promise<void>
+    {
+        const fields = video.toFields();
+
         await this.run(`
-            INSERT INTO videos(youtube_id, channel_id, title, description, published_at, duration_seconds, thumbnail_url, length_classification)
-            VALUES(:youtube_id,:channel_id,:title,:description,:published_at,:duration_seconds,:thumbnail_url,:length_classification)
-            ON DUPLICATE KEY UPDATE
-                channel_id=VALUES(channel_id),
-                title=VALUES(title),
-                description=VALUES(description),
-                published_at=VALUES(published_at),
-                duration_seconds=VALUES(duration_seconds),
-                thumbnail_url=VALUES(thumbnail_url),
-                length_classification=VALUES(length_classification)
-        `, {
-            length_classification: VideoLengthClassification.Unknown,
-            ...(video as Record<string, unknown>)
-        });
+            UPDATE videos
+            SET youtube_id = ?,
+                channel_id = ?,
+                title = ?,
+                description = ?,
+                published_at = ?,
+                duration_seconds = ?,
+                thumbnail_url = ?,
+                length_classification = ?
+            WHERE id = ?
+        `, [
+            fields.youtube_id,
+            fields.channel_id,
+            fields.title,
+            fields.description,
+            fields.published_at,
+            fields.duration_seconds,
+            fields.thumbnail_url,
+            fields.length_classification,
+            fields.id
+        ]);
     }
 
     async get(id: number): Promise<Video | undefined>
     {
-        return this.getOne<Video>(`SELECT id, youtube_id, channel_id, title, description, published_at, duration_seconds, thumbnail_url, length_classification FROM videos WHERE id = ?`, [id]);
+        const fields = await this.getOne<VideoFields>(`
+            SELECT id, youtube_id, channel_id, title, description, published_at, duration_seconds, thumbnail_url, length_classification FROM videos 
+            WHERE id = ?`,
+            [id]
+        );
+
+        return fields ? new Video(fields) : undefined;
     }
 
     async listExistingIds(ids: number[]): Promise<number[]>
@@ -45,12 +79,25 @@ export class VideoDAO extends DAO
 
     async getByExternalId(external_id: string): Promise<Video | undefined>
     {
-        return this.getOne<Video>(`SELECT id, youtube_id, channel_id, title, description, published_at, duration_seconds, thumbnail_url, length_classification FROM videos WHERE youtube_id = ?`, [external_id]);
+        const fields = await this.getOne<VideoFields>(`
+            SELECT id, youtube_id, channel_id, title, description, published_at, duration_seconds, thumbnail_url, length_classification FROM videos 
+            WHERE youtube_id = ?`,
+            [external_id]
+        );
+
+        return fields ? new Video(fields) : undefined;
     }
 
     async listByChannel(channel_id: number): Promise<Video[]>
     {
-        return this.listRows<Video>(`SELECT id, youtube_id, channel_id, title, description, published_at, duration_seconds, thumbnail_url, length_classification FROM videos WHERE channel_id = ? ORDER BY published_at IS NULL ASC, published_at DESC, id DESC`, [channel_id]);
+        const rows = await this.listRows<VideoFields>(`
+            SELECT id, youtube_id, channel_id, title, description, published_at, duration_seconds, thumbnail_url, length_classification FROM videos 
+            WHERE channel_id = ? 
+            ORDER BY published_at IS NULL ASC, published_at DESC, id DESC`,
+            [channel_id]
+        );
+
+        return rows.map((row) => new Video(row));
     }
 
     async remove(id: number): Promise<void>
