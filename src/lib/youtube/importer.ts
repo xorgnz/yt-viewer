@@ -1,7 +1,8 @@
 import type { SourceChannelDAO } from '../daos/sourceChannelDAO';
 import type { VideoDAO } from '../daos/videoDAO';
+import { SourceChannel } from '../entities/sourceChannel';
 import { YouTubeChannelDataService } from './fetch';
-import { YouTubeChannelUpsertMapper, YouTubeVideoUpsertMapper } from './mapper';
+import { YouTubeVideoUpsertMapper } from './mapper';
 import type { YouTubeClient } from './youTubeClient';
 
 export interface ImportResult
@@ -10,7 +11,7 @@ export interface ImportResult
     videosUpserted: number;
 }
 
-type ImportSourceChannelDAO = Pick<SourceChannelDAO, 'getByExternalId' | 'upsert'>;
+type ImportSourceChannelDAO = Pick<SourceChannelDAO, 'create' | 'getByExternalId' | 'update'>;
 type ImportVideoDAO = Pick<VideoDAO, 'upsert'>;
 
 export class YouTubeChannelImportService
@@ -18,7 +19,6 @@ export class YouTubeChannelImportService
     private readonly channelDataService: YouTubeChannelDataService;
     private readonly sourceChannelDAO: ImportSourceChannelDAO;
     private readonly videoDAO: ImportVideoDAO;
-    private readonly channelMapper: YouTubeChannelUpsertMapper;
     private readonly videoMapper: YouTubeVideoUpsertMapper;
 
     constructor(
@@ -26,14 +26,12 @@ export class YouTubeChannelImportService
         channelDataService: YouTubeChannelDataService = new YouTubeChannelDataService(client),
         sourceChannelDAO: ImportSourceChannelDAO,
         videoDAO: ImportVideoDAO,
-        channelMapper: YouTubeChannelUpsertMapper = new YouTubeChannelUpsertMapper(),
         videoMapper: YouTubeVideoUpsertMapper = new YouTubeVideoUpsertMapper()
     )
     {
         this.channelDataService = channelDataService;
         this.sourceChannelDAO = sourceChannelDAO;
         this.videoDAO = videoDAO;
-        this.channelMapper = channelMapper;
         this.videoMapper = videoMapper;
     }
 
@@ -52,13 +50,25 @@ export class YouTubeChannelImportService
             ['snippet', 'contentDetails']
         );
         const videoMetadataById = new Map(videoMetadataItems.map((item) => [item.id, item]));
+        const snippet = channel.snippet || {};
+        const publishedAt = snippet.publishedAt ? Date.parse(snippet.publishedAt) : null;
+        const channelData = {
+            youtube_id: channel.id,
+            title: snippet.title || '',
+            description: snippet.description || '',
+            thumbnail_url: this.getBestThumbnailUrl(snippet.thumbnails as Record<string, { url?: string }> | undefined),
+            published_at: Number.isFinite(publishedAt as any) ? (publishedAt as number) : null
+        };
+        const existingSourceChannel = await this.sourceChannelDAO.getByExternalId(channelData.youtube_id);
+        if (existingSourceChannel) {
+            await this.sourceChannelDAO.update(existingSourceChannel.with(new SourceChannel({ id: 0, ...channelData, last_refreshed_at: null })));
+        } else {
+            await this.sourceChannelDAO.create(new SourceChannel({ id: 0, ...channelData, last_refreshed_at: null }));
+        }
 
-        const channelUpsert = this.channelMapper.toChannelUpsert(channel);
-        await this.sourceChannelDAO.upsert(channelUpsert);
-
-        const sourceChannel = await this.sourceChannelDAO.getByExternalId(channelUpsert.youtubeId);
+        const sourceChannel = await this.sourceChannelDAO.getByExternalId(channelData.youtube_id);
         if (!sourceChannel) {
-            throw new Error(`Failed to resolve imported channel ${channelUpsert.youtubeId}.`);
+            throw new Error(`Failed to resolve imported channel ${channelData.youtube_id}.`);
         }
 
         let videosUpserted = 0;
@@ -82,6 +92,29 @@ export class YouTubeChannelImportService
             channelId: sourceChannel.id,
             videosUpserted
         };
+    }
+
+    private getBestThumbnailUrl(thumbnails?: Record<string, { url?: string }>): string | null
+    {
+        if (!thumbnails) {
+            return null;
+        }
+
+        const prioritizedKeys = ['maxres', 'standard', 'high', 'medium', 'default'];
+        for (const key of prioritizedKeys) {
+            const url = thumbnails[key]?.url;
+            if (url) {
+                return url;
+            }
+        }
+
+        for (const entry of Object.values(thumbnails)) {
+            if (entry?.url) {
+                return entry.url;
+            }
+        }
+
+        return null;
     }
 }
 // apply-patch-anchor - do not delete

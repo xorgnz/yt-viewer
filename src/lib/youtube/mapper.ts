@@ -1,45 +1,5 @@
 import { VideoLengthClassification } from '$lib/entities/video';
-import type { ChannelsListResponse, PlaylistItemsListResponse, VideosListResponse } from './youTubeClient';
-
-export class YouTubeChannelUpsertMapper
-{
-    toChannelUpsert(item: ChannelsListResponse['items'][number])
-    {
-        const snippet = item.snippet || {};
-        const publishedAt = snippet.publishedAt ? Date.parse(snippet.publishedAt) : null;
-
-        return {
-            youtubeId: item.id,
-            title: snippet.title || '',
-            description: snippet.description || '',
-            thumbnailUrl: this.getBestThumbnailUrl(snippet.thumbnails),
-            publishedAt: Number.isFinite(publishedAt as any) ? (publishedAt as number) : null
-        } as const;
-    }
-
-    private getBestThumbnailUrl(thumbnails?: Record<string, { url: string }>): string | null
-    {
-        if (!thumbnails) {
-            return null;
-        }
-
-        const prioritizedKeys = ['maxres', 'standard', 'high', 'medium', 'default'];
-        for (const key of prioritizedKeys) {
-            const url = (thumbnails as any)[key]?.url;
-            if (url) {
-                return url;
-            }
-        }
-
-        for (const entry of Object.values(thumbnails)) {
-            if (entry?.url) {
-                return entry.url;
-            }
-        }
-
-        return null;
-    }
-}
+import type { PlaylistItemsListResponse, VideosListResponse } from './youTubeClient';
 
 export class YouTubeVideoUpsertMapper
 {

@@ -1,4 +1,5 @@
 import type { SourceChannelDAO } from '$lib/daos/sourceChannelDAO';
+import { SourceChannel } from '$lib/entities/sourceChannel';
 import { AdminSourceChannelYouTubeCoordinator } from '$lib/server/admin/AdminSourceChannelYouTubeCoordinator';
 import { AdminYouTubeClientProvider } from '$lib/server/admin/AdminYouTubeClientProvider';
 import type {
@@ -15,7 +16,7 @@ import { YouTubeApiError } from '$lib/youtube/youTubeClient';
 
 type AdminSourceChannelDAO = Pick<
     SourceChannelDAO,
-    'get' | 'listWithVideoStats' | 'markRefreshed' | 'remove' | 'upsert'
+    'create' | 'get' | 'listWithVideoStats' | 'markRefreshed' | 'remove' | 'update'
 >;
 
 export class AdminSourceChannelPageService
@@ -78,15 +79,17 @@ export class AdminSourceChannelPageService
             const metadataThumbnailUrl = this.getBestThumbnailUrl(snippet.thumbnails as Record<string, { url?: string }> | undefined);
             const metadataPublishedAt = snippet.publishedAt ? Date.parse(snippet.publishedAt) : null;
 
-            await this.sourceChannelDAO.upsert({
-                youtubeId: resolved.channelId,
+            await this.sourceChannelDAO.create(new SourceChannel({
+                id: 0,
+                youtube_id: resolved.channelId,
                 title: input.title || snippet.title || '',
                 description: input.description || snippet.description || '',
-                thumbnailUrl: input.thumbnail_url || metadataThumbnailUrl,
-                publishedAt: input.published_at ?? (
+                thumbnail_url: input.thumbnail_url || metadataThumbnailUrl,
+                published_at: input.published_at ?? (
                     Number.isFinite(metadataPublishedAt as number) ? (metadataPublishedAt as number) : null
-                )
-            });
+                ),
+                last_refreshed_at: null
+            }));
 
             return {
                 ok: true,
@@ -110,13 +113,12 @@ export class AdminSourceChannelPageService
             return this.buildError('source_channel_not_found', 404, 'SourceChannel not found.');
         }
 
-        await this.sourceChannelDAO.upsert({
-            youtubeId: existing.youtubeId,
+        await this.sourceChannelDAO.update(existing.with({
             title: input.title,
             description: input.description,
             thumbnailUrl: input.thumbnail_url,
             publishedAt: input.published_at
-        });
+        }));
 
         return {
             ok: true,

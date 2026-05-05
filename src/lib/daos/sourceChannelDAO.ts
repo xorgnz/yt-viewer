@@ -1,5 +1,5 @@
 import { DAO } from '$lib/daos/shared/DAO';
-import type { SourceChannel } from '$lib/entities/sourceChannel';
+import { SourceChannel, type SourceChannelFields } from '$lib/entities/sourceChannel';
 
 export interface SourceChannelWithVideoStats extends SourceChannel
 {
@@ -11,84 +11,71 @@ export interface SourceChannelWithVideoStats extends SourceChannel
 
 export class SourceChannelDAO extends DAO
 {
-    async upsert(channel: Omit<SourceChannel, 'id'> | Partial<SourceChannel> & { youtubeId: string; title: string }): Promise<void>
+    async create(channel: SourceChannel): Promise<void>
     {
+        const fields = channel.toFields();
+
+        await this.run(
+            `INSERT INTO source_channels(youtube_id, title, description, thumbnail_url, published_at) VALUES(?,?,?,?,?)`,
+            [fields.youtube_id, fields.title, fields.description, fields.thumbnail_url, fields.published_at]
+        );
+    }
+
+    async update(channel: SourceChannel): Promise<void>
+    {
+        const fields = channel.toFields();
+
         await this.run(`
-            INSERT INTO source_channels(youtube_id, title, description, thumbnail_url, published_at)
-            VALUES(:youtube_id,:title,:description,:thumbnail_url,:published_at)
-            ON DUPLICATE KEY UPDATE
-                title=VALUES(title),
-                description=VALUES(description),
-                thumbnail_url=VALUES(thumbnail_url),
-                published_at=VALUES(published_at)
-        `, {
-            youtube_id: channel.youtubeId,
-            title: channel.title,
-            description: channel.description,
-            thumbnail_url: channel.thumbnailUrl,
-            published_at: channel.publishedAt
-        });
+            UPDATE source_channels
+            SET youtube_id = ?,
+                title = ?,
+                description = ?,
+                thumbnail_url = ?,
+                published_at = ?
+            WHERE id = ?
+        `, [fields.youtube_id, fields.title, fields.description, fields.thumbnail_url, fields.published_at, fields.id]);
     }
 
     async get(id: number): Promise<SourceChannel | undefined>
     {
-        return this.getOne<SourceChannel>(`
-            SELECT
-                id,
-                youtube_id AS youtubeId,
-                title,
-                description,
-                thumbnail_url AS thumbnailUrl,
-                published_at AS publishedAt,
-                last_refreshed_at AS lastRefreshedAt
-            FROM source_channels
-            WHERE id = ?
-        `, [id]);
+        const fields = await this.getOne<SourceChannelFields>(
+            `SELECT id, youtube_id, title, description, thumbnail_url, published_at, last_refreshed_at FROM source_channels WHERE id = ?`,
+            [id]
+        );
+
+        return fields ? new SourceChannel(fields) : undefined;
     }
 
     async getByExternalId(external_id: string): Promise<SourceChannel | undefined>
     {
-        return this.getOne<SourceChannel>(`
-            SELECT
-                id,
-                youtube_id AS youtubeId,
-                title,
-                description,
-                thumbnail_url AS thumbnailUrl,
-                published_at AS publishedAt,
-                last_refreshed_at AS lastRefreshedAt
-            FROM source_channels
-            WHERE youtube_id = ?
-        `, [external_id]);
+        const fields = await this.getOne<SourceChannelFields>(
+            `SELECT id, youtube_id, title, description, thumbnail_url, published_at, last_refreshed_at FROM source_channels WHERE youtube_id = ?`,
+            [external_id]
+        );
+
+        return fields ? new SourceChannel(fields) : undefined;
     }
 
     async list(): Promise<SourceChannel[]>
     {
-        return this.listRows<SourceChannel>(`
-            SELECT
-                id,
-                youtube_id AS youtubeId,
-                title,
-                description,
-                thumbnail_url AS thumbnailUrl,
-                published_at AS publishedAt,
-                last_refreshed_at AS lastRefreshedAt
-            FROM source_channels
-            ORDER BY title
-        `);
+        const rows = await this.listRows<SourceChannelFields>(
+            `SELECT id, youtube_id, title, description, thumbnail_url, published_at, last_refreshed_at FROM source_channels ORDER BY title`
+        );
+
+        return rows.map((row) => new SourceChannel(row));
     }
 
     async listWithVideoStats(): Promise<SourceChannelWithVideoStats[]>
     {
-        return this.listRows<SourceChannelWithVideoStats>(`
+        const rows = await this.listRows<SourceChannelFields & Omit<SourceChannelWithVideoStats, keyof SourceChannel>>(`
             SELECT
                 sc.id,
-                sc.youtube_id AS youtubeId,
+                sc.youtube_id,
                 sc.title,
                 sc.description,
-                sc.thumbnail_url AS thumbnailUrl,
-                sc.published_at AS publishedAt,
-                sc.last_refreshed_at AS lastRefreshedAt,
+                sc.thumbnail_url,
+                sc.published_at,
+                sc.last_refreshed_at,
                 COUNT(v.id) AS video_count,
                 COALESCE(SUM(CASE WHEN vf_agg.watched = 1 THEN 1 ELSE 0 END), 0) AS watched_count,
                 COALESCE(SUM(CASE WHEN vf_agg.favorite = 1 THEN 1 ELSE 0 END), 0) AS favorite_count,
@@ -107,6 +94,16 @@ export class SourceChannelDAO extends DAO
             GROUP BY sc.id
             ORDER BY sc.title
         `);
+
+        return rows.map((row) => Object.assign(
+            new SourceChannel(row),
+            {
+                video_count: row.video_count,
+                watched_count: row.watched_count,
+                favorite_count: row.favorite_count,
+                ignored_count: row.ignored_count
+            }
+        ));
     }
 
     async remove(id: number): Promise<void>
@@ -120,6 +117,4 @@ export class SourceChannelDAO extends DAO
     }
 }
 // apply-patch-anchor - do not delete
-
-
 

@@ -1,35 +1,7 @@
 import { describe, it, expect } from 'vitest';
-import {
-    YouTubeChannelUpsertMapper,
-    YouTubeVideoUpsertMapper
-} from '../../../src/lib/youtube/mapper';
+import { YouTubeVideoUpsertMapper } from '../../../src/lib/youtube/mapper';
 
 describe('youtube mapper (task 3.3)', () => {
-    it('maps channel item to channel upsert payload', () => {
-        const mapper = new YouTubeChannelUpsertMapper();
-        const item: any = {
-            id: 'UC_123',
-            snippet: {
-                title: 'SourceChannel Title',
-                description: 'About this channel',
-                publishedAt: '2020-01-02T03:04:05Z',
-                thumbnails: {
-                    default: { url: 'http://t.def' },
-                    medium: { url: 'http://t.med' },
-                    high: { url: 'http://t.hi' }
-                }
-            }
-        };
-        const up = mapper.toChannelUpsert(item);
-        expect(up).toMatchObject({
-            youtubeId: 'UC_123',
-            title: 'SourceChannel Title',
-            description: 'About this channel',
-            thumbnailUrl: 'http://t.hi'
-        });
-        expect(typeof up.publishedAt === 'number' || up.publishedAt === null).toBe(true);
-    });
-
     it('maps playlistItems item to video upsert payload with video metadata classification', () => {
         const mapper = new YouTubeVideoUpsertMapper();
         const item: any = {
