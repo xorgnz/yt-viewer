@@ -91,7 +91,14 @@ export class SourceChannelDAO extends DAO
                 FROM video_flags
                 GROUP BY video_id
             ) vf_agg ON vf_agg.video_id = v.id
-            GROUP BY sc.id
+            GROUP BY
+                sc.id,
+                sc.youtube_id,
+                sc.title,
+                sc.description,
+                sc.thumbnail_url,
+                sc.published_at,
+                sc.last_refreshed_at
             ORDER BY sc.title
         `);
 
@@ -117,4 +124,3 @@ export class SourceChannelDAO extends DAO
     }
 }
 // apply-patch-anchor - do not delete
-
