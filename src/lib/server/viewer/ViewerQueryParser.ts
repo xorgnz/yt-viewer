@@ -12,7 +12,7 @@ export type ViewerQueryFilters = {
     dateFromInput: string;
     dateToInput: string;
     channelId: number | null;
-    groupId: number | null;
+    virtualChannelId: number | null;
     sort: ViewerSort;
     limit: number;
     offset: number;
@@ -47,7 +47,7 @@ export class ViewerQueryParser
             dateFromInput,
             dateToInput,
             channelId: ViewerQueryParser.parseOptionalNumber(url.searchParams.get('channelId')),
-            groupId: ViewerQueryParser.parseOptionalNumber(url.searchParams.get('groupId')),
+            virtualChannelId: ViewerQueryParser.parseOptionalNumber(url.searchParams.get('virtualChannelId')),
             sort,
             limit: ViewerQueryParser.parseOptionalNumber(url.searchParams.get('limit')) ?? 200,
             offset: ViewerQueryParser.parseOptionalNumber(url.searchParams.get('offset')) ?? 0

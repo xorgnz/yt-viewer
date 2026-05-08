@@ -1,12 +1,12 @@
 import { DAO } from '$lib/daos/shared/DAO';
-import type { VirtualChannelAssignment, VirtualChannelAssignmentMode } from '$lib/entities/virtualChannelAssignment';
+import { VirtualChannelAssignmentMode, type VirtualChannelAssignment} from '$lib/entities/virtualChannelAssignment';
 
 export class AssignmentDAO extends DAO
 {
     async add(
         source_channel_id: number,
         virtual_channel_id: number,
-        mode: VirtualChannelAssignmentMode = 'all'
+        mode: VirtualChannelAssignmentMode = VirtualChannelAssignmentMode.All
     ): Promise<void>
     {
         await this.run(`

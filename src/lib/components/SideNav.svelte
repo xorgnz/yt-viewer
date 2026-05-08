@@ -1,5 +1,7 @@
 <script lang="ts">
     import { page } from '$app/stores';
+    import SideNavVirtualChannelPanel from '$lib/components/SideNavVirtualChannelPanel.svelte';
+    import type { SideNavVirtualChannelViewModel } from '$lib/components/SideNavVirtualChannelPanelViewModel';
 
     // Simple side navigation used across all pages
     export let appName: string = 'YT Viewer';
@@ -17,6 +19,44 @@
     {
         return activeProfileKey === 'child' && profileKey === 'default';
     }
+
+    function readActiveVirtualChannel(value: unknown): SideNavVirtualChannelViewModel | null
+    {
+        if (!value || typeof value !== 'object') {
+            return null;
+        }
+
+        const candidate = value as Partial<SideNavVirtualChannelViewModel>;
+
+        if (typeof candidate.id !== 'number' || typeof candidate.name !== 'string') {
+            return null;
+        }
+
+        // Normalize partial load payloads so nav rendering does not silently drop an active channel.
+        const dailyTimerMax = typeof candidate.dailyTimerMax === 'number' ? candidate.dailyTimerMax : null;
+        const timerUsageSeconds = typeof candidate.timerUsageSeconds === 'number' ? candidate.timerUsageSeconds : 0;
+        const timerRemainingSeconds = typeof candidate.timerRemainingSeconds === 'number'
+            ? candidate.timerRemainingSeconds
+            : (dailyTimerMax == null ? null : Math.max(0, dailyTimerMax - timerUsageSeconds));
+        const timerState = candidate.timerState === 'unlimited' || candidate.timerState === 'available' || candidate.timerState === 'capped'
+            ? candidate.timerState
+            : (dailyTimerMax == null ? 'unlimited' : (timerRemainingSeconds === 0 ? 'capped' : 'available'));
+
+        return {
+            id: candidate.id,
+            name: candidate.name,
+            dailyTimerMax,
+            timerState,
+            timerUsageSeconds,
+            timerRemainingSeconds,
+            timerWindowStartMs: typeof candidate.timerWindowStartMs === 'number' ? candidate.timerWindowStartMs : 0,
+            timerWindowEndMs: typeof candidate.timerWindowEndMs === 'number' ? candidate.timerWindowEndMs : 0,
+        };
+    }
+
+    $: activeVirtualChannel = readActiveVirtualChannel($page.data.activeVirtualChannel);
+    $: shouldShowVirtualChannelPanel = $page.url.pathname === '/viewer'
+        || $page.url.pathname.startsWith('/viewer/');
 </script>
 
 <aside class="side-nav" aria-label="Primary Navigation">
@@ -38,6 +78,10 @@
             <a href="/admin/login">Admin</a>
         {/if}
     </nav>
+
+    {#if shouldShowVirtualChannelPanel}
+        <SideNavVirtualChannelPanel virtualChannel={activeVirtualChannel} />
+    {/if}
 
     <details class="profile-switcher" data-profile-tone={profileTone(activeProfileKey)}>
         <summary class="profile-chip">

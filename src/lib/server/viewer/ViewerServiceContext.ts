@@ -46,16 +46,19 @@ export class ViewerServiceContext
             viewerVideoReadRepository,
             profileContext.activeProfileId
         );
+        const historyDAO = new HistoryDAO(db);
+        const virtualChannelService = new ViewerVirtualChannelService(
+            new VirtualChannelDAO(db),
+            historyDAO,
+            profileContext
+        );
         const watchService = new ViewerWatchService(
             viewerVideoReadRepository,
             flagsDAO,
-            new HistoryDAO(db),
+            historyDAO,
             profileContext,
-            recommendationService
-        );
-        const virtualChannelService = new ViewerVirtualChannelService(
-            new VirtualChannelDAO(db),
-            profileContext
+            recommendationService,
+            virtualChannelService
         );
 
         return new ViewerServiceContext(

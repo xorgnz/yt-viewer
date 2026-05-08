@@ -1,7 +1,6 @@
 import type {
     ViewerFilterInputState,
     ViewerFilters,
-    ViewerGroup,
     ViewerPaginationState,
     ViewerVideo,
     ViewerVisiblePage
@@ -33,7 +32,7 @@ function buildViewerPageHref(filters: ViewerFilters, page: number): string
         dateFrom: filters.dateFromInput,
         dateTo: filters.dateToInput,
         channelId: filters.channelId != null ? String(filters.channelId) : '',
-        groupId: filters.groupId != null ? String(filters.groupId) : '',
+        virtualChannelId: filters.virtualChannelId != null ? String(filters.virtualChannelId) : '',
         sort: filters.sort,
         limit: String(filters.limit),
         offset: String((page - 1) * filters.limit)
@@ -49,7 +48,7 @@ function buildViewerWatchHref(filters: ViewerFilters, videoYoutubeId: string): s
         dateFrom: filters.dateFromInput,
         dateTo: filters.dateToInput,
         channelId: filters.channelId != null ? String(filters.channelId) : '',
-        groupId: filters.groupId != null ? String(filters.groupId) : '',
+        virtualChannelId: filters.virtualChannelId != null ? String(filters.virtualChannelId) : '',
         sort: filters.sort
     }).toString();
 
@@ -133,7 +132,7 @@ function buildViewerFilterQuery(
         dateFrom: inputState.dateFromInput,
         dateTo: inputState.dateToInput,
         channelId: inputState.channelIdInput,
-        groupId: filters.groupId != null ? String(filters.groupId) : '',
+        virtualChannelId: filters.virtualChannelId != null ? String(filters.virtualChannelId) : '',
         sort: inputState.sortMode,
         limit: inputState.limitInput,
         offset: '0'
@@ -148,11 +147,6 @@ function buildViewerFilterQuery(
     }
 
     return params.toString();
-}
-
-function findActiveViewerGroup(groups: ViewerGroup[], groupId: number | null): ViewerGroup | null
-{
-    return groups.find((group) => group.id === groupId) ?? null;
 }
 
 function createViewerSelectionSnapshots(videos: ViewerVideo[]): ViewerSelectionVideoSnapshot[]
@@ -189,7 +183,6 @@ export const viewerPageState = {
     deriveViewerPaginationState,
     deriveViewerFilterInputState,
     buildViewerFilterQuery,
-    findActiveViewerGroup,
     createViewerSelectionSnapshots,
     deriveViewerSelectionSummary
 };

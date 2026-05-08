@@ -25,7 +25,7 @@ describe('viewerSelection filter-context behavior', () => {
             dateFromInput: '',
             dateToInput: '',
             channelId: null,
-            groupId: null,
+            virtualChannelId: null,
             sort: 'newest',
             ...overrides
         });

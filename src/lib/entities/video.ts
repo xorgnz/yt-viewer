@@ -1,4 +1,9 @@
-export type VideoLengthClassification = 'long' | 'short' | 'unknown';
+export enum VideoLengthClassification
+{
+    Long = 'long',
+    Short = 'short',
+    Unknown = 'unknown'
+}
 
 export type VideoFields = {
     id: number;
@@ -9,7 +14,7 @@ export type VideoFields = {
     published_at?: number | null;
     duration_seconds?: number | null;
     thumbnail_url?: string | null;
-    length_classification?: VideoLengthClassification | null;
+    length_classification: VideoLengthClassification;
 };
 
 export class Video
@@ -22,7 +27,7 @@ export class Video
     readonly published_at?: number | null; // unix epoch ms
     readonly duration_seconds?: number | null;
     readonly thumbnail_url?: string | null;
-    readonly length_classification?: VideoLengthClassification | null;
+    readonly length_classification: VideoLengthClassification;
 
     constructor(data: VideoFields)
     {
@@ -35,6 +40,21 @@ export class Video
         this.duration_seconds = data.duration_seconds;
         this.thumbnail_url = data.thumbnail_url;
         this.length_classification = data.length_classification;
+    }
+
+    toFields(): VideoFields
+    {
+        return {
+            id: this.id,
+            youtube_id: this.youtube_id,
+            channel_id: this.channel_id,
+            title: this.title,
+            description: this.description,
+            published_at: this.published_at,
+            duration_seconds: this.duration_seconds,
+            thumbnail_url: this.thumbnail_url,
+            length_classification: this.length_classification,
+        };
     }
 
     static validate(value: any): value is Video
@@ -52,11 +72,9 @@ export class Video
             ((value as any).duration_seconds === undefined || (value as any).duration_seconds === null || typeof (value as any).duration_seconds === 'number') &&
             ((value as any).thumbnail_url === undefined || (value as any).thumbnail_url === null || typeof (value as any).thumbnail_url === 'string') &&
             (
-                (value as any).length_classification === undefined ||
-                (value as any).length_classification === null ||
-                (value as any).length_classification === 'long' ||
-                (value as any).length_classification === 'short' ||
-                (value as any).length_classification === 'unknown'
+                (value as any).length_classification === VideoLengthClassification.Long ||
+                (value as any).length_classification === VideoLengthClassification.Short ||
+                (value as any).length_classification === VideoLengthClassification.Unknown
             )
         );
     }

@@ -1,7 +1,8 @@
 import type { SourceChannelDAO } from '../daos/sourceChannelDAO';
 import type { VideoDAO } from '../daos/videoDAO';
+import { SourceChannel } from '../entities/sourceChannel';
+import { YouTubeVideoUpsertMapper } from './YouTubeVideoUpsertMapper';
 import { YouTubeChannelDataService } from './fetch';
-import { YouTubeChannelUpsertMapper, YouTubeVideoUpsertMapper } from './mapper';
 import type { YouTubeClient } from './youTubeClient';
 
 export interface ImportResult
@@ -10,31 +11,25 @@ export interface ImportResult
     videosUpserted: number;
 }
 
-type ImportSourceChannelDAO = Pick<SourceChannelDAO, 'getByExternalId' | 'upsert'>;
-type ImportVideoDAO = Pick<VideoDAO, 'upsert'>;
+type ImportSourceChannelDAO = Pick<SourceChannelDAO, 'create' | 'getByExternalId' | 'update'>;
+type ImportVideoDAO = Pick<VideoDAO, 'create' | 'getByExternalId' | 'update'>;
 
 export class YouTubeChannelImportService
 {
     private readonly channelDataService: YouTubeChannelDataService;
     private readonly sourceChannelDAO: ImportSourceChannelDAO;
     private readonly videoDAO: ImportVideoDAO;
-    private readonly channelMapper: YouTubeChannelUpsertMapper;
-    private readonly videoMapper: YouTubeVideoUpsertMapper;
 
     constructor(
         client: YouTubeClient,
         channelDataService: YouTubeChannelDataService = new YouTubeChannelDataService(client),
         sourceChannelDAO: ImportSourceChannelDAO,
-        videoDAO: ImportVideoDAO,
-        channelMapper: YouTubeChannelUpsertMapper = new YouTubeChannelUpsertMapper(),
-        videoMapper: YouTubeVideoUpsertMapper = new YouTubeVideoUpsertMapper()
+        videoDAO: ImportVideoDAO
     )
     {
         this.channelDataService = channelDataService;
         this.sourceChannelDAO = sourceChannelDAO;
         this.videoDAO = videoDAO;
-        this.channelMapper = channelMapper;
-        this.videoMapper = videoMapper;
     }
 
     async importChannel(channelExternalId: string): Promise<ImportResult>
@@ -52,29 +47,46 @@ export class YouTubeChannelImportService
             ['snippet', 'contentDetails']
         );
         const videoMetadataById = new Map(videoMetadataItems.map((item) => [item.id, item]));
+        const snippet = channel.snippet || {};
+        const publishedAt = snippet.publishedAt ? Date.parse(snippet.publishedAt) : null;
+        const channelData = {
+            youtube_id: channel.id,
+            title: snippet.title || '',
+            description: snippet.description || '',
+            thumbnail_url: this.getBestThumbnailUrl(snippet.thumbnails as Record<string, { url?: string }> | undefined),
+            published_at: Number.isFinite(publishedAt as any) ? (publishedAt as number) : null
+        };
+        const existingSourceChannel = await this.sourceChannelDAO.getByExternalId(channelData.youtube_id);
+        if (existingSourceChannel) {
+            await this.sourceChannelDAO.update(existingSourceChannel.with(new SourceChannel({ id: 0, ...channelData, last_refreshed_at: null })));
+        } else {
+            await this.sourceChannelDAO.create(new SourceChannel({ id: 0, ...channelData, last_refreshed_at: null }));
+        }
 
-        const channelUpsert = this.channelMapper.toChannelUpsert(channel);
-        await this.sourceChannelDAO.upsert(channelUpsert);
-
-        const sourceChannel = await this.sourceChannelDAO.getByExternalId(channelUpsert.youtube_id);
+        const sourceChannel = await this.sourceChannelDAO.getByExternalId(channelData.youtube_id);
         if (!sourceChannel) {
-            throw new Error(`Failed to resolve imported channel ${channelUpsert.youtube_id}.`);
+            throw new Error(`Failed to resolve imported channel ${channelData.youtube_id}.`);
         }
 
         let videosUpserted = 0;
         for (const item of videos) {
             const videoId = item.contentDetails?.videoId || item.snippet?.resourceId?.videoId || '';
-            const videoUpsert = this.videoMapper.toVideoUpsert(
+            const video = YouTubeVideoUpsertMapper.toVideo(
                 item,
                 sourceChannel.id,
                 videoMetadataById.get(videoId)
             );
 
-            if (!videoUpsert.youtube_id) {
+            if (!video.youtube_id) {
                 continue;
             }
 
-            await this.videoDAO.upsert(videoUpsert);
+            const existingVideo = await this.videoDAO.getByExternalId(video.youtube_id);
+            if (existingVideo) {
+                await this.videoDAO.update(existingVideo.with(video));
+            } else {
+                await this.videoDAO.create(video);
+            }
             videosUpserted++;
         }
 
@@ -82,6 +94,29 @@ export class YouTubeChannelImportService
             channelId: sourceChannel.id,
             videosUpserted
         };
+    }
+
+    private getBestThumbnailUrl(thumbnails?: Record<string, { url?: string }>): string | null
+    {
+        if (!thumbnails) {
+            return null;
+        }
+
+        const prioritizedKeys = ['maxres', 'standard', 'high', 'medium', 'default'];
+        for (const key of prioritizedKeys) {
+            const url = thumbnails[key]?.url;
+            if (url) {
+                return url;
+            }
+        }
+
+        for (const entry of Object.values(thumbnails)) {
+            if (entry?.url) {
+                return entry.url;
+            }
+        }
+
+        return null;
     }
 }
 // apply-patch-anchor - do not delete

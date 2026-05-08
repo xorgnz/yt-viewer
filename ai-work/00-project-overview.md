@@ -2,172 +2,100 @@
 
 ## Purpose
 
-`yt-viewer` is a SvelteKit web application for importing YouTube channel uploads, organizing them into curated "virtual channels", and browsing or watching the resulting video library with per-profile state.
+`yt-viewer` is a SvelteKit application for importing YouTube channel uploads, organizing them into curated virtual channels, and giving users a focused viewer for browsing, filtering, and watching the resulting library with per-profile state.
 
-The app has two main surfaces:
+The product has two primary surfaces:
 
-- Viewer-facing pages for filtering videos, watching videos, switching profiles, and reviewing watch history.
-- Admin-facing pages for managing source channels, virtual channels, imports, and virtual-channel assignment behavior.
+- a viewer experience for browsing videos, watching videos, tracking history, and managing per-profile flags
+- an admin experience for importing source channels, maintaining virtual channels, and controlling how source-channel content appears in those virtual channels
 
-## Current Project State
+## Current System Summary
 
-- Active feature: `09-stable-db-ids`
-- Planning status: feature 09 audit is complete; schema and application changes are still pending.
-- Completed feature history:
-  - `01-initial`: initial viewer, admin CRUD, import flow, history, profile support
-  - `02-vchannel-mgmt`: virtual-channel/source-channel associations and selected-only review model
-  - `03-inline-assign`: inline source-channel assignment controls on admin index
-  - `04-watch-history`: session-based watch history separate from watched flags
-  - `05-db-migrations`: forward-only migration infrastructure
-  - `06-video-select`: viewer multi-select, bulk actions, undo
-  - `07-refactoring`: service-layer and repository decomposition
-  - `08-online-deploy`: MySQL/MariaDB runtime, local Docker Compose DB, Cloud Run deployment
+The current system stores imported YouTube source channels and videos in a MySQL/MariaDB database, then exposes those videos through both direct source-channel browsing and curated virtual-channel views. Virtual channels are built by associating source channels with a virtual channel and controlling inclusion behavior through assignment modes and, for selected-only cases, per-video review state.
 
-## Product Model
+Viewer workflows support search, filtering, profile-specific watched/favorite/ignored flags, session-style watch history, and recommendation/next-video flows. Admin workflows support channel import and refresh, virtual-channel CRUD, inline assignment management, and deeper per-channel review controls for selected-only curation.
 
-The core data model in the current codebase is:
+## Key Features
 
-- `source_channels`: imported YouTube channels
-- `videos`: imported channel videos
-- `virtual_channels`: curated groups shown to viewers
-- `virtual_channel_assignments`: relationship between a source channel and a virtual channel, with mode
-- `virtual_channel_assignment_video_selections`: per-video review state for `selected_only` assignments
-- `profiles`: site profiles used for viewer-specific state
-- `video_flags`: per-profile `ignored`, `watched`, and `favorite` flags
-- `watch_history`: session-style watch tracking
-- `migration_history` and `_meta`: schema versioning and migration metadata
+- Viewer library and watch flow
+  - browse videos with filters, pagination, and virtual-channel context
+  - watch videos with adjacent navigation and per-profile flags
+- Watch history and profile state
+  - record session-style watch progress independently from watched flags
+  - keep watched, favorite, and ignored state per active profile
+- Virtual channel curation
+  - group source channels into viewer-facing virtual channels
+  - control assignment behavior through `all`, `long_only`, and `selected_only` modes
+- Admin channel management
+  - import, refresh, create, rename, and delete source and virtual channels
+  - review selected-only video inclusion state
+- Explicit schema and migration workflow
+  - keep latest-schema bootstrap in code
+  - use forward-only migrations for database evolution
 
-Current schema version in code: `8` in [src/lib/daos/_schema.ts](/abs/path/D:/workspaces/yt-viewer/src/lib/daos/_schema.ts).
+## Architecture Overview
 
-## Behavior Summary
+### Tech Stack
 
-### Viewer
-
-- Main viewer page supports search, channel filters, date filters, watched/ignored filters, pagination, and virtual-channel filtering.
-- Viewer selection supports single-select, additive/range multi-select, bulk flag updates, and undo.
-- Watch page tracks playback history sessions independently from the watched flag.
-- History page supports session view and aggregated per-video view.
-
-Primary entry points:
-
-- [src/routes/viewer/+page.server.ts](/abs/path/D:/workspaces/yt-viewer/src/routes/viewer/+page.server.ts)
-- [src/routes/viewer/+page.svelte](/abs/path/D:/workspaces/yt-viewer/src/routes/viewer/+page.svelte)
-- [src/routes/viewer/watch/[videoId]/+page.server.ts](/abs/path/D:/workspaces/yt-viewer/src/routes/viewer/watch/[videoId]/+page.server.ts)
-- [src/routes/history/+page.server.ts](/abs/path/D:/workspaces/yt-viewer/src/routes/history/+page.server.ts)
-
-### Admin
-
-- Source-channel admin supports create, update, delete, lookup/import, and refresh.
-- Virtual-channel index supports create, rename, delete, inline add/remove assignment, and navigation to manage pages.
-- Virtual-channel manage page supports assignment mode changes and selected-only review-state updates, including bulk update of filtered results.
-- Admin routes are gated by cookie-based session checks.
-
-Primary entry points:
-
-- [src/routes/admin/+layout.server.ts](/abs/path/D:/workspaces/yt-viewer/src/routes/admin/+layout.server.ts)
-- [src/routes/admin/source-channels/+page.server.ts](/abs/path/D:/workspaces/yt-viewer/src/routes/admin/source-channels/+page.server.ts)
-- [src/routes/admin/virtual-channels/+page.server.ts](/abs/path/D:/workspaces/yt-viewer/src/routes/admin/virtual-channels/+page.server.ts)
-- [src/routes/admin/virtual-channels/[virtualChannelId]/+page.server.ts](/abs/path/D:/workspaces/yt-viewer/src/routes/admin/virtual-channels/[virtualChannelId]/+page.server.ts)
-
-## Architecture Summary
-
-The repository is structured around thin SvelteKit routes and explicit service/DAO layers.
-
-- Routes parse request inputs and delegate to services.
-- `src/lib/server/*` contains request-scoped service logic.
-- `src/lib/daos/*` contains write-side DAOs, read repositories, query specs, and migration/bootstrap support.
-- `src/lib/entities/*` holds shared entity and contract types.
-- `src/lib/viewer/*` holds client-side viewer state, selection logic, and UI helpers.
-- `src/lib/youtube/*` wraps YouTube fetch and import mapping.
-
-Important infrastructure files:
-
-- [src/lib/server/ServerDatabaseContext.ts](/abs/path/D:/workspaces/yt-viewer/src/lib/server/ServerDatabaseContext.ts): runtime DB connection lifecycle and mode resolution
-- [src/lib/server/ServerProfileContext.ts](/abs/path/D:/workspaces/yt-viewer/src/lib/server/ServerProfileContext.ts): active profile resolution
-- [src/lib/server/ServerAdminSession.ts](/abs/path/D:/workspaces/yt-viewer/src/lib/server/ServerAdminSession.ts): admin auth/session guard
-- [src/lib/server/ServerActionForm.ts](/abs/path/D:/workspaces/yt-viewer/src/lib/server/ServerActionForm.ts): form parsing helpers
-
-## Project Layout
-
-### Planning and workflow
-
-- `ai-work/`: planning artifacts, feature docs, task breakdowns, tech stack, and status tracking
-- `ai-rules/`: repository-specific workflow rules for feature planning and execution
-- `AGENTS.md`: repository operating instructions
-
-### Application code
-
-- `src/routes/`: SvelteKit routes
-  - `admin/`: admin UI and auth routes
-  - `viewer/`: main viewer, watch page, and virtual-channel routes
-  - `history/`: watch-history UI
-  - `profile/+server.ts`: active-profile switching
-- `src/lib/components/`: shared UI components
-- `src/lib/viewer/`: viewer UI helpers, selection state, bulk actions, page state
-- `src/lib/server/admin/`: admin service layer
-- `src/lib/server/viewer/`: viewer service layer
-- `src/lib/daos/`: persistence layer
-  - `shared/`: DB pool, bootstrap, migration engine
-  - `migrations/`: registered forward migrations
-  - `queries/`: SQL query-spec builders
-  - `readers/`: read-model repositories
-- `src/lib/entities/`: shared domain types
-- `src/lib/youtube/`: YouTube client, fetch, mapping, and import services
-- `src/lib/auth/`: password policy helpers
-
-### Operational code
-
-- `scripts/create_database.ts`: latest-schema bootstrap for an existing MySQL/MariaDB database
-- `scripts/migrate_database.ts`: explicit forward-only migration command for `dev` and `live`
-- `scripts/run_with_local_mysql.ts`: wraps a command with the local Docker Compose database URL
-- `docker-compose.yml`: local MariaDB runtime
-- `deploy.ps1`: Windows deployment flow for Cloud Run
-- `deploy.sh`: shell deployment variant
-
-### Tests
-
-- `tests/admin/`: admin route/auth coverage
-- `tests/lib/`: viewer, DAO, migration, runtime, and parsing coverage
-- `tests/scripts/`: DB setup script coverage
-- `tests/helpers/`: shared test utilities
-
-## Runtime and Stack
-
-- Framework: SvelteKit
-- Language: TypeScript
-- Runtime adapter: `@sveltejs/adapter-node`
-- Database: MySQL/MariaDB via `mysql2`
-- Local DB runtime: Docker Compose
-- Deployment target: Google Cloud Run
+- Frontend: SvelteKit + Svelte + plain CSS/Sass support
+- Backend: SvelteKit server routes and server-side service classes
+- Data/storage: MySQL/MariaDB via `mysql2`
 - Testing: Vitest
+- Tooling/infrastructure: Vite, TypeScript, Docker Compose for local DB, Cloud Run for deployment
 
-Package and script definitions live in [package.json](/abs/path/D:/workspaces/yt-viewer/package.json).
+### System Shape
 
-## Important Current Constraints
+The application is organized around thin SvelteKit routes, explicit server-side services, and direct SQL DAOs/read repositories.
 
-- The codebase still uses generated integer row IDs as primary relational identifiers.
-- Feature `09-stable-db-ids` exists to replace those brittle generated IDs with stable identifiers and adjusted foreign-key contracts.
-- Planning for feature 09 is spread across:
-  - [ai-work/09-stable-db-ids-prd.md](/abs/path/D:/workspaces/yt-viewer/ai-work/09-stable-db-ids-prd.md)
-  - [ai-work/09-stable-db-ids-scope.md](/abs/path/D:/workspaces/yt-viewer/ai-work/09-stable-db-ids-scope.md)
-  - [ai-work/09-stable-db-ids-tasks.md](/abs/path/D:/workspaces/yt-viewer/ai-work/09-stable-db-ids-tasks.md)
-  - [ai-work/09-stable-db-ids-generated-id-trace.md](/abs/path/D:/workspaces/yt-viewer/ai-work/09-stable-db-ids-generated-id-trace.md)
-  - [ai-work/09-stable-db-ids-db-change-plan.md](/abs/path/D:/workspaces/yt-viewer/ai-work/09-stable-db-ids-db-change-plan.md)
+- Route modules parse request input, resolve request context, and delegate to services.
+- `src/lib/server/admin/` and `src/lib/server/viewer/` contain request-facing business logic.
+- `src/lib/daos/` contains write-side DAOs, read repositories, query specs, and migration/bootstrap support.
+- `src/lib/entities/` contains entity classes and plain field-value types shared across the app.
+- `src/lib/viewer/` contains client-side viewer state, selection logic, and presentation helpers.
+- `src/lib/youtube/` handles YouTube API fetch/import logic and mapping into stored records.
 
-## Resume Guidance
+The current data model centers on:
 
-When starting a new session, review these first:
+- `source_channels`
+- `videos`
+- `virtual_channels`
+- `virtual_channel_assignments`
+- `virtual_channel_assignment_video_selections`
+- `profiles`
+- `video_flags`
+- `watch_history`
+- `migration_history` and `_meta`
 
-1. [ai-work/00-feature-status.md](/abs/path/D:/workspaces/yt-viewer/ai-work/00-feature-status.md)
-2. [ai-work/00-master-techstack.md](/abs/path/D:/workspaces/yt-viewer/ai-work/00-master-techstack.md)
-3. [ai-work/09-stable-db-ids-tasks.md](/abs/path/D:/workspaces/yt-viewer/ai-work/09-stable-db-ids-tasks.md)
-4. [ai-work/09-stable-db-ids-db-change-plan.md](/abs/path/D:/workspaces/yt-viewer/ai-work/09-stable-db-ids-db-change-plan.md)
+Current schema version in code is `9` in `src/lib/daos/_schema.ts`.
 
-Then inspect the current implementation around:
+## Directory Guide
 
-- [src/lib/daos/_schema.ts](/abs/path/D:/workspaces/yt-viewer/src/lib/daos/_schema.ts)
-- [src/lib/daos/queries/ViewerVideoQuerySpec.ts](/abs/path/D:/workspaces/yt-viewer/src/lib/daos/queries/ViewerVideoQuerySpec.ts)
-- [src/lib/daos/readers/HistoryReadRepository.ts](/abs/path/D:/workspaces/yt-viewer/src/lib/daos/readers/HistoryReadRepository.ts)
-- [src/lib/server/admin/AdminVirtualChannelManageService.ts](/abs/path/D:/workspaces/yt-viewer/src/lib/server/admin/AdminVirtualChannelManageService.ts)
-- [src/lib/server/viewer/ViewerWatchService.ts](/abs/path/D:/workspaces/yt-viewer/src/lib/server/viewer/ViewerWatchService.ts)
-- [src/lib/youtube/importer.ts](/abs/path/D:/workspaces/yt-viewer/src/lib/youtube/importer.ts)
+### Top-Level Layout
+
+- `ai-work/` - planning artifacts, feature status, project summary docs, and feature-specific scope/PRD/task files
+- `ai-rules/` - repository workflow rules for planning, execution, testing, and commit preparation
+- `src/` - primary application implementation root
+  - `src/routes/` - SvelteKit pages, layouts, and form actions for viewer, history, profile switching, and admin surfaces
+  - `src/lib/server/` - request-scoped service layer and shared server context helpers
+  - `src/lib/daos/` - schema DDL, migrations, DAOs, query specs, and read repositories
+  - `src/lib/entities/` - entity classes and plain field-value structures
+  - `src/lib/viewer/` - client-side viewer state, selection, bulk actions, and UI helpers
+  - `src/lib/components/` - shared Svelte UI components
+  - `src/lib/youtube/` - YouTube integration and import mapping
+  - `src/lib/auth/` - auth-related helpers
+- `scripts/` - database setup/migration and local runtime helper scripts
+- `tests/` - Vitest coverage for routes, DAOs, migration/setup code, and shared logic
+- `docker-compose.yml` - local MariaDB runtime
+
+### Key Files
+
+- `ai-work/00-feature-status.md` - source of truth for feature state
+- `ai-work/00-master-techstack.md` - shared application-wide tech stack decisions
+- `src/lib/daos/_schema.ts` - latest-schema DDL and index definitions
+- `src/lib/daos/migrations/registry.ts` - registered forward migrations
+- `src/lib/server/ServerDatabaseContext.ts` - DB connection lifecycle and runtime mode resolution
+- `src/lib/server/ServerProfileContext.ts` - active profile resolution
+- `src/routes/viewer/+page.server.ts` - main viewer page load path
+- `src/routes/viewer/watch/[videoId]/+page.server.ts` - watch-page server actions for history and watched-state updates
+- `src/routes/admin/virtual-channels/+page.server.ts` - virtual-channel admin index actions
+- `package.json` - scripts and package-level tooling entry points

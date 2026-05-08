@@ -78,6 +78,61 @@ export class HistoryDAO extends DAO
             [profile_id, limit]
         );
     }
+
+    async getVirtualChannelWatchSecondsInWindow(
+        profileId: number,
+        virtualChannelId: number,
+        windowStartMs: number,
+        windowEndMs: number
+    ): Promise<number>
+    {
+        const row = await this.getOne<{ totalWatchSeconds: number }>(`
+            SELECT COALESCE(SUM(h.time_watched_seconds), 0) AS totalWatchSeconds
+            FROM watch_history h
+            INNER JOIN videos v
+                ON v.id = h.video_id
+            INNER JOIN virtual_channel_assignments a
+                ON a.source_channel_id = v.channel_id
+            WHERE h.profile_id = ?
+              AND a.virtual_channel_id = ?
+              AND h.last_updated_at >= ?
+              AND h.last_updated_at < ?
+        `, [
+            profileId,
+            virtualChannelId,
+            windowStartMs,
+            windowEndMs
+        ]);
+
+        return row?.totalWatchSeconds ?? 0;
+    }
+
+    async resetVirtualChannelWatchSecondsInWindow(
+        profileId: number,
+        virtualChannelId: number,
+        windowStartMs: number,
+        windowEndMs: number
+    ): Promise<void>
+    {
+        await this.run(`
+            DELETE FROM watch_history
+            WHERE profile_id = ?
+              AND video_id IN (
+                  SELECT v.id
+                  FROM videos v
+                  INNER JOIN virtual_channel_assignments a
+                      ON a.source_channel_id = v.channel_id
+                  WHERE a.virtual_channel_id = ?
+              )
+              AND last_updated_at >= ?
+              AND last_updated_at < ?
+        `, [
+            profileId,
+            virtualChannelId,
+            windowStartMs,
+            windowEndMs
+        ]);
+    }
 }
 // apply-patch-anchor - do not delete
 

@@ -1,4 +1,5 @@
 import type { SourceChannelDAO } from '$lib/daos/sourceChannelDAO';
+import { SourceChannel } from '$lib/entities/sourceChannel';
 import { AdminSourceChannelYouTubeCoordinator } from '$lib/server/admin/AdminSourceChannelYouTubeCoordinator';
 import { AdminYouTubeClientProvider } from '$lib/server/admin/AdminYouTubeClientProvider';
 import type {
@@ -15,7 +16,7 @@ import { YouTubeApiError } from '$lib/youtube/youTubeClient';
 
 type AdminSourceChannelDAO = Pick<
     SourceChannelDAO,
-    'get' | 'listWithVideoStats' | 'markRefreshed' | 'remove' | 'upsert'
+    'create' | 'get' | 'listWithVideoStats' | 'markRefreshed' | 'remove' | 'update'
 >;
 
 export class AdminSourceChannelPageService
@@ -78,15 +79,17 @@ export class AdminSourceChannelPageService
             const metadataThumbnailUrl = this.getBestThumbnailUrl(snippet.thumbnails as Record<string, { url?: string }> | undefined);
             const metadataPublishedAt = snippet.publishedAt ? Date.parse(snippet.publishedAt) : null;
 
-            await this.sourceChannelDAO.upsert({
+            await this.sourceChannelDAO.create(new SourceChannel({
+                id: 0,
                 youtube_id: resolved.channelId,
                 title: input.title || snippet.title || '',
                 description: input.description || snippet.description || '',
                 thumbnail_url: input.thumbnail_url || metadataThumbnailUrl,
                 published_at: input.published_at ?? (
                     Number.isFinite(metadataPublishedAt as number) ? (metadataPublishedAt as number) : null
-                )
-            });
+                ),
+                last_refreshed_at: null
+            }));
 
             return {
                 ok: true,
@@ -110,13 +113,12 @@ export class AdminSourceChannelPageService
             return this.buildError('source_channel_not_found', 404, 'SourceChannel not found.');
         }
 
-        await this.sourceChannelDAO.upsert({
-            youtube_id: existing.youtube_id,
+        await this.sourceChannelDAO.update(existing.with({
             title: input.title,
             description: input.description,
-            thumbnail_url: input.thumbnail_url,
-            published_at: input.published_at
-        });
+            thumbnailUrl: input.thumbnail_url,
+            publishedAt: input.published_at
+        }));
 
         return {
             ok: true,
@@ -157,7 +159,7 @@ export class AdminSourceChannelPageService
             const result = await this.youTubeCoordinator.importChannelFromYouTube(
                 this.db,
                 client,
-                existing.youtube_id
+                existing.youtubeId
             );
 
             if (result.channelId === null) {
@@ -174,7 +176,7 @@ export class AdminSourceChannelPageService
                 data: { redirectTo: AdminSourceChannelPageService.INDEX_PATH }
             };
         } catch (error: unknown) {
-            console.error('Refresh failed for channel', existing.youtube_id, error);
+            console.error('Refresh failed for channel', existing.youtubeId, error);
             return this.mapYouTubeRequestFailure(
                 error,
                 'Invalid request to YouTube. Please verify the channel ID and try again.'

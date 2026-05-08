@@ -1,6 +1,6 @@
 ---
-version: 1.7.0
-timestamp: 2026-04-19 00:00
+version: 1.8.0
+timestamp: 2026-04-30 00:00
 ---
 # Rule: Generating a Product Requirements Document (PRD)
 
@@ -28,6 +28,7 @@ timestamp: 2026-04-19 00:00
    - Check for `/ai-work/{feature-tag}-scope.md`
    - Use it as the high-level upstream boundary document
    - Carry the important scope boundaries forward into the PRD so implementation does not depend on reopening the scope file
+   - If `/ai-work/00-architecture.md` exists, read it and apply relevant architectural boundaries and structural decisions while drafting the PRD
 
 3. **Ask Essential Clarifying Questions**
    - Ask only the 3-5 most important unresolved questions
@@ -54,6 +55,7 @@ timestamp: 2026-04-19 00:00
 
 6. **Save the Approved PRD**
    - Save the approved PRD to `/ai-work/{feature-tag}-prd.md`
+   - If the approved PRD introduces, clarifies, or materially changes architectural decisions, update `/ai-work/00-architecture.md` so the architectural record stays current
    - Report that the PRD was written and identify the target file
 
 ## PRD Structure Guidance

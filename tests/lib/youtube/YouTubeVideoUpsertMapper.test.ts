@@ -1,37 +1,8 @@
 import { describe, it, expect } from 'vitest';
-import {
-    YouTubeChannelUpsertMapper,
-    YouTubeVideoUpsertMapper
-} from '../../../src/lib/youtube/mapper';
+import { YouTubeVideoUpsertMapper } from '../../../src/lib/youtube/YouTubeVideoUpsertMapper';
 
 describe('youtube mapper (task 3.3)', () => {
-    it('maps channel item to channel upsert payload', () => {
-        const mapper = new YouTubeChannelUpsertMapper();
-        const item: any = {
-            id: 'UC_123',
-            snippet: {
-                title: 'SourceChannel Title',
-                description: 'About this channel',
-                publishedAt: '2020-01-02T03:04:05Z',
-                thumbnails: {
-                    default: { url: 'http://t.def' },
-                    medium: { url: 'http://t.med' },
-                    high: { url: 'http://t.hi' }
-                }
-            }
-        };
-        const up = mapper.toChannelUpsert(item);
-        expect(up).toMatchObject({
-            youtube_id: 'UC_123',
-            title: 'SourceChannel Title',
-            description: 'About this channel',
-            thumbnail_url: 'http://t.hi'
-        });
-        expect(typeof up.published_at === 'number' || up.published_at === null).toBe(true);
-    });
-
-    it('maps playlistItems item to video upsert payload with video metadata classification', () => {
-        const mapper = new YouTubeVideoUpsertMapper();
+    it('maps playlistItems item to a video with metadata classification', () => {
         const item: any = {
             snippet: {
                 title: 'Video A',
@@ -56,8 +27,8 @@ describe('youtube mapper (task 3.3)', () => {
                 duration: 'PT59S'
             }
         };
-        const up = mapper.toVideoUpsert(item, 42, videoMetadata);
-        expect(up).toMatchObject({
+        const video = YouTubeVideoUpsertMapper.toVideo(item, 42, videoMetadata);
+        expect(video).toMatchObject({
             youtube_id: 'vid123',
             channel_id: 42,
             title: 'Video A (canonical)',
@@ -65,14 +36,12 @@ describe('youtube mapper (task 3.3)', () => {
             thumbnail_url: 'http://v.hi',
             length_classification: 'short'
         });
-        expect(typeof up.published_at === 'number' || up.published_at === null).toBe(true);
-        expect(up.duration_seconds).toBe(59);
+        expect(typeof video.published_at === 'number' || video.published_at === null).toBe(true);
+        expect(video.duration_seconds).toBe(59);
     });
 
     it('derives long and unknown classifications through the video mapper boundary', () => {
-        const mapper = new YouTubeVideoUpsertMapper();
-
-        const longVideo = mapper.toVideoUpsert({
+        const longVideo = YouTubeVideoUpsertMapper.toVideo({
             snippet: {
                 title: 'Long video',
                 resourceId: { videoId: 'long-video' }
@@ -87,7 +56,7 @@ describe('youtube mapper (task 3.3)', () => {
             }
         } as any);
 
-        const unknownVideo = mapper.toVideoUpsert({
+        const unknownVideo = YouTubeVideoUpsertMapper.toVideo({
             snippet: {
                 title: 'Unknown video',
                 resourceId: { videoId: 'unknown-video' }
@@ -109,7 +78,6 @@ describe('youtube mapper (task 3.3)', () => {
     });
 
     it('falls back to unknown classification when video metadata is missing', () => {
-        const mapper = new YouTubeVideoUpsertMapper();
         const item: any = {
             snippet: {
                 title: 'Playlist fallback title',
@@ -124,8 +92,8 @@ describe('youtube mapper (task 3.3)', () => {
             }
         };
 
-        const up = mapper.toVideoUpsert(item, 7);
-        expect(up).toMatchObject({
+        const video = YouTubeVideoUpsertMapper.toVideo(item, 7);
+        expect(video).toMatchObject({
             youtube_id: 'vid-missing-metadata',
             channel_id: 7,
             title: 'Playlist fallback title',

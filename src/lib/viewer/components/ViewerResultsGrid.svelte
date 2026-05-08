@@ -9,6 +9,7 @@
 
     export let videos: ViewerVideo[] = [];
     export let selectedVideoIds: number[] = [];
+    export let disabled = false;
     export let buildVideoWatchHref: ((video: ViewerVideo) => string) | null = null;
     export let videoMutationService: VideoMutationService | null = null;
     export let onCardMouseDown: ViewerCardMouseDownHandler | null = null;
@@ -24,11 +25,12 @@
             {#each videos as video}
                 <VideoCard
                     {video}
-                    watchHref={buildVideoWatchHref ? buildVideoWatchHref(video) : null}
-                    {videoMutationService}
+                    disabled={disabled}
+                    watchHref={disabled ? null : (buildVideoWatchHref ? buildVideoWatchHref(video) : null)}
+                    videoMutationService={disabled ? null : videoMutationService}
                     isSelected={selectedVideoIds.includes(video.id)}
-                    onCardMouseDown={onCardMouseDown}
-                    onCardClick={onCardClick}
+                    onCardMouseDown={disabled ? null : onCardMouseDown}
+                    onCardClick={disabled ? null : onCardClick}
                     on:videochange={(event) => onVideoChange?.(event.detail)}
                 />
             {/each}

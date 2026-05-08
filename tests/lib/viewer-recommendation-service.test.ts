@@ -35,7 +35,7 @@ describe('ViewerRecommendationService', () => {
             watched: 'all',
             ignored: 'hide',
             channelId: null,
-            groupId: 99,
+            virtualChannelId: 99,
             limit: 1000,
             offset: 0
         }, 17);
@@ -55,7 +55,7 @@ describe('ViewerRecommendationService', () => {
             watched: 'all',
             ignored: 'hide',
             channelId: 7,
-            groupId: null,
+            virtualChannelId: null,
             limit: 1000,
             offset: 0
         }, 3);

@@ -80,5 +80,3 @@ Additional guidance:
 | `f03-channel-mgmt` |  | `🟣` | `future` | `2026-04-28` |  | Add channel management UI for aggregate review, video list browsing, and channel tracking tools |
 | `f04-video-channels` |  | `🟣` | `future` | `2026-04-30` |  | Virtual channels built from an arbitrary list of videos rather than full source channels |
 | `f05-col-prefixes` |  | `🟣` | `future` | `2026-05-08` |  | Apply consistent table-oriented column prefixes across the schema to improve SQL readability and reduce alias churn |
-
-

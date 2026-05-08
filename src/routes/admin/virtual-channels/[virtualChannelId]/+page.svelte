@@ -1,72 +1,38 @@
 <script lang="ts">
-    export let data: {
-        virtualChannel: {
-            id: number;
-            name: string;
-        };
-        associatedSourceChannels: Array<{
-            assignment: {
-                id: number;
-                source_channel_id: number;
-                virtual_channel_id: number;
-                mode: 'all' | 'long_only' | 'selected_only';
-                created_at: number;
-                updated_at: number;
-            };
-            sourceChannel: {
-                id: number;
-                youtube_id: string;
-                title: string;
-                description?: string;
-                thumbnail_url?: string | null;
-                published_at?: number | null;
-                last_refreshed_at?: number | null;
-            } | null;
-            automaticVideos: Array<{
-                id: number;
-                youtube_id: string;
-                channel_id: number;
-                title: string;
-                description?: string;
-                published_at?: number | null;
-                duration_seconds?: number | null;
-                thumbnail_url?: string | null;
-                length_classification?: 'long' | 'short' | 'unknown' | null;
-            }>;
-            selectedOnlyVideos: Array<{
-                id: number;
-                youtube_id: string;
-                channel_id: number;
-                title: string;
-                description?: string;
-                published_at?: number | null;
-                duration_seconds?: number | null;
-                thumbnail_url?: string | null;
-                length_classification?: 'long' | 'short' | 'unknown' | null;
-                review_state: 'included' | 'ignored' | 'not_yet_reviewed';
-            }>;
-            selectedOnlyCounts: {
-                included: number;
-                ignored: number;
-                not_yet_reviewed: number;
-            } | null;
-            reviewStateFilter: 'all' | 'not_yet_reviewed';
-            regexFilter: string;
-            videoTypeFilter: 'all' | 'long' | 'short' | 'unknown';
-        }>;
-        availableSourceChannels: Array<{
-            id: number;
-            youtube_id: string;
-            title: string;
-            description?: string;
-            thumbnail_url?: string | null;
-            published_at?: number | null;
-            last_refreshed_at?: number | null;
-        }>;
+    import type { ActionData, PageData } from './$types';
+    import type { AdminSelectedOnlyVideoViewModel } from '$lib/server/admin/AdminVirtualChannelTypes';
+    import {
+        AdminReviewStateFilter,
+        AdminVideoTypeFilter
+    } from '$lib/server/admin/AdminVirtualChannelTypes';
+    import { VirtualChannelAssignmentMode } from '$lib/entities/virtualChannelAssignment';
+    import { VirtualChannelAssignmentVideoReviewState as ReviewState } from '$lib/entities/virtualChannelAssignmentVideoSelection';
+    import { VideoLengthClassification } from '$lib/entities/video';
+
+    export let data: PageData;
+    export let form: ActionData;
+
+    type TimerFormState = {
+        action?: string;
+        message?: string;
+        timerMode?: 'unlimited' | 'capped';
+        dailyTimerMaxInput?: string;
     };
 
+    let timerFormState: TimerFormState | null = null;
+    let timerFormMode: 'unlimited' | 'capped' = 'unlimited';
+    let timerFormInput = '';
+
+    $: timerFormState = form && typeof form === 'object' ? form as TimerFormState : null;
+    $: timerFormMode = timerFormState?.action === 'saveTimerSettings'
+        ? (timerFormState.timerMode ?? 'unlimited')
+        : (data.virtualChannel.dailyTimerMax == null ? 'unlimited' : 'capped');
+    $: timerFormInput = timerFormState?.action === 'saveTimerSettings'
+        ? (timerFormState.dailyTimerMaxInput ?? '')
+        : (data.virtualChannel.dailyTimerMax == null ? '' : String(data.virtualChannel.dailyTimerMax));
+
     const associatedSourceChannelIds = new Set(
-        data.associatedSourceChannels.map((item) => item.assignment.source_channel_id)
+        data.associatedSourceChannels.map((item) => item.assignment.sourceChannelId)
     );
 
     const availableForAssociation = data.availableSourceChannels.filter(
@@ -93,13 +59,13 @@
         return `${minutes}:${seconds.toString().padStart(2, '0')}`;
     }
 
-    function formatLengthClassification(lengthClassification?: 'long' | 'short' | 'unknown' | null): string
+    function formatLengthClassification(lengthClassification: VideoLengthClassification): string
     {
-        if (lengthClassification === 'long') {
+        if (lengthClassification === VideoLengthClassification.Long) {
             return 'Long';
         }
 
-        if (lengthClassification === 'short') {
+        if (lengthClassification === VideoLengthClassification.Short) {
             return 'Short';
         }
 
@@ -108,9 +74,9 @@
 
     function selectedOnlyQueryString(item: {
         assignment: { id: number };
-        reviewStateFilter: 'all' | 'not_yet_reviewed';
+        reviewStateFilter: AdminReviewStateFilter;
         regexFilter: string;
-        videoTypeFilter: 'all' | 'long' | 'short' | 'unknown';
+        videoTypeFilter: AdminVideoTypeFilter;
     }): string
     {
         const params = new URLSearchParams();
@@ -120,7 +86,7 @@
             params.set(`regexFilter-${item.assignment.id}`, item.regexFilter);
         }
 
-        if (item.videoTypeFilter !== 'all') {
+        if (item.videoTypeFilter !== AdminVideoTypeFilter.All) {
             params.set(`videoTypeFilter-${item.assignment.id}`, item.videoTypeFilter);
         }
 
@@ -128,33 +94,21 @@
     }
 
     function filteredSelectedOnlyVideos(
-        videos: Array<{
-            id: number;
-            youtube_id: string;
-            channel_id: number;
-            title: string;
-            description?: string;
-            published_at?: number | null;
-            duration_seconds?: number | null;
-            thumbnail_url?: string | null;
-            length_classification?: 'long' | 'short' | 'unknown' | null;
-            review_state: 'included' | 'ignored' | 'not_yet_reviewed';
-        }>,
-        reviewStateFilter: 'all' | 'not_yet_reviewed',
+        videos: AdminSelectedOnlyVideoViewModel[],
+        reviewStateFilter: AdminReviewStateFilter,
         regexFilter: string,
-        videoTypeFilter: 'all' | 'long' | 'short' | 'unknown'
+        videoTypeFilter: AdminVideoTypeFilter
     )
     {
         // Apply the review-state filter first so later bulk tools can target the shown rows.
-        let filteredVideos = reviewStateFilter === 'not_yet_reviewed'
-            ? videos.filter((video) => video.review_state === 'not_yet_reviewed')
+        let filteredVideos = reviewStateFilter === AdminReviewStateFilter.NotYetReviewed
+            ? videos.filter((video) => video.reviewState === ReviewState.NotYetReviewed)
             : videos;
 
         // Apply the video classification filter before regex matching.
-        if (videoTypeFilter !== 'all') {
+        if (videoTypeFilter !== AdminVideoTypeFilter.All) {
             filteredVideos = filteredVideos.filter((video) => {
-                const classification = video.length_classification ?? 'unknown';
-                return classification === videoTypeFilter;
+                return matchesVideoTypeFilter(video.video.length_classification, videoTypeFilter);
             });
         }
 
@@ -167,8 +121,8 @@
             const pattern = new RegExp(regexFilter, 'i');
 
             filteredVideos = filteredVideos.filter((video) => {
-                const title = video.title || '';
-                const description = video.description || '';
+                const title = video.video.title || '';
+                const description = video.video.description || '';
                 return pattern.test(title) || pattern.test(description);
             });
 
@@ -176,6 +130,18 @@
         } catch {
             return { videos: filteredVideos, hasInvalidRegex: true };
         }
+    }
+
+    function matchesVideoTypeFilter(
+        classification: VideoLengthClassification,
+        videoTypeFilter: AdminVideoTypeFilter
+    ): boolean
+    {
+        return (
+            (videoTypeFilter === AdminVideoTypeFilter.Long && classification === VideoLengthClassification.Long) ||
+            (videoTypeFilter === AdminVideoTypeFilter.Short && classification === VideoLengthClassification.Short) ||
+            classification === VideoLengthClassification.Unknown
+        );
     }
 </script>
 
@@ -205,6 +171,47 @@
 
     <section class="panel stack">
         <div>
+            <h2>Timer Settings</h2>
+            <p class="muted">Leave the channel uncapped or set a daily playback allowance in whole seconds.</p>
+        </div>
+
+        <form method="post" action="?/saveTimerSettings" class="fields">
+            <label>
+                Timer mode
+                <select name="timer_mode">
+                    <option value="unlimited" selected={timerFormMode === 'unlimited'}>Unlimited</option>
+                    <option value="capped" selected={timerFormMode === 'capped'}>Daily limit</option>
+                </select>
+            </label>
+
+            <label>
+                Daily seconds
+                <input
+                    type="number"
+                    name="daily_timer_max"
+                    min="1"
+                    step="1"
+                    value={timerFormInput}
+                    placeholder="Leave blank for unlimited"
+                />
+            </label>
+
+            {#if timerFormState?.action === 'saveTimerSettings' && timerFormState.message}
+                <p class="error-text">{timerFormState.message}</p>
+            {:else if data.virtualChannel.dailyTimerMax == null}
+                <p class="muted">This virtual channel is currently unlimited.</p>
+            {:else}
+                <p class="muted">Current daily limit: {data.virtualChannel.dailyTimerMax} second(s).</p>
+            {/if}
+
+            <div class="inline-actions">
+                <button type="submit">Save Timer Settings</button>
+            </div>
+        </form>
+    </section>
+
+    <section class="panel stack">
+        <div>
             <h2>Add Source Channel</h2>
             <p class="muted">Choose one imported source channel and the initial association mode.</p>
         </div>
@@ -218,7 +225,7 @@
                     <select name="source_channel_id" required>
                         <option value="" disabled selected>Select a source channel</option>
                         {#each availableForAssociation as channel}
-                            <option value={channel.id}>{channel.title} ({channel.youtube_id})</option>
+                            <option value={channel.id}>{channel.title} ({channel.youtubeId})</option>
                         {/each}
                     </select>
                 </label>
@@ -226,9 +233,9 @@
                 <label>
                     Initial mode
                     <select name="mode">
-                        <option value="all">All videos</option>
-                        <option value="long_only">Long videos only</option>
-                        <option value="selected_only">Selected only</option>
+                        <option value={VirtualChannelAssignmentMode.All}>All videos</option>
+                        <option value={VirtualChannelAssignmentMode.LongOnly}>Long videos only</option>
+                        <option value={VirtualChannelAssignmentMode.SelectedOnly}>Selected only</option>
                     </select>
                 </label>
 
@@ -270,14 +277,14 @@
                                     >
                                         <input type="hidden" name="assignment_id" value={item.assignment.id} />
                                         <select name="mode" value={item.assignment.mode}>
-                                            <option value="all">All videos</option>
-                                            <option value="long_only">Long videos only</option>
-                                            <option value="selected_only">Selected only</option>
+                                            <option value={VirtualChannelAssignmentMode.All}>All videos</option>
+                                            <option value={VirtualChannelAssignmentMode.LongOnly}>Long videos only</option>
+                                            <option value={VirtualChannelAssignmentMode.SelectedOnly}>Selected only</option>
                                         </select>
                                         <button type="submit">Update Mode</button>
                                     </form>
                                 </td>
-                                <td><code>{item.sourceChannel?.youtube_id || 'missing'}</code></td>
+                                <td><code>{item.sourceChannel?.youtubeId || 'missing'}</code></td>
                                 <td>
                                     <form method="post" action="?/removeAssociation" class="inline-form">
                                         <input type="hidden" name="assignment_id" value={item.assignment.id} />
@@ -295,7 +302,7 @@
                                     </form>
                                 </td>
                             </tr>
-                            {#if item.assignment.mode === 'all' || item.assignment.mode === 'long_only'}
+                            {#if item.assignment.mode === VirtualChannelAssignmentMode.All || item.assignment.mode === VirtualChannelAssignmentMode.LongOnly}
                                 <tr>
                                     <td colspan="4">
                                         <details>
@@ -329,14 +336,14 @@
                                                 </div>
                                             {/if}
 
-                                            {#if item.assignment.mode === 'long_only'}
+                                            {#if item.assignment.mode === VirtualChannelAssignmentMode.LongOnly}
                                                 <p class="muted">Videos with unknown type are excluded here until you review them manually in selected-only mode.</p>
                                             {/if}
                                         </details>
                                     </td>
                                 </tr>
                             {/if}
-                            {#if item.assignment.mode === 'selected_only'}
+                            {#if item.assignment.mode === VirtualChannelAssignmentMode.SelectedOnly}
                                 <tr>
                                     <td colspan="4">
                                         <details>
@@ -353,7 +360,7 @@
                                                         <input
                                                             type="hidden"
                                                             name={`reviewStateFilter-${item.assignment.id}`}
-                                                            value="all"
+                                                            value={AdminReviewStateFilter.All}
                                                         />
                                                         <input
                                                             type="hidden"
@@ -371,7 +378,7 @@
                                                         <input
                                                             type="hidden"
                                                             name={`reviewStateFilter-${item.assignment.id}`}
-                                                            value="not_yet_reviewed"
+                                                            value={AdminReviewStateFilter.NotYetReviewed}
                                                         />
                                                         <input
                                                             type="hidden"
@@ -386,7 +393,7 @@
                                                         <button type="submit" class="btn btn-secondary">
                                                             Not yet reviewed
                                                             {#if item.selectedOnlyCounts}
-                                                                ({item.selectedOnlyCounts.not_yet_reviewed})
+                                                                ({item.selectedOnlyCounts.notYetReviewed})
                                                             {/if}
                                                         </button>
                                                     </form>
@@ -438,10 +445,10 @@
                                                     <label>
                                                         Video type
                                                         <select name={`videoTypeFilter-${item.assignment.id}`}>
-                                                            <option value="all" selected={item.videoTypeFilter === 'all'}>All types</option>
-                                                            <option value="long" selected={item.videoTypeFilter === 'long'}>Long</option>
-                                                            <option value="short" selected={item.videoTypeFilter === 'short'}>Short</option>
-                                                            <option value="unknown" selected={item.videoTypeFilter === 'unknown'}>Unknown / needs review</option>
+                                                            <option value={AdminVideoTypeFilter.All} selected={item.videoTypeFilter === AdminVideoTypeFilter.All}>All types</option>
+                                                            <option value={AdminVideoTypeFilter.Long} selected={item.videoTypeFilter === AdminVideoTypeFilter.Long}>Long</option>
+                                                            <option value={AdminVideoTypeFilter.Short} selected={item.videoTypeFilter === AdminVideoTypeFilter.Short}>Short</option>
+                                                            <option value={AdminVideoTypeFilter.Unknown} selected={item.videoTypeFilter === AdminVideoTypeFilter.Unknown}>Unknown / needs review</option>
                                                         </select>
                                                     </label>
                                                     <div class="inline-actions">
@@ -478,7 +485,7 @@
                                                         <input
                                                             type="hidden"
                                                             name="video_ids"
-                                                            value={visibleSelectedOnlyVideos.map((video) => video.id).join(',')}
+                                                            value={visibleSelectedOnlyVideos.map((video) => video.video.id).join(',')}
                                                         />
                                                         <input
                                                             type="hidden"
@@ -489,11 +496,11 @@
                                                     </form>
                                                     <form method="post" action="?/bulkUpdateVideoReviewState" class="inline-form">
                                                         <input type="hidden" name="assignment_id" value={item.assignment.id} />
-                                                        <input type="hidden" name="review_state" value="not_yet_reviewed" />
+                                                        <input type="hidden" name="review_state" value="notYetReviewed" />
                                                         <input
                                                             type="hidden"
                                                             name="video_ids"
-                                                            value={visibleSelectedOnlyVideos.map((video) => video.id).join(',')}
+                                                            value={visibleSelectedOnlyVideos.map((video) => video.video.id).join(',')}
                                                         />
                                                         <input
                                                             type="hidden"
@@ -508,7 +515,7 @@
                                                         <input
                                                             type="hidden"
                                                             name="video_ids"
-                                                            value={visibleSelectedOnlyVideos.map((video) => video.id).join(',')}
+                                                            value={visibleSelectedOnlyVideos.map((video) => video.video.id).join(',')}
                                                         />
                                                         <input
                                                             type="hidden"
@@ -519,11 +526,11 @@
                                                     </form>
                                                     <form method="post" action="?/bulkUpdateVideoReviewState" class="inline-form">
                                                         <input type="hidden" name="assignment_id" value={item.assignment.id} />
-                                                        <input type="hidden" name="review_state" value="not_yet_reviewed" />
+                                                        <input type="hidden" name="review_state" value="notYetReviewed" />
                                                         <input
                                                             type="hidden"
                                                             name="video_ids"
-                                                            value={visibleSelectedOnlyVideos.map((video) => video.id).join(',')}
+                                                            value={visibleSelectedOnlyVideos.map((video) => video.video.id).join(',')}
                                                         />
                                                         <input
                                                             type="hidden"
@@ -548,49 +555,49 @@
                                                                 <tr>
                                                                     <td>
                                                                         <div class="inline-actions">
-                                                                            {#if video.thumbnail_url}
+                                                                            {#if video.video.thumbnail_url}
                                                                                 <img
-                                                                                    src={video.thumbnail_url}
+                                                                                    src={video.video.thumbnail_url}
                                                                                     alt=""
                                                                                     width="96"
                                                                                     height="54"
                                                                                 />
                                                                             {/if}
                                                                             <div>
-                                                                                <div>{video.title}</div>
+                                                                                <div>{video.video.title}</div>
                                                                                 <div class="muted">
-                                                                                    {video.description || 'No description available.'}
+                                                                                    {video.video.description || 'No description available.'}
                                                                                 </div>
                                                                             </div>
                                                                         </div>
                                                                     </td>
                                                                     <td>
-                                                                        <div class="muted">Published: {formatTimestamp(video.published_at)}</div>
-                                                                        <div class="muted">Length: {formatDuration(video.duration_seconds)}</div>
+                                                                        <div class="muted">Published: {formatTimestamp(video.video.published_at)}</div>
+                                                                        <div class="muted">Length: {formatDuration(video.video.duration_seconds)}</div>
                                                                         <div class="muted">
-                                                                            Type: <code>{formatLengthClassification(video.length_classification)}</code>
+                                                                            Type: <code>{formatLengthClassification(video.video.length_classification)}</code>
                                                                         </div>
                                                                     </td>
                                                                     <td>
                                                                         <div class="stack">
-                                                                            <div><code>{video.review_state}</code></div>
+                                                                            <div><code>{video.reviewState}</code></div>
                                                                             <div class="inline-actions">
                                                                                 <form method="post" action="?/setVideoReviewState" class="inline-form">
                                                                                     <input type="hidden" name="assignment_id" value={item.assignment.id} />
-                                                                                    <input type="hidden" name="video_id" value={video.id} />
+                                                                                    <input type="hidden" name="video_id" value={video.video.id} />
                                                                                     <input type="hidden" name="review_state" value="included" />
                                                                                     <button type="submit">Include</button>
                                                                                 </form>
                                                                                 <form method="post" action="?/setVideoReviewState" class="inline-form">
                                                                                     <input type="hidden" name="assignment_id" value={item.assignment.id} />
-                                                                                    <input type="hidden" name="video_id" value={video.id} />
+                                                                                    <input type="hidden" name="video_id" value={video.video.id} />
                                                                                     <input type="hidden" name="review_state" value="ignored" />
                                                                                     <button type="submit" class="btn-secondary">Ignore</button>
                                                                                 </form>
                                                                                 <form method="post" action="?/setVideoReviewState" class="inline-form">
                                                                                     <input type="hidden" name="assignment_id" value={item.assignment.id} />
-                                                                                    <input type="hidden" name="video_id" value={video.id} />
-                                                                                    <input type="hidden" name="review_state" value="not_yet_reviewed" />
+                                                                                    <input type="hidden" name="video_id" value={video.video.id} />
+                                                                                    <input type="hidden" name="review_state" value="notYetReviewed" />
                                                                                     <button type="submit" class="btn-secondary">Reset</button>
                                                                                 </form>
                                                                             </div>
@@ -636,8 +643,8 @@
                         {#each data.availableSourceChannels as channel}
                             <tr>
                                 <td>{channel.title}</td>
-                                <td><code>{channel.youtube_id}</code></td>
-                                <td>{channel.last_refreshed_at ?? 'Never'}</td>
+                                <td><code>{channel.youtubeId}</code></td>
+                                <td>{channel.lastRefreshedAt ?? 'Never'}</td>
                             </tr>
                         {/each}
                     </tbody>

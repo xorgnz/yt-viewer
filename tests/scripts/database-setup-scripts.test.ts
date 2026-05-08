@@ -37,12 +37,16 @@ describe('database setup scripts', () => {
         });
 
         expect(result.currentVersion).toBe(7);
-        expect(result.targetVersion).toBe(8);
-        expect(result.finalVersion).toBe(8);
+        expect(result.targetVersion).toBe(9);
+        expect(result.finalVersion).toBe(9);
         expect(result.appliedMigrations).toEqual([
             {
                 version: 8,
                 name: 'add_migration_history',
+            },
+            {
+                version: 9,
+                name: 'add_virtual_channel_daily_timer_max',
             }
         ]);
         expect(client.calls.map((call) => call.text)).toContain('START TRANSACTION');

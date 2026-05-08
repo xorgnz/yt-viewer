@@ -14,9 +14,11 @@ export const load = async ({ params, cookies, url }: { params: { videoId: string
         const serviceContext = await ViewerServiceContext.resolve(db, cookies);
         const filters = ViewerQueryParser.parse(url, serviceContext.profileContext.activeProfileKey);
         const result = await serviceContext.watchService.load(videoId, filters);
-        if (!result) throw error(404, 'Video not found');
+        if (!result.ok) {
+            throw error(result.status, result.message);
+        }
 
-        return result;
+        return result.data;
     });
 };
 
@@ -44,11 +46,14 @@ export const actions = {
     async createHistorySession({ request, params, cookies }: { request: Request; params: { videoId: string }, cookies: any })
     {
         const videoYoutubeId = String(params.videoId || '').trim();
-        if (!videoYoutubeId) return fail(400, { message: 'Missing videoId' });
+        if (!videoYoutubeId) {
+            return fail(400, { message: 'Missing videoId' });
+        }
 
         const form = await ServerActionForm.fromRequest(request);
+        const virtualChannelId = form.getPositiveInteger('virtualChannelId');
         const watchSeconds = form.getNumber('watchSeconds', 0);
-        if (!Number.isFinite(watchSeconds) || watchSeconds <= 5) {
+        if (!Number.isFinite(watchSeconds) || watchSeconds < 1) {
             return fail(400, { message: 'Insufficient watch time for history session' });
         }
 
@@ -56,11 +61,16 @@ export const actions = {
             const serviceContext = await ViewerServiceContext.resolve(db, cookies);
             const result = await serviceContext.watchService.createHistorySession(
                 videoYoutubeId,
-                watchSeconds
+                watchSeconds,
+                virtualChannelId
             );
 
             if (!result.ok) {
-                return fail(result.status, { message: result.message });
+                return fail(result.status, {
+                    message: result.message,
+                    code: result.code,
+                    timerState: result.code === 'timer_capped' ? 'capped' : null
+                });
             }
 
             return result;
@@ -71,9 +81,12 @@ export const actions = {
     async updateHistoryProgress({ request, params, cookies }: { request: Request; params: { videoId: string }, cookies: any })
     {
         const videoYoutubeId = String(params.videoId || '').trim();
-        if (!videoYoutubeId) return fail(400, { message: 'Missing videoId' });
+        if (!videoYoutubeId) {
+            return fail(400, { message: 'Missing videoId' });
+        }
 
         const form = await ServerActionForm.fromRequest(request);
+        const virtualChannelId = form.getPositiveInteger('virtualChannelId');
         const watchSeconds = form.getNumber('watchSeconds', 0);
         if (!Number.isFinite(watchSeconds) || watchSeconds < 0) {
             return fail(400, { message: 'Invalid watch time' });
@@ -83,11 +96,16 @@ export const actions = {
             const serviceContext = await ViewerServiceContext.resolve(db, cookies);
             const result = await serviceContext.watchService.updateHistoryProgress(
                 videoYoutubeId,
-                watchSeconds
+                watchSeconds,
+                virtualChannelId
             );
 
             if (!result.ok) {
-                return fail(result.status, { message: result.message });
+                return fail(result.status, {
+                    message: result.message,
+                    code: result.code,
+                    timerState: result.code === 'timer_capped' ? 'capped' : null
+                });
             }
 
             return result;

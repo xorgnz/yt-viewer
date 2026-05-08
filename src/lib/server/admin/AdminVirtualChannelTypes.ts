@@ -2,10 +2,21 @@ import type { SourceChannel } from '$lib/entities/sourceChannel';
 import type { VirtualChannelAssignment } from '$lib/entities/virtualChannelAssignment';
 import type { VirtualChannelAssignmentVideoReviewState } from '$lib/entities/virtualChannelAssignmentVideoSelection';
 import type { VirtualChannel } from '$lib/entities/virtualChannel';
-import type { Video, VideoFields } from '$lib/entities/video';
+import type { Video } from '$lib/entities/video';
 
-export type AdminVideoTypeFilter = 'all' | 'long' | 'short' | 'unknown';
-export type AdminReviewStateFilter = 'all' | 'not_yet_reviewed';
+export enum AdminVideoTypeFilter
+{
+    All = 'all',
+    Long = 'long',
+    Short = 'short',
+    Unknown = 'unknown'
+}
+
+export enum AdminReviewStateFilter
+{
+    All = 'all',
+    NotYetReviewed = 'notYetReviewed'
+}
 
 export interface AdminVirtualChannelServiceError<TCode extends string = string>
 {
@@ -39,8 +50,7 @@ export interface AdminInlineAssociation
 
 export interface AdminVirtualChannelRow
 {
-    id: number;
-    name: string;
+    virtualChannel: VirtualChannel;
     associatedSourceChannels: AdminInlineAssociation[];
     availableSourceChannels: SourceChannel[];
 }
@@ -63,16 +73,17 @@ export interface AdminVirtualChannelRedirect
     redirectTo: string;
 }
 
-export interface AdminSelectedOnlyVideo extends VideoFields
+export interface AdminSelectedOnlyVideoViewModel
 {
-    review_state: VirtualChannelAssignmentVideoReviewState;
+    video: Video;
+    reviewState: VirtualChannelAssignmentVideoReviewState;
 }
 
 export interface AdminSelectedOnlyCounts
 {
     included: number;
     ignored: number;
-    not_yet_reviewed: number;
+    notYetReviewed: number;
 }
 
 export interface AdminAssociatedSourceChannelView
@@ -80,7 +91,7 @@ export interface AdminAssociatedSourceChannelView
     assignment: VirtualChannelAssignment;
     sourceChannel: SourceChannel | null;
     automaticVideos: Video[];
-    selectedOnlyVideos: AdminSelectedOnlyVideo[];
+    selectedOnlyVideos: AdminSelectedOnlyVideoViewModel[];
     selectedOnlyCounts: AdminSelectedOnlyCounts | null;
     reviewStateFilter: AdminReviewStateFilter;
     regexFilter: string;

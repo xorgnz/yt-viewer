@@ -222,7 +222,7 @@ export class AdminVirtualChannelIndexService
 
             const currentAssignments = await this.assignmentDAO.listForVirtualChannel(input.virtualChannelId);
             const assignment = currentAssignments
-                .find((candidate) => candidate.source_channel_id === input.sourceChannelId);
+                .find((candidate) => candidate.sourceChannelId === input.sourceChannelId);
 
             if (!assignment) {
                 return this.buildInlineError(
@@ -255,7 +255,7 @@ export class AdminVirtualChannelIndexService
     }
 
     private buildVirtualChannelRow(
-        virtualChannel: Pick<VirtualChannel, 'id' | 'name'>,
+        virtualChannel: VirtualChannel,
         allSourceChannels: SourceChannel[],
         assignments: AdminAssignmentRows
     ): AdminVirtualChannelRow
@@ -264,14 +264,13 @@ export class AdminVirtualChannelIndexService
         const sourceChannelsById = new Map(allSourceChannels.map((channel) => [channel.id, channel]));
         const associatedSourceChannels = assignments.map((assignment) => ({
             assignment,
-            sourceChannel: sourceChannelsById.get(assignment.source_channel_id) ?? null
+            sourceChannel: sourceChannelsById.get(assignment.sourceChannelId) ?? null
         }));
-        const associatedSourceChannelIds = new Set(assignments.map((assignment) => assignment.source_channel_id));
+        const associatedSourceChannelIds = new Set(assignments.map((assignment) => assignment.sourceChannelId));
         const availableSourceChannels = allSourceChannels.filter((channel) => !associatedSourceChannelIds.has(channel.id));
 
         return {
-            id: virtualChannel.id,
-            name: virtualChannel.name,
+            virtualChannel,
             associatedSourceChannels,
             availableSourceChannels
         };

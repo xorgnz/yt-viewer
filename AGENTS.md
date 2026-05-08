@@ -8,6 +8,7 @@
 - If the user's intent is ambiguous, ask for confirmation before doing the work.
 - When the user asks for a plan, proposal, review, explanation, or recommendation, stop at that output unless the user separately instructs you to execute it.
 If a request is ambiguous, ask one concise clarifying question before proceeding.
+
 - Work step-by-step and avoid combining unrelated changes in a single pass.
 - Prefer repo-aware tools and minimal, traceable edits over broad rewrites.
 - You may refer to repository files directly with `@` file references when the UI supports them.
@@ -17,6 +18,10 @@ If a request is ambiguous, ask one concise clarifying question before proceeding
 - After recognizing a numbered rule invocation, parse the remaining tokens against that rule's documented arguments before applying generic feature, task, or free-form inference.
 - If a token matches both a reserved rule argument and a possible feature alias, task label, or free-form description, prefer the reserved rule argument unless the user explicitly identifies the other target, for example with `feature <tag>`.
 - Shortcut workflow phrases documented in `ai-rules/` may also be used directly. For example, `Run the 6-7-8 subtask flow for task 3` refers to the workflow defined in `@ai-rules/00-subtask-flow-6-7-8.md`.
+- A project may have `ai-work/00-project-overview.md` as an overview document. If this document exists, consult it at the beginning of the session and whenever the user directs that behavior.
+- A project may have `ai-work/00-architecture.md` as an architecture record. If this document exists, consult it at the beginning of the session and whenever the user directs that behavior.
+- Do not automatically consult `ai-work/00-project-overview.md` later in an already-started session merely because you are consulting guidelines again.
+- Do not automatically consult `ai-work/00-architecture.md` later in an already-started session merely because you are consulting guidelines again.
 
 ## Approval Style
 
@@ -81,6 +86,12 @@ Do only what the user explicitly asks. Do not propose follow-on work, suggest ne
 - Follow the existing `tsconfig.json` and formatter/linter settings in the target repository rather than imposing new defaults.
 - When logic accumulates behavior, state, or rules, prefer explicit object boundaries with named classes or similarly clear structures.
 - Treat free-standing global functions as the exception rather than the default.
+- Do not leave related behavior scattered across floating top-level functions when a clear concept-owning class or module boundary would make the code easier to understand.
+- When behavior is stateless and should remain functional, group related functions into a deliberately named utility module with one defensible purpose rather than a grab-bag of unrelated helpers.
+- Do not replace a forest of small floating functions with a forest of one-function classes. Introduce classes when they represent a real concept, state owner, coordinator, or policy boundary.
+- Prefer one obvious owner for each non-trivial concept. If multiple modules can plausibly claim the same behavior, the boundary is weak.
+- Separate domain models, persistence projections, and UI-facing view models unless they are genuinely the same concept.
+- Prefer explicit construction and clearly named factory/conversion points over broad implicit reshaping of objects across layers.
 - Treat anonymous object literals as short-lived transport values, not as substitutes for named domain objects that carry behavior, invariants, or lifecycle.
 
 ### TypeScript
@@ -89,6 +100,15 @@ Do only what the user explicitly asks. Do not propose follow-on work, suggest ne
 - Avoid introducing broad `any` usage unless the surrounding code already relies on it and tightening types is outside the requested scope.
 - Do not spread related behavior across ad hoc exported helpers unless the code is genuinely tiny, stateless, and local in scope.
 - Keep helper types readable; avoid type-level cleverness unless the existing codebase already uses that style.
+- Avoid anonymous object types wherever practical. Prefer named types for reusable payloads, public contracts, cross-module boundaries, and any non-trivial data shape.
+- Keep inline object types only for very local, obvious, one-use transport values where introducing a named type would not improve clarity.
+- For a real domain concept, prefer a simple field-value type plus an entity class when behavior or invariants need a clear home.
+- Keep entity and field-value names in domain/TypeScript shape. Do not let storage-specific naming conventions leak through the rest of the application.
+- Treat anonymous objects as transport values at boundaries. If logic, invariants, or lifecycle accumulate around a concept, promote it to a named type or class.
+- When a query returns a one-off aggregate or projection rather than a real domain object, keep that result shape local to the persistence or service layer unless it is reused meaningfully elsewhere.
+- Keep names aligned across layers unless there is a real boundary reason to translate them.
+- Prefer test builders, fixtures, or named helpers over repeating large ad hoc object literals across tests.
+- Use explicit suffixes when they clarify role: prefer \*DAO` for persistence boundaries, `*Service` for orchestration, `*Fields` for plain entity field-value shapes, and `*ViewModel` for UI-facing projection types.`
 
 ### JavaScript Style
 
@@ -121,6 +141,17 @@ Do only what the user explicitly asks. Do not propose follow-on work, suggest ne
 - Outside that component boundary, keep framework-required exported functions thin and move substantial behavior behind named classes or other explicit object-oriented structures rather than embedding it directly in `load` functions, actions, or request handlers.
 - For load functions and actions, prefer straightforward data flow and explicit error handling over deeply abstracted helper wrappers.
 - When editing Svelte components, preserve reactivity semantics and keep state flow easy to trace.
+- Keep `load` functions, form actions, and request handlers focused on transport concerns: parse inputs, resolve request-scoped context, call the right service, and map service failures to HTTP or form responses.
+- Return plain serializable data from `load` and action responses. Do not return class instances or other non-POJO values to SvelteKit page data.
+- When route behavior needs cross-query orchestration, persistence coordination, or policy decisions, move that behavior into a named server-side service rather than growing the route file.
+- Prefer one clear server-side orchestration layer per request flow. Routes should not become a second home for business rules that already exist in services.
+- Treat page data as a deliberate contract. Add fields intentionally, name them clearly, and avoid growing load payloads with incidental internal state.
+- Keep query-string parsing, param parsing, and form parsing explicit at the route boundary rather than relying on loosely shaped request access deep in the stack.
+- Prefer server-derived truth for availability, permissions, workflow status, and other rule-bearing state. The client should reflect those decisions rather than recomputing them independently.
+- Distinguish between coordinating components and presentational components. Avoid making one component carry both heavy workflow logic and broad rendering responsibility when a clearer split is available.
+- Keep component APIs narrow and purposeful. A large set of booleans or mode flags is usually a sign that the component is handling too many roles.
+- Prefer semantic callbacks and named payloads over passing raw DOM events through multiple layers when a higher-level intent is what the caller actually needs.
+
 
 ### Validation
 

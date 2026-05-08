@@ -13,7 +13,7 @@ export type ViewerFilters = {
     dateFromInput: string;
     dateToInput: string;
     channelId: number | null;
-    groupId: number | null;
+    virtualChannelId: number | null;
     sort: ViewerSort;
     limit: number;
     offset: number;
@@ -44,17 +44,26 @@ export type ViewerChannel = {
     title: string;
 };
 
-export type ViewerGroup = {
+export type ViewerVirtualChannel = {
     id: number;
     name: string;
+    dailyTimerMax: number | null;
+    timerState: ViewerVirtualChannelTimerState;
+    timerUsageSeconds: number;
+    timerRemainingSeconds: number | null;
+    timerWindowStartMs: number;
+    timerWindowEndMs: number;
 };
+
+export type ViewerVirtualChannelTimerState = 'unlimited' | 'available' | 'capped';
 
 export type ViewerPageData = {
     filters: ViewerFilters;
     videos: ViewerVideo[];
     totalCount: number;
     channels: ViewerChannel[];
-    groups: ViewerGroup[];
+    groups: ViewerVirtualChannel[];
+    activeVirtualChannel: ViewerVirtualChannel | null;
     profileId: number;
     profileKey: string;
     profileName: string;

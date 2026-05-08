@@ -1,4 +1,4 @@
-export type ChannelFields = {
+export type SourceChannelFields = {
     id: number;
     youtube_id: string;
     title: string;
@@ -11,22 +11,35 @@ export type ChannelFields = {
 export class SourceChannel
 {
     readonly id: number; // internal DB id
-    readonly youtube_id: string; // YouTube channel ID
+    readonly youtubeId: string; // YouTube channel ID
     readonly title: string;
     readonly description?: string;
-    readonly thumbnail_url?: string | null;
-    readonly published_at?: number | null; // unix epoch ms
-    readonly last_refreshed_at?: number | null; // unix epoch ms
+    readonly thumbnailUrl?: string | null;
+    readonly publishedAt?: number | null; // unix epoch ms
+    readonly lastRefreshedAt?: number | null; // unix epoch ms
 
-    constructor(data: ChannelFields)
+    constructor(data: SourceChannelFields)
     {
         this.id = data.id;
-        this.youtube_id = data.youtube_id;
+        this.youtubeId = data.youtube_id;
         this.title = data.title;
         this.description = data.description;
-        this.thumbnail_url = data.thumbnail_url;
-        this.published_at = data.published_at;
-        this.last_refreshed_at = data.last_refreshed_at;
+        this.thumbnailUrl = data.thumbnail_url;
+        this.publishedAt = data.published_at;
+        this.lastRefreshedAt = data.last_refreshed_at;
+    }
+
+    toFields(): SourceChannelFields
+    {
+        return {
+            id: this.id,
+            youtube_id: this.youtubeId,
+            title: this.title,
+            description: this.description,
+            thumbnail_url: this.thumbnailUrl,
+            published_at: this.publishedAt,
+            last_refreshed_at: this.lastRefreshedAt,
+        };
     }
 
     static validate(value: any): value is SourceChannel
@@ -36,12 +49,12 @@ export class SourceChannel
             value !== null &&
             typeof value === 'object' &&
             typeof (value as any).id === 'number' &&
-            typeof (value as any).youtube_id === 'string' &&
+            typeof (value as any).youtubeId === 'string' &&
             typeof (value as any).title === 'string' &&
             ((value as any).description === undefined || typeof (value as any).description === 'string') &&
-            ((value as any).thumbnail_url === undefined || (value as any).thumbnail_url === null || typeof (value as any).thumbnail_url === 'string') &&
-            ((value as any).published_at === undefined || (value as any).published_at === null || typeof (value as any).published_at === 'number') &&
-            ((value as any).last_refreshed_at === undefined || (value as any).last_refreshed_at === null || typeof (value as any).last_refreshed_at === 'number')
+            ((value as any).thumbnailUrl === undefined || (value as any).thumbnailUrl === null || typeof (value as any).thumbnailUrl === 'string') &&
+            ((value as any).publishedAt === undefined || (value as any).publishedAt === null || typeof (value as any).publishedAt === 'number') &&
+            ((value as any).lastRefreshedAt === undefined || (value as any).lastRefreshedAt === null || typeof (value as any).lastRefreshedAt === 'number')
         );
     }
 
@@ -49,12 +62,12 @@ export class SourceChannel
     {
         return new SourceChannel({
             id: (patch as any).id ?? this.id,
-            youtube_id: (patch as any).youtube_id ?? this.youtube_id,
+            youtube_id: (patch as any).youtubeId ?? this.youtubeId,
             title: (patch as any).title ?? this.title,
             description: (patch as any).description ?? this.description,
-            thumbnail_url: (patch as any).thumbnail_url ?? this.thumbnail_url,
-            published_at: (patch as any).published_at ?? this.published_at,
-            last_refreshed_at: (patch as any).last_refreshed_at ?? this.last_refreshed_at
+            thumbnail_url: (patch as any).thumbnailUrl ?? this.thumbnailUrl,
+            published_at: (patch as any).publishedAt ?? this.publishedAt,
+            last_refreshed_at: (patch as any).lastRefreshedAt ?? this.lastRefreshedAt
         });
     }
 }

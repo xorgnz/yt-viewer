@@ -1,6 +1,6 @@
 ---
-version: 1.4.0
-timestamp: 2026-04-19 00:00
+version: 1.5.0
+timestamp: 2026-04-30 00:00
 ---
 # Rule: Creating a High-Level Project Scope
 
@@ -21,10 +21,12 @@ timestamp: 2026-04-19 00:00
    - If the user names a different feature and it is `paused`, `completed`, or `archived`, only proceed if they explicitly ask for an exception
    - Only require the feature-change workflow when the user wants a different feature to become the active working feature
    - Do not bring future features into scope planning for other features unless the user explicitly names the future feature as relevant
+   - If `/ai-work/00-architecture.md` exists, read it and treat it as the current architectural vision and constraint record for the project
 
 2. **Ask Discovery Questions**
    - Guide the user through a focused set of questions about vision, boundaries, and constraints
    - Ask 5-7 questions maximum
+   - Include architecture-focused questions when the feature may affect major system boundaries, responsibilities, or integration points
 
 ### Propose
 
@@ -48,6 +50,7 @@ timestamp: 2026-04-19 00:00
 
 6. **Save the Scope Document**
    - Save it to `/ai-work/{feature-tag}-scope.md`
+   - If scope clarification establishes or changes architectural direction, update `/ai-work/00-architecture.md` so the architectural record stays aligned with the approved scope
    - Report that the scope was written and identify the target file
 
 ## Discovery Questions Framework
