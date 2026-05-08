@@ -24,34 +24,34 @@
   - [x] 2.1. Draft `ai-work/09-stable-db-ids-db-change-plan.md` with the exact planned table, column, key, index, and foreign key changes.
   - [x] 2.2. Include the proposed stable ID source for each entity, including YouTube-derived IDs, natural-key-derived IDs, and composite-key tables.
   - [x] 2.3. Include the planned production migration sequence and rollback/backup expectations.
-  - [ ] 2.4. Present the plan to the user and wait for explicit approval before making schema edits, migration scripts, or production database changes.
+  - [x] 2.4. Present the plan to the user and wait for explicit approval before making schema edits, migration scripts, or production database changes.
 
 - [ ] 3 - Update the application schema and setup path after database-change approval.
-  - [ ] 3.1. Update `src/lib/daos/_schema.ts` to define the approved stable-ID columns, keys, indexes, and foreign keys.
+  - [ ] 3.1. Update `src/lib/daos/_schema.ts` to define the approved stable-ID columns, keys, indexes, and foreign keys, including `src_channel_id`, `video_id`, `vchannel_id`, and `profile_id`.
   - [ ] 3.2. Keep setup idempotent for MySQL/MariaDB local and production-compatible environments.
-  - [ ] 3.3. Update setup script tests to match the new schema contract.
+  - [ ] 3.3. Update setup script tests to match the new schema contract and the rule that serial row IDs remain only for event/bookkeeping tables such as `watch_history` and `migration_history`.
 
 - [ ] 4 - Update write-side DAO and import behavior to use stable IDs.
-  - [ ] 4.1. Update source channel, video, profile, virtual channel, assignment, selection, flag, and history writes to persist approved stable identifiers.
-  - [ ] 4.2. Apply approved YouTube-derived, natural-key-derived, and composite-key ID rules consistently.
+  - [ ] 4.1. Update source channel, video, profile, virtual channel, assignment, selection, flag, and history writes to persist the approved stable identifiers.
+  - [ ] 4.2. Apply approved YouTube-derived, profile-key-derived, opaque virtual-channel, and composite-key ID rules consistently, including retry-on-collision behavior for `vchannel_id`.
 
 - [ ] 5 - Update read-side queries and service contracts to use stable IDs.
-  - [ ] 5.1. Update DAO and reader return types where generated row IDs are currently used as relationship identifiers.
-  - [ ] 5.2. Update server services and route actions to pass stable IDs through viewer, history, flag, assignment, and selection workflows.
-  - [ ] 5.3. Preserve current user-facing behavior while changing only the backing identifier contract.
+  - [ ] 5.1. Update DAO and reader return types where database-generated serial row IDs are currently used as entity or relationship identifiers.
+  - [ ] 5.2. Update server services and route actions to pass `src_channel_id`, `video_id`, `vchannel_id`, and `profile_id` through viewer, history, flag, assignment, and selection workflows.
+  - [ ] 5.3. Preserve current user-facing behavior while changing only the backing identifier contract and keeping serial IDs private to event/bookkeeping rows.
 
 - [ ] 6 - Build and verify the local/admin migration path.
   - [ ] 6.1. Create an inspectable migration artifact that can be run from this workspace with admin credentials and is not deployed as app startup code.
-  - [ ] 6.2. Ensure existing production data can be rewritten deterministically from generated IDs to stable IDs while preserving relationships.
+  - [ ] 6.2. Ensure existing production data can be rewritten deterministically from database-generated serial IDs to stable domain-derived or app-generated IDs while preserving relationships.
   - [ ] 6.3. Verify the migration against local/dev data or a representative export before production use.
 
 - [ ] 7 - Update tests for stable-ID behavior.
-  - [ ] 7.1. Update DAO and reader tests to assert stable identifiers and composite keys in SQL and returned records.
-  - [ ] 7.2. Update importer tests to prove YouTube-backed records keep stable IDs derived from YouTube IDs.
-  - [ ] 7.3. Add migration-focused coverage proving relationships are preserved through the approved rewrite.
-  - [ ] 7.4. Update service/route tests for flags, history, assignments, and selected video review state.
+  - [ ] 7.1. Update DAO and reader tests to assert stable identifiers, entity-prefixed ID names, and composite keys in SQL and returned records.
+  - [ ] 7.2. Update importer tests to prove YouTube-backed records keep stable IDs derived from YouTube IDs and profiles keep IDs derived from existing profile keys.
+  - [ ] 7.3. Add migration-focused coverage proving relationships are preserved through the approved rewrite from serial IDs to stable IDs.
+  - [ ] 7.4. Update service/route tests for flags, history, assignments, and selected video review state while keeping serial IDs private to event/bookkeeping rows.
 
 - [ ] 8 - Run validation and production readiness checks.
   - [ ] 8.1. Run `npm run check`, `npm run typecheck`, and `npm run test`.
-  - [ ] 8.2. Confirm no code path depends on generated serial row IDs as relationship identifiers.
+  - [ ] 8.2. Confirm no code path depends on database-generated serial row IDs as entity identities or relationship identifiers, except for approved private event/bookkeeping rows.
   - [ ] 8.3. Prepare the production migration execution notes and post-migration smoke-check list, including runtime credential expectations.
