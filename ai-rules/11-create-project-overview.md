@@ -26,7 +26,6 @@ Also create or refresh `/ai-work/00-architecture.md` as the shared place where a
 2. Read all planning documents in `/ai-work/` that are relevant to understanding the project
    - Use the full planning set to understand the project as a whole rather than carrying individual planning documents forward into the overview
    - Summarize the system as it currently stands by integrating relevant material from active, planned, completed, closed, and archived feature documents into a single synthesized description
-   - After summarizing the current system, identify current work and future work separately where that helps explain the project's present direction
    - Do not reproduce, embed, or enumerate full feature planning documents inside the overview
 3. Review the repository structure and the implementation surface enough to describe:
    - the project's overall objective
@@ -59,7 +58,7 @@ Also create or refresh `/ai-work/00-architecture.md` as the shared place where a
 The overview must include:
 
 1. A brief statement of what the project seeks to achieve
-2. A summary of the key features or functional areas
+2. A summary of the current system and key functional areas
 3. A brief architecture overview that refers to the relevant tech stack where needed
 4. A high-level directory guide describing the layout of major folders and the location of key files
 
@@ -137,20 +136,6 @@ Example pattern:
 - `path/to/file` - Why it matters
 - `path/to/file` - Why it matters
 - `path/to/file` - Why it matters
-
-## Current Work
-
-List the active or near-term work that is relevant to understanding the project's current direction.
-
-- Work item
-- Work item
-
-## Future Work
-
-List planned or future work that helps explain where the project is heading.
-
-- Work item
-- Work item
 ```
 
 ## Writing Guidance
@@ -163,6 +148,7 @@ List planned or future work that helps explain where the project is heading.
 - Do not force a rigid architecture-document template yet; prefer a practical structure that can evolve as the project matures
 - Describe the project's observed layout as it exists; do not treat the template examples as a prescribed directory structure
 - When a source root such as `src/` contains meaningful internal structure, unpack the important subfolders so the overview helps agents navigate the implementation
-- You may refer to active, planned, or future work directly when that helps explain the current project trajectory
+- Treat the overview as a stable project summary rather than a feature tracker
+- Keep active, planned, paused, and future feature state in `/ai-work/00-feature-status.md` rather than duplicating it in the overview
 - Do not refer directly to closed, completed, or archived feature documents in the overview; instead, fold any still-relevant understanding into the synthesized project description
 - Do not turn the directory guide into a full file listing; keep it high level and practical
