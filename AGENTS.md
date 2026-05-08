@@ -102,13 +102,13 @@ Do only what the user explicitly asks. Do not propose follow-on work, suggest ne
 - Keep helper types readable; avoid type-level cleverness unless the existing codebase already uses that style.
 - Avoid anonymous object types wherever practical. Prefer named types for reusable payloads, public contracts, cross-module boundaries, and any non-trivial data shape.
 - Keep inline object types only for very local, obvious, one-use transport values where introducing a named type would not improve clarity.
-- Use explicit suffixes when they clarify role: prefer `*DAO` for persistence boundaries, `*Service` for orchestration, `*Fields` for plain entity field-value shapes, `*ViewModel` for UI-facing projection types, and `*Panel.svelte` for panel-style presentational components. When a panel has a dedicated UI projection type, name the companion file to include the same concept plus the `ViewModel` suffix.
 - For a real domain concept, prefer a simple field-value type plus an entity class when behavior or invariants need a clear home.
 - Keep entity and field-value names in domain/TypeScript shape. Do not let storage-specific naming conventions leak through the rest of the application.
 - Treat anonymous objects as transport values at boundaries. If logic, invariants, or lifecycle accumulate around a concept, promote it to a named type or class.
 - When a query returns a one-off aggregate or projection rather than a real domain object, keep that result shape local to the persistence or service layer unless it is reused meaningfully elsewhere.
 - Keep names aligned across layers unless there is a real boundary reason to translate them.
 - Prefer test builders, fixtures, or named helpers over repeating large ad hoc object literals across tests.
+- Use explicit suffixes when they clarify role: prefer \*DAO` for persistence boundaries, `*Service` for orchestration, `*Fields` for plain entity field-value shapes, and `*ViewModel` for UI-facing projection types.`
 
 ### JavaScript Style
 
@@ -190,4 +190,3 @@ Do only what the user explicitly asks. Do not propose follow-on work, suggest ne
 ### Validation
 
 - When practical, run the repository's existing style or check command after CSS edits.
-

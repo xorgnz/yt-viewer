@@ -1,5 +1,5 @@
 ---
-version: 1.10.0
+version: 1.12.0
 timestamp: 2026-05-02 00:00
 ---
 # Rule: Switch, Activate, Pause, Close, or Archive a Feature
@@ -24,6 +24,26 @@ Allowed status values:
 
 Also follow the shared feature-state contract in `/ai-work/00-feature-status.md`.
 
+When maintaining the feature list in `/ai-work/00-feature-status.md`, use colored spot emojis to make feature states easy to scan.
+
+Suggested markers:
+
+- `planned` -> `🟡`
+- `future` -> `🟣`
+- `active` -> `🟠`
+- `paused` -> `🔴`
+- `completed` -> `🟢`
+- `archived` -> `🔵`
+
+Approximate colors are acceptable. Keep the meaning consistent within the file.
+
+Keep the feature list in `/ai-work/00-feature-status.md` sorted in this order:
+
+1. Normal numeric feature tags first, sorted by feature tag
+2. Future feature tags last, sorted by feature tag
+
+Do not reorder entries by status. The stable ordering should come from the tag groups above.
+
 ## Scope of This Rule
 
 This rule does **not** independently create new features.
@@ -34,8 +54,8 @@ This rule does **not** independently create new features.
 - Future features use `fNN-` tags and represent work that may be pursued eventually but is not ready for normal planning or execution
 - Do not offer standalone `pause` as a primary workflow action; use `switch` to leave a feature paused, or `close` to end active work without selecting a replacement
 - If the user says `create and activate`, treat that as a convenience flow:
-    1. invoke rule 1 to create the feature tag and feature entry
-    2. then continue with activation under this rule
+  1. invoke rule 1 to create the feature tag and feature entry
+  2. then continue with activation under this rule
 
 ## Core Rules
 
@@ -108,9 +128,9 @@ Use this when the user explicitly asks to archive a feature.
 2. Confirm which feature is being archived
 3. Confirm the feature exists and is not already `archived`
 4. Identify existing feature-scoped planning documents matching `/ai-work/{feature-tag}-*.md`
-    - This includes expected files such as `/ai-work/{feature-tag}-scope.md`, `/ai-work/{feature-tag}-prd.md`, and `/ai-work/{feature-tag}-tasks.md`
-    - Also include additional feature-scoped planning notes or supporting documents that use the same `{feature-tag}-*.md` naming pattern
-    - Do not include global files such as `/ai-work/00-feature-status.md` or `/ai-work/00-master-techstack.md`
+   - This includes expected files such as `/ai-work/{feature-tag}-scope.md`, `/ai-work/{feature-tag}-prd.md`, and `/ai-work/{feature-tag}-tasks.md`
+   - Also include additional feature-scoped planning notes or supporting documents that use the same `{feature-tag}-*.md` naming pattern
+   - Do not include global files such as `/ai-work/00-feature-status.md` or `/ai-work/00-master-techstack.md`
 5. Ensure `/ai-work/archive/` exists
 6. If an archive destination already exists for any file, stop before changing status or moving files and ask the user how to resolve the conflict
 7. Mark the feature as `archived`
@@ -130,7 +150,8 @@ Use this when the user explicitly asks to archive a feature.
 ### Execute and Report
 
 1. Apply the selected feature-state changes in the required order
-2. Report the previous active feature, the new active feature if any, whether any feature was paused, promoted, completed, or archived, and which files were moved or renamed
+2. Re-sort `/ai-work/00-feature-status.md` after the change so numeric feature tags remain first and future feature tags remain last
+3. Report the previous active feature, the new active feature if any, whether any feature was paused, promoted, completed, or archived, and which files were moved or renamed
 
 ## Output Expectations
 
