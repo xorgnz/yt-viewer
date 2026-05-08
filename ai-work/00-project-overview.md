@@ -91,7 +91,7 @@ Current schema version in code is `9` in `src/lib/daos/_schema.ts`.
 
 ### Key Files
 
-- `ai-work/00-feature-status.md` - source of truth for active/planned/future feature state
+- `ai-work/00-feature-status.md` - source of truth for feature state and branch alignment
 - `ai-work/00-master-techstack.md` - shared application-wide tech stack decisions
 - `src/lib/daos/_schema.ts` - latest-schema DDL and index definitions
 - `src/lib/daos/migrations/registry.ts` - registered forward migrations
@@ -117,7 +117,7 @@ Current schema version in code is `9` in `src/lib/daos/_schema.ts`.
 ## Future Work
 
 - Resume and complete `09-stable-db-ids` to remove dependence on generated serial row IDs across relationships.
-- `xx-rec-modes` - recommendation-mode controls for content selection/prioritization.
-- `xx-shorts-mgmt` - Shorts detection, overrides, and Shorts-aware filtering.
-- `xx-channel-mgmt` - broader channel management and review tooling.
-- `xx-video-channels` - virtual channels built from arbitrary video lists instead of whole source channels.
+- `f01-rec-modes` - recommendation-mode controls for content selection/prioritization.
+- `f02-shorts-mgmt` - Shorts detection, overrides, and Shorts-aware filtering.
+- `f03-channel-mgmt` - broader channel management and review tooling.
+- `f04-video-channels` - virtual channels built from arbitrary video lists instead of whole source channels.
