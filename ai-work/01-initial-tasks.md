@@ -47,8 +47,8 @@
 
 ## Tasks
 
-- [x] 0.0 Create feature branch
-  - [x] 0.1 Create and checkout a new branch for this feature (for example, `git checkout -b feature/01-initial`)
+- [x] 0.0 Create feature workspace
+  - [x] 0.1 Set up the initial working context for this feature
   - [x] 0.2 Create the Node project and install required modules
   - [x] 0.3 Set up the initial Svelte and TypeScript project files
 - [x] 1.0 Define data model and local persistence for channels, videos, flags, profiles, and history

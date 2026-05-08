@@ -12,7 +12,6 @@ The app has two main surfaces:
 ## Current Project State
 
 - Active feature: `09-stable-db-ids`
-- Active branch target: `feature/09-stable-db-ids`
 - Planning status: feature 09 audit is complete; schema and application changes are still pending.
 - Completed feature history:
   - `01-initial`: initial viewer, admin CRUD, import flow, history, profile support

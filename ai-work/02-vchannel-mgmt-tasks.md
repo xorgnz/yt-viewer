@@ -29,7 +29,7 @@
 - Consult `/ai-work/00-master-techstack.md` for the approved shared stack and tooling choices.
 - Use Windows-compatible, non-interactive commands in this repository, consistent with `AGENTS.md`.
 - Avoid long-running commands such as development servers unless explicitly requested.
-- This task list is being prepared for planned feature `02-vchannel-mgmt` as a documentation exception before branch activation.
+- This task list is being prepared for planned feature `02-vchannel-mgmt` as a documentation exception before feature activation.
 
 ## Instructions for Completing Tasks
 
