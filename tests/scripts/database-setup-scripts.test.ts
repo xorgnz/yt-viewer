@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { CREATE_TABLE_META } from '../../src/lib/daos/_schema';
+import { CREATE_TABLE_META, SCHEMA_VERSION } from '../../src/lib/daos/_schema';
 import type { MigrationDefinition } from '../../src/lib/daos/migrations/migrationTypes';
 import { runCreateDatabaseWorkflow } from '../../scripts/create_database';
 import { runMigrationWorkflow } from '../../scripts/migrate_database';
@@ -24,8 +24,19 @@ describe('database setup scripts', () => {
             pool: client,
         });
 
+        const sqlCalls = client.calls.map((call) => call.text);
+
         expect(client.calls[0].text).toBe('START TRANSACTION');
         expect(client.calls.some((call) => CREATE_TABLE_META.includes(call.text))).toBe(true);
+        expect(sqlCalls).not.toContain('DROP TABLE IF EXISTS watch_history');
+        expect(sqlCalls.some((sql) => sql.includes('CREATE TABLE IF NOT EXISTS source_channels'))).toBe(true);
+        expect(sqlCalls.some((sql) => sql.includes('src_channel_id VARCHAR(255) NOT NULL'))).toBe(true);
+        expect(sqlCalls.some((sql) => sql.includes('PRIMARY KEY (src_channel_id)'))).toBe(true);
+        expect(sqlCalls.some((sql) => sql.includes('CREATE TABLE IF NOT EXISTS videos'))).toBe(true);
+        expect(sqlCalls.some((sql) => sql.includes('video_id VARCHAR(255) NOT NULL'))).toBe(true);
+        expect(sqlCalls.some((sql) => sql.includes('FOREIGN KEY (src_channel_id) REFERENCES source_channels(src_channel_id) ON DELETE CASCADE ON UPDATE CASCADE'))).toBe(true);
+        expect(sqlCalls.some((sql) => sql.includes('INSERT INTO _meta(`key`, value) VALUES(\'schema_version\', ?)'))).toBe(true);
+        expect(client.calls.at(-2)?.values).toEqual([String(SCHEMA_VERSION)]);
         expect(client.calls.at(-1)?.text).toBe('COMMIT');
     });
 

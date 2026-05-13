@@ -26,10 +26,10 @@
   - [x] 2.3. Include the planned production migration sequence and rollback/backup expectations.
   - [x] 2.4. Present the plan to the user and wait for explicit approval before making schema edits, migration scripts, or production database changes.
 
-- [ ] 3 - Update the application schema and setup path after database-change approval.
-  - [ ] 3.1. Update `src/lib/daos/_schema.ts` to define the approved stable-ID columns, keys, indexes, and foreign keys, including `src_channel_id`, `video_id`, `vchannel_id`, and `profile_id`.
-  - [ ] 3.2. Keep setup idempotent for MySQL/MariaDB local and production-compatible environments.
-  - [ ] 3.3. Update setup script tests to match the new schema contract and the rule that serial row IDs remain only for event/bookkeeping tables such as `watch_history` and `migration_history`.
+- [x] 3 - Update the application schema and setup path after database-change approval.
+  - [x] 3.1. Update `src/lib/daos/_schema.ts` to define the approved stable-ID columns, keys, indexes, and foreign keys, including `src_channel_id`, `video_id`, `vchannel_id`, and `profile_id`.
+  - [x] 3.2. Keep setup idempotent for MySQL/MariaDB local and production-compatible environments.
+  - [x] 3.3. Update setup script tests to match the new schema contract and the rule that serial row IDs remain only for event/bookkeeping tables such as `watch_history` and `migration_history`.
 
 - [ ] 4 - Update write-side DAO and import behavior to use stable IDs.
   - [ ] 4.1. Update source channel, video, profile, virtual channel, assignment, selection, flag, and history writes to persist the approved stable identifiers.
