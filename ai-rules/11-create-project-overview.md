@@ -15,8 +15,8 @@ Also create or refresh `/ai-work/00-architecture.md` as the shared place where a
 - **Format:** Markdown
 - **Location:** `/ai-work/`
 - **Filenames:**
-  - `00-project-overview.md`
-  - `00-architecture.md`
+   - `00-project-overview.md`
+   - `00-architecture.md`
 
 ## Process
 
