@@ -1,6 +1,6 @@
 ---
-version: 1.11.0
-timestamp: 2026-04-19 00:00
+version: 1.13.0
+timestamp: 2026-05-13 00:00
 ---
 # Rule: Prepare a Commit for Approval
 
@@ -13,8 +13,9 @@ The AI must not commit automatically when using this rule unless the user explic
 - Step 2 selects the commit prefix, determines the commit mode, and validates the candidate context into a selected context.
 - Step 3 prepares the tag from the selected context, selected prefix, and commit mode.
 - Step 4 builds the full commit message from the prefix, tag, and scoped diff.
-- Step 5 confirms the exact message and file scope with the user.
-- Step 6 creates the commit and reports the result.
+- Step 5 decides whether the commit should produce a stakeholder changelog entry and prepares the note when it should.
+- Step 6 confirms the exact message, file scope, and changelog outcome with the user.
+- Step 7 records any pending changelog entry, creates the commit, and reports the result.
 
 ## Step 0 - Parse invocation
 
@@ -219,21 +220,78 @@ Construct the full message from the selected prefix, the Step 3 tag, and a descr
 - If multiple related changes have accumulated since the last commit, make the description reflect the combined result at the chosen scope.
 - Keep the description concise and specific.
 
-## Step 5 - Confirm with user
+## Step 5 - Stakeholder changelog handling
+
+Decide whether the commit should create one pending stakeholder changelog entry in `/changes/changelog.json`.
+
+### Changelog file and schema
+
+- Use the repository-root path `/changes/changelog.json`.
+- Treat the file as a JSON array of objects.
+- Each object must contain exactly:
+  - `message`
+  - `commit`
+- If `/changes/` does not exist, create it.
+- If `/changes/changelog.json` does not exist, create it with an empty array `[]`.
+- If the file is not valid JSON or is not an array, stop and ask the user how to proceed instead of guessing a repair.
+
+### Inclusion rules
+
+- Include a changelog entry only when the scoped diff represents work that project stakeholders are likely to care about at deploy time.
+- Exclude clearly administrative or agent-facing work such as:
+  - rule or guideline maintenance
+  - planning or board/status updates
+  - AI workflow or prompt-file updates
+  - repository-only housekeeping with no meaningful product or operational effect for stakeholders
+- Do not create a stakeholder changelog entry for clearly excluded work unless the user explicitly asks for one anyway.
+
+### Changelog message rules
+
+- When the commit is included, write the message for non-technical project stakeholders first, while keeping concrete product or operational detail where practical.
+- Describe what changed, where it matters, and any important user-visible or operational effect without falling back to vague engineering shorthand.
+- Do not simply copy the commit description. Expand it into stakeholder-readable language when the commit message is too terse to stand alone.
+- Keep the message to one concise sentence unless two short sentences are clearly needed.
+- When the selected context is task-scoped, include both the feature tag and the task id in the message.
+- When the selected context is tracked-feature-scoped, include the feature tag and do not invent a task id.
+- When the selected context is repo-scoped, identify it as a repository-wide or shared change rather than pretending it belongs to a specific feature or task.
+
+### Changelog commit id rule
+
+- For entries created by this rule, set `commit` to the empty string `""`.
+- Do not invent, approximate, or placeholder-fill a Git commit id in this rule.
+- A later reconciliation or deploy-time review pass is responsible for matching pending entries to real commit ids after the fact.
+
+## Step 6 - Confirm with user
 
 1. Present the proposed message and file list.
-2. Ask `Approve this? Y/N.` unless the user already provided preapproval in the same command.
-3. The approval question must clearly bind to that exact message and that exact scoped file set.
-4. If the user's rule invocation already includes `approve` or `approved`, treat that as approval for the proposed task-scoped, tracked-feature-scoped, or repo-scoped commit.
+2. If the commit qualifies for stakeholder changelog tracking, present the proposed changelog note text and state that it will be appended to `/changes/changelog.json` with an empty `commit` field.
+3. If the commit is excluded from stakeholder changelog tracking, say so briefly and state why.
+4. Ask `Approve this? Y/N.` unless the user already provided preapproval in the same command.
+5. The approval question must clearly bind to that exact message, that exact scoped file set, and the stated changelog outcome.
+6. If the user's rule invocation already includes `approve` or `approved`, treat that as approval for the proposed task-scoped, tracked-feature-scoped, or repo-scoped commit and its stated changelog outcome, unless scope is still ambiguous.
 
-## Step 6 - Create commit and report
+## Step 7 - Record changelog, create commit, and report
 
 1. Still inspect the selected context and changed files first.
-2. If the diff is clearly scoped to the selected task, tracked feature, or repo-scoped support change, create the commit after preparing the message and file scope without asking a second approval question.
+2. If the diff is clearly scoped to the selected task, tracked feature, or repo-scoped support change, continue with the approved message, file scope, and changelog outcome without asking a second approval question.
 3. If the diff is ambiguous, spans multiple tasks, or includes unrelated work, stop and ask for clarification instead of using preapproval blindly.
-4. After committing, report the commit message and resulting repository state.
+4. If the commit qualified for stakeholder changelog tracking, append one object to `/changes/changelog.json` using this shape:
 
-Step 6 command sequencing rules:
+```json
+{
+  "message": "<approved changelog note>",
+  "commit": ""
+}
+```
+
+5. Preserve existing queued entries already present in the file; append the new object at the end of the array.
+6. If the commit was excluded from stakeholder changelog tracking, do not modify `/changes/changelog.json`.
+7. When a changelog entry is written here, treat `/changes/changelog.json` as part of the approved commit scope so that the pending entry is included in the commit.
+8. Create the commit after any required changelog update is written.
+9. After commit creation, report the commit message, final commit id, changelog file path, and resulting repository state.
+10. If no changelog entry was written, report that clearly alongside the commit result.
+
+Step 7 command sequencing rules:
 
 - Do not rely on shell chaining semantics to serialize Git commit workflow steps across platforms
 - Do not issue `git add`, `git commit`, or `git status` simultaneously through parallel tool calls
