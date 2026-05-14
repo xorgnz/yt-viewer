@@ -5,12 +5,12 @@ export type BulkFlagKind = 'ignored' | 'watched' | 'favorite';
 
 export class FlagsDAO extends DAO
 {
-    private async ensureRows(videoIds: number[], profileId: number): Promise<void>
+    private async ensureRows(videoIds: Array<string | number>, profileId: string | number): Promise<void>
     {
         for (const videoId of videoIds) {
             await this.run(`
                 INSERT IGNORE INTO video_flags(video_id, profile_id) VALUES(?,?)
-            `, [videoId, profileId]);
+            `, [String(videoId), String(profileId)]);
         }
     }
 
@@ -35,14 +35,14 @@ export class FlagsDAO extends DAO
     }
 
     async set(
-        video_id: number,
-        profile_id: number,
+        video_id: string | number,
+        profile_id: string | number,
         patch: Partial<Pick<VideoFlags, 'ignored' | 'watched' | 'favorite'>>
     ): Promise<void>
     {
         await this.run(`
             INSERT IGNORE INTO video_flags(video_id, profile_id) VALUES(?,?)
-        `, [video_id, profile_id]);
+        `, [String(video_id), String(profile_id)]);
 
         const sets: string[] = [];
         const params: unknown[] = [];
@@ -52,7 +52,7 @@ export class FlagsDAO extends DAO
         if (patch.favorite !== undefined) { sets.push('favorite = ?'); params.push(patch.favorite); }
         if (sets.length === 0) { return; }
 
-        params.push(video_id, profile_id);
+        params.push(String(video_id), String(profile_id));
 
         await this.run(
             `UPDATE video_flags SET ${sets.join(', ')}, updated_at = (UNIX_TIMESTAMP(CURRENT_TIMESTAMP(3)) * 1000) WHERE video_id = ? AND profile_id = ?`,
@@ -60,12 +60,12 @@ export class FlagsDAO extends DAO
         );
     }
 
-    async get(video_id: number, profile_id: number): Promise<VideoFlags | undefined>
+    async get(video_id: string | number, profile_id: string | number): Promise<VideoFlags | undefined>
     {
-        return this.getOne<VideoFlags>(`SELECT * FROM video_flags WHERE video_id = ? AND profile_id = ?`, [video_id, profile_id]);
+        return this.getOne<VideoFlags>(`SELECT * FROM video_flags WHERE video_id = ? AND profile_id = ?`, [String(video_id), String(profile_id)]);
     }
 
-    async listByVideoIds(videoIds: number[], profileId: number): Promise<VideoFlags[]>
+    async listByVideoIds(videoIds: Array<string | number>, profileId: string | number): Promise<VideoFlags[]>
     {
         if (videoIds.length === 0) {
             return [];
@@ -77,28 +77,30 @@ export class FlagsDAO extends DAO
             FROM video_flags
             WHERE profile_id = ?
               AND video_id IN (${placeholders})
-        `, [profileId, ...videoIds]);
+        `, [String(profileId), ...videoIds.map((videoId) => String(videoId))]);
     }
 
-    async getValueMap(videoIds: number[], profileId: number, kind: BulkFlagKind): Promise<Map<number, 0 | 1>>
+    async getValueMap(videoIds: Array<string | number>, profileId: string | number, kind: BulkFlagKind): Promise<Map<string, 0 | 1>>
     {
         const rows = await this.listByVideoIds(videoIds, profileId);
-        const valueMap = new Map<number, 0 | 1>();
+        const valueMap = new Map<string, 0 | 1>();
 
         for (const row of rows) {
-            valueMap.set(row.video_id, this.getValue(row, kind));
+            valueMap.set(String(row.video_id), this.getValue(row, kind));
         }
 
         for (const videoId of videoIds) {
-            if (!valueMap.has(videoId)) {
-                valueMap.set(videoId, 0);
+            const normalizedVideoId = String(videoId);
+
+            if (!valueMap.has(normalizedVideoId)) {
+                valueMap.set(normalizedVideoId, 0);
             }
         }
 
         return valueMap;
     }
 
-    async setManyValue(videoIds: number[], profileId: number, kind: BulkFlagKind, value: 0 | 1): Promise<void>
+    async setManyValue(videoIds: Array<string | number>, profileId: string | number, kind: BulkFlagKind, value: 0 | 1): Promise<void>
     {
         if (videoIds.length === 0) {
             return;
@@ -114,12 +116,12 @@ export class FlagsDAO extends DAO
                 updated_at = (UNIX_TIMESTAMP(CURRENT_TIMESTAMP(3)) * 1000)
             WHERE profile_id = ?
               AND video_id IN (${placeholders})
-        `, [value, profileId, ...videoIds]);
+        `, [value, String(profileId), ...videoIds.map((videoId) => String(videoId))]);
     }
 
     async setManyValues(
-        entries: Array<{ videoId: number; value: 0 | 1 }>,
-        profileId: number,
+        entries: Array<{ videoId: string | number; value: 0 | 1 }>,
+        profileId: string | number,
         kind: BulkFlagKind
     ): Promise<void>
     {
@@ -127,9 +129,9 @@ export class FlagsDAO extends DAO
             return;
         }
 
-        const uniqueEntries = new Map<number, 0 | 1>();
+        const uniqueEntries = new Map<string, 0 | 1>();
         for (const entry of entries) {
-            uniqueEntries.set(entry.videoId, entry.value);
+            uniqueEntries.set(String(entry.videoId), entry.value);
         }
 
         const column = this.getColumn(kind);
@@ -143,22 +145,22 @@ export class FlagsDAO extends DAO
                     updated_at = (UNIX_TIMESTAMP(CURRENT_TIMESTAMP(3)) * 1000)
                 WHERE video_id = ?
                   AND profile_id = ?
-            `, [value, videoId, profileId]);
+            `, [value, videoId, String(profileId)]);
         }
     }
 
     async setMany(
-        entries: Array<{ videoId: number; watched: 0 | 1; favorite: 0 | 1; ignored: 0 | 1 }>,
-        profileId: number
+        entries: Array<{ videoId: string | number; watched: 0 | 1; favorite: 0 | 1; ignored: 0 | 1 }>,
+        profileId: string | number
     ): Promise<void>
     {
         if (entries.length === 0) {
             return;
         }
 
-        const uniqueEntries = new Map<number, { watched: 0 | 1; favorite: 0 | 1; ignored: 0 | 1 }>();
+        const uniqueEntries = new Map<string, { watched: 0 | 1; favorite: 0 | 1; ignored: 0 | 1 }>();
         for (const entry of entries) {
-            uniqueEntries.set(entry.videoId, {
+            uniqueEntries.set(String(entry.videoId), {
                 watched: entry.watched,
                 favorite: entry.favorite,
                 ignored: entry.ignored
@@ -177,7 +179,7 @@ export class FlagsDAO extends DAO
                     updated_at = (UNIX_TIMESTAMP(CURRENT_TIMESTAMP(3)) * 1000)
                 WHERE video_id = ?
                   AND profile_id = ?
-            `, [value.watched, value.favorite, value.ignored, videoId, profileId]);
+            `, [value.watched, value.favorite, value.ignored, videoId, String(profileId)]);
         }
     }
 }

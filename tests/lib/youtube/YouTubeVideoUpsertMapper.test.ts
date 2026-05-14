@@ -27,10 +27,11 @@ describe('youtube mapper (task 3.3)', () => {
                 duration: 'PT59S'
             }
         };
-        const video = YouTubeVideoUpsertMapper.toVideo(item, 42, videoMetadata);
+        const video = YouTubeVideoUpsertMapper.toVideo(item, 'channel-42', videoMetadata);
         expect(video).toMatchObject({
+            id: 'vid123',
             youtube_id: 'vid123',
-            channel_id: 42,
+            channel_id: 'channel-42',
             title: 'Video A (canonical)',
             description: 'Canonical desc',
             thumbnail_url: 'http://v.hi',
@@ -49,7 +50,7 @@ describe('youtube mapper (task 3.3)', () => {
             contentDetails: {
                 videoId: 'long-video'
             }
-        } as any, 5, {
+        } as any, 'channel-5', {
             id: 'long-video',
             contentDetails: {
                 duration: 'PT2H3M4S'
@@ -64,7 +65,7 @@ describe('youtube mapper (task 3.3)', () => {
             contentDetails: {
                 videoId: 'unknown-video'
             }
-        } as any, 5, {
+        } as any, 'channel-5', {
             id: 'unknown-video',
             contentDetails: {
                 duration: 'bad'
@@ -92,10 +93,11 @@ describe('youtube mapper (task 3.3)', () => {
             }
         };
 
-        const video = YouTubeVideoUpsertMapper.toVideo(item, 7);
+        const video = YouTubeVideoUpsertMapper.toVideo(item, 'channel-7');
         expect(video).toMatchObject({
+            id: 'vid-missing-metadata',
             youtube_id: 'vid-missing-metadata',
-            channel_id: 7,
+            channel_id: 'channel-7',
             title: 'Playlist fallback title',
             description: 'Playlist fallback description',
             thumbnail_url: 'http://v.med',

@@ -42,7 +42,7 @@ export class ViewerVirtualChannelService
         return await Promise.all(groups.map((group) => this.buildGroupView(group, window)));
     }
 
-    async getVirtualChannelById(virtualChannelId: number): Promise<ViewerVirtualChannel | null>
+    async getVirtualChannelById(virtualChannelId: string | number): Promise<ViewerVirtualChannel | null>
     {
         const group = await this.virtualChannelDAO.get(virtualChannelId);
         if (!group) {
@@ -56,7 +56,7 @@ export class ViewerVirtualChannelService
         return await this.buildGroupView(group, window);
     }
 
-    async resetVirtualChannelTimer(virtualChannelId: number): Promise<boolean>
+    async resetVirtualChannelTimer(virtualChannelId: string | number): Promise<boolean>
     {
         const group = await this.virtualChannelDAO.get(virtualChannelId);
         if (!group) {
@@ -173,7 +173,7 @@ export class ViewerVirtualChannelService
 
     private async buildGroupView(
         group: {
-            id: number;
+            id: string | number;
             name: string;
             dailyTimerMax: number | null;
         },

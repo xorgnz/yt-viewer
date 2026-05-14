@@ -1,6 +1,6 @@
 export type VideoFlagsFields = {
-    video_id: number;
-    profile_id: number;
+    video_id: string | number;
+    profile_id: string | number;
     ignored: 0 | 1;
     watched: 0 | 1;
     favorite: 0 | 1;
@@ -9,8 +9,8 @@ export type VideoFlagsFields = {
 
 export class VideoFlags
 {
-    readonly video_id: number; // internal video id
-    readonly profile_id: number; // internal profile id
+    readonly video_id: string | number; // stable video id
+    readonly profile_id: string | number; // stable profile id
     readonly ignored: 0 | 1;
     readonly watched: 0 | 1;
     readonly favorite: 0 | 1;
@@ -32,8 +32,8 @@ export class VideoFlags
         return (
             value &&
             typeof value === 'object' &&
-            typeof (value as any).video_id === 'number' &&
-            typeof (value as any).profile_id === 'number' &&
+            (typeof (value as any).video_id === 'string' || typeof (value as any).video_id === 'number') &&
+            (typeof (value as any).profile_id === 'string' || typeof (value as any).profile_id === 'number') &&
             (((value as any).ignored === 0) || ((value as any).ignored === 1)) &&
             (((value as any).watched === 0) || ((value as any).watched === 1)) &&
             (((value as any).favorite === 0) || ((value as any).favorite === 1)) &&

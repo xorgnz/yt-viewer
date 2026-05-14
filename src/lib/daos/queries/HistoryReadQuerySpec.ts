@@ -1,14 +1,14 @@
 export interface HistoryReadFilters
 {
-    profileId?: number | null;
-    channelId?: number | null;
+    profileId?: string | number | null;
+    channelId?: string | number | null;
     dateFrom?: number | null;
     dateTo?: number | null;
     limit?: number;
     offset?: number;
 }
 
-export type HistoryReadQueryParams = Record<string, number>;
+export type HistoryReadQueryParams = Record<string, string | number>;
 
 export interface HistoryReadQueryParts
 {

@@ -80,7 +80,7 @@ export class AdminSourceChannelPageService
             const metadataPublishedAt = snippet.publishedAt ? Date.parse(snippet.publishedAt) : null;
 
             await this.sourceChannelDAO.create(new SourceChannel({
-                id: 0,
+                id: resolved.channelId,
                 youtube_id: resolved.channelId,
                 title: input.title || snippet.title || '',
                 description: input.description || snippet.description || '',

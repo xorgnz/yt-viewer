@@ -12,17 +12,17 @@ export type ViewerFilters = {
     dateTo: number | null;
     dateFromInput: string;
     dateToInput: string;
-    channelId: number | null;
-    virtualChannelId: number | null;
+    channelId: string | number | null;
+    virtualChannelId: string | number | null;
     sort: ViewerSort;
     limit: number;
     offset: number;
 };
 
 export type ViewerVideo = {
-    id: number;
+    id: string | number;
     youtube_id: string;
-    channel_id: number;
+    channel_id: string | number;
     title: string;
     description: string;
     published_at: number | null;
@@ -35,17 +35,17 @@ export type ViewerVideo = {
     ignored: number;
 };
 
-export type ViewerCardClickHandler = (event: MouseEvent | KeyboardEvent, videoId: number) => void;
-export type ViewerCardMouseDownHandler = (event: MouseEvent, videoId: number) => void;
+export type ViewerCardClickHandler = (event: MouseEvent | KeyboardEvent, videoId: string | number) => void;
+export type ViewerCardMouseDownHandler = (event: MouseEvent, videoId: string | number) => void;
 
 export type ViewerChannel = {
-    id: number;
+    id: string | number;
     youtube_id: string;
     title: string;
 };
 
 export type ViewerVirtualChannel = {
-    id: number;
+    id: string | number;
     name: string;
     dailyTimerMax: number | null;
     timerState: ViewerVirtualChannelTimerState;
@@ -64,15 +64,15 @@ export type ViewerPageData = {
     channels: ViewerChannel[];
     groups: ViewerVirtualChannel[];
     activeVirtualChannel: ViewerVirtualChannel | null;
-    profileId: number;
+    profileId: string | number;
     profileKey: string;
     profileName: string;
 };
 
 export type BulkActionUndoState = {
-    requestedVideoIds: number[];
+    requestedVideoIds: Array<string | number>;
     originalStates: Array<{
-        videoId: number;
+        videoId: string | number;
         watched: ViewerSelectionFlagValue;
         favorite: ViewerSelectionFlagValue;
         ignored: ViewerSelectionFlagValue;

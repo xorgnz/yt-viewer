@@ -6,9 +6,9 @@ export enum VirtualChannelAssignmentMode
 }
 
 export type VirtualChannelAssignmentFields = {
-    id: number;
-    source_channel_id: number;
-    virtual_channel_id: number;
+    id: string;
+    source_channel_id: string | number;
+    virtual_channel_id: string | number;
     mode: VirtualChannelAssignmentMode;
     created_at: number;
     updated_at: number;
@@ -16,9 +16,9 @@ export type VirtualChannelAssignmentFields = {
 
 export class VirtualChannelAssignment
 {
-    readonly id: number;
-    readonly sourceChannelId: number;
-    readonly virtualChannelId: number;
+    readonly id: string;
+    readonly sourceChannelId: string | number;
+    readonly virtualChannelId: string | number;
     readonly mode: VirtualChannelAssignmentMode;
     readonly createdAt: number;
     readonly updatedAt: number;
@@ -51,9 +51,9 @@ export class VirtualChannelAssignment
         return (
             value &&
             typeof value === 'object' &&
-            typeof value.id === 'number' &&
-            typeof value.sourceChannelId === 'number' &&
-            typeof value.virtualChannelId === 'number' &&
+            typeof value.id === 'string' &&
+            (typeof value.sourceChannelId === 'string' || typeof value.sourceChannelId === 'number') &&
+            (typeof value.virtualChannelId === 'string' || typeof value.virtualChannelId === 'number') &&
             (
                 value.mode === VirtualChannelAssignmentMode.All ||
                 value.mode === VirtualChannelAssignmentMode.LongOnly ||

@@ -16,8 +16,8 @@ export class SourceChannelDAO extends DAO
         const fields = channel.toFields();
 
         await this.run(
-            `INSERT INTO source_channels(youtube_id, title, description, thumbnail_url, published_at) VALUES(?,?,?,?,?)`,
-            [fields.youtube_id, fields.title, fields.description, fields.thumbnail_url, fields.published_at]
+            `INSERT INTO source_channels(src_channel_id, title, description, thumbnail_url, published_at) VALUES(?,?,?,?,?)`,
+            [String(fields.id), fields.title, fields.description, fields.thumbnail_url, fields.published_at]
         );
     }
 
@@ -27,19 +27,19 @@ export class SourceChannelDAO extends DAO
 
         await this.run(`
             UPDATE source_channels
-            SET youtube_id = ?,
+            SET src_channel_id = ?,
                 title = ?,
                 description = ?,
                 thumbnail_url = ?,
                 published_at = ?
-            WHERE id = ?
-        `, [fields.youtube_id, fields.title, fields.description, fields.thumbnail_url, fields.published_at, fields.id]);
+            WHERE src_channel_id = ?
+        `, [String(fields.id), fields.title, fields.description, fields.thumbnail_url, fields.published_at, String(fields.id)]);
     }
 
-    async get(id: number): Promise<SourceChannel | undefined>
+    async get(id: string | number): Promise<SourceChannel | undefined>
     {
         const fields = await this.getOne<SourceChannelFields>(
-            `SELECT id, youtube_id, title, description, thumbnail_url, published_at, last_refreshed_at FROM source_channels WHERE id = ?`,
+            `SELECT src_channel_id AS id, src_channel_id AS youtube_id, title, description, thumbnail_url, published_at, last_refreshed_at FROM source_channels WHERE src_channel_id = ?`,
             [id]
         );
 
@@ -49,7 +49,7 @@ export class SourceChannelDAO extends DAO
     async getByExternalId(external_id: string): Promise<SourceChannel | undefined>
     {
         const fields = await this.getOne<SourceChannelFields>(
-            `SELECT id, youtube_id, title, description, thumbnail_url, published_at, last_refreshed_at FROM source_channels WHERE youtube_id = ?`,
+            `SELECT src_channel_id AS id, src_channel_id AS youtube_id, title, description, thumbnail_url, published_at, last_refreshed_at FROM source_channels WHERE src_channel_id = ?`,
             [external_id]
         );
 
@@ -59,7 +59,7 @@ export class SourceChannelDAO extends DAO
     async list(): Promise<SourceChannel[]>
     {
         const rows = await this.listRows<SourceChannelFields>(
-            `SELECT id, youtube_id, title, description, thumbnail_url, published_at, last_refreshed_at FROM source_channels ORDER BY title`
+            `SELECT src_channel_id AS id, src_channel_id AS youtube_id, title, description, thumbnail_url, published_at, last_refreshed_at FROM source_channels ORDER BY title`
         );
 
         return rows.map((row) => new SourceChannel(row));
@@ -70,18 +70,19 @@ export class SourceChannelDAO extends DAO
         const rows = await this.listRows<SourceChannelFields & Omit<SourceChannelWithVideoStats, keyof SourceChannel>>(`
             SELECT
                 sc.id,
-                sc.youtube_id,
+                sc.src_channel_id AS youtube_id,
+                sc.src_channel_id AS id,
                 sc.title,
                 sc.description,
                 sc.thumbnail_url,
                 sc.published_at,
                 sc.last_refreshed_at,
-                COUNT(v.id) AS video_count,
+                COUNT(v.video_id) AS video_count,
                 COALESCE(SUM(CASE WHEN vf_agg.watched = 1 THEN 1 ELSE 0 END), 0) AS watched_count,
                 COALESCE(SUM(CASE WHEN vf_agg.favorite = 1 THEN 1 ELSE 0 END), 0) AS favorite_count,
                 COALESCE(SUM(CASE WHEN vf_agg.ignored = 1 THEN 1 ELSE 0 END), 0) AS ignored_count
             FROM source_channels sc
-            LEFT JOIN videos v ON v.channel_id = sc.id
+            LEFT JOIN videos v ON v.src_channel_id = sc.src_channel_id
             LEFT JOIN (
                 SELECT
                     video_id,
@@ -90,10 +91,9 @@ export class SourceChannelDAO extends DAO
                     MAX(ignored) AS ignored
                 FROM video_flags
                 GROUP BY video_id
-            ) vf_agg ON vf_agg.video_id = v.id
+            ) vf_agg ON vf_agg.video_id = v.video_id
             GROUP BY
-                sc.id,
-                sc.youtube_id,
+                sc.src_channel_id,
                 sc.title,
                 sc.description,
                 sc.thumbnail_url,
@@ -113,14 +113,14 @@ export class SourceChannelDAO extends DAO
         ));
     }
 
-    async remove(id: number): Promise<void>
+    async remove(id: string | number): Promise<void>
     {
-        await this.run(`DELETE FROM source_channels WHERE id = ?`, [id]);
+        await this.run(`DELETE FROM source_channels WHERE src_channel_id = ?`, [String(id)]);
     }
 
-    async markRefreshed(id: number, ts: number = Date.now()): Promise<void>
+    async markRefreshed(id: string | number, ts: number = Date.now()): Promise<void>
     {
-        await this.run(`UPDATE source_channels SET last_refreshed_at = ? WHERE id = ?`, [ts, id]);
+        await this.run(`UPDATE source_channels SET last_refreshed_at = ? WHERE src_channel_id = ?`, [ts, String(id)]);
     }
 }
 // apply-patch-anchor - do not delete

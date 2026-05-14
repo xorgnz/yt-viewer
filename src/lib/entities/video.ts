@@ -6,9 +6,9 @@ export enum VideoLengthClassification
 }
 
 export type VideoFields = {
-    id: number;
+    id: string | number;
     youtube_id: string;
-    channel_id: number;
+    channel_id: string | number;
     title: string;
     description?: string;
     published_at?: number | null;
@@ -19,9 +19,9 @@ export type VideoFields = {
 
 export class Video
 {
-    readonly id: number; // internal DB id
-    readonly youtube_id: string; // YouTube video ID
-    readonly channel_id: number; // internal channel id
+    readonly id: string | number; // stable video id
+    readonly youtube_id: string; // YouTube video ID, same stable value as id
+    readonly channel_id: string | number; // stable source channel id
     readonly title: string;
     readonly description?: string;
     readonly published_at?: number | null; // unix epoch ms
@@ -63,9 +63,9 @@ export class Video
         return (
             value &&
             typeof value === 'object' &&
-            typeof (value as any).id === 'number' &&
+            (typeof (value as any).id === 'string' || typeof (value as any).id === 'number') &&
             typeof (value as any).youtube_id === 'string' &&
-            typeof (value as any).channel_id === 'number' &&
+            (typeof (value as any).channel_id === 'string' || typeof (value as any).channel_id === 'number') &&
             typeof (value as any).title === 'string' &&
             ((value as any).description === undefined || typeof (value as any).description === 'string') &&
             ((value as any).published_at === undefined || (value as any).published_at === null || typeof (value as any).published_at === 'number') &&

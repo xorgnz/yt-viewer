@@ -5,7 +5,7 @@ export class YouTubeVideoUpsertMapper
 {
     static toVideo(
         item: PlaylistItemsListResponse['items'][number],
-        channelId: number,
+        channelId: string | number,
         videoMetadata?: VideosListResponse['items'][number]
     ): Video
     {
@@ -19,7 +19,7 @@ export class YouTubeVideoUpsertMapper
         const durationSeconds = YouTubeVideoUpsertMapper.parseDurationSeconds(metadataDetails.duration);
 
         return new Video({
-            id: 0,
+            id: videoId,
             youtube_id: videoId,
             channel_id: channelId,
             title: metadataSnippet.title || snippet.title || '',

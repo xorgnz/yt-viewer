@@ -1,0 +1,6 @@
+[
+    {
+        "message": "09-stable-db-ids-04 updates writes and YouTube imports to store stable source-channel, video, profile, virtual-channel, assignment, flag, and watch-history IDs instead of generated relationship row IDs.",
+        "commit": ""
+    }
+]

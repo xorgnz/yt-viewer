@@ -1,53 +1,90 @@
 import { DAO } from '$lib/daos/shared/DAO';
 import { VirtualChannel, type VirtualChannelFields } from '$lib/entities/virtualChannel';
+import { randomBytes } from 'node:crypto';
+
+const VCHANNEL_ALPHABET = 'abcdefghjkmnpqrstvwxyz23456789';
+
+function buildRandomVChannelId(): string
+{
+    const bytes = randomBytes(16);
+    let suffix = '';
+
+    for (let index = 0; index < 16; index += 1) {
+        suffix += VCHANNEL_ALPHABET[bytes[index] % VCHANNEL_ALPHABET.length];
+    }
+
+    return `vc_${suffix}`;
+}
 
 export class VirtualChannelDAO extends DAO
 {
-    async create(name: string, dailyTimerMax: number | null = null): Promise<VirtualChannel>
-    {
-        const id = await this.insert(
-            `INSERT INTO virtual_channels(name, daily_timer_max) VALUES(?, ?)`,
-            [name, dailyTimerMax]
-        );
+    private readonly idProvider: () => string;
 
-        return new VirtualChannel({ id, name, dailyTimerMax });
+    constructor(db: ConstructorParameters<typeof DAO>[0], idProvider: () => string = buildRandomVChannelId)
+    {
+        super(db);
+        this.idProvider = idProvider;
     }
 
-    async get(id: number): Promise<VirtualChannel | undefined>
+    async create(name: string, dailyTimerMax: number | null = null): Promise<VirtualChannel>
+    {
+        for (let attempt = 0; attempt < 10; attempt += 1) {
+            const id = this.idProvider();
+
+            try {
+                await this.run(
+                    `INSERT INTO virtual_channels(vchannel_id, name, daily_timer_max) VALUES(?, ?, ?)`,
+                    [id, name, dailyTimerMax]
+                );
+
+                return new VirtualChannel({ id, name, dailyTimerMax });
+            } catch (error: any) {
+                if (error?.code === 'ER_DUP_ENTRY') {
+                    continue;
+                }
+
+                throw error;
+            }
+        }
+
+        throw new Error('Failed to generate a unique virtual channel id.');
+    }
+
+    async get(id: string | number): Promise<VirtualChannel | undefined>
     {
         const fields = await this.getOne<VirtualChannelFields>(
-            `SELECT id, name, daily_timer_max AS dailyTimerMax FROM virtual_channels WHERE id = ?`,
-            [id]
+            `SELECT vchannel_id AS id, name, daily_timer_max AS dailyTimerMax FROM virtual_channels WHERE vchannel_id = ?`,
+            [String(id)]
         );
 
         return fields ? new VirtualChannel(fields) : undefined;
     }
 
-    async rename(id: number, name: string): Promise<void>
+    async rename(id: string | number, name: string): Promise<void>
     {
-        await this.run(`UPDATE virtual_channels SET name = ? WHERE id = ?`, [name, id]);
+        await this.run(`UPDATE virtual_channels SET name = ? WHERE vchannel_id = ?`, [name, String(id)]);
     }
 
-    async updateDailyTimerMax(id: number, dailyTimerMax: number | null): Promise<void>
+    async updateDailyTimerMax(id: string | number, dailyTimerMax: number | null): Promise<void>
     {
         await this.run(
-            `UPDATE virtual_channels SET daily_timer_max = ? WHERE id = ?`,
-            [dailyTimerMax, id]
+            `UPDATE virtual_channels SET daily_timer_max = ? WHERE vchannel_id = ?`,
+            [dailyTimerMax, String(id)]
         );
     }
 
     async list(): Promise<VirtualChannel[]>
     {
         const rows = await this.listRows<VirtualChannelFields>(
-            `SELECT id, name, daily_timer_max AS dailyTimerMax FROM virtual_channels ORDER BY name`
+            `SELECT vchannel_id AS id, name, daily_timer_max AS dailyTimerMax FROM virtual_channels ORDER BY name`
         );
 
         return rows.map((row) => new VirtualChannel(row));
     }
 
-    async remove(id: number): Promise<void>
+    async remove(id: string | number): Promise<void>
     {
-        await this.run(`DELETE FROM virtual_channels WHERE id = ?`, [id]);
+        await this.run(`DELETE FROM virtual_channels WHERE vchannel_id = ?`, [String(id)]);
     }
 }
 // apply-patch-anchor - do not delete

@@ -6,9 +6,9 @@ export enum VirtualChannelAssignmentVideoReviewState
 }
 
 export type VirtualChannelAssignmentVideoSelectionFields = {
-    id: number;
-    assignment_id: number;
-    video_id: number;
+    id: string;
+    assignment_id: string;
+    video_id: string | number;
     review_state: VirtualChannelAssignmentVideoReviewState;
     created_at: number;
     updated_at: number;
@@ -16,9 +16,9 @@ export type VirtualChannelAssignmentVideoSelectionFields = {
 
 export class VirtualChannelAssignmentVideoSelection
 {
-    readonly id: number;
-    readonly assignmentId: number;
-    readonly videoId: number;
+    readonly id: string;
+    readonly assignmentId: string;
+    readonly videoId: string | number;
     readonly reviewState: VirtualChannelAssignmentVideoReviewState;
     readonly createdAt: number;
     readonly updatedAt: number;
@@ -51,9 +51,9 @@ export class VirtualChannelAssignmentVideoSelection
         return (
             value &&
             typeof value === 'object' &&
-            typeof value.id === 'number' &&
-            typeof value.assignmentId === 'number' &&
-            typeof value.videoId === 'number' &&
+            typeof value.id === 'string' &&
+            typeof value.assignmentId === 'string' &&
+            (typeof value.videoId === 'string' || typeof value.videoId === 'number') &&
             (
                 value.reviewState === VirtualChannelAssignmentVideoReviewState.Included ||
                 value.reviewState === VirtualChannelAssignmentVideoReviewState.Ignored ||

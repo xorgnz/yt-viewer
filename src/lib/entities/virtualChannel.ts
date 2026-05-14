@@ -1,12 +1,12 @@
 export type VirtualChannelFields = {
-    id: number;
+    id: string | number;
     name: string;
     dailyTimerMax: number | null;
 };
 
 export class VirtualChannel
 {
-    readonly id: number;
+    readonly id: string | number;
     readonly name: string;
     readonly dailyTimerMax: number | null;
 
@@ -30,7 +30,7 @@ export class VirtualChannel
         return (
             value &&
             typeof value === 'object' &&
-            typeof value.id === 'number' &&
+            (typeof value.id === 'string' || typeof value.id === 'number') &&
             typeof value.name === 'string' &&
             (
                 value.dailyTimerMax === undefined

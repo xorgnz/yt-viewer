@@ -7,7 +7,7 @@ import type { YouTubeClient } from './youTubeClient';
 
 export interface ImportResult
 {
-    channelId: number | null;
+    channelId: string | number | null;
     videosUpserted: number;
 }
 
@@ -50,6 +50,7 @@ export class YouTubeChannelImportService
         const snippet = channel.snippet || {};
         const publishedAt = snippet.publishedAt ? Date.parse(snippet.publishedAt) : null;
         const channelData = {
+            id: channel.id,
             youtube_id: channel.id,
             title: snippet.title || '',
             description: snippet.description || '',
@@ -58,9 +59,9 @@ export class YouTubeChannelImportService
         };
         const existingSourceChannel = await this.sourceChannelDAO.getByExternalId(channelData.youtube_id);
         if (existingSourceChannel) {
-            await this.sourceChannelDAO.update(existingSourceChannel.with(new SourceChannel({ id: 0, ...channelData, last_refreshed_at: null })));
+            await this.sourceChannelDAO.update(existingSourceChannel.with(new SourceChannel({ ...channelData, last_refreshed_at: null })));
         } else {
-            await this.sourceChannelDAO.create(new SourceChannel({ id: 0, ...channelData, last_refreshed_at: null }));
+            await this.sourceChannelDAO.create(new SourceChannel({ ...channelData, last_refreshed_at: null }));
         }
 
         const sourceChannel = await this.sourceChannelDAO.getByExternalId(channelData.youtube_id);

@@ -20,50 +20,50 @@ type AdminSelectionDAO = Pick<
 
 export interface LoadAdminVirtualChannelPageInput
 {
-    virtualChannelId: number;
+    virtualChannelId: string | number;
     searchParams: URLSearchParams;
 }
 
 export interface AddAdminAssociationInput
 {
-    virtualChannelId: number;
-    sourceChannelId: number;
+    virtualChannelId: string | number;
+    sourceChannelId: string | number;
     mode: VirtualChannelAssignmentMode;
 }
 
 export interface UpdateAdminAssociationModeInput
 {
-    virtualChannelId: number;
-    assignmentId: number;
+    virtualChannelId: string | number;
+    assignmentId: string | number;
     mode: VirtualChannelAssignmentMode;
 }
 
 export interface RemoveAdminAssociationInput
 {
-    virtualChannelId: number;
-    assignmentId: number;
+    virtualChannelId: string | number;
+    assignmentId: string | number;
 }
 
 export interface SetAdminVideoReviewStateInput
 {
-    virtualChannelId: number;
-    assignmentId: number;
-    videoId: number;
+    virtualChannelId: string | number;
+    assignmentId: string | number;
+    videoId: string | number;
     reviewState: VirtualChannelAssignmentVideoReviewState;
 }
 
 export interface BulkUpdateAdminVideoReviewStateInput
 {
-    virtualChannelId: number;
-    assignmentId: number;
-    videoIds: number[];
+    virtualChannelId: string | number;
+    assignmentId: string | number;
+    videoIds: Array<string | number>;
     reviewState: VirtualChannelAssignmentVideoReviewState;
     returnQuery: string;
 }
 
 export interface UpdateAdminVirtualChannelTimerInput
 {
-    virtualChannelId: number;
+    virtualChannelId: string | number;
     dailyTimerMax: number | null;
 }
 
@@ -280,7 +280,7 @@ export class AdminVirtualChannelManageService
 
     private async buildAssociatedSourceChannelView(
         assignment: VirtualChannelAssignment,
-        sourceChannelsById: Map<number, SourceChannel>,
+        sourceChannelsById: Map<string | number, SourceChannel>,
         searchParams: URLSearchParams
     ): Promise<AdminAssociatedSourceChannelView>
     {
@@ -290,7 +290,7 @@ export class AdminVirtualChannelManageService
         const selectionRows = assignment.mode === VirtualChannelAssignmentMode.SelectedOnly
             ? await this.selectionDAO.listForAssignment(assignment.id)
             : [];
-        const selectionByVideoId = new Map(selectionRows.map((row) => [row.videoId, row]));
+        const selectionByVideoId = new Map(selectionRows.map((row) => [String(row.videoId), row]));
 
         // Split automatic and selected-only display models so the route only renders.
         const automaticVideos = assignment.mode === VirtualChannelAssignmentMode.SelectedOnly
@@ -306,7 +306,7 @@ export class AdminVirtualChannelManageService
             ? []
             : sourceVideos.map((video) => ({
                 video,
-                reviewState: selectionByVideoId.get(video.id)?.reviewState ?? ReviewState.NotYetReviewed
+                reviewState: selectionByVideoId.get(String(video.id))?.reviewState ?? ReviewState.NotYetReviewed
             }));
         const selectedOnlyCounts = assignment.mode !== VirtualChannelAssignmentMode.SelectedOnly
             ? null
@@ -328,14 +328,14 @@ export class AdminVirtualChannelManageService
         };
     }
 
-    private getReviewStateFilter(searchParams: URLSearchParams, assignmentId: number): AdminReviewStateFilter
+    private getReviewStateFilter(searchParams: URLSearchParams, assignmentId: string | number): AdminReviewStateFilter
     {
         return searchParams.get(`reviewStateFilter-${assignmentId}`) === ReviewStateFilter.NotYetReviewed
             ? ReviewStateFilter.NotYetReviewed
             : ReviewStateFilter.All;
     }
 
-    private getVideoTypeFilter(searchParams: URLSearchParams, assignmentId: number): AdminVideoTypeFilter
+    private getVideoTypeFilter(searchParams: URLSearchParams, assignmentId: string | number): AdminVideoTypeFilter
     {
         const value = searchParams.get(`videoTypeFilter-${assignmentId}`);
         return value === VideoTypeFilter.Long || value === VideoTypeFilter.Short || value === VideoTypeFilter.Unknown
@@ -343,7 +343,7 @@ export class AdminVirtualChannelManageService
             : VideoTypeFilter.All;
     }
 
-    private buildManagePath(virtualChannelId: number, returnQuery?: string): string
+    private buildManagePath(virtualChannelId: string | number, returnQuery?: string): string
     {
         const suffix = returnQuery ? `?${returnQuery}` : '';
         return `/admin/virtual-channels/${virtualChannelId}${suffix}`;

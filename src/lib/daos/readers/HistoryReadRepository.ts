@@ -10,21 +10,21 @@ export interface HistorySessionRecord
     session_started_at: number;
     last_updated_at: number;
     time_watched_seconds: number;
-    profile_id: number;
-    video_id: number;
+    profile_id: string | number;
+    video_id: string | number;
     youtube_id: string;
     title: string;
-    channel_id: number;
+    channel_id: string | number;
     channel_title: string;
 }
 
 export interface HistoryVideoSummaryRecord
 {
-    profile_id: number;
-    video_id: number;
+    profile_id: string | number;
+    video_id: string | number;
     youtube_id: string;
     title: string;
-    channel_id: number;
+    channel_id: string | number;
     channel_title: string;
     total_time_watched_seconds: number;
     session_count: number;

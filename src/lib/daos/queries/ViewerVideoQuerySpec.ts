@@ -7,8 +7,8 @@ export interface ViewerVideoQueryFilters
     dateTo?: number | null;
     watched?: 'all' | 'watched' | 'unwatched';
     ignored?: 'hide' | 'show';
-    channelId?: number | null;
-    virtualChannelId?: number | null;
+    channelId?: string | number | null;
+    virtualChannelId?: string | number | null;
     sort?: ViewerSort;
     limit?: number;
     offset?: number;
@@ -33,9 +33,9 @@ export interface ViewerVideoListQueryParts extends ViewerVideoQueryParts
 export class ViewerVideoQuerySpec
 {
     private readonly filters: ViewerVideoQueryFilters;
-    private readonly profileId: number;
+    private readonly profileId: string | number;
 
-    constructor(filters: ViewerVideoQueryFilters, profileId: number)
+    constructor(filters: ViewerVideoQueryFilters, profileId: string | number)
     {
         this.filters = filters;
         this.profileId = profileId;

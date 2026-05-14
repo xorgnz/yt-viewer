@@ -30,7 +30,7 @@ describe('DAO modules', () => {
         }));
 
         await new SourceChannelDAO(provider).create(new SourceChannel({
-            id: 0,
+            id: 'channel-1',
             youtube_id: 'channel-1',
             title: 'Channel',
             description: '',
@@ -39,9 +39,9 @@ describe('DAO modules', () => {
             last_refreshed_at: null
         }));
         await new VideoDAO(provider).create(new Video({
-            id: 0,
+            id: 'video-1',
             youtube_id: 'video-1',
-            channel_id: 1,
+            channel_id: 'channel-1',
             title: 'Video',
             description: '',
             published_at: null,
@@ -49,19 +49,19 @@ describe('DAO modules', () => {
             thumbnail_url: null,
             length_classification: VideoLengthClassification.Unknown
         }));
-        await new VideoDAO(provider).listExistingIds([1, 2]);
+        await new VideoDAO(provider).listExistingIds(['video-1', 'video-2']);
         await new ProfileDAO(provider).upsertByKey('default', 'Default');
         await new VirtualChannelDAO(provider).create('Queue');
-        await new AssignmentDAO(provider).add(1, 2, VirtualChannelAssignmentMode.All);
-        await new VirtualChannelAssignmentVideoSelectionDAO(provider).setReviewState(3, 4, VirtualChannelAssignmentVideoReviewState.Included);
+        await new AssignmentDAO(provider).add('channel-1', 'vc_queue', VirtualChannelAssignmentMode.All);
+        await new VirtualChannelAssignmentVideoSelectionDAO(provider).setReviewState('channel-1::vc_queue', 'video-1', VirtualChannelAssignmentVideoReviewState.Included);
         await new HistoryDAO(provider).createSession({
-            video_id: 1,
-            profile_id: 2,
+            video_id: 'video-1',
+            profile_id: 'default',
             session_started_at: 100,
             last_updated_at: 200,
             time_watched_seconds: 30,
         });
-        await new FlagsDAO(provider).set(1, 2, { watched: 1 });
+        await new FlagsDAO(provider).set('video-1', 'default', { watched: 1 });
         await new ViewerVideoReadRepository(provider).list({}, 2);
         await new ViewerVideoReadRepository(provider).count({ term: 'demo' }, 2);
         await new HistoryReadRepository(provider).listVideoSummaries({ profileId: 2 });

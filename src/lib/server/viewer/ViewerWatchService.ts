@@ -19,11 +19,11 @@ export type ViewerWatchLoadModel = {
     recommendations: ViewerWatchVideo[];
     previousVideoYoutubeId: string | null;
     nextVideoYoutubeId: string | null;
-    currentVirtualChannelId: number | null;
+    currentVirtualChannelId: string | number | null;
     activeVirtualChannel: ViewerVirtualChannel | null;
     playbackBlockedMessage: string | null;
     navigationFilters: ViewerQueryFilters;
-    profileId: number;
+    profileId: string | number;
     profileKey: string;
     profileName: string;
 };
@@ -144,7 +144,7 @@ export class ViewerWatchService
     async createHistorySession(
         videoYoutubeId: string,
         watchSeconds: number,
-        virtualChannelId: number | null,
+        virtualChannelId: string | number | null,
         now = Date.now()
     ): Promise<ViewerWatchResult>
     {
@@ -219,7 +219,7 @@ export class ViewerWatchService
     async updateHistoryProgress(
         videoYoutubeId: string,
         watchSeconds: number,
-        virtualChannelId: number | null,
+        virtualChannelId: string | number | null,
         now = Date.now()
     ): Promise<ViewerWatchResult>
     {
@@ -311,7 +311,7 @@ export class ViewerWatchService
         return await this.viewerVideoReadRepository.getByYoutubeId(videoYoutubeId, this.profileContext.activeProfileId) || null;
     }
 
-    private async ensureGroupAllowsPlayback(virtualChannelId: number | null): Promise<ViewerWatchResult>
+    private async ensureGroupAllowsPlayback(virtualChannelId: string | number | null): Promise<ViewerWatchResult>
     {
         if (virtualChannelId == null) {
             return { ok: true };

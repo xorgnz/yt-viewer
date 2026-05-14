@@ -1,7 +1,7 @@
 export type WatchHistoryFields = {
     id: number;
-    video_id: number;
-    profile_id: number;
+    video_id: string | number;
+    profile_id: string | number;
     session_started_at: number;
     last_updated_at: number;
     time_watched_seconds: number;
@@ -10,8 +10,8 @@ export type WatchHistoryFields = {
 export class WatchHistory
 {
     readonly id: number;
-    readonly video_id: number;
-    readonly profile_id: number;
+    readonly video_id: string | number;
+    readonly profile_id: string | number;
     readonly session_started_at: number;   // unix epoch ms
     readonly last_updated_at: number;      // unix epoch ms
     readonly time_watched_seconds: number; // accumulated seconds
@@ -33,8 +33,8 @@ export class WatchHistory
             value &&
             typeof value === 'object' &&
             typeof (value as any).id === 'number' &&
-            typeof (value as any).video_id === 'number' &&
-            typeof (value as any).profile_id === 'number' &&
+            (typeof (value as any).video_id === 'string' || typeof (value as any).video_id === 'number') &&
+            (typeof (value as any).profile_id === 'string' || typeof (value as any).profile_id === 'number') &&
             typeof (value as any).session_started_at === 'number' &&
             typeof (value as any).last_updated_at === 'number' &&
             typeof (value as any).time_watched_seconds === 'number'

@@ -6,18 +6,18 @@ import type {
 export class ViewerRecommendationService
 {
     private readonly viewerVideoReadRepository: Pick<ViewerVideoReadRepository, 'list'>;
-    private readonly profileId: number;
+    private readonly profileId: string | number;
 
     constructor(
         viewerVideoReadRepository: Pick<ViewerVideoReadRepository, 'list'>,
-        profileId: number
+        profileId: string | number
     )
     {
         this.viewerVideoReadRepository = viewerVideoReadRepository;
         this.profileId = profileId;
     }
 
-    async load(currentVideo: ViewerVideoRecord, virtualChannelId: number | null, limit = 8): Promise<ViewerVideoRecord[]>
+    async load(currentVideo: ViewerVideoRecord, virtualChannelId: string | number | null, limit = 8): Promise<ViewerVideoRecord[]>
     {
         const candidates = await this.viewerVideoReadRepository.list({
             watched: 'all',
@@ -45,7 +45,7 @@ export class ViewerRecommendationService
                     return left.rank - right.rank;
                 }
 
-                return left.video.id - right.video.id;
+                return String(left.video.id).localeCompare(String(right.video.id));
             })
             .slice(0, Math.max(0, limit))
             .map((entry) => entry.video);

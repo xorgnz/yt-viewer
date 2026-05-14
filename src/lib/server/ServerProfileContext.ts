@@ -39,7 +39,7 @@ export class ServerProfileContext
         return new ServerProfileContext(activeProfile, requestedProfileKey);
     }
 
-    get activeProfileId(): number
+    get activeProfileId(): string | number
     {
         return this.activeProfile.id;
     }

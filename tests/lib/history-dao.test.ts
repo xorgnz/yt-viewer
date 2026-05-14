@@ -27,15 +27,15 @@ describe('HistoryDAO', () => {
             SELECT COALESCE(SUM(h.time_watched_seconds), 0) AS totalWatchSeconds
             FROM watch_history h
             INNER JOIN videos v
-                ON v.id = h.video_id
+                ON v.video_id = h.video_id
             INNER JOIN virtual_channel_assignments a
-                ON a.source_channel_id = v.channel_id
+                ON a.src_channel_id = v.src_channel_id
             WHERE h.profile_id = ?
-              AND a.virtual_channel_id = ?
+              AND a.vchannel_id = ?
               AND h.last_updated_at >= ?
               AND h.last_updated_at < ?
         `,
-                values: [7, 13, 1_000, 2_000],
+                values: ['7', '13', 1_000, 2_000],
             }
         ]);
     });

@@ -1,13 +1,13 @@
 export type ProfileFields = {
-    id: number;
+    id: string | number;
     key: string;
     name: string;
 };
 
 export class Profile
 {
-    readonly id: number; // internal DB id
-    readonly key: string; // e.g., 'adult', 'child'
+    readonly id: string | number; // stable profile id
+    readonly key: string; // same stable value as id
     readonly name: string;
 
     constructor(data: ProfileFields)
@@ -23,7 +23,7 @@ export class Profile
         return (
             value &&
             typeof value === 'object' &&
-            typeof value.id === 'number' &&
+            (typeof value.id === 'string' || typeof value.id === 'number') &&
             typeof value.key === 'string' &&
             typeof value.name === 'string'
         );

@@ -1,5 +1,5 @@
 export type SourceChannelFields = {
-    id: number;
+    id: string | number;
     youtube_id: string;
     title: string;
     description?: string;
@@ -10,8 +10,8 @@ export type SourceChannelFields = {
 
 export class SourceChannel
 {
-    readonly id: number; // internal DB id
-    readonly youtubeId: string; // YouTube channel ID
+    readonly id: string | number; // stable source channel id
+    readonly youtubeId: string; // YouTube channel ID, same stable value as id
     readonly title: string;
     readonly description?: string;
     readonly thumbnailUrl?: string | null;
@@ -48,7 +48,7 @@ export class SourceChannel
         return (
             value !== null &&
             typeof value === 'object' &&
-            typeof (value as any).id === 'number' &&
+            (typeof (value as any).id === 'string' || typeof (value as any).id === 'number') &&
             typeof (value as any).youtubeId === 'string' &&
             typeof (value as any).title === 'string' &&
             ((value as any).description === undefined || typeof (value as any).description === 'string') &&
