@@ -1,7 +1,7 @@
 // DDL statements for database schema and aggregated list.
 // Note: This file intentionally contains only schema DDL, not database creation/connection code.
 
-export const SCHEMA_VERSION = 9;
+export const SCHEMA_VERSION = 10;
 
 export const CREATE_TABLE_SOURCE_CHANNELS = `
 CREATE TABLE IF NOT EXISTS source_channels (

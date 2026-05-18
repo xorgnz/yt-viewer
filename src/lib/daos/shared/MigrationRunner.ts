@@ -54,6 +54,10 @@ function validateRecordedState(
     }
 
     if (currentVersion < firstRegisteredVersion) {
+        if (recordedState.migrations.length === 0) {
+            return;
+        }
+
         throw new Error('Migration metadata exists for a database version that predates supported migrations.');
     }
 

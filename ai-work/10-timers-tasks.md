@@ -70,7 +70,7 @@
 
 - [ ] 9 - Add persisted extra time on top of daily channel timers
   - [x] 9.1 - Extend the virtual channel schema, entity, and DAO shape with a persisted `extra_timer_seconds_remaining` balance.
-  - [ ] 9.2 - Add forward-only migration coverage for the new extra-time balance field and validate both fresh-create and migration paths.
+  - [x] 9.2 - Add forward-only migration coverage for the new extra-time balance field and validate both fresh-create and migration paths.
   - [ ] 9.3 - Add admin-side controls to grant additional time by incrementing the persisted remaining extra-time balance.
   - [ ] 9.4 - Update viewer timer view models to expose daily allowance, extra-time balance, and combined remaining allowance clearly.
   - [ ] 9.5 - Change watch-session persistence so each newly consumed watch-time delta burns daily allowance first and decrements extra-time balance only for spillover.

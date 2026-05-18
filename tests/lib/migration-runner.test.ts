@@ -63,19 +63,27 @@ class MockMigrationProvider
 }
 
 describe('MigrationRunner', () => {
-    it('returns the current version when no migrations are registered', async () => {
+    it('returns the current version when the schema is already at the latest version', async () => {
         const provider = new MockMigrationProvider({
-            schemaVersion: '9',
+            schemaVersion: '10',
+            historyTableExists: true,
+            migrationRows: [
+                {
+                    version: 10,
+                    name: 'add_virtual_channel_extra_timer_seconds_remaining',
+                    success: 1,
+                }
+            ],
         });
         const runner = new MigrationRunner(new DatabaseMigrationAdapter(provider as never), MIGRATIONS);
 
         const result = await runner.runToLatest();
 
         expect(result).toEqual({
-            currentVersion: 9,
-            targetVersion: 9,
+            currentVersion: 10,
+            targetVersion: 10,
             appliedMigrations: [],
-            finalVersion: 9,
+            finalVersion: 10,
         });
         expect(provider.calls.map((call) => call.sql)).not.toContain('START TRANSACTION');
         expect(provider.calls.map((call) => call.sql)).not.toContain('COMMIT');
@@ -130,6 +138,32 @@ describe('MigrationRunner', () => {
             ],
             finalVersion: 9,
         });
+    });
+
+    it('runs the registered extra timer migration from version 9 to 10', async () => {
+        const provider = new MockMigrationProvider({
+            schemaVersion: '9',
+            historyTableExists: true,
+            migrationRows: [],
+        });
+        const runner = new MigrationRunner(new DatabaseMigrationAdapter(provider as never), MIGRATIONS);
+
+        const result = await runner.runToLatest();
+
+        expect(result).toEqual({
+            currentVersion: 9,
+            targetVersion: 10,
+            appliedMigrations: [
+                {
+                    version: 10,
+                    name: 'add_virtual_channel_extra_timer_seconds_remaining',
+                }
+            ],
+            finalVersion: 10,
+        });
+        expect(provider.calls.map((call) => call.sql)).toContain('START TRANSACTION');
+        expect(provider.calls.map((call) => call.sql)).toContain('COMMIT');
+        expect(provider.calls.some((call) => call.sql.includes('ALTER TABLE virtual_channels'))).toBe(true);
     });
 });
 // apply-patch-anchor - do not delete
