@@ -8,7 +8,7 @@ describe('SideNavVirtualChannelPanelPresenter', () => {
     ): SideNavVirtualChannelViewModel
     {
         return {
-            id: 1,
+            id: 'vc_demo',
             name: 'Timers',
             dailyTimerMax: 60,
             timerState: 'available',

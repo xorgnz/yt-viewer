@@ -1,5 +1,5 @@
 export type SideNavVirtualChannelViewModel = {
-    id: number;
+    id: string | number;
     name: string;
     dailyTimerMax: number | null;
     timerState: 'unlimited' | 'available' | 'capped';

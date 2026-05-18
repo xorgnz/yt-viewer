@@ -45,7 +45,7 @@ export class ViewerPageLoader
             filters,
             videos,
             totalCount,
-            channels,
+            channels: channels.map((channel) => channel.toFields()),
             groups,
             activeVirtualChannel,
             profileId: profileContext.activeProfileId,

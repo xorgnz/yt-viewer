@@ -1,7 +1,7 @@
-import type { SourceChannel } from '$lib/entities/sourceChannel';
-import type { VirtualChannelAssignment } from '$lib/entities/virtualChannelAssignment';
+import type { SourceChannel, SourceChannelFields } from '$lib/entities/sourceChannel';
+import type { VirtualChannelAssignment, VirtualChannelAssignmentFields } from '$lib/entities/virtualChannelAssignment';
 import type { VirtualChannelAssignmentVideoReviewState } from '$lib/entities/virtualChannelAssignmentVideoSelection';
-import type { VirtualChannel } from '$lib/entities/virtualChannel';
+import type { VirtualChannel, VirtualChannelFields } from '$lib/entities/virtualChannel';
 import type { Video } from '$lib/entities/video';
 
 export enum AdminVideoTypeFilter
@@ -44,21 +44,21 @@ export type AdminVirtualChannelServiceResult<
 
 export interface AdminInlineAssociation
 {
-    assignment: VirtualChannelAssignment;
-    sourceChannel: SourceChannel | null;
+    assignment: VirtualChannelAssignmentFields;
+    sourceChannel: SourceChannelFields | null;
 }
 
 export interface AdminVirtualChannelRow
 {
-    virtualChannel: VirtualChannel;
+    virtualChannel: VirtualChannelFields;
     associatedSourceChannels: AdminInlineAssociation[];
-    availableSourceChannels: SourceChannel[];
+    availableSourceChannels: SourceChannelFields[];
 }
 
 export interface AdminVirtualChannelIndexPageData
 {
     groups: AdminVirtualChannelRow[];
-    availableSourceChannels: SourceChannel[];
+    availableSourceChannels: SourceChannelFields[];
 }
 
 export interface AdminVirtualChannelInlineMutationData

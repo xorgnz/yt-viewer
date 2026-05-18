@@ -62,6 +62,7 @@ describe('DAO modules', () => {
             time_watched_seconds: 30,
         });
         await new FlagsDAO(provider).set('video-1', 'default', { watched: 1 });
+        await new ViewerVideoReadRepository(provider).findAdjacentYoutubeIds({ youtube_id: 'video-1' }, {}, 'default');
         await new ViewerVideoReadRepository(provider).list({}, 'default');
         await new ViewerVideoReadRepository(provider).count({ term: 'demo' }, 'default');
         await new HistoryReadRepository(provider).listVideoSummaries({ profileId: 'default' });
@@ -81,6 +82,9 @@ describe('DAO modules', () => {
         expect(provider.calls.some((call) => call.text.includes('ORDER BY v.published_at IS NULL ASC'))).toBe(true);
         expect(provider.calls.some((call) => call.text.includes('COUNT(DISTINCT v.video_id) AS count'))).toBe(true);
         expect(provider.calls.some((call) => call.text.includes('JOIN source_channels c ON c.src_channel_id = v.src_channel_id'))).toBe(true);
+        expect(provider.calls.some((call) => call.text.includes('LAG(v.video_id) OVER'))).toBe(true);
+        expect(provider.calls.some((call) => call.text.includes('LEAD(v.video_id) OVER'))).toBe(true);
+        expect(provider.calls.some((call) => call.text.includes('v.youtube_id'))).toBe(false);
         expect(provider.calls.some((call) => call.text.includes('INSERT INTO profiles(profile_id, name) VALUES(?,?)'))).toBe(true);
         expect(provider.calls.some((call) => call.text.includes('ON DUPLICATE KEY UPDATE name=VALUES(name)'))).toBe(true);
         expect(provider.calls.some((call) => call.text.includes('LEFT JOIN video_flags vf ON (vf.video_id = v.video_id AND vf.profile_id = :profileId)'))).toBe(false);

@@ -173,7 +173,7 @@
                                                             <span>
                                                                 {item.sourceChannel?.title || 'Unknown source channel'}
                                                                 {#if item.sourceChannel}
-                                                                    <span class="muted">({item.sourceChannel.youtubeId})</span>
+                                                                    <span class="muted">({item.sourceChannel.youtube_id})</span>
                                                                 {/if}
                                                             </span>
                                                             <form
@@ -183,7 +183,7 @@
                                                                 use:enhance={enhanceInlineRemove(g.virtualChannel.id)}
                                                             >
                                                                 <input type="hidden" name="virtual_channel_id" value={g.virtualChannel.id} />
-                                                                <input type="hidden" name="source_channel_id" value={item.assignment.sourceChannelId} />
+                                                                <input type="hidden" name="source_channel_id" value={item.assignment.source_channel_id} />
                                                                 <button
                                                                     type="submit"
                                                                     class="btn-danger"
@@ -218,7 +218,7 @@
                                                         <select name="source_channel_id" required>
                                                         <option value="" selected disabled>Select source channel</option>
                                                         {#each g.availableSourceChannels as channel}
-                                                            <option value={channel.id}>{channel.title} ({channel.youtubeId})</option>
+                                                            <option value={channel.id}>{channel.title} ({channel.youtube_id})</option>
                                                         {/each}
                                                     </select>
                                                     <button type="submit">Add</button>

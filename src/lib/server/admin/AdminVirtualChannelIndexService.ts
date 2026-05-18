@@ -70,7 +70,7 @@ export class AdminVirtualChannelIndexService
 
         return {
             groups,
-            availableSourceChannels: allSourceChannels
+            availableSourceChannels: allSourceChannels.map((channel) => channel.toFields())
         };
     }
 
@@ -270,9 +270,12 @@ export class AdminVirtualChannelIndexService
         const availableSourceChannels = allSourceChannels.filter((channel) => !associatedSourceChannelIds.has(channel.id));
 
         return {
-            virtualChannel,
-            associatedSourceChannels,
-            availableSourceChannels
+            virtualChannel: virtualChannel.toFields(),
+            associatedSourceChannels: associatedSourceChannels.map((item) => ({
+                assignment: item.assignment.toFields(),
+                sourceChannel: item.sourceChannel ? item.sourceChannel.toFields() : null
+            })),
+            availableSourceChannels: availableSourceChannels.map((channel) => channel.toFields())
         };
     }
 

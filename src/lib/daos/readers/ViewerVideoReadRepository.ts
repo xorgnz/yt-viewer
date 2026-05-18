@@ -40,9 +40,9 @@ export class ViewerVideoReadRepository extends DAO
                 ordered.next_youtube_id AS next_youtube_id
             FROM (
                 SELECT
-                    v.youtube_id,
-                    LAG(v.youtube_id) OVER (ORDER BY ${orderBySql}) AS previous_youtube_id,
-                    LEAD(v.youtube_id) OVER (ORDER BY ${orderBySql}) AS next_youtube_id
+                    v.video_id AS youtube_id,
+                    LAG(v.video_id) OVER (ORDER BY ${orderBySql}) AS previous_youtube_id,
+                    LEAD(v.video_id) OVER (ORDER BY ${orderBySql}) AS next_youtube_id
                 FROM videos v
                 JOIN source_channels c ON c.src_channel_id = v.src_channel_id
                 LEFT JOIN video_flags vf ON (vf.video_id = v.video_id AND vf.profile_id = :profileId)

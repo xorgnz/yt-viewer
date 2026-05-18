@@ -28,7 +28,10 @@
 
         const candidate = value as Partial<SideNavVirtualChannelViewModel>;
 
-        if (typeof candidate.id !== 'number' || typeof candidate.name !== 'string') {
+        if (
+            (typeof candidate.id !== 'string' && typeof candidate.id !== 'number')
+            || typeof candidate.name !== 'string'
+        ) {
             return null;
         }
 
