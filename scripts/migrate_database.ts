@@ -3,10 +3,10 @@ import { argv, exit } from 'node:process';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 import { MIGRATIONS } from '$lib/daos/migrations/registry';
-import type { MigrationDefinition, MigrationRunResult } from '$lib/daos/migrations/migrationTypes';
+import type { MigrationDefinition } from '$lib/daos/migrations/migrationTypes';
+import { DatabaseMigrationAdapter } from '$lib/daos/migrations/MigrationAdapter';
+import { MigrationRunner, type MigrationRunResult } from '$lib/daos/migrations/MigrationRunner';
 import { DatabaseMode } from '$lib/daos/shared/DatabaseMode';
-import { MigrationRunner } from '$lib/daos/shared/MigrationRunner';
-import { DatabaseMigrationAdapter } from '$lib/daos/shared/MigrationAdapter';
 import { DatabasePool } from '$lib/daos/shared/DatabasePool';
 import { requireDatabaseUrlForRuntime } from '$lib/server/RuntimeDatabaseUrl';
 
@@ -71,14 +71,14 @@ function usage(error?: string): never
     exit(error ? 1 : 0);
 }
 
-export async function runMigrationWorkflow(options: {
-    pool: DatabaseClientProvider;
-    migrations?: MigrationDefinition[];
-}): Promise<MigrationRunResult>
+export async function runMigrationWorkflow(
+    pool: DatabaseClientProvider,
+    migrations?: MigrationDefinition[]
+): Promise<MigrationRunResult>
 {
     const runner = new MigrationRunner(
-        new DatabaseMigrationAdapter(options.pool as ConstructorParameters<typeof DatabaseMigrationAdapter>[0]),
-        options.migrations || MIGRATIONS
+        new DatabaseMigrationAdapter(pool as ConstructorParameters<typeof DatabaseMigrationAdapter>[0]),
+        migrations || MIGRATIONS
     );
 
     return runner.runToLatest();
@@ -95,7 +95,7 @@ async function main(): Promise<void>
     console.log(`Database mode: ${mode}`);
     console.log(`Database target: ${databaseUrl}`);
     try {
-        const result = await runMigrationWorkflow({ pool });
+        const result = await runMigrationWorkflow(pool);
 
         console.log(`Detected version: ${result.currentVersion}`);
         console.log(`Target version: ${result.targetVersion}`);

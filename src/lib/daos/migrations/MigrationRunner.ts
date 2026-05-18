@@ -1,9 +1,22 @@
 import type {
     MigrationAdapter,
     MigrationDefinition,
-    MigrationRunResult,
-    RecordedMigrationState,
 } from '$lib/daos/migrations/migrationTypes';
+import type { RecordedMigrationState } from '$lib/daos/migrations/MigrationMetadata';
+
+export interface AppliedMigration
+{
+    version: number;
+    name: string;
+}
+
+export interface MigrationRunResult
+{
+    currentVersion: number;
+    targetVersion: number;
+    appliedMigrations: AppliedMigration[];
+    finalVersion: number;
+}
 
 type RegisteredMigration = {
     version: number;

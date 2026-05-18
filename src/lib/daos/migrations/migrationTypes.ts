@@ -1,4 +1,5 @@
-export type SqlParams = unknown[] | Record<string, unknown>;
+import type { SqlParams } from '$lib/daos/shared/DAO';
+import type { RecordedMigrationState } from '$lib/daos/migrations/MigrationMetadata';
 
 export interface MigrationExecutionContext
 {
@@ -22,30 +23,5 @@ export interface MigrationAdapter
     recordSuccessfulMigration(version: number, name: string): Promise<void>;
     setCurrentVersion(version: number): Promise<void>;
     runInTransaction<T>(operation: (context: MigrationExecutionContext) => Promise<T> | T): Promise<T>;
-}
-
-export interface AppliedMigrationSummary
-{
-    version: number;
-    name: string;
-}
-
-export interface RecordedMigrationSummary extends AppliedMigrationSummary
-{
-    success: boolean;
-}
-
-export interface RecordedMigrationState
-{
-    historyTableExists: boolean;
-    migrations: RecordedMigrationSummary[];
-}
-
-export interface MigrationRunResult
-{
-    currentVersion: number;
-    targetVersion: number;
-    appliedMigrations: AppliedMigrationSummary[];
-    finalVersion: number;
 }
 // apply-patch-anchor - do not delete

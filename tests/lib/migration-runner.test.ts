@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { MIGRATIONS } from '../../src/lib/daos/migrations/registry';
-import { DatabaseMigrationAdapter } from '../../src/lib/daos/shared/MigrationAdapter';
-import { MigrationRunner } from '../../src/lib/daos/shared/MigrationRunner';
+import { DatabaseMigrationAdapter } from '../../src/lib/daos/migrations/MigrationAdapter';
+import { MigrationRunner } from '../../src/lib/daos/migrations/MigrationRunner';
 
 type QueryCall = {
     sql: string;

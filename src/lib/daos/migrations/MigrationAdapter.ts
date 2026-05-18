@@ -4,10 +4,10 @@ import type {
 import type {
     MigrationAdapter,
     MigrationExecutionContext,
-    RecordedMigrationState,
-    SqlParams,
 } from '$lib/daos/migrations/migrationTypes';
+import type { SqlParams } from '$lib/daos/shared/DAO';
 import { CREATE_TABLE_META } from '$lib/daos/_schema';
+import type { RecordedMigrationState } from '$lib/daos/migrations/MigrationMetadata';
 import type { DatabaseQueryResult } from '$lib/daos/shared/DatabasePool';
 import { SqlBinder } from '$lib/daos/shared/DAO';
 

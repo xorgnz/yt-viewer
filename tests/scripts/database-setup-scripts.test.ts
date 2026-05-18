@@ -130,9 +130,7 @@ describe('database setup scripts', () => {
             ],
         });
 
-        const result = await runMigrationWorkflow({
-            pool: client,
-        });
+        const result = await runMigrationWorkflow(client);
 
         expect(result.currentVersion).toBe(10);
         expect(result.targetVersion).toBe(10);
@@ -166,9 +164,7 @@ describe('database setup scripts', () => {
             ],
         });
 
-        const result = await runMigrationWorkflow({
-            pool: client,
-        });
+        const result = await runMigrationWorkflow(client);
 
         expect(result.currentVersion).toBe(10);
         expect(result.targetVersion).toBe(10);
@@ -185,9 +181,7 @@ describe('database setup scripts', () => {
             migrationRows: [],
         });
 
-        const result = await runMigrationWorkflow({
-            pool: client,
-        });
+        const result = await runMigrationWorkflow(client);
 
         expect(result.currentVersion).toBe(9);
         expect(result.targetVersion).toBe(10);
@@ -222,9 +216,7 @@ describe('database setup scripts', () => {
             ],
         });
 
-        const result = await runMigrationWorkflow({
-            pool: client,
-        });
+        const result = await runMigrationWorkflow(client);
 
         expect(result.currentVersion).toBe(9);
         expect(result.targetVersion).toBe(10);
@@ -253,10 +245,10 @@ describe('database setup scripts', () => {
             }
         ];
 
-        await expect(runMigrationWorkflow({
-            pool: client,
-            migrations: failingMigrations,
-        })).rejects.toThrow('forced migration failure');
+        await expect(runMigrationWorkflow(
+            client,
+            failingMigrations
+        )).rejects.toThrow('forced migration failure');
 
         expect(client.calls.map((call) => call.text)).toContain('START TRANSACTION');
         expect(client.calls.map((call) => call.text)).toContain('ROLLBACK');
