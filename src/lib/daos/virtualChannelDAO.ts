@@ -85,6 +85,14 @@ export class VirtualChannelDAO extends DAO
         );
     }
 
+    async incrementExtraTimerSecondsRemaining(id: string | number, additionalSeconds: number): Promise<void>
+    {
+        await this.run(
+            `UPDATE virtual_channels SET extra_timer_seconds_remaining = extra_timer_seconds_remaining + ? WHERE vchannel_id = ?`,
+            [additionalSeconds, String(id)]
+        );
+    }
+
     async list(): Promise<VirtualChannel[]>
     {
         const rows = await this.listRows<VirtualChannelFields>(

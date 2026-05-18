@@ -20,9 +20,17 @@
         dailyTimerMaxInput?: string;
     };
 
+    type GrantExtraTimeFormState = {
+        action?: string;
+        message?: string;
+        grantExtraSecondsInput?: string;
+    };
+
     let timerFormState: TimerFormState | null = null;
     let timerFormMode: 'unlimited' | 'capped' = 'unlimited';
     let timerFormInput = '';
+    let grantExtraTimeFormState: GrantExtraTimeFormState | null = null;
+    let grantExtraTimeInput = '';
 
     $: timerFormState = form && typeof form === 'object' ? form as TimerFormState : null;
     $: timerFormMode = timerFormState?.action === 'saveTimerSettings'
@@ -31,6 +39,10 @@
     $: timerFormInput = timerFormState?.action === 'saveTimerSettings'
         ? (timerFormState.dailyTimerMaxInput ?? '')
         : (data.virtualChannel.dailyTimerMax == null ? '' : String(data.virtualChannel.dailyTimerMax));
+    $: grantExtraTimeFormState = form && typeof form === 'object' ? form as GrantExtraTimeFormState : null;
+    $: grantExtraTimeInput = grantExtraTimeFormState?.action === 'grantExtraTime'
+        ? (grantExtraTimeFormState.grantExtraSecondsInput ?? '')
+        : '';
 
     const associatedSourceChannelIds = new Set(
         data.associatedSourceChannels.map((item) => item.assignment.sourceChannelId)
@@ -205,8 +217,32 @@
                 <p class="muted">Current daily limit: {data.virtualChannel.dailyTimerMax} second(s).</p>
             {/if}
 
+            <p class="muted">Extra time remaining: {data.virtualChannel.extraTimerSecondsRemaining} second(s).</p>
+
             <div class="inline-actions">
                 <button type="submit">Save Timer Settings</button>
+            </div>
+        </form>
+
+        <form method="post" action="?/grantExtraTime" class="fields">
+            <label>
+                Grant extra seconds
+                <input
+                    type="number"
+                    name="grant_extra_seconds"
+                    min="1"
+                    step="1"
+                    value={grantExtraTimeInput}
+                    placeholder="Add extra time"
+                />
+            </label>
+
+            {#if grantExtraTimeFormState?.action === 'grantExtraTime' && grantExtraTimeFormState.message}
+                <p class="error-text">{grantExtraTimeFormState.message}</p>
+            {/if}
+
+            <div class="inline-actions">
+                <button type="submit">Grant Extra Time</button>
             </div>
         </form>
     </section>

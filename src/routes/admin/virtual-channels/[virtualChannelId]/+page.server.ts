@@ -112,6 +112,47 @@ export const actions: Actions = {
         });
     },
 
+    grantExtraTime: async ({ params, request }) => {
+        const virtualChannelId = parseVirtualChannelId(params.virtualChannelId);
+        if (!virtualChannelId) {
+            throw error(404, 'Virtual channel not found');
+        }
+
+        const form = await ServerActionForm.fromRequest(request);
+        const grantExtraSecondsInput = form.getTrimmedString('grant_extra_seconds');
+
+        if (!grantExtraSecondsInput) {
+            return fail(400, {
+                action: 'grantExtraTime',
+                message: 'Extra timer seconds are required.',
+                grantExtraSecondsInput
+            });
+        }
+
+        const parsedGrantSeconds = Number(grantExtraSecondsInput);
+        if (!Number.isInteger(parsedGrantSeconds) || parsedGrantSeconds <= 0) {
+            return fail(400, {
+                action: 'grantExtraTime',
+                message: 'Extra timer seconds must be a positive whole number.',
+                grantExtraSecondsInput
+            });
+        }
+
+        return ServerDatabaseContext.run(async ({ db }) => {
+            const serviceContext = AdminVirtualChannelServiceContext.resolve(db);
+            const result = await serviceContext.manageService.grantExtraTimerSeconds(
+                virtualChannelId,
+                parsedGrantSeconds
+            );
+
+            if (!result.ok) {
+                throw error(result.error.status, result.error.message);
+            }
+
+            throw redirect(303, result.data);
+        });
+    },
+
     addAssociation: async ({ params, request }) => {
         // Validate the route and submitted source channel reference.
         const virtualChannelId = parseVirtualChannelId(params.virtualChannelId);

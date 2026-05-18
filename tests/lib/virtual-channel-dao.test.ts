@@ -54,6 +54,7 @@ describe('VirtualChannelDAO', () => {
         const list = await dao.list();
         await dao.updateDailyTimerMax('vc_bravo', 90);
         await dao.updateExtraTimerSecondsRemaining('vc_bravo', 30);
+        await dao.incrementExtraTimerSecondsRemaining('vc_bravo', 15);
 
         expect(single).toBeInstanceOf(VirtualChannel);
         expect(single).toMatchObject({
@@ -75,9 +76,13 @@ describe('VirtualChannelDAO', () => {
             dailyTimerMax: 30,
             extraTimerSecondsRemaining: 45
         });
-        expect(provider.calls.at(-1)).toEqual({
+        expect(provider.calls.at(-2)).toEqual({
             text: 'UPDATE virtual_channels SET extra_timer_seconds_remaining = ? WHERE vchannel_id = ?',
             values: [30, 'vc_bravo']
+        });
+        expect(provider.calls.at(-1)).toEqual({
+            text: 'UPDATE virtual_channels SET extra_timer_seconds_remaining = extra_timer_seconds_remaining + ? WHERE vchannel_id = ?',
+            values: [15, 'vc_bravo']
         });
     });
 

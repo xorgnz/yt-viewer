@@ -11,7 +11,10 @@ import type { VirtualChannel } from '$lib/entities/virtualChannel';
 import { AdminReviewStateFilter as ReviewStateFilter, AdminVideoTypeFilter as VideoTypeFilter } from '$lib/admin/AdminVirtualChannelFilters';
 import type { AdminReviewStateFilter, AdminVideoTypeFilter } from '$lib/admin/AdminVirtualChannelFilters';
 
-type AdminVirtualChannelDAO = Pick<VirtualChannelDAO, 'get' | 'updateDailyTimerMax'>;
+type AdminVirtualChannelDAO = Pick<
+    VirtualChannelDAO,
+    'get' | 'updateDailyTimerMax' | 'incrementExtraTimerSecondsRemaining'
+>;
 type AdminAssignmentDAO = Pick<AssignmentDAO, 'add' | 'get' | 'listForVirtualChannel' | 'remove' | 'updateMode'>;
 type AdminSourceChannelDAO = Pick<SourceChannelDAO, 'get' | 'list'>;
 type AdminVideoDAO = Pick<VideoDAO, 'get' | 'listByChannel'>;
@@ -300,6 +303,26 @@ export class AdminVirtualChannelManageService
         }
 
         await this.virtualChannelDAO.updateDailyTimerMax(virtualChannelId, dailyTimerMax);
+
+        return {
+            ok: true,
+            data: this.buildManagePath(virtualChannelId)
+        };
+    }
+
+    async grantExtraTimerSeconds(
+        virtualChannelId: string | number,
+        additionalSeconds: number
+    ): Promise<AdminVirtualChannelServiceResult<
+        string,
+        AdminVirtualChannelServiceError<'virtual_channel_not_found'>
+    >>
+    {
+        if (!await this.virtualChannelDAO.get(virtualChannelId)) {
+            return this.buildError('virtual_channel_not_found', 404, 'Virtual channel not found');
+        }
+
+        await this.virtualChannelDAO.incrementExtraTimerSecondsRemaining(virtualChannelId, additionalSeconds);
 
         return {
             ok: true,
