@@ -4,11 +4,11 @@
 
     export let data: PageData;
 
-    type VirtualChannelGroup = (typeof data.groups)[number];
+    type VirtualChannelRow = (typeof data.virtualChannels)[number];
     type InlineStatus = { type: 'success' | 'error'; text: string };
     type VirtualChannelId = string | number;
     type InlineAssociationActionData = {
-        group: VirtualChannelGroup;
+        virtualChannelRow: VirtualChannelRow;
         message?: string;
         virtualChannelId?: VirtualChannelId | null;
     };
@@ -19,22 +19,22 @@
 
     function isInlineAssociationActionData(value: unknown): value is InlineAssociationActionData
     {
-        if (!value || typeof value !== 'object' || !('group' in value)) {
+        if (!value || typeof value !== 'object' || !('virtualChannelRow' in value)) {
             return false;
         }
 
-        const group = value.group;
-        return Boolean(group && typeof group === 'object' && 'virtualChannel' in group);
+        const virtualChannelRow = value.virtualChannelRow;
+        return Boolean(virtualChannelRow && typeof virtualChannelRow === 'object' && 'virtualChannel' in virtualChannelRow);
     }
 
-    function readFailureGroupId(value: unknown, fallbackGroupId: VirtualChannelId): VirtualChannelId
+    function readFailureVirtualChannelId(value: unknown, fallbackVirtualChannelId: VirtualChannelId): VirtualChannelId
     {
         if (!value || typeof value !== 'object' || !('virtualChannelId' in value)) {
-            return fallbackGroupId;
+            return fallbackVirtualChannelId;
         }
 
         const failureData = value as InlineAssociationFailureData;
-        return Number(failureData.virtualChannelId ?? fallbackGroupId);
+        return Number(failureData.virtualChannelId ?? fallbackVirtualChannelId);
     }
 
     function readFailureMessage(value: unknown, fallbackMessage: string): string
@@ -47,51 +47,53 @@
         return String(failureData.message || fallbackMessage);
     }
 
-    let groups = data.groups;
+    let virtualChannels = data.virtualChannels;
     let newName = '';
-    let inlineStatusByGroupId: Record<string, InlineStatus> = {};
+    let inlineStatusByVirtualChannelId: Record<string, InlineStatus> = {};
 
-    function updateInlineGroup(nextGroup: VirtualChannelGroup)
+    function updateInlineVirtualChannelRow(nextVirtualChannelRow: VirtualChannelRow)
     {
         // Replace only the affected row so inline actions do not trigger a full reload.
-        groups = groups.map((group) => (group.virtualChannel.id === nextGroup.virtualChannel.id ? nextGroup : group));
+        virtualChannels = virtualChannels.map((virtualChannelRow) => (
+            virtualChannelRow.virtualChannel.id === nextVirtualChannelRow.virtualChannel.id ? nextVirtualChannelRow : virtualChannelRow
+        ));
     }
 
-    function setInlineStatus(groupId: VirtualChannelId | null | undefined, type: 'success' | 'error', text: string)
+    function setInlineStatus(virtualChannelId: VirtualChannelId | null | undefined, type: 'success' | 'error', text: string)
     {
-        if (groupId == null) {
+        if (virtualChannelId == null) {
             return;
         }
 
-        inlineStatusByGroupId = {
-            ...inlineStatusByGroupId,
-            [String(groupId)]: { type, text }
+        inlineStatusByVirtualChannelId = {
+            ...inlineStatusByVirtualChannelId,
+            [String(virtualChannelId)]: { type, text }
         };
     }
 
-    function clearInlineStatus(groupId: VirtualChannelId)
+    function clearInlineStatus(virtualChannelId: VirtualChannelId)
     {
-        const nextStatus = { ...inlineStatusByGroupId };
-        delete nextStatus[String(groupId)];
-        inlineStatusByGroupId = nextStatus;
+        const nextStatus = { ...inlineStatusByVirtualChannelId };
+        delete nextStatus[String(virtualChannelId)];
+        inlineStatusByVirtualChannelId = nextStatus;
     }
 
-    function enhanceInlineAdd(groupId: VirtualChannelId): SubmitFunction
+    function enhanceInlineAdd(virtualChannelId: VirtualChannelId): SubmitFunction
     {
         return ({ formElement }: { formElement: HTMLFormElement }) => {
-            clearInlineStatus(groupId);
+            clearInlineStatus(virtualChannelId);
 
             return async ({ result }) => {
                 if (result.type === 'success' && isInlineAssociationActionData(result.data)) {
-                    updateInlineGroup(result.data.group);
-                    setInlineStatus(groupId, 'success', String(result.data.message || 'Source channel added.'));
+                    updateInlineVirtualChannelRow(result.data.virtualChannelRow);
+                    setInlineStatus(virtualChannelId, 'success', String(result.data.message || 'Source channel added.'));
                     formElement.reset();
                     return;
                 }
 
                 if (result.type === 'failure' && result.data) {
                     setInlineStatus(
-                        readFailureGroupId(result.data, groupId),
+                        readFailureVirtualChannelId(result.data, virtualChannelId),
                         'error',
                         readFailureMessage(result.data, 'Failed to add source channel.')
                     );
@@ -100,21 +102,21 @@
         };
     }
 
-    function enhanceInlineRemove(groupId: VirtualChannelId): SubmitFunction
+    function enhanceInlineRemove(virtualChannelId: VirtualChannelId): SubmitFunction
     {
         return () => {
-            clearInlineStatus(groupId);
+            clearInlineStatus(virtualChannelId);
 
             return async ({ result }) => {
                 if (result.type === 'success' && isInlineAssociationActionData(result.data)) {
-                    updateInlineGroup(result.data.group);
-                    setInlineStatus(groupId, 'success', String(result.data.message || 'Source channel removed.'));
+                    updateInlineVirtualChannelRow(result.data.virtualChannelRow);
+                    setInlineStatus(virtualChannelId, 'success', String(result.data.message || 'Source channel removed.'));
                     return;
                 }
 
                 if (result.type === 'failure' && result.data) {
                     setInlineStatus(
-                        readFailureGroupId(result.data, groupId),
+                        readFailureVirtualChannelId(result.data, virtualChannelId),
                         'error',
                         readFailureMessage(result.data, 'Failed to remove source channel.')
                     );
@@ -141,7 +143,7 @@
 
     <section class="panel">
         <h2>Existing Virtual Channels</h2>
-        {#if groups.length === 0}
+        {#if virtualChannels.length === 0}
             <p class="muted">No virtual channels yet.</p>
         {:else}
             <div class="table-wrap">
@@ -154,7 +156,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        {#each groups as g}
+                        {#each virtualChannels as g}
                             <tr>
                                 <td>
                                     <input name="name" form={`rename-${g.virtualChannel.id}`} value={g.virtualChannel.name} />
@@ -226,9 +228,9 @@
                                             {/if}
                                         </div>
 
-                                        {#if inlineStatusByGroupId[g.virtualChannel.id]}
-                                            <p class={inlineStatusByGroupId[g.virtualChannel.id].type === 'error' ? 'error-text' : 'status'}>
-                                                {inlineStatusByGroupId[g.virtualChannel.id].text}
+                                        {#if inlineStatusByVirtualChannelId[g.virtualChannel.id]}
+                                            <p class={inlineStatusByVirtualChannelId[g.virtualChannel.id].type === 'error' ? 'error-text' : 'status'}>
+                                                {inlineStatusByVirtualChannelId[g.virtualChannel.id].text}
                                             </p>
                                         {/if}
                                     </div>

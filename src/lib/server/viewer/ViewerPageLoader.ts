@@ -31,7 +31,7 @@ export class ViewerPageLoader
         );
 
         // Assemble the viewer page model from the normalized filters and current profile context.
-        const [videos, totalCount, channels, groups] = await Promise.all([
+        const [videos, totalCount, channels, virtualChannels] = await Promise.all([
             this.viewerVideoReadRepository.list(filters, profileContext.activeProfileId),
             this.viewerVideoReadRepository.count(filters, profileContext.activeProfileId),
             this.sourceChannelDAO.list(),
@@ -39,14 +39,14 @@ export class ViewerPageLoader
         ]);
         const activeVirtualChannel = filters.virtualChannelId == null
             ? null
-            : groups.find((group) => group.id === filters.virtualChannelId) ?? null;
+            : virtualChannels.find((virtualChannel) => virtualChannel.id === filters.virtualChannelId) ?? null;
 
         return {
             filters,
             videos,
             totalCount,
             channels: channels.map((channel) => channel.toFields()),
-            groups,
+            virtualChannels,
             activeVirtualChannel,
             profileId: profileContext.activeProfileId,
             profileKey: profileContext.activeProfileKey,

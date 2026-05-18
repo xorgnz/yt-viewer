@@ -24,13 +24,13 @@ interface AdminVirtualChannelRow
 
 interface AdminVirtualChannelIndexPageData
 {
-    groups: AdminVirtualChannelRow[];
+    virtualChannels: AdminVirtualChannelRow[];
     availableSourceChannels: SourceChannelFields[];
 }
 
 interface AdminVirtualChannelInlineMutationData
 {
-    group: AdminVirtualChannelRow;
+    virtualChannelRow: AdminVirtualChannelRow;
     message: string;
     virtualChannelId: string | number;
 }
@@ -58,13 +58,13 @@ export class AdminVirtualChannelIndexService
     {
         const allSourceChannels = await this.sourceChannelDAO.list();
         const virtualChannels = await this.virtualChannelDAO.list();
-        const groups = await Promise.all(virtualChannels.map(async (virtualChannel) => {
+        const virtualChannelRows = await Promise.all(virtualChannels.map(async (virtualChannel) => {
             const assignments = await this.assignmentDAO.listForVirtualChannel(virtualChannel.id);
             return this.buildVirtualChannelRow(virtualChannel, allSourceChannels, assignments);
         }));
 
         return {
-            groups,
+            virtualChannels: virtualChannelRows,
             availableSourceChannels: allSourceChannels.map((channel) => channel.toFields())
         };
     }
@@ -87,7 +87,7 @@ export class AdminVirtualChannelIndexService
                 error: {
                     code: 'create_virtual_channel_failed',
                     status: 400,
-                    message: this.getErrorMessage(error, 'Failed to create group')
+                    message: this.getErrorMessage(error, 'Failed to create virtual channel')
                 }
             };
         }
@@ -111,7 +111,7 @@ export class AdminVirtualChannelIndexService
                 error: {
                     code: 'rename_virtual_channel_failed',
                     status: 400,
-                    message: this.getErrorMessage(error, 'Failed to rename group')
+                    message: this.getErrorMessage(error, 'Failed to rename virtual channel')
                 }
             };
         }
@@ -135,7 +135,7 @@ export class AdminVirtualChannelIndexService
                 error: {
                     code: 'delete_virtual_channel_failed',
                     status: 400,
-                    message: this.getErrorMessage(error, 'Failed to delete group')
+                    message: this.getErrorMessage(error, 'Failed to delete virtual channel')
                 }
             };
         }
@@ -181,7 +181,7 @@ export class AdminVirtualChannelIndexService
             return {
                 ok: true,
                 data: {
-                    group: this.buildVirtualChannelRow(virtualChannel, allSourceChannels, assignments),
+                    virtualChannelRow: this.buildVirtualChannelRow(virtualChannel, allSourceChannels, assignments),
                     message: 'Source channel added.',
                     virtualChannelId
                 }
@@ -240,7 +240,7 @@ export class AdminVirtualChannelIndexService
             return {
                 ok: true,
                 data: {
-                    group: this.buildVirtualChannelRow(virtualChannel, allSourceChannels, assignments),
+                    virtualChannelRow: this.buildVirtualChannelRow(virtualChannel, allSourceChannels, assignments),
                     message: 'Source channel removed.',
                     virtualChannelId
                 }

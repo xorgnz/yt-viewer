@@ -27,25 +27,25 @@ export class ViewerVirtualChannelService
     async loadNavigation()
     {
         return {
-            groups: await this.loadVirtualChannels(),
+            virtualChannels: await this.loadVirtualChannels(),
             profileKey: this.profileContext.activeProfileKey
         };
     }
 
     async loadVirtualChannels(): Promise<ViewerVirtualChannel[]>
     {
-        const groups = await this.virtualChannelDAO.list();
+        const virtualChannels = await this.virtualChannelDAO.list();
         const timezone = AppTimezonePolicy.configuredTimezone;
         const now = this.nowProvider();
         const window = ViewerVirtualChannelService.getCurrentDayWindow(now, timezone);
 
-        return await Promise.all(groups.map((group) => this.buildGroupView(group, window)));
+        return await Promise.all(virtualChannels.map((virtualChannel) => this.buildVirtualChannelView(virtualChannel, window)));
     }
 
     async getVirtualChannelById(virtualChannelId: string | number): Promise<ViewerVirtualChannel | null>
     {
-        const group = await this.virtualChannelDAO.get(virtualChannelId);
-        if (!group) {
+        const virtualChannel = await this.virtualChannelDAO.get(virtualChannelId);
+        if (!virtualChannel) {
             return null;
         }
 
@@ -53,13 +53,13 @@ export class ViewerVirtualChannelService
         const now = this.nowProvider();
         const window = ViewerVirtualChannelService.getCurrentDayWindow(now, timezone);
 
-        return await this.buildGroupView(group, window);
+        return await this.buildVirtualChannelView(virtualChannel, window);
     }
 
     async resetVirtualChannelTimer(virtualChannelId: string | number): Promise<boolean>
     {
-        const group = await this.virtualChannelDAO.get(virtualChannelId);
-        if (!group) {
+        const virtualChannel = await this.virtualChannelDAO.get(virtualChannelId);
+        if (!virtualChannel) {
             return false;
         }
 
@@ -171,8 +171,8 @@ export class ViewerVirtualChannelService
         };
     }
 
-    private async buildGroupView(
-        group: {
+    private async buildVirtualChannelView(
+        virtualChannel: {
             id: string | number;
             name: string;
             dailyTimerMax: number | null;
@@ -180,12 +180,12 @@ export class ViewerVirtualChannelService
         window: { startMs: number; endMs: number }
     ): Promise<ViewerVirtualChannel>
     {
-        const dailyTimerMax = group.dailyTimerMax;
+        const dailyTimerMax = virtualChannel.dailyTimerMax;
 
         if (dailyTimerMax == null) {
             return {
-                id: group.id,
-                name: group.name,
+                id: virtualChannel.id,
+                name: virtualChannel.name,
                 dailyTimerMax: null,
                 timerState: 'unlimited' as ViewerVirtualChannelTimerState,
                 timerUsageSeconds: 0,
@@ -197,7 +197,7 @@ export class ViewerVirtualChannelService
 
         const timerUsageSeconds = Number(await this.historyDAO.getVirtualChannelWatchSecondsInWindow(
             this.profileContext.activeProfileId,
-            group.id,
+            virtualChannel.id,
             window.startMs,
             window.endMs
         ));
@@ -205,8 +205,8 @@ export class ViewerVirtualChannelService
         const timerRemainingSeconds = Math.max(0, timerMaxSeconds - timerUsageSeconds);
 
         return {
-            id: group.id,
-            name: group.name,
+            id: virtualChannel.id,
+            name: virtualChannel.name,
             dailyTimerMax,
             timerState: timerUsageSeconds >= timerMaxSeconds ? 'capped' : 'available',
             timerUsageSeconds,

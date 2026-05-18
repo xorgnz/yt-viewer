@@ -87,15 +87,15 @@ export class ViewerWatchService
         }
 
         if (filters.virtualChannelId != null) {
-            const group = await this.virtualChannelService.getVirtualChannelById(filters.virtualChannelId);
+            const virtualChannel = await this.virtualChannelService.getVirtualChannelById(filters.virtualChannelId);
 
-            if (!group) {
+            if (!virtualChannel) {
                 return { ok: false, status: 404, message: 'Virtual channel not found' };
             }
 
-            activeVirtualChannel = group;
+            activeVirtualChannel = virtualChannel;
 
-            if (group.timerState === 'capped' || await this.shouldBlockReloadForNearlyCappedSession(video.id, group)) {
+            if (virtualChannel.timerState === 'capped' || await this.shouldBlockReloadForNearlyCappedSession(video.id, virtualChannel)) {
                 playbackBlockedMessage = 'Daily timer limit reached for this virtual channel.';
             }
         }
@@ -155,10 +155,10 @@ export class ViewerWatchService
             now
         });
 
-        const groupCheck = await this.ensureGroupAllowsPlayback(virtualChannelId);
-        if (!groupCheck.ok) {
-            console.info('[viewer-watch.createHistorySession.blocked]', groupCheck);
-            return groupCheck;
+        const virtualChannelCheck = await this.ensureVirtualChannelAllowsPlayback(virtualChannelId);
+        if (!virtualChannelCheck.ok) {
+            console.info('[viewer-watch.createHistorySession.blocked]', virtualChannelCheck);
+            return virtualChannelCheck;
         }
 
         const video = await this.loadVideo(videoYoutubeId);
@@ -197,19 +197,19 @@ export class ViewerWatchService
             });
         }
 
-        const postWriteGroupCheck = await this.ensureGroupAllowsPlayback(virtualChannelId);
-        if (!postWriteGroupCheck.ok) {
-            console.info('[viewer-watch.createHistorySession.post-write-blocked]', postWriteGroupCheck);
-            return postWriteGroupCheck;
+        const postWriteVirtualChannelCheck = await this.ensureVirtualChannelAllowsPlayback(virtualChannelId);
+        if (!postWriteVirtualChannelCheck.ok) {
+            console.info('[viewer-watch.createHistorySession.post-write-blocked]', postWriteVirtualChannelCheck);
+            return postWriteVirtualChannelCheck;
         }
 
         if (virtualChannelId != null) {
-            const postWriteGroup = await this.virtualChannelService.getVirtualChannelById(virtualChannelId);
+            const postWriteVirtualChannel = await this.virtualChannelService.getVirtualChannelById(virtualChannelId);
             console.info('[viewer-watch.createHistorySession.complete]', {
                 virtualChannelId,
-                activeVirtualChannelUsageSeconds: postWriteGroup?.timerUsageSeconds ?? null,
-                activeVirtualChannelRemainingSeconds: postWriteGroup?.timerRemainingSeconds ?? null,
-                activeVirtualChannelState: postWriteGroup?.timerState ?? null
+                activeVirtualChannelUsageSeconds: postWriteVirtualChannel?.timerUsageSeconds ?? null,
+                activeVirtualChannelRemainingSeconds: postWriteVirtualChannel?.timerRemainingSeconds ?? null,
+                activeVirtualChannelState: postWriteVirtualChannel?.timerState ?? null
             });
         }
 
@@ -230,10 +230,10 @@ export class ViewerWatchService
             now
         });
 
-        const groupCheck = await this.ensureGroupAllowsPlayback(virtualChannelId);
-        if (!groupCheck.ok) {
-            console.info('[viewer-watch.updateHistoryProgress.blocked]', groupCheck);
-            return groupCheck;
+        const virtualChannelCheck = await this.ensureVirtualChannelAllowsPlayback(virtualChannelId);
+        if (!virtualChannelCheck.ok) {
+            console.info('[viewer-watch.updateHistoryProgress.blocked]', virtualChannelCheck);
+            return virtualChannelCheck;
         }
 
         const video = await this.loadVideo(videoYoutubeId);
@@ -270,19 +270,19 @@ export class ViewerWatchService
             watchSeconds: Math.floor(watchSeconds)
         });
 
-        const postWriteGroupCheck = await this.ensureGroupAllowsPlayback(virtualChannelId);
-        if (!postWriteGroupCheck.ok) {
-            console.info('[viewer-watch.updateHistoryProgress.post-write-blocked]', postWriteGroupCheck);
-            return postWriteGroupCheck;
+        const postWriteVirtualChannelCheck = await this.ensureVirtualChannelAllowsPlayback(virtualChannelId);
+        if (!postWriteVirtualChannelCheck.ok) {
+            console.info('[viewer-watch.updateHistoryProgress.post-write-blocked]', postWriteVirtualChannelCheck);
+            return postWriteVirtualChannelCheck;
         }
 
         if (virtualChannelId != null) {
-            const postWriteGroup = await this.virtualChannelService.getVirtualChannelById(virtualChannelId);
+            const postWriteVirtualChannel = await this.virtualChannelService.getVirtualChannelById(virtualChannelId);
             console.info('[viewer-watch.updateHistoryProgress.complete]', {
                 virtualChannelId,
-                activeVirtualChannelUsageSeconds: postWriteGroup?.timerUsageSeconds ?? null,
-                activeVirtualChannelRemainingSeconds: postWriteGroup?.timerRemainingSeconds ?? null,
-                activeVirtualChannelState: postWriteGroup?.timerState ?? null
+                activeVirtualChannelUsageSeconds: postWriteVirtualChannel?.timerUsageSeconds ?? null,
+                activeVirtualChannelRemainingSeconds: postWriteVirtualChannel?.timerRemainingSeconds ?? null,
+                activeVirtualChannelState: postWriteVirtualChannel?.timerState ?? null
             });
         }
 
@@ -311,14 +311,14 @@ export class ViewerWatchService
         return await this.viewerVideoReadRepository.getByYoutubeId(videoYoutubeId, this.profileContext.activeProfileId) || null;
     }
 
-    private async ensureGroupAllowsPlayback(virtualChannelId: string | number | null): Promise<ViewerWatchResult>
+    private async ensureVirtualChannelAllowsPlayback(virtualChannelId: string | number | null): Promise<ViewerWatchResult>
     {
         if (virtualChannelId == null) {
             return { ok: true };
         }
 
-        const group = await this.virtualChannelService.getVirtualChannelById(virtualChannelId);
-        if (!group) {
+        const virtualChannel = await this.virtualChannelService.getVirtualChannelById(virtualChannelId);
+        if (!virtualChannel) {
             return {
                 ok: false,
                 status: 404,
@@ -327,7 +327,7 @@ export class ViewerWatchService
             };
         }
 
-        if (group.timerState === 'capped') {
+        if (virtualChannel.timerState === 'capped') {
             return {
                 ok: false,
                 status: 409,
@@ -341,15 +341,15 @@ export class ViewerWatchService
 
     private async shouldBlockReloadForNearlyCappedSession(
         videoId: string | number,
-        group: ViewerVirtualChannel,
+        virtualChannel: ViewerVirtualChannel,
         now = Date.now()
     ): Promise<boolean>
     {
-        if (group.dailyTimerMax == null || group.timerState === 'capped') {
+        if (virtualChannel.dailyTimerMax == null || virtualChannel.timerState === 'capped') {
             return false;
         }
 
-        if ((group.timerRemainingSeconds ?? 0) > 1) {
+        if ((virtualChannel.timerRemainingSeconds ?? 0) > 1) {
             return false;
         }
 

@@ -62,7 +62,7 @@ export type ViewerPageData = {
     videos: ViewerVideo[];
     totalCount: number;
     channels: ViewerChannel[];
-    groups: ViewerVirtualChannel[];
+    virtualChannels: ViewerVirtualChannel[];
     activeVirtualChannel: ViewerVirtualChannel | null;
     profileId: string | number;
     profileKey: string;

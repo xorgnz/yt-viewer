@@ -53,16 +53,16 @@ describe('viewer timer services', () => {
             () => Date.UTC(2026, 4, 2, 15, 0, 0)
         );
 
-        const groups = await service.loadVirtualChannels();
+        const virtualChannels = await service.loadVirtualChannels();
 
-        expect(groups).toHaveLength(2);
-        expect(groups[0]).toMatchObject({
+        expect(virtualChannels).toHaveLength(2);
+        expect(virtualChannels[0]).toMatchObject({
             id: '1',
             timerState: 'unlimited',
             timerUsageSeconds: 0,
             timerRemainingSeconds: null
         });
-        expect(groups[1]).toMatchObject({
+        expect(virtualChannels[1]).toMatchObject({
             id: '2',
             timerState: 'capped',
             timerUsageSeconds: 60,
@@ -298,9 +298,9 @@ describe('viewer timer services', () => {
             () => Date.UTC(2026, 4, 2, 15, 0, 0)
         );
 
-        const group = await service.getVirtualChannelById('2');
+        const virtualChannel = await service.getVirtualChannelById('2');
 
-        expect(group).toMatchObject({
+        expect(virtualChannel).toMatchObject({
             id: '2',
             dailyTimerMax: 120,
             timerState: 'available',

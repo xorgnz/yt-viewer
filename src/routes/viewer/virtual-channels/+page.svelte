@@ -2,7 +2,7 @@
     import type { ViewerVirtualChannel } from '$lib/viewer/types';
 
     export let data: {
-        groups: ViewerVirtualChannel[];
+        virtualChannels: ViewerVirtualChannel[];
         profileKey: string;
     };
 </script>
@@ -10,18 +10,18 @@
 <div class="page stack">
     <section class="panel">
         <h1>Choose a Virtual Channel</h1>
-        {#if data.groups.length === 0}
+        {#if data.virtualChannels.length === 0}
             <p class="muted">No virtual channels yet. Ask an admin to create some in Admin -> Virtual Channels.</p>
         {:else}
             <div class="grid">
-                {#each data.groups as g}
+                {#each data.virtualChannels as g}
                     {#if g.timerState === 'capped'}
-                        <div class="group group-capped" aria-disabled="true">
+                        <div class="virtual-channel-card virtual-channel-card-capped" aria-disabled="true">
                             <div class="name">{g.name}</div>
                             <div class="hint">Daily timer limit reached</div>
                         </div>
                     {:else}
-                        <a class="group" href={`/viewer?${new URLSearchParams({ virtualChannelId: String(g.id) }).toString()}`}>
+                        <a class="virtual-channel-card" href={`/viewer?${new URLSearchParams({ virtualChannelId: String(g.id) }).toString()}`}>
                             <div class="name">{g.name}</div>
                             <div class="hint">View videos from this virtual channel</div>
                         </a>
@@ -39,7 +39,7 @@
         gap: 0.9rem;
     }
 
-    .group {
+    .virtual-channel-card {
         display: flex;
         flex-direction: column;
         gap: 0.25rem;
@@ -52,20 +52,20 @@
         transition: transform 0.1s ease, background 0.15s ease, border-color 0.15s ease;
     }
 
-    .group.group-capped {
+    .virtual-channel-card.virtual-channel-card-capped {
         opacity: 0.55;
         cursor: default;
         box-shadow: none;
     }
 
-    .group:hover {
+    .virtual-channel-card:hover {
         transform: translateY(-1px);
         background: var(--bg-elevated);
         border-color: var(--border-strong);
         color: var(--text);
     }
 
-    .group.group-capped:hover {
+    .virtual-channel-card.virtual-channel-card-capped:hover {
         transform: none;
         background: var(--bg-panel);
         border-color: var(--border);
