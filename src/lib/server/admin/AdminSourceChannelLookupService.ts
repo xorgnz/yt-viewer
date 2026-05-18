@@ -1,12 +1,33 @@
 import { AdminSourceChannelYouTubeCoordinator } from '$lib/server/admin/AdminSourceChannelYouTubeCoordinator';
 import { AdminYouTubeClientProvider } from '$lib/server/admin/AdminYouTubeClientProvider';
-import type {
-    AdminSourceChannelLookupData,
-    AdminSourceChannelServiceError,
-    AdminSourceChannelServiceResult,
-    LookupAdminSourceChannelInput
-} from '$lib/server/admin/AdminSourceChannelTypes';
 import { YouTubeApiError } from '$lib/youtube/youTubeClient';
+
+interface AdminSourceChannelServiceError<TCode extends string = string>
+{
+    code: TCode;
+    status: number;
+    message: string;
+}
+
+type AdminSourceChannelServiceResult<
+    TSuccess,
+    TError extends AdminSourceChannelServiceError = AdminSourceChannelServiceError
+> = {
+    ok: true;
+    data: TSuccess;
+} | {
+    ok: false;
+    error: TError;
+};
+
+interface AdminSourceChannelLookupData
+{
+    youtube_id: string;
+    title: string;
+    description: string;
+    thumbnail_url: string | null;
+    published_at: number | null;
+}
 
 export class AdminSourceChannelLookupService
 {
@@ -22,7 +43,7 @@ export class AdminSourceChannelLookupService
         this.youTubeCoordinator = youTubeCoordinator;
     }
 
-    async lookupSourceChannel(input: LookupAdminSourceChannelInput): Promise<AdminSourceChannelServiceResult<
+    async lookupSourceChannel(youtubeInput: string): Promise<AdminSourceChannelServiceResult<
         AdminSourceChannelLookupData,
         AdminSourceChannelServiceError
     >>
@@ -39,7 +60,7 @@ export class AdminSourceChannelLookupService
         }
 
         try {
-            const resolved = await this.youTubeCoordinator.resolveChannelReference(client, input.youtubeInput);
+            const resolved = await this.youTubeCoordinator.resolveChannelReference(client, youtubeInput);
             if (!resolved.channelId) {
                 return this.buildError(
                     'source_channel_not_found',

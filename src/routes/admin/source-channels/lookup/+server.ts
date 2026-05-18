@@ -10,7 +10,7 @@ export const GET: RequestHandler = async ({ url }) =>
 
     const result = await AdminSourceChannelServiceContext
         .resolveLookupService()
-        .lookupSourceChannel({ youtubeInput: youtubeId });
+        .lookupSourceChannel(youtubeId);
     if (!result.ok) {
         return new Response(
             JSON.stringify({ ok: false, error: result.error.message }),

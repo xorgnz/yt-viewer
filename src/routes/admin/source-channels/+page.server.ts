@@ -34,20 +34,14 @@ export const actions: Actions = {
         }
 
         const result = await withPageService((pageService) => {
-            return pageService.createSourceChannel({
-                youtubeInput,
-                title,
-                description,
-                thumbnail_url,
-                published_at
-            });
+            return pageService.createSourceChannel(youtubeInput, title, description, thumbnail_url, published_at);
         });
 
         if (!result.ok) {
             return fail(result.error.status, { message: result.error.message });
         }
 
-        throw redirect(303, result.data.redirectTo);
+        throw redirect(303, result.data);
     },
 
     update: async ({ request }) => {
@@ -64,20 +58,14 @@ export const actions: Actions = {
         }
 
         const result = await withPageService((pageService) => {
-            return pageService.updateSourceChannel({
-                id,
-                title,
-                description,
-                thumbnail_url,
-                published_at
-            });
+            return pageService.updateSourceChannel(id, title, description, thumbnail_url, published_at);
         });
 
         if (!result.ok) {
             return fail(result.error.status, { message: result.error.message });
         }
 
-        throw redirect(303, result.data.redirectTo);
+        throw redirect(303, result.data);
     },
 
     delete: async ({ request }) => {
@@ -86,10 +74,10 @@ export const actions: Actions = {
         if (id === null) return fail(400, { message: 'id is required.' });
 
         const result = await withPageService((pageService) => {
-            return pageService.deleteSourceChannel({ id });
+            return pageService.deleteSourceChannel(id);
         });
 
-        throw redirect(303, result.redirectTo);
+        throw redirect(303, result);
     },
 
     refresh: async ({ request }) => {
@@ -98,14 +86,14 @@ export const actions: Actions = {
         if (id === null) return fail(400, { message: 'id is required.' });
 
         const result = await withPageService((pageService) => {
-            return pageService.refreshSourceChannel({ id });
+            return pageService.refreshSourceChannel(id);
         });
 
         if (!result.ok) {
             return fail(result.error.status, { message: result.error.message });
         }
 
-        throw redirect(303, result.data.redirectTo);
+        throw redirect(303, result.data);
     }
 };
 // apply-patch-anchor - do not delete

@@ -20,14 +20,14 @@ export const actions: Actions = {
 
         const result = await ServerDatabaseContext.run(async ({ db }) => {
             const serviceContext = AdminVirtualChannelServiceContext.resolve(db);
-            return await serviceContext.indexService.createVirtualChannel({ name });
+            return await serviceContext.indexService.createVirtualChannel(name);
         });
 
         if (!result.ok) {
             return fail(result.error.status, { message: result.error.message });
         }
 
-        throw redirect(303, result.data.redirectTo);
+        throw redirect(303, result.data);
     },
 
     rename: async ({ request }) => {
@@ -38,14 +38,14 @@ export const actions: Actions = {
 
         const result = await ServerDatabaseContext.run(async ({ db }) => {
             const serviceContext = AdminVirtualChannelServiceContext.resolve(db);
-            return await serviceContext.indexService.renameVirtualChannel({ id, name });
+            return await serviceContext.indexService.renameVirtualChannel(id, name);
         });
 
         if (!result.ok) {
             return fail(result.error.status, { message: result.error.message });
         }
 
-        throw redirect(303, result.data.redirectTo);
+        throw redirect(303, result.data);
     },
 
     delete: async ({ request }) => {
@@ -55,14 +55,14 @@ export const actions: Actions = {
 
         const result = await ServerDatabaseContext.run(async ({ db }) => {
             const serviceContext = AdminVirtualChannelServiceContext.resolve(db);
-            return await serviceContext.indexService.deleteVirtualChannel({ id });
+            return await serviceContext.indexService.deleteVirtualChannel(id);
         });
 
         if (!result.ok) {
             return fail(result.error.status, { message: result.error.message });
         }
 
-        throw redirect(303, result.data.redirectTo);
+        throw redirect(303, result.data);
     },
 
     addAssociationInline: async ({ request }) => {
@@ -80,10 +80,7 @@ export const actions: Actions = {
 
         return ServerDatabaseContext.run(async ({ db }) => {
             const serviceContext = AdminVirtualChannelServiceContext.resolve(db);
-            const result = await serviceContext.indexService.addInlineAssociation({
-                virtualChannelId,
-                sourceChannelId
-            });
+            const result = await serviceContext.indexService.addInlineAssociation(virtualChannelId, sourceChannelId);
 
             if (!result.ok) {
                 return fail(result.error.status, {
@@ -111,10 +108,7 @@ export const actions: Actions = {
 
         return ServerDatabaseContext.run(async ({ db }) => {
             const serviceContext = AdminVirtualChannelServiceContext.resolve(db);
-            const result = await serviceContext.indexService.removeInlineAssociation({
-                virtualChannelId,
-                sourceChannelId
-            });
+            const result = await serviceContext.indexService.removeInlineAssociation(virtualChannelId, sourceChannelId);
 
             if (!result.ok) {
                 return fail(result.error.status, {

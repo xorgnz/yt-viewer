@@ -2,22 +2,36 @@ import type { SourceChannelDAO } from '$lib/daos/sourceChannelDAO';
 import { SourceChannel } from '$lib/entities/sourceChannel';
 import { AdminSourceChannelYouTubeCoordinator } from '$lib/server/admin/AdminSourceChannelYouTubeCoordinator';
 import { AdminYouTubeClientProvider } from '$lib/server/admin/AdminYouTubeClientProvider';
-import type {
-    AdminSourceChannelPageData,
-    AdminSourceChannelRedirect,
-    AdminSourceChannelServiceError,
-    AdminSourceChannelServiceResult,
-    CreateAdminSourceChannelInput,
-    DeleteAdminSourceChannelInput,
-    RefreshAdminSourceChannelInput,
-    UpdateAdminSourceChannelInput
-} from '$lib/server/admin/AdminSourceChannelTypes';
+import type { SourceChannelWithVideoStats } from '$lib/daos/sourceChannelDAO';
 import { YouTubeApiError } from '$lib/youtube/youTubeClient';
 
 type AdminSourceChannelDAO = Pick<
     SourceChannelDAO,
     'create' | 'get' | 'listWithVideoStats' | 'markRefreshed' | 'remove' | 'update'
 >;
+
+interface AdminSourceChannelServiceError<TCode extends string = string>
+{
+    code: TCode;
+    status: number;
+    message: string;
+}
+
+type AdminSourceChannelServiceResult<
+    TSuccess,
+    TError extends AdminSourceChannelServiceError = AdminSourceChannelServiceError
+> = {
+    ok: true;
+    data: TSuccess;
+} | {
+    ok: false;
+    error: TError;
+};
+
+interface AdminSourceChannelPageData
+{
+    channels: SourceChannelWithVideoStats[];
+}
 
 export class AdminSourceChannelPageService
 {
@@ -48,8 +62,14 @@ export class AdminSourceChannelPageService
         };
     }
 
-    async createSourceChannel(input: CreateAdminSourceChannelInput): Promise<AdminSourceChannelServiceResult<
-        AdminSourceChannelRedirect,
+    async createSourceChannel(
+        youtubeInput: string,
+        title: string,
+        description: string,
+        thumbnailUrl: string | null,
+        publishedAt: number | null
+    ): Promise<AdminSourceChannelServiceResult<
+        string,
         AdminSourceChannelServiceError
     >>
     {
@@ -65,7 +85,7 @@ export class AdminSourceChannelPageService
         }
 
         try {
-            const resolved = await this.youTubeCoordinator.resolveChannelReference(client, input.youtubeInput);
+            const resolved = await this.youTubeCoordinator.resolveChannelReference(client, youtubeInput);
             if (!resolved.channelId) {
                 return this.buildError(
                     'youtube_reference_invalid',
@@ -82,10 +102,10 @@ export class AdminSourceChannelPageService
             await this.sourceChannelDAO.create(new SourceChannel({
                 id: resolved.channelId,
                 youtube_id: resolved.channelId,
-                title: input.title || snippet.title || '',
-                description: input.description || snippet.description || '',
-                thumbnail_url: input.thumbnail_url || metadataThumbnailUrl,
-                published_at: input.published_at ?? (
+                title: title || snippet.title || '',
+                description: description || snippet.description || '',
+                thumbnail_url: thumbnailUrl || metadataThumbnailUrl,
+                published_at: publishedAt ?? (
                     Number.isFinite(metadataPublishedAt as number) ? (metadataPublishedAt as number) : null
                 ),
                 last_refreshed_at: null
@@ -93,7 +113,7 @@ export class AdminSourceChannelPageService
 
             return {
                 ok: true,
-                data: { redirectTo: AdminSourceChannelPageService.INDEX_PATH }
+                data: AdminSourceChannelPageService.INDEX_PATH
             };
         } catch (error: unknown) {
             return this.mapYouTubeRequestFailure(
@@ -103,43 +123,47 @@ export class AdminSourceChannelPageService
         }
     }
 
-    async updateSourceChannel(input: UpdateAdminSourceChannelInput): Promise<AdminSourceChannelServiceResult<
-        AdminSourceChannelRedirect,
+    async updateSourceChannel(
+        id: number,
+        title: string,
+        description: string,
+        thumbnailUrl: string | null,
+        publishedAt: number | null
+    ): Promise<AdminSourceChannelServiceResult<
+        string,
         AdminSourceChannelServiceError<'source_channel_not_found'>
     >>
     {
-        const existing = await this.sourceChannelDAO.get(input.id);
+        const existing = await this.sourceChannelDAO.get(id);
         if (!existing) {
             return this.buildError('source_channel_not_found', 404, 'SourceChannel not found.');
         }
 
         await this.sourceChannelDAO.update(existing.with({
-            title: input.title,
-            description: input.description,
-            thumbnailUrl: input.thumbnail_url,
-            publishedAt: input.published_at
+            title,
+            description,
+            thumbnailUrl,
+            publishedAt
         }));
 
         return {
             ok: true,
-            data: { redirectTo: AdminSourceChannelPageService.INDEX_PATH }
+            data: AdminSourceChannelPageService.INDEX_PATH
         };
     }
 
-    async deleteSourceChannel(input: DeleteAdminSourceChannelInput): Promise<AdminSourceChannelRedirect>
+    async deleteSourceChannel(id: number): Promise<string>
     {
-        await this.sourceChannelDAO.remove(input.id);
-        return {
-            redirectTo: AdminSourceChannelPageService.INDEX_PATH
-        };
+        await this.sourceChannelDAO.remove(id);
+        return AdminSourceChannelPageService.INDEX_PATH;
     }
 
-    async refreshSourceChannel(input: RefreshAdminSourceChannelInput): Promise<AdminSourceChannelServiceResult<
-        AdminSourceChannelRedirect,
+    async refreshSourceChannel(id: number): Promise<AdminSourceChannelServiceResult<
+        string,
         AdminSourceChannelServiceError
     >>
     {
-        const existing = await this.sourceChannelDAO.get(input.id);
+        const existing = await this.sourceChannelDAO.get(id);
         if (!existing) {
             return this.buildError('source_channel_not_found', 404, 'SourceChannel not found.');
         }
@@ -170,10 +194,10 @@ export class AdminSourceChannelPageService
                 );
             }
 
-            await this.sourceChannelDAO.markRefreshed(input.id, Date.now());
+            await this.sourceChannelDAO.markRefreshed(id, Date.now());
             return {
                 ok: true,
-                data: { redirectTo: AdminSourceChannelPageService.INDEX_PATH }
+                data: AdminSourceChannelPageService.INDEX_PATH
             };
         } catch (error: unknown) {
             console.error('Refresh failed for channel', existing.youtubeId, error);

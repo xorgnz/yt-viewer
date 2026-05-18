@@ -6,8 +6,10 @@ import type { VirtualChannelDAO } from '$lib/daos/virtualChannelDAO';
 import { VirtualChannelAssignmentMode, type VirtualChannelAssignment } from '$lib/entities/virtualChannelAssignment';
 import { VirtualChannelAssignmentVideoReviewState as ReviewState, type VirtualChannelAssignmentVideoReviewState } from '$lib/entities/virtualChannelAssignmentVideoSelection';
 import type { SourceChannel } from '$lib/entities/sourceChannel';
-import { VideoLengthClassification } from '$lib/entities/video';
-import { AdminReviewStateFilter as ReviewStateFilter, AdminVideoTypeFilter as VideoTypeFilter, type AdminAssociatedSourceChannelView, type AdminReviewStateFilter, type AdminVideoTypeFilter, type AdminVirtualChannelManagePageData, type AdminVirtualChannelRedirect, type AdminVirtualChannelServiceError, type AdminVirtualChannelServiceResult } from '$lib/server/admin/AdminVirtualChannelTypes';
+import { VideoLengthClassification, type Video } from '$lib/entities/video';
+import type { VirtualChannel } from '$lib/entities/virtualChannel';
+import { AdminReviewStateFilter as ReviewStateFilter, AdminVideoTypeFilter as VideoTypeFilter } from '$lib/admin/AdminVirtualChannelFilters';
+import type { AdminReviewStateFilter, AdminVideoTypeFilter } from '$lib/admin/AdminVirtualChannelFilters';
 
 type AdminVirtualChannelDAO = Pick<VirtualChannelDAO, 'get' | 'updateDailyTimerMax'>;
 type AdminAssignmentDAO = Pick<AssignmentDAO, 'add' | 'get' | 'listForVirtualChannel' | 'remove' | 'updateMode'>;
@@ -18,53 +20,54 @@ type AdminSelectionDAO = Pick<
     'listForAssignment' | 'setReviewState'
 >;
 
-export interface LoadAdminVirtualChannelPageInput
+interface AdminVirtualChannelServiceError<TCode extends string = string>
 {
-    virtualChannelId: string | number;
-    searchParams: URLSearchParams;
+    code: TCode;
+    status: number;
+    message: string;
 }
 
-export interface AddAdminAssociationInput
-{
-    virtualChannelId: string | number;
-    sourceChannelId: string | number;
-    mode: VirtualChannelAssignmentMode;
-}
+type AdminVirtualChannelServiceResult<
+    TSuccess,
+    TError extends AdminVirtualChannelServiceError = AdminVirtualChannelServiceError
+> = {
+    ok: true;
+    data: TSuccess;
+} | {
+    ok: false;
+    error: TError;
+};
 
-export interface UpdateAdminAssociationModeInput
+interface AdminSelectedOnlyVideoViewModel
 {
-    virtualChannelId: string | number;
-    assignmentId: string | number;
-    mode: VirtualChannelAssignmentMode;
-}
-
-export interface RemoveAdminAssociationInput
-{
-    virtualChannelId: string | number;
-    assignmentId: string | number;
-}
-
-export interface SetAdminVideoReviewStateInput
-{
-    virtualChannelId: string | number;
-    assignmentId: string | number;
-    videoId: string | number;
+    video: Video;
     reviewState: VirtualChannelAssignmentVideoReviewState;
 }
 
-export interface BulkUpdateAdminVideoReviewStateInput
+interface AdminSelectedOnlyCounts
 {
-    virtualChannelId: string | number;
-    assignmentId: string | number;
-    videoIds: Array<string | number>;
-    reviewState: VirtualChannelAssignmentVideoReviewState;
-    returnQuery: string;
+    included: number;
+    ignored: number;
+    notYetReviewed: number;
 }
 
-export interface UpdateAdminVirtualChannelTimerInput
+interface AdminAssociatedSourceChannelView
 {
-    virtualChannelId: string | number;
-    dailyTimerMax: number | null;
+    assignment: VirtualChannelAssignment;
+    sourceChannel: SourceChannel | null;
+    automaticVideos: Video[];
+    selectedOnlyVideos: AdminSelectedOnlyVideoViewModel[];
+    selectedOnlyCounts: AdminSelectedOnlyCounts | null;
+    reviewStateFilter: AdminReviewStateFilter;
+    regexFilter: string;
+    videoTypeFilter: AdminVideoTypeFilter;
+}
+
+interface AdminVirtualChannelManagePageData
+{
+    virtualChannel: VirtualChannel;
+    associatedSourceChannels: AdminAssociatedSourceChannelView[];
+    availableSourceChannels: SourceChannel[];
 }
 
 export class AdminVirtualChannelManageService
@@ -90,12 +93,15 @@ export class AdminVirtualChannelManageService
         this.selectionDAO = selectionDAO;
     }
 
-    async loadPageData(input: LoadAdminVirtualChannelPageInput): Promise<AdminVirtualChannelServiceResult<
+    async loadPageData(
+        virtualChannelId: string | number,
+        searchParams: URLSearchParams
+    ): Promise<AdminVirtualChannelServiceResult<
         AdminVirtualChannelManagePageData,
         AdminVirtualChannelServiceError<'virtual_channel_not_found'>
     >>
     {
-        const virtualChannel = await this.virtualChannelDAO.get(input.virtualChannelId);
+        const virtualChannel = await this.virtualChannelDAO.get(virtualChannelId);
         if (!virtualChannel) {
             return this.buildError('virtual_channel_not_found', 404, 'Virtual channel not found');
         }
@@ -103,11 +109,11 @@ export class AdminVirtualChannelManageService
         // Load imported source channels and existing assignments for the page shell.
         const availableSourceChannels = await this.sourceChannelDAO.list();
         const sourceChannelsById = new Map(availableSourceChannels.map((channel) => [channel.id, channel]));
-        const assignments = await this.assignmentDAO.listForVirtualChannel(input.virtualChannelId);
+        const assignments = await this.assignmentDAO.listForVirtualChannel(virtualChannelId);
         const associatedSourceChannels = await Promise.all(assignments.map((assignment) => this.buildAssociatedSourceChannelView(
             assignment,
             sourceChannelsById,
-            input.searchParams
+            searchParams
         )));
 
         return {
@@ -120,8 +126,12 @@ export class AdminVirtualChannelManageService
         };
     }
 
-    async addAssociation(input: AddAdminAssociationInput): Promise<AdminVirtualChannelServiceResult<
-        AdminVirtualChannelRedirect,
+    async addAssociation(
+        virtualChannelId: string | number,
+        sourceChannelId: string | number,
+        mode: VirtualChannelAssignmentMode
+    ): Promise<AdminVirtualChannelServiceResult<
+        string,
         AdminVirtualChannelServiceError<
             'virtual_channel_not_found' |
             'source_channel_not_found' |
@@ -130,18 +140,18 @@ export class AdminVirtualChannelManageService
     >>
     {
         try {
-            if (!await this.virtualChannelDAO.get(input.virtualChannelId)) {
+            if (!await this.virtualChannelDAO.get(virtualChannelId)) {
                 return this.buildError('virtual_channel_not_found', 404, 'Virtual channel not found');
             }
 
-            if (!await this.sourceChannelDAO.get(input.sourceChannelId)) {
+            if (!await this.sourceChannelDAO.get(sourceChannelId)) {
                 return this.buildError('source_channel_not_found', 404, 'Source channel not found.');
             }
 
-            await this.assignmentDAO.add(input.sourceChannelId, input.virtualChannelId, input.mode);
+            await this.assignmentDAO.add(sourceChannelId, virtualChannelId, mode);
             return {
                 ok: true,
-                data: { redirectTo: this.buildManagePath(input.virtualChannelId) }
+                data: this.buildManagePath(virtualChannelId)
             };
         } catch (error: unknown) {
             return this.buildError(
@@ -152,42 +162,54 @@ export class AdminVirtualChannelManageService
         }
     }
 
-    async updateAssociationMode(input: UpdateAdminAssociationModeInput): Promise<AdminVirtualChannelServiceResult<
-        AdminVirtualChannelRedirect,
+    async updateAssociationMode(
+        virtualChannelId: string | number,
+        assignmentId: string | number,
+        mode: VirtualChannelAssignmentMode
+    ): Promise<AdminVirtualChannelServiceResult<
+        string,
         AdminVirtualChannelServiceError<'assignment_not_found'>
     >>
     {
-        const assignment = await this.assignmentDAO.get(input.assignmentId);
-        if (!assignment || assignment.virtualChannelId !== input.virtualChannelId) {
+        const assignment = await this.assignmentDAO.get(assignmentId);
+        if (!assignment || assignment.virtualChannelId !== virtualChannelId) {
             return this.buildError('assignment_not_found', 404, 'Assignment not found.');
         }
 
-        await this.assignmentDAO.updateMode(input.assignmentId, input.mode);
+        await this.assignmentDAO.updateMode(assignmentId, mode);
         return {
             ok: true,
-            data: { redirectTo: this.buildManagePath(input.virtualChannelId) }
+            data: this.buildManagePath(virtualChannelId)
         };
     }
 
-    async removeAssociation(input: RemoveAdminAssociationInput): Promise<AdminVirtualChannelServiceResult<
-        AdminVirtualChannelRedirect,
+    async removeAssociation(
+        virtualChannelId: string | number,
+        assignmentId: string | number
+    ): Promise<AdminVirtualChannelServiceResult<
+        string,
         AdminVirtualChannelServiceError<'assignment_not_found'>
     >>
     {
-        const assignment = await this.assignmentDAO.get(input.assignmentId);
-        if (!assignment || assignment.virtualChannelId !== input.virtualChannelId) {
+        const assignment = await this.assignmentDAO.get(assignmentId);
+        if (!assignment || assignment.virtualChannelId !== virtualChannelId) {
             return this.buildError('assignment_not_found', 404, 'Assignment not found.');
         }
 
         await this.assignmentDAO.remove(assignment.sourceChannelId, assignment.virtualChannelId);
         return {
             ok: true,
-            data: { redirectTo: this.buildManagePath(input.virtualChannelId) }
+            data: this.buildManagePath(virtualChannelId)
         };
     }
 
-    async setVideoReviewState(input: SetAdminVideoReviewStateInput): Promise<AdminVirtualChannelServiceResult<
-        AdminVirtualChannelRedirect,
+    async setVideoReviewState(
+        virtualChannelId: string | number,
+        assignmentId: string | number,
+        videoId: string | number,
+        reviewState: VirtualChannelAssignmentVideoReviewState
+    ): Promise<AdminVirtualChannelServiceResult<
+        string,
         AdminVirtualChannelServiceError<
             'assignment_not_found' |
             'assignment_mode_invalid' |
@@ -195,8 +217,8 @@ export class AdminVirtualChannelManageService
         >
     >>
     {
-        const assignment = await this.assignmentDAO.get(input.assignmentId);
-        if (!assignment || assignment.virtualChannelId !== input.virtualChannelId) {
+        const assignment = await this.assignmentDAO.get(assignmentId);
+        if (!assignment || assignment.virtualChannelId !== virtualChannelId) {
             return this.buildError('assignment_not_found', 404, 'Assignment not found.');
         }
 
@@ -208,20 +230,26 @@ export class AdminVirtualChannelManageService
             );
         }
 
-        const video = await this.videoDAO.get(input.videoId);
+        const video = await this.videoDAO.get(videoId);
         if (!video || video.channel_id !== assignment.sourceChannelId) {
             return this.buildError('video_not_found', 404, 'Video not found for this assignment.');
         }
 
-        await this.selectionDAO.setReviewState(input.assignmentId, input.videoId, input.reviewState);
+        await this.selectionDAO.setReviewState(assignmentId, videoId, reviewState);
         return {
             ok: true,
-            data: { redirectTo: this.buildManagePath(input.virtualChannelId) }
+            data: this.buildManagePath(virtualChannelId)
         };
     }
 
-    async bulkUpdateVideoReviewState(input: BulkUpdateAdminVideoReviewStateInput): Promise<AdminVirtualChannelServiceResult<
-        AdminVirtualChannelRedirect,
+    async bulkUpdateVideoReviewState(
+        virtualChannelId: string | number,
+        assignmentId: string | number,
+        videoIds: Array<string | number>,
+        reviewState: VirtualChannelAssignmentVideoReviewState,
+        returnQuery: string
+    ): Promise<AdminVirtualChannelServiceResult<
+        string,
         AdminVirtualChannelServiceError<
             'assignment_not_found' |
             'assignment_mode_invalid' |
@@ -229,8 +257,8 @@ export class AdminVirtualChannelManageService
         >
     >>
     {
-        const assignment = await this.assignmentDAO.get(input.assignmentId);
-        if (!assignment || assignment.virtualChannelId !== input.virtualChannelId) {
+        const assignment = await this.assignmentDAO.get(assignmentId);
+        if (!assignment || assignment.virtualChannelId !== virtualChannelId) {
             return this.buildError('assignment_not_found', 404, 'Assignment not found.');
         }
 
@@ -242,39 +270,40 @@ export class AdminVirtualChannelManageService
             );
         }
 
-        for (const videoId of input.videoIds) {
+        for (const videoId of videoIds) {
             const video = await this.videoDAO.get(videoId);
             if (!video || video.channel_id !== assignment.sourceChannelId) {
                 return this.buildError('video_not_found', 404, `Video ${videoId} is not available for this assignment.`);
             }
         }
 
-        for (const videoId of input.videoIds) {
-            await this.selectionDAO.setReviewState(input.assignmentId, videoId, input.reviewState);
+        for (const videoId of videoIds) {
+            await this.selectionDAO.setReviewState(assignmentId, videoId, reviewState);
         }
 
         return {
             ok: true,
-            data: {
-                redirectTo: this.buildManagePath(input.virtualChannelId, input.returnQuery)
-            }
+            data: this.buildManagePath(virtualChannelId, returnQuery)
         };
     }
 
-    async updateTimerSettings(input: UpdateAdminVirtualChannelTimerInput): Promise<AdminVirtualChannelServiceResult<
-        AdminVirtualChannelRedirect,
+    async updateTimerSettings(
+        virtualChannelId: string | number,
+        dailyTimerMax: number | null
+    ): Promise<AdminVirtualChannelServiceResult<
+        string,
         AdminVirtualChannelServiceError<'virtual_channel_not_found'>
     >>
     {
-        if (!await this.virtualChannelDAO.get(input.virtualChannelId)) {
+        if (!await this.virtualChannelDAO.get(virtualChannelId)) {
             return this.buildError('virtual_channel_not_found', 404, 'Virtual channel not found');
         }
 
-        await this.virtualChannelDAO.updateDailyTimerMax(input.virtualChannelId, input.dailyTimerMax);
+        await this.virtualChannelDAO.updateDailyTimerMax(virtualChannelId, dailyTimerMax);
 
         return {
             ok: true,
-            data: { redirectTo: this.buildManagePath(input.virtualChannelId) }
+            data: this.buildManagePath(virtualChannelId)
         };
     }
 

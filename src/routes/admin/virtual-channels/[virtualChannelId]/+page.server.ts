@@ -18,10 +18,10 @@ export const load: PageServerLoad = async ({ params, url }) =>
 
     return ServerDatabaseContext.run(async ({ db }) => {
         const serviceContext = AdminVirtualChannelServiceContext.resolve(db);
-        const result = await serviceContext.manageService.loadPageData({
+        const result = await serviceContext.manageService.loadPageData(
             virtualChannelId,
-            searchParams: url.searchParams
-        });
+            url.searchParams
+        );
 
         if (!result.ok) {
             throw error(result.error.status, result.error.message);
@@ -87,31 +87,28 @@ export const actions: Actions = {
 
             return ServerDatabaseContext.run(async ({ db }) => {
                 const serviceContext = AdminVirtualChannelServiceContext.resolve(db);
-                const result = await serviceContext.manageService.updateTimerSettings({
+                const result = await serviceContext.manageService.updateTimerSettings(
                     virtualChannelId,
-                    dailyTimerMax: parsedDailyTimerMax
-                });
+                    parsedDailyTimerMax
+                );
 
                 if (!result.ok) {
                     throw error(result.error.status, result.error.message);
                 }
 
-                throw redirect(303, result.data.redirectTo);
+                throw redirect(303, result.data);
             });
         }
 
         return ServerDatabaseContext.run(async ({ db }) => {
             const serviceContext = AdminVirtualChannelServiceContext.resolve(db);
-            const result = await serviceContext.manageService.updateTimerSettings({
-                virtualChannelId,
-                dailyTimerMax: null
-            });
+            const result = await serviceContext.manageService.updateTimerSettings(virtualChannelId, null);
 
             if (!result.ok) {
                 throw error(result.error.status, result.error.message);
             }
 
-            throw redirect(303, result.data.redirectTo);
+            throw redirect(303, result.data);
         });
     },
 
@@ -132,11 +129,11 @@ export const actions: Actions = {
 
         return ServerDatabaseContext.run(async ({ db }) => {
             const serviceContext = AdminVirtualChannelServiceContext.resolve(db);
-            const result = await serviceContext.manageService.addAssociation({
+            const result = await serviceContext.manageService.addAssociation(
                 virtualChannelId,
                 sourceChannelId,
                 mode
-            });
+            );
 
             if (!result.ok) {
                 if (result.error.code === 'virtual_channel_not_found') {
@@ -146,7 +143,7 @@ export const actions: Actions = {
                 return fail(result.error.status, { message: result.error.message });
             }
 
-            throw redirect(303, result.data.redirectTo);
+            throw redirect(303, result.data);
         });
     },
 
@@ -167,17 +164,17 @@ export const actions: Actions = {
 
         return ServerDatabaseContext.run(async ({ db }) => {
             const serviceContext = AdminVirtualChannelServiceContext.resolve(db);
-            const result = await serviceContext.manageService.updateAssociationMode({
+            const result = await serviceContext.manageService.updateAssociationMode(
                 virtualChannelId,
                 assignmentId,
                 mode
-            });
+            );
 
             if (!result.ok) {
                 return fail(result.error.status, { message: result.error.message });
             }
 
-            throw redirect(303, result.data.redirectTo);
+            throw redirect(303, result.data);
         });
     },
 
@@ -197,16 +194,16 @@ export const actions: Actions = {
 
         return ServerDatabaseContext.run(async ({ db }) => {
             const serviceContext = AdminVirtualChannelServiceContext.resolve(db);
-            const result = await serviceContext.manageService.removeAssociation({
+            const result = await serviceContext.manageService.removeAssociation(
                 virtualChannelId,
                 assignmentId
-            });
+            );
 
             if (!result.ok) {
                 return fail(result.error.status, { message: result.error.message });
             }
 
-            throw redirect(303, result.data.redirectTo);
+            throw redirect(303, result.data);
         });
     },
 
@@ -228,18 +225,18 @@ export const actions: Actions = {
 
         return ServerDatabaseContext.run(async ({ db }) => {
             const serviceContext = AdminVirtualChannelServiceContext.resolve(db);
-            const result = await serviceContext.manageService.setVideoReviewState({
+            const result = await serviceContext.manageService.setVideoReviewState(
                 virtualChannelId,
                 assignmentId,
                 videoId,
                 reviewState
-            });
+            );
 
             if (!result.ok) {
                 return fail(result.error.status, { message: result.error.message });
             }
 
-            throw redirect(303, result.data.redirectTo);
+            throw redirect(303, result.data);
         });
     },
 
@@ -269,19 +266,19 @@ export const actions: Actions = {
 
         return ServerDatabaseContext.run(async ({ db }) => {
             const serviceContext = AdminVirtualChannelServiceContext.resolve(db);
-            const result = await serviceContext.manageService.bulkUpdateVideoReviewState({
+            const result = await serviceContext.manageService.bulkUpdateVideoReviewState(
                 virtualChannelId,
                 assignmentId,
                 videoIds,
                 reviewState,
                 returnQuery
-            });
+            );
 
             if (!result.ok) {
                 return fail(result.error.status, { message: result.error.message });
             }
 
-            throw redirect(303, result.data.redirectTo);
+            throw redirect(303, result.data);
         });
     }
 };

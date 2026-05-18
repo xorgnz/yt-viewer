@@ -1,43 +1,64 @@
 import type { AssignmentDAO } from '$lib/daos/assignmentDAO';
 import type { SourceChannelDAO } from '$lib/daos/sourceChannelDAO';
 import type { VirtualChannelDAO } from '$lib/daos/virtualChannelDAO';
-import type { SourceChannel } from '$lib/entities/sourceChannel';
+import type { SourceChannel, SourceChannelFields } from '$lib/entities/sourceChannel';
 import type { VirtualChannel } from '$lib/entities/virtualChannel';
-import type {
-    AdminVirtualChannelIndexPageData,
-    AdminVirtualChannelInlineMutationData,
-    AdminVirtualChannelInlineServiceError,
-    AdminVirtualChannelRedirect,
-    AdminVirtualChannelRow,
-    AdminVirtualChannelServiceError,
-    AdminVirtualChannelServiceResult
-} from '$lib/server/admin/AdminVirtualChannelTypes';
+import type { VirtualChannelAssignmentFields } from '$lib/entities/virtualChannelAssignment';
+import type { VirtualChannelFields } from '$lib/entities/virtualChannel';
 
 type AdminVirtualChannelDAO = Pick<VirtualChannelDAO, 'create' | 'get' | 'list' | 'remove' | 'rename'>;
 type AdminAssignmentDAO = Pick<AssignmentDAO, 'add' | 'listForVirtualChannel' | 'remove'>;
 type AdminSourceChannelDAO = Pick<SourceChannelDAO, 'get' | 'list'>;
 type AdminAssignmentRows = Awaited<ReturnType<AdminAssignmentDAO['listForVirtualChannel']>>;
 
-export interface CreateVirtualChannelInput
+interface AdminVirtualChannelServiceError<TCode extends string = string>
 {
-    name: string;
+    code: TCode;
+    status: number;
+    message: string;
 }
 
-export interface RenameVirtualChannelInput
+interface AdminVirtualChannelInlineServiceError<TCode extends string = string>
+    extends AdminVirtualChannelServiceError<TCode>
 {
-    id: string | number;
-    name: string;
+    virtualChannelId: string | number | null;
 }
 
-export interface DeleteVirtualChannelInput
+type AdminVirtualChannelServiceResult<
+    TSuccess,
+    TError extends AdminVirtualChannelServiceError = AdminVirtualChannelServiceError
+> = {
+    ok: true;
+    data: TSuccess;
+} | {
+    ok: false;
+    error: TError;
+};
+
+interface AdminInlineAssociation
 {
-    id: string | number;
+    assignment: VirtualChannelAssignmentFields;
+    sourceChannel: SourceChannelFields | null;
 }
 
-export interface AdminInlineAssociationInput
+interface AdminVirtualChannelRow
 {
+    virtualChannel: VirtualChannelFields;
+    associatedSourceChannels: AdminInlineAssociation[];
+    availableSourceChannels: SourceChannelFields[];
+}
+
+interface AdminVirtualChannelIndexPageData
+{
+    groups: AdminVirtualChannelRow[];
+    availableSourceChannels: SourceChannelFields[];
+}
+
+interface AdminVirtualChannelInlineMutationData
+{
+    group: AdminVirtualChannelRow;
+    message: string;
     virtualChannelId: string | number;
-    sourceChannelId: string | number;
 }
 
 export class AdminVirtualChannelIndexService
@@ -74,17 +95,17 @@ export class AdminVirtualChannelIndexService
         };
     }
 
-    async createVirtualChannel(input: CreateVirtualChannelInput): Promise<AdminVirtualChannelServiceResult<
-        AdminVirtualChannelRedirect,
+    async createVirtualChannel(name: string): Promise<AdminVirtualChannelServiceResult<
+        string,
         AdminVirtualChannelServiceError<'create_virtual_channel_failed'>
     >>
     {
         try {
-            await this.virtualChannelDAO.create(input.name);
+            await this.virtualChannelDAO.create(name);
 
             return {
                 ok: true,
-                data: { redirectTo: AdminVirtualChannelIndexService.INDEX_PATH }
+                data: AdminVirtualChannelIndexService.INDEX_PATH
             };
         } catch (error: unknown) {
             return {
@@ -98,17 +119,17 @@ export class AdminVirtualChannelIndexService
         }
     }
 
-    async renameVirtualChannel(input: RenameVirtualChannelInput): Promise<AdminVirtualChannelServiceResult<
-        AdminVirtualChannelRedirect,
+    async renameVirtualChannel(id: string | number, name: string): Promise<AdminVirtualChannelServiceResult<
+        string,
         AdminVirtualChannelServiceError<'rename_virtual_channel_failed'>
     >>
     {
         try {
-            await this.virtualChannelDAO.rename(input.id, input.name);
+            await this.virtualChannelDAO.rename(id, name);
 
             return {
                 ok: true,
-                data: { redirectTo: AdminVirtualChannelIndexService.INDEX_PATH }
+                data: AdminVirtualChannelIndexService.INDEX_PATH
             };
         } catch (error: unknown) {
             return {
@@ -122,17 +143,17 @@ export class AdminVirtualChannelIndexService
         }
     }
 
-    async deleteVirtualChannel(input: DeleteVirtualChannelInput): Promise<AdminVirtualChannelServiceResult<
-        AdminVirtualChannelRedirect,
+    async deleteVirtualChannel(id: string | number): Promise<AdminVirtualChannelServiceResult<
+        string,
         AdminVirtualChannelServiceError<'delete_virtual_channel_failed'>
     >>
     {
         try {
-            await this.virtualChannelDAO.remove(input.id);
+            await this.virtualChannelDAO.remove(id);
 
             return {
                 ok: true,
-                data: { redirectTo: AdminVirtualChannelIndexService.INDEX_PATH }
+                data: AdminVirtualChannelIndexService.INDEX_PATH
             };
         } catch (error: unknown) {
             return {
@@ -146,7 +167,10 @@ export class AdminVirtualChannelIndexService
         }
     }
 
-    async addInlineAssociation(input: AdminInlineAssociationInput): Promise<AdminVirtualChannelServiceResult<
+    async addInlineAssociation(
+        virtualChannelId: string | number,
+        sourceChannelId: string | number
+    ): Promise<AdminVirtualChannelServiceResult<
         AdminVirtualChannelInlineMutationData,
         AdminVirtualChannelInlineServiceError<
             'virtual_channel_not_found' |
@@ -157,35 +181,35 @@ export class AdminVirtualChannelIndexService
     {
         try {
             const allSourceChannels = await this.sourceChannelDAO.list();
-            const virtualChannel = await this.virtualChannelDAO.get(input.virtualChannelId);
+            const virtualChannel = await this.virtualChannelDAO.get(virtualChannelId);
 
             if (!virtualChannel) {
                 return this.buildInlineError(
                     'virtual_channel_not_found',
                     404,
                     'Virtual channel not found.',
-                    input.virtualChannelId
+                    virtualChannelId
                 );
             }
 
-            if (!await this.sourceChannelDAO.get(input.sourceChannelId)) {
+            if (!await this.sourceChannelDAO.get(sourceChannelId)) {
                 return this.buildInlineError(
                     'source_channel_not_found',
                     404,
                     'Source channel not found.',
-                    input.virtualChannelId
+                    virtualChannelId
                 );
             }
 
-            await this.assignmentDAO.add(input.sourceChannelId, input.virtualChannelId);
-            const assignments = await this.assignmentDAO.listForVirtualChannel(input.virtualChannelId);
+            await this.assignmentDAO.add(sourceChannelId, virtualChannelId);
+            const assignments = await this.assignmentDAO.listForVirtualChannel(virtualChannelId);
 
             return {
                 ok: true,
                 data: {
                     group: this.buildVirtualChannelRow(virtualChannel, allSourceChannels, assignments),
                     message: 'Source channel added.',
-                    virtualChannelId: input.virtualChannelId
+                    virtualChannelId
                 }
             };
         } catch (error: unknown) {
@@ -193,12 +217,15 @@ export class AdminVirtualChannelIndexService
                 'add_inline_association_failed',
                 400,
                 this.getErrorMessage(error, 'Failed to add source channel.'),
-                input.virtualChannelId
+                virtualChannelId
             );
         }
     }
 
-    async removeInlineAssociation(input: AdminInlineAssociationInput): Promise<AdminVirtualChannelServiceResult<
+    async removeInlineAssociation(
+        virtualChannelId: string | number,
+        sourceChannelId: string | number
+    ): Promise<AdminVirtualChannelServiceResult<
         AdminVirtualChannelInlineMutationData,
         AdminVirtualChannelInlineServiceError<
             'virtual_channel_not_found' |
@@ -209,39 +236,39 @@ export class AdminVirtualChannelIndexService
     {
         try {
             const allSourceChannels = await this.sourceChannelDAO.list();
-            const virtualChannel = await this.virtualChannelDAO.get(input.virtualChannelId);
+            const virtualChannel = await this.virtualChannelDAO.get(virtualChannelId);
 
             if (!virtualChannel) {
                 return this.buildInlineError(
                     'virtual_channel_not_found',
                     404,
                     'Virtual channel not found.',
-                    input.virtualChannelId
+                    virtualChannelId
                 );
             }
 
-            const currentAssignments = await this.assignmentDAO.listForVirtualChannel(input.virtualChannelId);
+            const currentAssignments = await this.assignmentDAO.listForVirtualChannel(virtualChannelId);
             const assignment = currentAssignments
-                .find((candidate) => candidate.sourceChannelId === input.sourceChannelId);
+                .find((candidate) => candidate.sourceChannelId === sourceChannelId);
 
             if (!assignment) {
                 return this.buildInlineError(
                     'assignment_not_found',
                     404,
                     'Assignment not found.',
-                    input.virtualChannelId
+                    virtualChannelId
                 );
             }
 
-            await this.assignmentDAO.remove(input.sourceChannelId, input.virtualChannelId);
-            const assignments = await this.assignmentDAO.listForVirtualChannel(input.virtualChannelId);
+            await this.assignmentDAO.remove(sourceChannelId, virtualChannelId);
+            const assignments = await this.assignmentDAO.listForVirtualChannel(virtualChannelId);
 
             return {
                 ok: true,
                 data: {
                     group: this.buildVirtualChannelRow(virtualChannel, allSourceChannels, assignments),
                     message: 'Source channel removed.',
-                    virtualChannelId: input.virtualChannelId
+                    virtualChannelId
                 }
             };
         } catch (error: unknown) {
@@ -249,7 +276,7 @@ export class AdminVirtualChannelIndexService
                 'remove_inline_association_failed',
                 400,
                 this.getErrorMessage(error, 'Failed to remove source channel.'),
-                input.virtualChannelId
+                virtualChannelId
             );
         }
     }

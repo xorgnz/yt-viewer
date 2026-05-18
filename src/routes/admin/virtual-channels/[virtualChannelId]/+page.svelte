@@ -1,16 +1,17 @@
 <script lang="ts">
     import type { ActionData, PageData } from './$types';
-    import type { AdminSelectedOnlyVideoViewModel } from '$lib/server/admin/AdminVirtualChannelTypes';
     import {
         AdminReviewStateFilter,
         AdminVideoTypeFilter
-    } from '$lib/server/admin/AdminVirtualChannelTypes';
+    } from '$lib/admin/AdminVirtualChannelFilters';
     import { VirtualChannelAssignmentMode } from '$lib/entities/virtualChannelAssignment';
     import { VirtualChannelAssignmentVideoReviewState as ReviewState } from '$lib/entities/virtualChannelAssignmentVideoSelection';
     import { VideoLengthClassification } from '$lib/entities/video';
 
     export let data: PageData;
     export let form: ActionData;
+
+    type AdminSelectedOnlyVideoViewModel = PageData['associatedSourceChannels'][number]['selectedOnlyVideos'][number];
 
     type TimerFormState = {
         action?: string;
