@@ -20,12 +20,13 @@ describe('VirtualChannelDAO', () => {
         expect(result).toMatchObject({
             id: 'vc_demo1234567890',
             name: 'Queue',
-            dailyTimerMax: null
+            dailyTimerMax: null,
+            extraTimerSecondsRemaining: 0
         });
         expect(provider.calls).toEqual([
             {
-                text: 'INSERT INTO virtual_channels(vchannel_id, name, daily_timer_max) VALUES(?, ?, ?)',
-                values: ['vc_demo1234567890', 'Queue', null]
+                text: 'INSERT INTO virtual_channels(vchannel_id, name, daily_timer_max, extra_timer_seconds_remaining) VALUES(?, ?, ?, ?)',
+                values: ['vc_demo1234567890', 'Queue', null, 0]
             }
         ]);
     });
@@ -34,14 +35,14 @@ describe('VirtualChannelDAO', () => {
         const provider = new MockQueryProvider((text, values) => {
             if (text.includes('WHERE vchannel_id = ?')) {
                 return MockQueryProvider.result([
-                    { id: String(values[0]), name: 'Timers', dailyTimerMax: 45 }
+                    { id: String(values[0]), name: 'Timers', dailyTimerMax: 45, extraTimerSecondsRemaining: 120 }
                 ]);
             }
 
             if (text.includes('ORDER BY name')) {
                 return MockQueryProvider.result([
-                    { id: 'vc_alpha', name: 'Alpha', dailyTimerMax: null },
-                    { id: 'vc_bravo', name: 'Bravo', dailyTimerMax: 30 }
+                    { id: 'vc_alpha', name: 'Alpha', dailyTimerMax: null, extraTimerSecondsRemaining: 0 },
+                    { id: 'vc_bravo', name: 'Bravo', dailyTimerMax: 30, extraTimerSecondsRemaining: 45 }
                 ]);
             }
 
@@ -52,19 +53,31 @@ describe('VirtualChannelDAO', () => {
         const single = await dao.get('vc_timers');
         const list = await dao.list();
         await dao.updateDailyTimerMax('vc_bravo', 90);
+        await dao.updateExtraTimerSecondsRemaining('vc_bravo', 30);
 
         expect(single).toBeInstanceOf(VirtualChannel);
         expect(single).toMatchObject({
             id: 'vc_timers',
             name: 'Timers',
-            dailyTimerMax: 45
+            dailyTimerMax: 45,
+            extraTimerSecondsRemaining: 120
         });
         expect(list).toHaveLength(2);
-        expect(list[0]).toMatchObject({ id: 'vc_alpha', name: 'Alpha', dailyTimerMax: null });
-        expect(list[1]).toMatchObject({ id: 'vc_bravo', name: 'Bravo', dailyTimerMax: 30 });
+        expect(list[0]).toMatchObject({
+            id: 'vc_alpha',
+            name: 'Alpha',
+            dailyTimerMax: null,
+            extraTimerSecondsRemaining: 0
+        });
+        expect(list[1]).toMatchObject({
+            id: 'vc_bravo',
+            name: 'Bravo',
+            dailyTimerMax: 30,
+            extraTimerSecondsRemaining: 45
+        });
         expect(provider.calls.at(-1)).toEqual({
-            text: 'UPDATE virtual_channels SET daily_timer_max = ? WHERE vchannel_id = ?',
-            values: [90, 'vc_bravo']
+            text: 'UPDATE virtual_channels SET extra_timer_seconds_remaining = ? WHERE vchannel_id = ?',
+            values: [30, 'vc_bravo']
         });
     });
 

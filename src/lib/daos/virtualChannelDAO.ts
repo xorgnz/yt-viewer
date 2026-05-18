@@ -26,18 +26,22 @@ export class VirtualChannelDAO extends DAO
         this.idProvider = idProvider;
     }
 
-    async create(name: string, dailyTimerMax: number | null = null): Promise<VirtualChannel>
+    async create(
+        name: string,
+        dailyTimerMax: number | null = null,
+        extraTimerSecondsRemaining = 0
+    ): Promise<VirtualChannel>
     {
         for (let attempt = 0; attempt < 10; attempt += 1) {
             const id = this.idProvider();
 
             try {
                 await this.run(
-                    `INSERT INTO virtual_channels(vchannel_id, name, daily_timer_max) VALUES(?, ?, ?)`,
-                    [id, name, dailyTimerMax]
+                    `INSERT INTO virtual_channels(vchannel_id, name, daily_timer_max, extra_timer_seconds_remaining) VALUES(?, ?, ?, ?)`,
+                    [id, name, dailyTimerMax, extraTimerSecondsRemaining]
                 );
 
-                return new VirtualChannel({ id, name, dailyTimerMax });
+                return new VirtualChannel({ id, name, dailyTimerMax, extraTimerSecondsRemaining });
             } catch (error: any) {
                 if (error?.code === 'ER_DUP_ENTRY') {
                     continue;
@@ -53,7 +57,7 @@ export class VirtualChannelDAO extends DAO
     async get(id: string | number): Promise<VirtualChannel | undefined>
     {
         const fields = await this.getOne<VirtualChannelFields>(
-            `SELECT vchannel_id AS id, name, daily_timer_max AS dailyTimerMax FROM virtual_channels WHERE vchannel_id = ?`,
+            `SELECT vchannel_id AS id, name, daily_timer_max AS dailyTimerMax, extra_timer_seconds_remaining AS extraTimerSecondsRemaining FROM virtual_channels WHERE vchannel_id = ?`,
             [String(id)]
         );
 
@@ -73,10 +77,18 @@ export class VirtualChannelDAO extends DAO
         );
     }
 
+    async updateExtraTimerSecondsRemaining(id: string | number, extraTimerSecondsRemaining: number): Promise<void>
+    {
+        await this.run(
+            `UPDATE virtual_channels SET extra_timer_seconds_remaining = ? WHERE vchannel_id = ?`,
+            [extraTimerSecondsRemaining, String(id)]
+        );
+    }
+
     async list(): Promise<VirtualChannel[]>
     {
         const rows = await this.listRows<VirtualChannelFields>(
-            `SELECT vchannel_id AS id, name, daily_timer_max AS dailyTimerMax FROM virtual_channels ORDER BY name`
+            `SELECT vchannel_id AS id, name, daily_timer_max AS dailyTimerMax, extra_timer_seconds_remaining AS extraTimerSecondsRemaining FROM virtual_channels ORDER BY name`
         );
 
         return rows.map((row) => new VirtualChannel(row));

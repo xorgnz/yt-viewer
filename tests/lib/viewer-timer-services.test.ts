@@ -37,8 +37,8 @@ function createProfileContext()
 describe('viewer timer services', () => {
     it('derives unlimited and capped virtual-channel timer states from watch-history aggregates', async () => {
         const list = vi.fn(async () => ([
-            new VirtualChannel({ id: '1', name: 'Unlimited', dailyTimerMax: null }),
-            new VirtualChannel({ id: '2', name: 'Capped', dailyTimerMax: 60 })
+            new VirtualChannel({ id: '1', name: 'Unlimited', dailyTimerMax: null, extraTimerSecondsRemaining: 0 }),
+            new VirtualChannel({ id: '2', name: 'Capped', dailyTimerMax: 60, extraTimerSecondsRemaining: 0 })
         ]));
         const historyDAO = {
             getVirtualChannelWatchSecondsInWindow: vi.fn(async (_profileId: number, virtualChannelId: string | number) => {
@@ -282,7 +282,12 @@ describe('viewer timer services', () => {
     it('normalizes string watch-history aggregates before deriving timer state', async () => {
         const service = new ViewerVirtualChannelService(
             {
-                get: vi.fn(async () => new VirtualChannel({ id: '2', name: 'Timers', dailyTimerMax: 120 })),
+                get: vi.fn(async () => new VirtualChannel({
+                    id: '2',
+                    name: 'Timers',
+                    dailyTimerMax: 120,
+                    extraTimerSecondsRemaining: 0
+                })),
                 list: vi.fn(async () => [])
             },
             {

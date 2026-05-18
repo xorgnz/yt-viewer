@@ -19,6 +19,7 @@ CREATE TABLE IF NOT EXISTS virtual_channels (
     vchannel_id VARCHAR(255) NOT NULL,
     name VARCHAR(255) NOT NULL UNIQUE,
     daily_timer_max INT DEFAULT NULL,
+    extra_timer_seconds_remaining INT NOT NULL DEFAULT 0,
     PRIMARY KEY (vchannel_id)
 );`;
 

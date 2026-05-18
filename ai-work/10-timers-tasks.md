@@ -6,12 +6,14 @@
 - `src/lib/daos/virtualChannelDAO.ts` - Persist and load virtual channel timer configuration.
 - `src/lib/daos/_schema.ts` - Add schema changes for timer fields if they do not already exist.
 - `src/lib/daos/migrations/` - Add a forward-only migration for timer-related schema updates.
+- `src/lib/server/admin/AdminVirtualChannelManageService.ts` - Persist admin-side timer and extra-time updates through the existing virtual-channel management flow.
 - `src/lib/daos/historyDAO.ts` - Add timer-usage queries derived from watch history.
 - `src/lib/server/viewer/ViewerWatchService.ts` - Enforce timer limits during watch-session persistence and playback flow.
 - `src/lib/server/viewer/ViewerVirtualChannelService.ts` - Surface capped-channel availability state in viewer data.
 - `src/lib/server/viewer/ViewerLoadService.ts` - Include timer-derived availability in viewer page loads where needed.
 - `src/routes/admin/virtual-channels/[virtualChannelId]/+page.server.ts` - Save timer settings from the admin form.
 - `src/routes/admin/virtual-channels/[virtualChannelId]/+page.svelte` - Add the timer section and validation feedback to the virtual channel edit UI.
+- `src/routes/settings/` - Add a placeholder settings surface for split-timer configuration.
 - `src/routes/viewer/virtual-channels/+page.server.ts` - Load capped/unavailable channel state for the viewer channel list.
 - `src/routes/viewer/virtual-channels/+page.svelte` - Show capped channels as greyed out and non-selectable.
 - `src/routes/viewer/watch/[videoId]/+page.server.ts` - Block or stop playback when the selected channel has exhausted its daily allowance.
@@ -65,3 +67,14 @@
   - [x] 8.4 - Extract the virtual channel timer panel into its own component once the nav display fields and formatting behavior are stable.
   - [x] 8.5 - Keep the timer panel behavior and wording aligned between the main viewer page and the watch page.
   - [x] 8.6 - Validate unlimited, limited, and capped display states.
+
+- [ ] 9 - Add persisted extra time on top of daily channel timers
+  - [x] 9.1 - Extend the virtual channel schema, entity, and DAO shape with a persisted `extra_timer_seconds_remaining` balance.
+  - [ ] 9.2 - Add forward-only migration coverage for the new extra-time balance field and validate both fresh-create and migration paths.
+  - [ ] 9.3 - Add admin-side controls to grant additional time by incrementing the persisted remaining extra-time balance.
+  - [ ] 9.4 - Update viewer timer view models to expose daily allowance, extra-time balance, and combined remaining allowance clearly.
+  - [ ] 9.5 - Change watch-session persistence so each newly consumed watch-time delta burns daily allowance first and decrements extra-time balance only for spillover.
+  - [ ] 9.6 - Make the timer-cap enforcement path treat extra time as persistent carryover across day boundaries until it is consumed.
+  - [ ] 9.7 - Add a split-timer-mode flag that defaults to `true`, and expose it through a placeholder settings page so the complex daily-plus-extra display can be disabled for simpler profiles.
+  - [ ] 9.8 - Update viewer and admin timer displays so, when split-timer mode is enabled, the user can see both the configured daily allowance and any remaining granted extra time where that context matters.
+  - [ ] 9.9 - Add focused tests for mixed daily-plus-extra consumption, carryover across reset boundaries, capped behavior when extra time is exhausted, and split-timer-mode on/off behavior.
