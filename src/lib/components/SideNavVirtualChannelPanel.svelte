@@ -14,7 +14,7 @@
 
     onMount(() => {
         const onPlaybackTick = (event: Event) => {
-            const detail = (event as CustomEvent<{ virtualChannelId: number; deltaSeconds: number }>).detail;
+            const detail = (event as CustomEvent<{ virtualChannelId: string | number; deltaSeconds: number }>).detail;
             if (!liveVirtualChannel || !detail || detail.virtualChannelId !== liveVirtualChannel.id) {
                 return;
             }

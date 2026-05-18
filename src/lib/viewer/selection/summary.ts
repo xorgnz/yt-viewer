@@ -6,7 +6,7 @@ import type {
 
 class ViewerSelectionInspector
 {
-    public getCurrentPageSelectedIds(state: ViewerSelectionState): number[]
+    public getCurrentPageSelectedIds(state: ViewerSelectionState): string[]
     {
         const currentPageIdSet = new Set(state.currentPageVideoIds);
         return state.selectedVideoIds.filter((videoId) => currentPageIdSet.has(videoId));

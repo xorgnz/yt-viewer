@@ -6,8 +6,8 @@ import type {
 
 interface PersistedViewerSelectionState
 {
-    selectedVideoIds: number[];
-    anchorVideoId: number | null;
+    selectedVideoIds: string[];
+    anchorVideoId: string | null;
     selectedVideoState?: ViewerSelectionState['selectedVideoState'];
     baselineSelectedVideoState?: ViewerSelectionState['baselineSelectedVideoState'];
 }

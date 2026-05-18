@@ -32,7 +32,7 @@ export const actions: Actions = {
 
     rename: async ({ request }) => {
         const form = await ServerActionForm.fromRequest(request);
-        const id = form.getPositiveInteger('id');
+        const id = form.getIdentifier('id');
         const name = form.getTrimmedString('name');
         if (id === null || !name) return fail(400, { message: 'Invalid input' });
 
@@ -50,7 +50,7 @@ export const actions: Actions = {
 
     delete: async ({ request }) => {
         const form = await ServerActionForm.fromRequest(request);
-        const id = form.getPositiveInteger('id');
+        const id = form.getIdentifier('id');
         if (id === null) return fail(400, { message: 'Invalid id' });
 
         const result = await ServerDatabaseContext.run(async ({ db }) => {
@@ -67,14 +67,14 @@ export const actions: Actions = {
 
     addAssociationInline: async ({ request }) => {
         const form = await ServerActionForm.fromRequest(request);
-        const virtualChannelId = form.getPositiveInteger('virtual_channel_id');
-        const sourceChannelId = form.getPositiveInteger('source_channel_id');
+        const virtualChannelId = form.getIdentifier('virtual_channel_id');
+        const sourceChannelId = form.getIdentifier('source_channel_id');
 
-        if (!virtualChannelId) {
+        if (virtualChannelId === null) {
             return fail(400, { message: 'A valid virtual channel is required.', virtualChannelId: null });
         }
 
-        if (!sourceChannelId) {
+        if (sourceChannelId === null) {
             return fail(400, { message: 'A valid source channel is required.', virtualChannelId });
         }
 
@@ -98,14 +98,14 @@ export const actions: Actions = {
 
     removeAssociationInline: async ({ request }) => {
         const form = await ServerActionForm.fromRequest(request);
-        const virtualChannelId = form.getPositiveInteger('virtual_channel_id');
-        const sourceChannelId = form.getPositiveInteger('source_channel_id');
+        const virtualChannelId = form.getIdentifier('virtual_channel_id');
+        const sourceChannelId = form.getIdentifier('source_channel_id');
 
-        if (!virtualChannelId) {
+        if (virtualChannelId === null) {
             return fail(400, { message: 'A valid virtual channel is required.', virtualChannelId: null });
         }
 
-        if (!sourceChannelId) {
+        if (sourceChannelId === null) {
             return fail(400, { message: 'A valid source channel is required.', virtualChannelId });
         }
 

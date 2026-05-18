@@ -10,7 +10,7 @@ import { VirtualChannelAssignmentVideoReviewState as ReviewState } from '$lib/en
 export const load: PageServerLoad = async ({ params, url }) =>
 {
     // Validate the requested virtual channel id.
-    const virtualChannelId = Number(params.virtualChannelId);
+    const virtualChannelId = params.virtualChannelId?.trim() || null;
 
     if (!virtualChannelId) {
         throw error(404, 'Virtual channel not found');
@@ -31,10 +31,10 @@ export const load: PageServerLoad = async ({ params, url }) =>
     });
 };
 
-function parseVirtualChannelId(value: string): number | null
+function parseVirtualChannelId(value: string): string | null
 {
-    const id = Number(value);
-    return Number.isInteger(id) && id > 0 ? id : null;
+    const id = value.trim();
+    return id ? id : null;
 }
 
 function parseAssignmentMode(value: FormDataEntryValue | null): VirtualChannelAssignmentMode
@@ -123,7 +123,7 @@ export const actions: Actions = {
         }
 
         const form = await ServerActionForm.fromRequest(request);
-        const sourceChannelId = form.getPositiveInteger('source_channel_id');
+        const sourceChannelId = form.getIdentifier('source_channel_id');
         const mode = parseAssignmentMode(form.getRaw('mode'));
 
         if (sourceChannelId === null) {
@@ -158,7 +158,7 @@ export const actions: Actions = {
         }
 
         const form = await ServerActionForm.fromRequest(request);
-        const assignmentId = form.getPositiveInteger('assignment_id');
+        const assignmentId = form.getIdentifier('assignment_id');
         const mode = parseAssignmentMode(form.getRaw('mode'));
 
         if (assignmentId === null) {
@@ -189,7 +189,7 @@ export const actions: Actions = {
         }
 
         const form = await ServerActionForm.fromRequest(request);
-        const assignmentId = form.getPositiveInteger('assignment_id');
+        const assignmentId = form.getIdentifier('assignment_id');
 
         if (assignmentId === null) {
             return fail(400, { message: 'A valid assignment is required.' });
@@ -218,8 +218,8 @@ export const actions: Actions = {
         }
 
         const form = await ServerActionForm.fromRequest(request);
-        const assignmentId = form.getPositiveInteger('assignment_id');
-        const videoId = form.getPositiveInteger('video_id');
+        const assignmentId = form.getIdentifier('assignment_id');
+        const videoId = form.getIdentifier('video_id');
         const reviewState = parseReviewState(form.getRaw('review_state'));
 
         if (assignmentId === null || videoId === null) {
@@ -251,9 +251,9 @@ export const actions: Actions = {
         }
 
         const form = await ServerActionForm.fromRequest(request);
-        const assignmentId = form.getPositiveInteger('assignment_id');
+        const assignmentId = form.getIdentifier('assignment_id');
         const reviewState = parseReviewState(form.getRaw('review_state'));
-        const videoIds = form.getPositiveIntegerList({
+        const videoIds = form.getIdentifierList({
             repeatedField: 'video_id',
             csvField: 'video_ids'
         });

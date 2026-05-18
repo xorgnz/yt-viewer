@@ -8,9 +8,9 @@ import { ViewerWatchService } from '../../src/lib/server/viewer/ViewerWatchServi
 function createVideo(id: number): ViewerVideoRecord
 {
     return {
-        id,
+        id: `video-${id}`,
         youtube_id: `video-${id}`,
-        channel_id: 7,
+        channel_id: 'channel-7',
         title: `Video ${id}`,
         description: '',
         published_at: id * 1000,
@@ -41,8 +41,8 @@ describe('viewer timer services', () => {
             new VirtualChannel({ id: 2, name: 'Capped', dailyTimerMax: 60 })
         ]));
         const historyDAO = {
-            getVirtualChannelWatchSecondsInWindow: vi.fn(async (_profileId: number, virtualChannelId: number) => {
-                return virtualChannelId === 2 ? 60 : 0;
+            getVirtualChannelWatchSecondsInWindow: vi.fn(async (_profileId: number, virtualChannelId: string | number) => {
+                return String(virtualChannelId) === '2' ? 60 : 0;
             }),
             resetVirtualChannelWatchSecondsInWindow: vi.fn(async () => undefined)
         };
@@ -57,13 +57,13 @@ describe('viewer timer services', () => {
 
         expect(groups).toHaveLength(2);
         expect(groups[0]).toMatchObject({
-            id: 1,
+            id: '1',
             timerState: 'unlimited',
             timerUsageSeconds: 0,
             timerRemainingSeconds: null
         });
         expect(groups[1]).toMatchObject({
-            id: 2,
+            id: '2',
             timerState: 'capped',
             timerUsageSeconds: 60,
             timerRemainingSeconds: 0
@@ -71,7 +71,7 @@ describe('viewer timer services', () => {
         expect(historyDAO.getVirtualChannelWatchSecondsInWindow).toHaveBeenCalledTimes(1);
         expect(historyDAO.getVirtualChannelWatchSecondsInWindow).toHaveBeenCalledWith(
             11,
-            2,
+            '2',
             expect.any(Number),
             expect.any(Number)
         );
@@ -99,7 +99,7 @@ describe('viewer timer services', () => {
             recommendationService,
             {
                 getVirtualChannelById: vi.fn(async () => ({
-                    id: 8,
+                    id: '8',
                     name: 'Timers',
                     dailyTimerMax: 60,
                     timerState: 'capped' as const,
@@ -119,7 +119,7 @@ describe('viewer timer services', () => {
             dateFromInput: '',
             dateToInput: '',
             channelId: null,
-            virtualChannelId: 8,
+            virtualChannelId: '8',
             sort: 'newest',
             limit: 200,
             offset: 0
@@ -131,7 +131,7 @@ describe('viewer timer services', () => {
         }
 
         expect(result.data.playbackBlockedMessage).toBe('Daily timer limit reached for this virtual channel.');
-        expect(result.data.currentVirtualChannelId).toBe(8);
+        expect(result.data.currentVirtualChannelId).toBe('8');
         expect(result.data.nextVideoYoutubeId).toBe('video-4');
     });
 
@@ -153,7 +153,7 @@ describe('viewer timer services', () => {
         };
         const availableThenCapped = vi.fn()
             .mockResolvedValueOnce({
-                id: 9,
+                id: '9',
                 name: 'Timers',
                 dailyTimerMax: 60,
                 timerState: 'available' as const,
@@ -163,7 +163,7 @@ describe('viewer timer services', () => {
                 timerWindowEndMs: 200
             })
             .mockResolvedValueOnce({
-                id: 9,
+                id: '9',
                 name: 'Timers',
                 dailyTimerMax: 60,
                 timerState: 'capped' as const,
@@ -181,7 +181,7 @@ describe('viewer timer services', () => {
             { getVirtualChannelById: availableThenCapped }
         );
 
-        const cappedResult = await service.updateHistoryProgress('video-5', 60, 9, 8000);
+        const cappedResult = await service.updateHistoryProgress('video-5', 60, '9', 8000);
 
         expect(cappedResult).toEqual({
             ok: false,
@@ -213,7 +213,7 @@ describe('viewer timer services', () => {
             {} as never,
             {
                 getVirtualChannelById: vi.fn(async () => ({
-                    id: 9,
+                    id: '9',
                     name: 'Timers',
                     dailyTimerMax: 60,
                     timerState: 'available' as const,
@@ -225,7 +225,7 @@ describe('viewer timer services', () => {
             }
         );
 
-        const inactiveResult = await inactiveService.updateHistoryProgress('video-5', 60, 9, 1000 + (5 * 60 * 1000) + 1);
+        const inactiveResult = await inactiveService.updateHistoryProgress('video-5', 60, '9', 1000 + (5 * 60 * 1000) + 1);
 
         expect(inactiveResult).toEqual({
             ok: false,

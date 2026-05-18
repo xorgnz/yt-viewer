@@ -3,7 +3,7 @@
         filters: {
             profileKey: string;
             mode: 'sessions' | 'videos';
-            channelId: number | null;
+            channelId: string | null;
             dateFrom: number | null;
             dateTo: number | null;
             limit: number;
@@ -14,19 +14,19 @@
                 session_started_at: number;
                 last_updated_at: number;
                 time_watched_seconds: number;
-                profile_id: number;
-                video_id: number;
+                profile_id: string | number;
+                video_id: string | number;
                 youtube_id: string;
                 title: string;
-                channel_id: number;
+                channel_id: string | number;
                 channel_title: string;
             } |
             {
-                profile_id: number;
-                video_id: number;
+                profile_id: string | number;
+                video_id: string | number;
                 youtube_id: string;
                 title: string;
-                channel_id: number;
+                channel_id: string | number;
                 channel_title: string;
                 total_time_watched_seconds: number;
                 session_count: number;
@@ -38,15 +38,15 @@
             session_started_at: number;
             last_updated_at: number;
             time_watched_seconds: number;
-            profile_id: number;
-            video_id: number;
+            profile_id: string | number;
+            video_id: string | number;
             youtube_id: string;
             title: string;
-            channel_id: number;
+            channel_id: string | number;
             channel_title: string;
         }>;
-        channels: Array<{ id: number; youtube_id: string; title: string }>;
-        profileId: number;
+        channels: Array<{ id: string | number; youtube_id: string; title: string }>;
+        profileId: string | number;
         profileName: string;
     };
 
@@ -105,7 +105,7 @@
         }).toString();
     }
 
-    function sessionsForVideo(videoId: number)
+    function sessionsForVideo(videoId: string | number)
     {
         return data.sessionItems.filter((it) => it.video_id === videoId);
     }

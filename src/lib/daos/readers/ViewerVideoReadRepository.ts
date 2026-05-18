@@ -6,9 +6,9 @@ import {
 
 export interface ViewerVideoRecord
 {
-    id: number;
+    id: string | number;
     youtube_id: string;
-    channel_id: number;
+    channel_id: string | number;
     title: string;
     description: string;
     published_at: number | null;
@@ -27,7 +27,7 @@ export class ViewerVideoReadRepository extends DAO
     async findAdjacentYoutubeIds(
         video: Pick<ViewerVideoRecord, 'youtube_id'>,
         filters: ViewerVideoQueryFilters,
-        profileId: number
+        profileId: string | number
     ): Promise<{ previousYoutubeId: string | null; nextYoutubeId: string | null }>
     {
         const querySpec = new ViewerVideoQuerySpec(filters, profileId);
@@ -44,8 +44,8 @@ export class ViewerVideoReadRepository extends DAO
                     LAG(v.youtube_id) OVER (ORDER BY ${orderBySql}) AS previous_youtube_id,
                     LEAD(v.youtube_id) OVER (ORDER BY ${orderBySql}) AS next_youtube_id
                 FROM videos v
-                JOIN source_channels c ON c.id = v.channel_id
-                LEFT JOIN video_flags vf ON (vf.video_id = v.id AND vf.profile_id = :profileId)
+                JOIN source_channels c ON c.src_channel_id = v.src_channel_id
+                LEFT JOIN video_flags vf ON (vf.video_id = v.video_id AND vf.profile_id = :profileId)
                 ${groupJoin}
                 ${selectionJoin}
                 ${whereSql}
@@ -68,13 +68,13 @@ export class ViewerVideoReadRepository extends DAO
         };
     }
 
-    async getByYoutubeId(youtubeId: string, profileId: number): Promise<ViewerVideoRecord | undefined>
+    async getByYoutubeId(youtubeId: string, profileId: string | number): Promise<ViewerVideoRecord | undefined>
     {
         const sql = `
             SELECT
-                v.id,
-                v.youtube_id,
-                v.channel_id,
+                v.video_id AS id,
+                v.video_id AS youtube_id,
+                v.src_channel_id AS channel_id,
                 v.title,
                 v.description,
                 v.published_at,
@@ -82,21 +82,21 @@ export class ViewerVideoReadRepository extends DAO
                 v.thumbnail_url,
                 v.length_classification,
                 c.title AS channel_title,
-                c.youtube_id AS channel_youtube_id,
+                c.src_channel_id AS channel_youtube_id,
                 COALESCE(vf.watched, 0) AS watched,
                 COALESCE(vf.favorite, 0) AS favorite,
                 COALESCE(vf.ignored, 0) AS ignored
             FROM videos v
-            JOIN source_channels c ON c.id = v.channel_id
-            LEFT JOIN video_flags vf ON (vf.video_id = v.id AND vf.profile_id = :profileId)
-            WHERE v.youtube_id = :youtubeId
+            JOIN source_channels c ON c.src_channel_id = v.src_channel_id
+            LEFT JOIN video_flags vf ON (vf.video_id = v.video_id AND vf.profile_id = :profileId)
+            WHERE v.video_id = :youtubeId
             LIMIT 1
         `;
 
         return this.getOne<ViewerVideoRecord>(sql, { youtubeId, profileId });
     }
 
-    async list(filters: ViewerVideoQueryFilters, profileId: number): Promise<ViewerVideoRecord[]>
+    async list(filters: ViewerVideoQueryFilters, profileId: string | number): Promise<ViewerVideoRecord[]>
     {
         const querySpec = new ViewerVideoQuerySpec(filters, profileId);
         const { whereSql, groupJoin, selectionJoin, params, limit, offset } = querySpec.buildListQueryParts();
@@ -104,9 +104,9 @@ export class ViewerVideoReadRepository extends DAO
 
         const sql = `
             SELECT
-                v.id,
-                v.youtube_id,
-                v.channel_id,
+                v.video_id AS id,
+                v.video_id AS youtube_id,
+                v.src_channel_id AS channel_id,
                 v.title,
                 v.description,
                 v.published_at,
@@ -114,13 +114,13 @@ export class ViewerVideoReadRepository extends DAO
                 v.thumbnail_url,
                 v.length_classification,
                 c.title AS channel_title,
-                c.youtube_id AS channel_youtube_id,
+                c.src_channel_id AS channel_youtube_id,
                 COALESCE(vf.watched, 0) AS watched,
                 COALESCE(vf.favorite, 0) AS favorite,
                 COALESCE(vf.ignored, 0) AS ignored
             FROM videos v
-            JOIN source_channels c ON c.id = v.channel_id
-            LEFT JOIN video_flags vf ON (vf.video_id = v.id AND vf.profile_id = :profileId)
+            JOIN source_channels c ON c.src_channel_id = v.src_channel_id
+            LEFT JOIN video_flags vf ON (vf.video_id = v.video_id AND vf.profile_id = :profileId)
             ${groupJoin}
             ${selectionJoin}
             ${whereSql}
@@ -135,16 +135,16 @@ export class ViewerVideoReadRepository extends DAO
         });
     }
 
-    async count(filters: ViewerVideoQueryFilters, profileId: number): Promise<number>
+    async count(filters: ViewerVideoQueryFilters, profileId: string | number): Promise<number>
     {
         const querySpec = new ViewerVideoQuerySpec(filters, profileId);
         const { whereSql, groupJoin, selectionJoin, params } = querySpec.buildCountQueryParts();
 
         const sql = `
-            SELECT COUNT(DISTINCT v.id) AS count
+            SELECT COUNT(DISTINCT v.video_id) AS count
             FROM videos v
-            JOIN source_channels c ON c.id = v.channel_id
-            LEFT JOIN video_flags vf ON (vf.video_id = v.id AND vf.profile_id = :profileId)
+            JOIN source_channels c ON c.src_channel_id = v.src_channel_id
+            LEFT JOIN video_flags vf ON (vf.video_id = v.video_id AND vf.profile_id = :profileId)
             ${groupJoin}
             ${selectionJoin}
             ${whereSql}

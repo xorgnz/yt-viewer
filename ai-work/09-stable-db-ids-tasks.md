@@ -35,10 +35,10 @@
   - [x] 4.1. Update source channel, video, profile, virtual channel, assignment, selection, flag, and history writes to persist the approved stable identifiers.
   - [x] 4.2. Apply approved YouTube-derived, profile-key-derived, opaque virtual-channel, and composite-key ID rules consistently, including retry-on-collision behavior for `vchannel_id`.
 
-- [ ] 5 - Update read-side queries and service contracts to use stable IDs.
-  - [ ] 5.1. Update DAO and reader return types where database-generated serial row IDs are currently used as entity or relationship identifiers.
-  - [ ] 5.2. Update server services and route actions to pass `src_channel_id`, `video_id`, `vchannel_id`, and `profile_id` through viewer, history, flag, assignment, and selection workflows.
-  - [ ] 5.3. Preserve current user-facing behavior while changing only the backing identifier contract and keeping serial IDs private to event/bookkeeping rows.
+- [x] 5 - Update read-side queries and service contracts to use stable IDs.
+  - [x] 5.1. Update DAO and reader return types where database-generated serial row IDs are currently used as entity or relationship identifiers.
+  - [x] 5.2. Update server services and route actions to pass `src_channel_id`, `video_id`, `vchannel_id`, and `profile_id` through viewer, history, flag, assignment, and selection workflows.
+  - [x] 5.3. Preserve current user-facing behavior while changing only the backing identifier contract and keeping serial IDs private to event/bookkeeping rows.
 
 - [ ] 6 - Build and verify the local/admin migration path.
   - [ ] 6.1. Create an inspectable migration artifact that can be run from this workspace with admin credentials and is not deployed as app startup code.

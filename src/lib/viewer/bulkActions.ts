@@ -61,7 +61,7 @@ function applyBulkFlagToVisibleVideos(
     videos: ViewerVideo[],
     kind: ViewerSelectionFlagKind,
     value: ViewerSelectionFlagValue,
-    updatedVideoIds: number[]
+    updatedVideoIds: Array<string | number>
 ): ViewerVideo[]
 {
     const updatedIdSet = new Set(updatedVideoIds);
@@ -86,10 +86,10 @@ function restoreVisibleVideoSnapshots(
     restoredStates: ViewerSelectionVideoSnapshot[]
 ): ViewerVideo[]
 {
-    const restoredStateMap = new Map<number, Omit<ViewerSelectionVideoSnapshot, 'id'>>();
+    const restoredStateMap = new Map<string, Omit<ViewerSelectionVideoSnapshot, 'id'>>();
 
     for (const restoredState of restoredStates) {
-        restoredStateMap.set(restoredState.id, {
+        restoredStateMap.set(String(restoredState.id), {
             watched: restoredState.watched,
             favorite: restoredState.favorite,
             ignored: restoredState.ignored
@@ -101,13 +101,14 @@ function restoreVisibleVideoSnapshots(
     }
 
     return videos.map((video) => {
-        if (!restoredStateMap.has(video.id)) {
+        const normalizedVideoId = String(video.id);
+        if (!restoredStateMap.has(normalizedVideoId)) {
             return video;
         }
 
         return {
             ...video,
-            ...restoredStateMap.get(video.id)!
+            ...restoredStateMap.get(normalizedVideoId)!
         };
     });
 }

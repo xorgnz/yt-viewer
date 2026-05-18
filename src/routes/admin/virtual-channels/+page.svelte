@@ -6,14 +6,15 @@
 
     type VirtualChannelGroup = (typeof data.groups)[number];
     type InlineStatus = { type: 'success' | 'error'; text: string };
+    type VirtualChannelId = string | number;
     type InlineAssociationActionData = {
         group: VirtualChannelGroup;
         message?: string;
-        virtualChannelId?: number | null;
+        virtualChannelId?: VirtualChannelId | null;
     };
     type InlineAssociationFailureData = {
         message?: string;
-        virtualChannelId?: number | null;
+        virtualChannelId?: VirtualChannelId | null;
     };
 
     function isInlineAssociationActionData(value: unknown): value is InlineAssociationActionData
@@ -26,7 +27,7 @@
         return Boolean(group && typeof group === 'object' && 'virtualChannel' in group);
     }
 
-    function readFailureGroupId(value: unknown, fallbackGroupId: number): number
+    function readFailureGroupId(value: unknown, fallbackGroupId: VirtualChannelId): VirtualChannelId
     {
         if (!value || typeof value !== 'object' || !('virtualChannelId' in value)) {
             return fallbackGroupId;
@@ -48,7 +49,7 @@
 
     let groups = data.groups;
     let newName = '';
-    let inlineStatusByGroupId: Record<number, InlineStatus> = {};
+    let inlineStatusByGroupId: Record<string, InlineStatus> = {};
 
     function updateInlineGroup(nextGroup: VirtualChannelGroup)
     {
@@ -56,26 +57,26 @@
         groups = groups.map((group) => (group.virtualChannel.id === nextGroup.virtualChannel.id ? nextGroup : group));
     }
 
-    function setInlineStatus(groupId: number | null | undefined, type: 'success' | 'error', text: string)
+    function setInlineStatus(groupId: VirtualChannelId | null | undefined, type: 'success' | 'error', text: string)
     {
-        if (!groupId) {
+        if (groupId == null) {
             return;
         }
 
         inlineStatusByGroupId = {
             ...inlineStatusByGroupId,
-            [groupId]: { type, text }
+            [String(groupId)]: { type, text }
         };
     }
 
-    function clearInlineStatus(groupId: number)
+    function clearInlineStatus(groupId: VirtualChannelId)
     {
         const nextStatus = { ...inlineStatusByGroupId };
-        delete nextStatus[groupId];
+        delete nextStatus[String(groupId)];
         inlineStatusByGroupId = nextStatus;
     }
 
-    function enhanceInlineAdd(groupId: number): SubmitFunction
+    function enhanceInlineAdd(groupId: VirtualChannelId): SubmitFunction
     {
         return ({ formElement }: { formElement: HTMLFormElement }) => {
             clearInlineStatus(groupId);
@@ -99,7 +100,7 @@
         };
     }
 
-    function enhanceInlineRemove(groupId: number): SubmitFunction
+    function enhanceInlineRemove(groupId: VirtualChannelId): SubmitFunction
     {
         return () => {
             clearInlineStatus(groupId);

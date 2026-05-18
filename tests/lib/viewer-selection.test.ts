@@ -7,12 +7,12 @@ import type { ViewerSelectionContextInput } from '../../src/lib/viewer/selection
 
 describe('viewerSelection filter-context behavior', () => {
     const pageOneVideos = [
-        { id: 1, watched: 0 as const, favorite: 0 as const, ignored: 0 as const },
-        { id: 2, watched: 1 as const, favorite: 1 as const, ignored: 0 as const }
+        { id: '1', watched: 0 as const, favorite: 0 as const, ignored: 0 as const },
+        { id: '2', watched: 1 as const, favorite: 1 as const, ignored: 0 as const }
     ];
     const pageTwoVideos = [
-        { id: 3, watched: 0 as const, favorite: 0 as const, ignored: 0 as const },
-        { id: 4, watched: 1 as const, favorite: 0 as const, ignored: 1 as const }
+        { id: '3', watched: 0 as const, favorite: 0 as const, ignored: 0 as const },
+        { id: '4', watched: 1 as const, favorite: 0 as const, ignored: 1 as const }
     ];
 
     function createContextKey(overrides: Partial<ViewerSelectionContextInput> = {})
@@ -35,14 +35,14 @@ describe('viewerSelection filter-context behavior', () => {
         const contextKey = createContextKey();
         let state = viewerSelectionStateManager.create(contextKey, pageOneVideos);
 
-        state = viewerSelectionStateManager.toggle(state, 1);
-        state = viewerSelectionStateManager.toggle(state, 2);
+        state = viewerSelectionStateManager.toggle(state, '1');
+        state = viewerSelectionStateManager.toggle(state, '2');
 
         const nextState = viewerSelectionStateManager.reconcile(state, contextKey, pageTwoVideos);
 
-        expect(nextState.selectedVideoIds).toEqual([1, 2]);
-        expect(nextState.anchorVideoId).toBe(2);
-        expect(nextState.currentPageVideoIds).toEqual([3, 4]);
+        expect(nextState.selectedVideoIds).toEqual(['1', '2']);
+        expect(nextState.anchorVideoId).toBe('2');
+        expect(nextState.currentPageVideoIds).toEqual(['3', '4']);
         expect(nextState.selectedVideoState).toEqual({
             1: { watched: 0, favorite: 0, ignored: 0 },
             2: { watched: 1, favorite: 1, ignored: 0 }
@@ -53,8 +53,8 @@ describe('viewerSelection filter-context behavior', () => {
         const originalContextKey = createContextKey();
         let state = viewerSelectionStateManager.create(originalContextKey, pageOneVideos);
 
-        state = viewerSelectionStateManager.toggle(state, 1);
-        state = viewerSelectionStateManager.toggle(state, 2);
+        state = viewerSelectionStateManager.toggle(state, '1');
+        state = viewerSelectionStateManager.toggle(state, '2');
 
         const filteredContextKey = createContextKey({ watched: 'unwatched', term: 'music' });
         const nextState = viewerSelectionStateManager.reconcile(state, filteredContextKey, pageOneVideos);
@@ -63,20 +63,20 @@ describe('viewerSelection filter-context behavior', () => {
         expect(nextState.selectedVideoIds).toEqual([]);
         expect(nextState.anchorVideoId).toBeNull();
         expect(nextState.selectedVideoState).toEqual({});
-        expect(nextState.currentPageVideoIds).toEqual([1, 2]);
+        expect(nextState.currentPageVideoIds).toEqual(['1', '2']);
     });
 
     it('clears selected ids, anchor, and stored flag state without changing the page context', () => {
         const contextKey = createContextKey();
         let state = viewerSelectionStateManager.create(contextKey, pageOneVideos);
 
-        state = viewerSelectionStateManager.toggle(state, 1);
-        state = viewerSelectionStateManager.toggle(state, 2);
+        state = viewerSelectionStateManager.toggle(state, '1');
+        state = viewerSelectionStateManager.toggle(state, '2');
 
         const clearedState = viewerSelectionStateManager.clear(state);
 
         expect(clearedState.contextKey).toBe(contextKey);
-        expect(clearedState.currentPageVideoIds).toEqual([1, 2]);
+        expect(clearedState.currentPageVideoIds).toEqual(['1', '2']);
         expect(clearedState.selectedVideoIds).toEqual([]);
         expect(clearedState.anchorVideoId).toBeNull();
         expect(clearedState.selectedVideoState).toEqual({});
@@ -86,12 +86,12 @@ describe('viewerSelection filter-context behavior', () => {
         const contextKey = createContextKey();
         let state = viewerSelectionStateManager.create(contextKey, pageOneVideos);
 
-        state = viewerSelectionStateManager.toggle(state, 1);
-        state = viewerSelectionStateManager.toggle(state, 2);
-        state = viewerSelectionStateManager.selectSingle(state, 1);
+        state = viewerSelectionStateManager.toggle(state, '1');
+        state = viewerSelectionStateManager.toggle(state, '2');
+        state = viewerSelectionStateManager.selectSingle(state, '1');
 
-        expect(state.selectedVideoIds).toEqual([1]);
-        expect(state.anchorVideoId).toBe(1);
+        expect(state.selectedVideoIds).toEqual(['1']);
+        expect(state.anchorVideoId).toBe('1');
         expect(state.selectedVideoState).toEqual({
             1: { watched: 0, favorite: 0, ignored: 0 }
         });
@@ -101,8 +101,8 @@ describe('viewerSelection filter-context behavior', () => {
         const contextKey = createContextKey();
         let state = viewerSelectionStateManager.create(contextKey, pageOneVideos);
 
-        state = viewerSelectionStateManager.toggleSingle(state, 1);
-        state = viewerSelectionStateManager.toggleSingle(state, 1);
+        state = viewerSelectionStateManager.toggleSingle(state, '1');
+        state = viewerSelectionStateManager.toggleSingle(state, '1');
 
         expect(state.selectedVideoIds).toEqual([]);
         expect(state.anchorVideoId).toBeNull();
@@ -113,8 +113,8 @@ describe('viewerSelection filter-context behavior', () => {
         const contextKey = createContextKey();
         let state = viewerSelectionStateManager.create(contextKey, pageOneVideos);
 
-        state = viewerSelectionStateManager.toggle(state, 1);
-        state = viewerSelectionStateManager.toggle(state, 2);
+        state = viewerSelectionStateManager.toggle(state, '1');
+        state = viewerSelectionStateManager.toggle(state, '2');
         state = viewerSelectionStateManager.reconcile(state, contextKey, pageTwoVideos);
 
         expect(viewerSelectionInspector.hasSelectionOutsideCurrentPage(state)).toBe(true);
@@ -147,13 +147,13 @@ describe('viewerSelection filter-context behavior', () => {
             const contextKey = createContextKey();
             let state = viewerSelectionStateManager.create(contextKey, pageOneVideos);
 
-            state = viewerSelectionStateManager.toggle(state, 1);
+        state = viewerSelectionStateManager.toggle(state, '1');
             viewerSelectionSessionStore.persist(state);
 
             const restoredState = viewerSelectionSessionStore.load(contextKey, pageOneVideos);
 
-            expect(restoredState?.selectedVideoIds).toEqual([1]);
-            expect(restoredState?.anchorVideoId).toBe(1);
+            expect(restoredState?.selectedVideoIds).toEqual(['1']);
+            expect(restoredState?.anchorVideoId).toBe('1');
             expect(restoredState?.selectedVideoState).toEqual({
                 1: { watched: 0, favorite: 0, ignored: 0 }
             });

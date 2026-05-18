@@ -150,7 +150,7 @@
         void applyFiltersNow();
     }
 
-    function handleCardClick(event: MouseEvent | KeyboardEvent, videoId: number)
+    function handleCardClick(event: MouseEvent | KeyboardEvent, videoId: string | number)
     {
         const action = viewerSelectionInteractions.getViewerCardSelectionAction(event, bulkActionPending);
 
@@ -280,7 +280,7 @@
             const succeededIdSet = new Set(actionResult.succeededIds);
             const restoredStates = undo.originalStates.filter((state) => succeededIdSet.has(state.videoId));
             const restoredSnapshots = restoredStates.map((state) => ({
-                id: state.videoId,
+                id: String(state.videoId),
                 watched: state.watched,
                 favorite: state.favorite,
                 ignored: state.ignored
@@ -317,8 +317,8 @@
             ignored: f.ignored,
             dateFromInput: f.dateFromInput,
             dateToInput: f.dateToInput,
-            channelId: f.channelId,
-            virtualChannelId: f.virtualChannelId,
+            channelId: f.channelId != null ? String(f.channelId) : null,
+            virtualChannelId: f.virtualChannelId != null ? String(f.virtualChannelId) : null,
             sort: f.sort
         });
         const nextCurrentPageVideoIds = currentPageSelectionVideos.map((video) => video.id);

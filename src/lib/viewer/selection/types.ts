@@ -1,10 +1,11 @@
 export type ViewerSelectionFlagKind = 'watched' | 'favorite' | 'ignored';
 export type ViewerSelectionFlagValue = 0 | 1;
 export type ViewerSelectionControlState = 'unchecked' | 'checked' | 'mixed';
+export type ViewerSelectableId = string;
 
 export interface ViewerSelectionVideoSnapshot
 {
-    id: number;
+    id: string | number;
     watched: ViewerSelectionFlagValue;
     favorite: ViewerSelectionFlagValue;
     ignored: ViewerSelectionFlagValue;
@@ -20,12 +21,12 @@ export interface ViewerSelectionVideoState
 export interface ViewerSelectionState
 {
     contextKey: string;
-    selectedVideoIds: number[];
-    anchorVideoId: number | null;
-    currentPageVideoIds: number[];
+    selectedVideoIds: ViewerSelectableId[];
+    anchorVideoId: ViewerSelectableId | null;
+    currentPageVideoIds: ViewerSelectableId[];
     currentPageVideos: ViewerSelectionVideoSnapshot[];
-    selectedVideoState: Record<number, ViewerSelectionVideoState>;
-    baselineSelectedVideoState: Record<number, ViewerSelectionVideoState>;
+    selectedVideoState: Record<ViewerSelectableId, ViewerSelectionVideoState>;
+    baselineSelectedVideoState: Record<ViewerSelectableId, ViewerSelectionVideoState>;
 }
 
 export interface ViewerSelectionContextInput
@@ -36,8 +37,8 @@ export interface ViewerSelectionContextInput
     ignored: 'hide' | 'show';
     dateFromInput: string;
     dateToInput: string;
-    channelId: number | null;
-    virtualChannelId: number | null;
+    channelId: string | null;
+    virtualChannelId: string | null;
     sort: string;
 }
 // apply-patch-anchor - do not delete

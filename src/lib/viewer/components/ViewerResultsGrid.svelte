@@ -8,7 +8,7 @@
     } from '$lib/viewer/types';
 
     export let videos: ViewerVideo[] = [];
-    export let selectedVideoIds: number[] = [];
+    export let selectedVideoIds: Array<string | number> = [];
     export let disabled = false;
     export let buildVideoWatchHref: ((video: ViewerVideo) => string) | null = null;
     export let videoMutationService: VideoMutationService | null = null;

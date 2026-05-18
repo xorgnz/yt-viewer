@@ -25,19 +25,19 @@ export interface CreateVirtualChannelInput
 
 export interface RenameVirtualChannelInput
 {
-    id: number;
+    id: string | number;
     name: string;
 }
 
 export interface DeleteVirtualChannelInput
 {
-    id: number;
+    id: string | number;
 }
 
 export interface AdminInlineAssociationInput
 {
-    virtualChannelId: number;
-    sourceChannelId: number;
+    virtualChannelId: string | number;
+    sourceChannelId: string | number;
 }
 
 export class AdminVirtualChannelIndexService
@@ -280,7 +280,7 @@ export class AdminVirtualChannelIndexService
         code: TCode,
         status: number,
         message: string,
-        virtualChannelId: number | null
+        virtualChannelId: string | number | null
     ): AdminVirtualChannelServiceResult<never, AdminVirtualChannelInlineServiceError<TCode>>
     {
         return {

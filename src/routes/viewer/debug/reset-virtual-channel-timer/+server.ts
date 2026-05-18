@@ -15,10 +15,10 @@ function sanitizeReturnTo(returnTo: string): string
 export const POST = async ({ request, cookies }: { request: Request; cookies: any }) =>
 {
     const form = await ServerActionForm.fromRequest(request);
-    const virtualChannelId = form.getPositiveInteger('virtualChannelId');
+    const virtualChannelId = form.getIdentifier('virtualChannelId');
     const returnTo = sanitizeReturnTo(form.getTrimmedString('returnTo', '/viewer/virtual-channels'));
 
-    if (!virtualChannelId) {
+    if (virtualChannelId === null) {
         throw redirect(303, returnTo);
     }
 

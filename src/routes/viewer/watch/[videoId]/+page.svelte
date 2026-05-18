@@ -7,9 +7,9 @@
 
     export let data: {
         video: {
-            id: number;
+            id: string | number;
             youtube_id: string;
-            channel_id: number;
+            channel_id: string | number;
             title: string;
             description: string;
             published_at: number | null;
@@ -23,12 +23,12 @@
         };
         recommendations: ViewerVideo[];
         navigationFilters: ViewerFilters;
-        profileId: number;
+        profileId: string | number;
         profileKey: string;
         profileName: string;
         previousVideoYoutubeId: string | null;
         nextVideoYoutubeId: string | null;
-        currentVirtualChannelId: number | null;
+        currentVirtualChannelId: string | number | null;
         activeVirtualChannel: ViewerVirtualChannel | null;
         playbackBlockedMessage: string | null;
     };
@@ -138,7 +138,7 @@
     function resetForVideoChange(
         serverWatched: boolean,
         playbackBlockedMessage: string | null,
-        virtualChannelId: number | null,
+        virtualChannelId: string | number | null,
         usageBaselineSeconds: number
     )
     {
@@ -404,7 +404,7 @@
         return currentSeconds > 0;
     }
 
-    function buildHistoryProgressFormData(virtualChannelId: number | null = activeVirtualChannelId): FormData
+    function buildHistoryProgressFormData(virtualChannelId: string | number | null = activeVirtualChannelId): FormData
     {
         const formData = new FormData();
         formData.set('watchSeconds', String(Math.floor(elapsedWatchSeconds)));
@@ -416,7 +416,7 @@
         return formData;
     }
 
-    function flushPendingHistory(videoYoutubeId: string, keepalive = false, virtualChannelId: number | null = activeVirtualChannelId)
+    function flushPendingHistory(videoYoutubeId: string, keepalive = false, virtualChannelId: string | number | null = activeVirtualChannelId)
     {
         if (!videoYoutubeId || !shouldFlushPendingHistory()) {
             lastDebugEvent = `flush skipped: ${videoYoutubeId || 'none'}`;

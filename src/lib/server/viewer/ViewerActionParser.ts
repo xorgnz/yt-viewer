@@ -10,7 +10,7 @@ export class ViewerActionParser
 {
     static parseToggleFlag(form: ServerActionForm)
     {
-        const videoId = form.getPositiveInteger('videoId');
+        const videoId = form.getIdentifier('videoId');
         const kind = ViewerActionParser.parseBulkFlagKind(form.getRaw('kind'));
         const value = ViewerActionParser.parseBulkFlagValue(form.getRaw('value'));
 
@@ -29,7 +29,7 @@ export class ViewerActionParser
     {
         const kind = ViewerActionParser.parseBulkFlagKind(form.getRaw('kind'));
         const value = ViewerActionParser.parseBulkFlagValue(form.getRaw('value'));
-        const requestedVideoIds = form.getPositiveIntegerList({ csvField: 'videoIds' });
+        const requestedVideoIds = form.getIdentifierList({ csvField: 'videoIds' });
         const selectionContextKey = form.getNullableTrimmedString('selectionContextKey');
         const selectedCountHintRaw = form.getNumber('selectedCount', requestedVideoIds.length);
         const selectedCountHint = Number.isInteger(selectedCountHintRaw) && selectedCountHintRaw >= 0
@@ -44,8 +44,8 @@ export class ViewerActionParser
             kind,
             value,
             requestedVideoIds,
-            selectionContextKey,
             selectedCountHint,
+            selectionContextKey,
             spansMultiplePages: form.isEnabled('spansMultiplePages')
         };
     }
@@ -53,8 +53,9 @@ export class ViewerActionParser
     static parseUndoBulkUpdateFlags(form: ServerActionForm)
     {
         const kind = ViewerActionParser.parseBulkFlagKind(form.getRaw('kind'));
-        const requestedVideoIds = form.getPositiveIntegerList({ csvField: 'videoIds' });
+        const requestedVideoIds = form.getIdentifierList({ csvField: 'videoIds' });
         const undoStates = ViewerActionParser.parseUndoStates(form.getRaw('originalStates'));
+        const selectionContextKey = form.getNullableTrimmedString('selectionContextKey');
 
         if (!kind || undoStates === null) {
             return null;
@@ -62,9 +63,9 @@ export class ViewerActionParser
 
         return {
             kind,
+            selectionContextKey,
             requestedVideoIds,
-            undoStates,
-            selectionContextKey: form.getNullableTrimmedString('selectionContextKey')
+            undoStates
         };
     }
 
@@ -77,7 +78,7 @@ export class ViewerActionParser
         }
 
         return {
-            requestedVideoIds: form.getPositiveIntegerList({ csvField: 'videoIds' }),
+            requestedVideoIds: form.getIdentifierList({ csvField: 'videoIds' }),
             restoreStates,
             selectionContextKey: form.getNullableTrimmedString('selectionContextKey')
         };
@@ -116,9 +117,9 @@ export class ViewerActionParser
 
             const states: BulkUndoState[] = [];
             for (const item of parsed) {
-                const videoId = Number((item as any)?.videoId);
+                const videoId = String((item as any)?.videoId || '').trim();
                 const value = Number((item as any)?.value);
-                if (!Number.isInteger(videoId) || videoId <= 0 || (value !== 0 && value !== 1)) {
+                if (!videoId || (value !== 0 && value !== 1)) {
                     return null;
                 }
 
@@ -146,14 +147,13 @@ export class ViewerActionParser
 
             const states: BulkRestoreState[] = [];
             for (const item of parsed) {
-                const videoId = Number((item as any)?.videoId);
+                const videoId = String((item as any)?.videoId || '').trim();
                 const watched = Number((item as any)?.watched);
                 const favorite = Number((item as any)?.favorite);
                 const ignored = Number((item as any)?.ignored);
 
                 if (
-                    !Number.isInteger(videoId) ||
-                    videoId <= 0 ||
+                    !videoId ||
                     (watched !== 0 && watched !== 1) ||
                     (favorite !== 0 && favorite !== 1) ||
                     (ignored !== 0 && ignored !== 1)

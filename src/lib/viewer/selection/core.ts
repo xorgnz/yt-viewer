@@ -71,10 +71,10 @@ class ViewerSelectionStateManager
         };
     }
 
-    public toggle(state: ViewerSelectionState, videoId: number): ViewerSelectionState
+    public toggle(state: ViewerSelectionState, videoId: string | number): ViewerSelectionState
     {
-        const normalizedVideoId = Number(videoId);
-        if (!Number.isInteger(normalizedVideoId) || normalizedVideoId <= 0) {
+        const normalizedVideoId = String(videoId).trim();
+        if (!normalizedVideoId) {
             return state;
         }
 
@@ -106,16 +106,16 @@ class ViewerSelectionStateManager
         };
     }
 
-    public selectSingle(state: ViewerSelectionState, videoId: number): ViewerSelectionState
+    public selectSingle(state: ViewerSelectionState, videoId: string | number): ViewerSelectionState
     {
-        const normalizedVideoId = Number(videoId);
-        if (!Number.isInteger(normalizedVideoId) || normalizedVideoId <= 0) {
+        const normalizedVideoId = String(videoId).trim();
+        if (!normalizedVideoId) {
             return state;
         }
 
         const currentPageVideoState = ViewerSelectionSupport.createCurrentPageVideoStateMap(state.currentPageVideos);
-        const selectedVideoState: Record<number, ViewerSelectionVideoState> = {};
-        const baselineSelectedVideoState: Record<number, ViewerSelectionVideoState> = {};
+        const selectedVideoState: Record<string, ViewerSelectionVideoState> = {};
+        const baselineSelectedVideoState: Record<string, ViewerSelectionVideoState> = {};
 
         if (currentPageVideoState[normalizedVideoId]) {
             selectedVideoState[normalizedVideoId] = currentPageVideoState[normalizedVideoId];
@@ -149,10 +149,10 @@ class ViewerSelectionStateManager
         };
     }
 
-    public toggleSingle(state: ViewerSelectionState, videoId: number): ViewerSelectionState
+    public toggleSingle(state: ViewerSelectionState, videoId: string | number): ViewerSelectionState
     {
-        const normalizedVideoId = Number(videoId);
-        if (!Number.isInteger(normalizedVideoId) || normalizedVideoId <= 0) {
+        const normalizedVideoId = String(videoId).trim();
+        if (!normalizedVideoId) {
             return state;
         }
 
@@ -163,10 +163,10 @@ class ViewerSelectionStateManager
         return this.selectSingle(state, normalizedVideoId);
     }
 
-    public selectRange(state: ViewerSelectionState, videoId: number): ViewerSelectionState
+    public selectRange(state: ViewerSelectionState, videoId: string | number): ViewerSelectionState
     {
-        const normalizedVideoId = Number(videoId);
-        if (!Number.isInteger(normalizedVideoId) || normalizedVideoId <= 0) {
+        const normalizedVideoId = String(videoId).trim();
+        if (!normalizedVideoId) {
             return state;
         }
 
@@ -229,7 +229,7 @@ class ViewerSelectionStateManager
         state: ViewerSelectionState,
         kind: ViewerSelectionFlagKind,
         value: ViewerSelectionFlagValue,
-        updatedVideoIds: number[]
+        updatedVideoIds: Array<string | number>
     ): ViewerSelectionState
     {
         const updatedIdSet = new Set(ViewerSelectionSupport.normalizeIds(updatedVideoIds));
@@ -239,7 +239,8 @@ class ViewerSelectionStateManager
 
         const selectedVideoState = ViewerSelectionSupport.createStateMap(state.selectedVideoIds, state.selectedVideoState);
         const currentPageVideos = state.currentPageVideos.map((video) => {
-            if (!updatedIdSet.has(video.id)) {
+            const normalizedVideoId = String(video.id);
+            if (!updatedIdSet.has(normalizedVideoId)) {
                 return video;
             }
 
@@ -274,11 +275,11 @@ class ViewerSelectionStateManager
             return state;
         }
 
-        const restoredStateMap = new Map<number, ViewerSelectionVideoState>();
+        const restoredStateMap = new Map<string, ViewerSelectionVideoState>();
 
         for (const restoredState of restoredStates) {
-            const videoId = Number(restoredState.id);
-            if (!Number.isInteger(videoId) || videoId <= 0) {
+            const videoId = String(restoredState.id).trim();
+            if (!videoId) {
                 continue;
             }
 
@@ -295,13 +296,14 @@ class ViewerSelectionStateManager
 
         const selectedVideoState = ViewerSelectionSupport.createStateMap(state.selectedVideoIds, state.selectedVideoState);
         const currentPageVideos = state.currentPageVideos.map((video) => {
-            if (!restoredStateMap.has(video.id)) {
+            const normalizedVideoId = String(video.id);
+            if (!restoredStateMap.has(normalizedVideoId)) {
                 return video;
             }
 
             return {
                 ...video,
-                ...restoredStateMap.get(video.id)!
+                ...restoredStateMap.get(normalizedVideoId)!
             };
         });
 

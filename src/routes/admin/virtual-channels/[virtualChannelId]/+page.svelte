@@ -73,7 +73,7 @@
     }
 
     function selectedOnlyQueryString(item: {
-        assignment: { id: number };
+        assignment: { id: string | number };
         reviewStateFilter: AdminReviewStateFilter;
         regexFilter: string;
         videoTypeFilter: AdminVideoTypeFilter;

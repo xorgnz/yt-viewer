@@ -45,14 +45,14 @@ export class HistoryReadRepository extends DAO
                 h.last_updated_at,
                 h.time_watched_seconds,
                 h.profile_id,
-                v.id AS video_id,
-                v.youtube_id,
+                v.video_id,
+                v.video_id AS youtube_id,
                 v.title,
-                c.id AS channel_id,
+                c.src_channel_id AS channel_id,
                 c.title AS channel_title
             FROM watch_history h
-            JOIN videos v ON v.id = h.video_id
-            JOIN source_channels c ON c.id = v.channel_id
+            JOIN videos v ON v.video_id = h.video_id
+            JOIN source_channels c ON c.src_channel_id = v.src_channel_id
             ${whereSql}
             ORDER BY h.session_started_at DESC
             LIMIT :limit OFFSET :offset
@@ -73,25 +73,24 @@ export class HistoryReadRepository extends DAO
         const sql = `
             SELECT
                 h.profile_id,
-                v.id AS video_id,
-                v.youtube_id,
+                v.video_id,
+                v.video_id AS youtube_id,
                 v.title,
-                c.id AS channel_id,
+                c.src_channel_id AS channel_id,
                 c.title AS channel_title,
                 SUM(h.time_watched_seconds) AS total_time_watched_seconds,
                 COUNT(*) AS session_count,
                 MAX(h.session_started_at) AS latest_session_started_at,
                 MAX(h.last_updated_at) AS latest_last_updated_at
             FROM watch_history h
-            JOIN videos v ON v.id = h.video_id
-            JOIN source_channels c ON c.id = v.channel_id
+            JOIN videos v ON v.video_id = h.video_id
+            JOIN source_channels c ON c.src_channel_id = v.src_channel_id
             ${whereSql}
             GROUP BY
                 h.profile_id,
-                v.id,
-                v.youtube_id,
+                v.video_id,
                 v.title,
-                c.id,
+                c.src_channel_id,
                 c.title
             ORDER BY latest_session_started_at DESC
             LIMIT :limit OFFSET :offset

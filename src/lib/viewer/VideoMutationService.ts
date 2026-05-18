@@ -13,7 +13,7 @@ export type ViewerBulkMutationResult = {
     ok: boolean;
     outcome: ViewerBulkActionOutcome;
     message: string;
-    succeededIds: number[];
+    succeededIds: Array<string | number>;
 };
 
 export class VideoMutationService
@@ -61,7 +61,7 @@ export class VideoMutationService
     async bulkUpdateFlags(input: {
         kind: ViewerSelectionFlagKind;
         value: ViewerSelectionFlagValue;
-        videoIds: number[];
+        videoIds: Array<string | number>;
         selectionContextKey: string | null;
         selectedCount: number;
         spansMultiplePages: boolean;
@@ -80,7 +80,7 @@ export class VideoMutationService
     }
 
     async restoreSelectionState(input: {
-        requestedVideoIds: number[];
+        requestedVideoIds: Array<string | number>;
         undo: BulkActionUndoState;
         selectionContextKey: string | null;
     }): Promise<ViewerBulkMutationResult | null>
@@ -129,7 +129,7 @@ export class VideoMutationService
             return null;
         }
 
-        if (!Array.isArray(succeededIds) || succeededIds.some((id) => typeof id !== 'number')) {
+        if (!Array.isArray(succeededIds) || succeededIds.some((id) => typeof id !== 'string' && typeof id !== 'number')) {
             return null;
         }
 

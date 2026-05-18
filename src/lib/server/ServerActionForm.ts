@@ -38,6 +38,11 @@ export class ServerActionForm
         return value ? value : null;
     }
 
+    getIdentifier(name: string): string | null
+    {
+        return this.getNullableTrimmedString(name);
+    }
+
     getPositiveInteger(name: string): number | null
     {
         const parsed = Number(this.getString(name));
@@ -93,6 +98,35 @@ export class ServerActionForm
 
             seen.add(parsed);
             values.push(parsed);
+        }
+
+        return values;
+    }
+
+    getIdentifierList(fields: PositiveIntegerListFields): string[]
+    {
+        const values: string[] = [];
+        const seen = new Set<string>();
+        const rawValues: string[] = [];
+
+        // Combine repeated and CSV field shapes into one normalized string-id list.
+        if (fields.repeatedField) {
+            const repeatedValues = this.form.getAll(fields.repeatedField);
+            rawValues.push(...repeatedValues.map((value) => String(value).trim()));
+        }
+
+        if (fields.csvField) {
+            const csvValue = this.getString(fields.csvField);
+            rawValues.push(...csvValue.split(',').map((value) => value.trim()));
+        }
+
+        for (const rawValue of rawValues) {
+            if (!rawValue || seen.has(rawValue)) {
+                continue;
+            }
+
+            seen.add(rawValue);
+            values.push(rawValue);
         }
 
         return values;

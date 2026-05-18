@@ -28,7 +28,7 @@ export interface AdminVirtualChannelServiceError<TCode extends string = string>
 export interface AdminVirtualChannelInlineServiceError<TCode extends string = string>
     extends AdminVirtualChannelServiceError<TCode>
 {
-    virtualChannelId: number | null;
+    virtualChannelId: string | number | null;
 }
 
 export type AdminVirtualChannelServiceResult<
@@ -65,7 +65,7 @@ export interface AdminVirtualChannelInlineMutationData
 {
     group: AdminVirtualChannelRow;
     message: string;
-    virtualChannelId: number;
+    virtualChannelId: string | number;
 }
 
 export interface AdminVirtualChannelRedirect

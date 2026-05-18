@@ -10,8 +10,8 @@ export class ViewerSelectionContext
     public readonly ignored: 'hide' | 'show';
     public readonly dateFromInput: string;
     public readonly dateToInput: string;
-    public readonly channelId: number | null;
-    public readonly virtualChannelId: number | null;
+    public readonly channelId: string | null;
+    public readonly virtualChannelId: string | null;
     public readonly sort: string;
 
     public constructor(input: ViewerSelectionContextInput)

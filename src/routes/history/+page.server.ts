@@ -21,7 +21,7 @@ export const load = async ({ url, cookies }: { url: URL; cookies: any }) =>
         const filters = {
             profileKey: profileContext.activeProfileKey,
             mode,
-            channelId: channelId ? Number(channelId) : null,
+            channelId: channelId?.trim() || null,
             dateFrom: dateFrom ? Number(dateFrom) : null,
             dateTo: dateTo ? Number(dateTo) : null,
             limit: limit ? Number(limit) : 100,

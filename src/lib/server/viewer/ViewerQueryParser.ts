@@ -11,8 +11,8 @@ export type ViewerQueryFilters = {
     dateTo: number | null;
     dateFromInput: string;
     dateToInput: string;
-    channelId: number | null;
-    virtualChannelId: number | null;
+    channelId: string | number | null;
+    virtualChannelId: string | number | null;
     sort: ViewerSort;
     limit: number;
     offset: number;
@@ -46,17 +46,28 @@ export class ViewerQueryParser
             dateTo: ViewerQueryParser.parseDateOnly(dateToInput, 'end'),
             dateFromInput,
             dateToInput,
-            channelId: ViewerQueryParser.parseOptionalNumber(url.searchParams.get('channelId')),
-            virtualChannelId: ViewerQueryParser.parseOptionalNumber(url.searchParams.get('virtualChannelId')),
+            channelId: ViewerQueryParser.parseOptionalIdentifier(url.searchParams.get('channelId')),
+            virtualChannelId: ViewerQueryParser.parseOptionalIdentifier(url.searchParams.get('virtualChannelId')),
             sort,
-            limit: ViewerQueryParser.parseOptionalNumber(url.searchParams.get('limit')) ?? 200,
-            offset: ViewerQueryParser.parseOptionalNumber(url.searchParams.get('offset')) ?? 0
+            limit: ViewerQueryParser.parseOptionalInteger(url.searchParams.get('limit')) ?? 200,
+            offset: ViewerQueryParser.parseOptionalInteger(url.searchParams.get('offset')) ?? 0
         };
     }
 
-    private static parseOptionalNumber(value: string | null): number | null
+    private static parseOptionalIdentifier(value: string | null): string | null
     {
-        return value ? Number(value) : null;
+        const normalizedValue = value?.trim() ?? '';
+        return normalizedValue ? normalizedValue : null;
+    }
+
+    private static parseOptionalInteger(value: string | null): number | null
+    {
+        if (!value) {
+            return null;
+        }
+
+        const parsed = Number(value);
+        return Number.isInteger(parsed) ? parsed : null;
     }
 
     private static parseSort(value: string | null): ViewerSort

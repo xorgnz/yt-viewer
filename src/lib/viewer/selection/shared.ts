@@ -6,11 +6,13 @@ import type {
 
 export class ViewerSelectionSupport
 {
-    public static normalizeIds(ids: number[]): number[]
+    public static normalizeIds(ids: Array<string | number>): string[]
     {
         return Array.from(
             new Set(
-                ids.filter((value) => Number.isInteger(value) && value > 0)
+                ids
+                    .map((value) => String(value).trim())
+                    .filter((value) => value.length > 0)
             )
         );
     }
@@ -24,11 +26,11 @@ export class ViewerSelectionSupport
         videos: ViewerSelectionVideoSnapshot[]
     ): ViewerSelectionVideoSnapshot[]
     {
-        const snapshotMap = new Map<number, ViewerSelectionVideoSnapshot>();
+        const snapshotMap = new Map<string, ViewerSelectionVideoSnapshot>();
 
         for (const video of videos) {
-            const id = Number(video?.id);
-            if (!Number.isInteger(id) || id <= 0) {
+            const id = String(video?.id || '').trim();
+            if (!id) {
                 continue;
             }
 
@@ -44,15 +46,15 @@ export class ViewerSelectionSupport
     }
 
     public static createStateMap(
-        selectedVideoIds: number[],
-        selectedVideoState: Record<number, ViewerSelectionVideoState> | null | undefined
-    ): Record<number, ViewerSelectionVideoState>
+        selectedVideoIds: string[],
+        selectedVideoState: Record<string, ViewerSelectionVideoState> | null | undefined
+    ): Record<string, ViewerSelectionVideoState>
     {
         const selectedIdSet = new Set(this.normalizeIds(selectedVideoIds));
-        const normalizedState: Record<number, ViewerSelectionVideoState> = {};
+        const normalizedState: Record<string, ViewerSelectionVideoState> = {};
 
         for (const [rawId, snapshot] of Object.entries(selectedVideoState || {})) {
-            const id = Number(rawId);
+            const id = rawId.trim();
             if (!selectedIdSet.has(id)) {
                 continue;
             }
@@ -69,9 +71,9 @@ export class ViewerSelectionSupport
 
     public static createCurrentPageVideoStateMap(
         currentPageVideos: ViewerSelectionVideoSnapshot[]
-    ): Record<number, ViewerSelectionVideoState>
+    ): Record<string, ViewerSelectionVideoState>
     {
-        const snapshotMap: Record<number, ViewerSelectionVideoState> = {};
+        const snapshotMap: Record<string, ViewerSelectionVideoState> = {};
 
         for (const video of currentPageVideos) {
             snapshotMap[video.id] = {
@@ -84,9 +86,9 @@ export class ViewerSelectionSupport
         return snapshotMap;
     }
 
-    public static createCurrentPageVideoIds(currentPageVideos: ViewerSelectionVideoSnapshot[]): number[]
+    public static createCurrentPageVideoIds(currentPageVideos: ViewerSelectionVideoSnapshot[]): string[]
     {
-        return currentPageVideos.map((video) => video.id);
+        return currentPageVideos.map((video) => String(video.id));
     }
 }
 // apply-patch-anchor - do not delete

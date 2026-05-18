@@ -27,7 +27,7 @@ describe('viewer page state helpers', () => {
     }
 
     it('builds filter query flags from input state', () => {
-        const filters = createFilters({ virtualChannelId: 4 });
+        const filters = createFilters({ virtualChannelId: '4' });
         const inputState = viewerPageState.deriveViewerFilterInputState({
             ...filters,
             term: 'space',
@@ -35,7 +35,7 @@ describe('viewer page state helpers', () => {
             ignored: 'show',
             dateFromInput: '2026-04-01',
             dateToInput: '2026-04-10',
-            channelId: 22,
+            channelId: '22',
             limit: 25
         });
 
@@ -78,16 +78,16 @@ describe('viewer page state helpers', () => {
             sort: 'newest'
         });
         const pageOneVideos = [
-            { id: 1, watched: 0 as const, favorite: 0 as const, ignored: 0 as const },
-            { id: 2, watched: 1 as const, favorite: 1 as const, ignored: 0 as const }
+            { id: '1', watched: 0 as const, favorite: 0 as const, ignored: 0 as const },
+            { id: '2', watched: 1 as const, favorite: 1 as const, ignored: 0 as const }
         ];
         const pageTwoVideos = [
-            { id: 3, watched: 0 as const, favorite: 0 as const, ignored: 1 as const }
+            { id: '3', watched: 0 as const, favorite: 0 as const, ignored: 1 as const }
         ];
 
         let state = viewerSelectionStateManager.create(contextKey, pageOneVideos);
-        state = viewerSelectionStateManager.toggle(state, 1);
-        state = viewerSelectionStateManager.toggle(state, 2);
+        state = viewerSelectionStateManager.toggle(state, '1');
+        state = viewerSelectionStateManager.toggle(state, '2');
         state = viewerSelectionStateManager.reconcile(state, contextKey, pageTwoVideos);
 
         const summary = viewerPageState.deriveViewerSelectionSummary(state);
@@ -105,8 +105,8 @@ describe('viewer page state helpers', () => {
             term: 'ramen',
             watched: 'unwatched',
             ignored: 'show',
-            channelId: 7,
-            virtualChannelId: 3,
+            channelId: '7',
+            virtualChannelId: '3',
             sort: 'title_desc'
         }), 'abc123');
 

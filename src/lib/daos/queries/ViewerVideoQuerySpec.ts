@@ -61,13 +61,13 @@ export class ViewerVideoQuerySpec
     {
         switch (this.resolveSort()) {
             case 'oldest':
-                return 'v.published_at IS NULL ASC, v.published_at ASC, v.id ASC';
+                return 'v.published_at IS NULL ASC, v.published_at ASC, v.video_id ASC';
             case 'title_asc':
-                return 'LOWER(v.title) ASC, v.published_at IS NULL ASC, v.published_at DESC, v.id ASC';
+                return 'LOWER(v.title) ASC, v.published_at IS NULL ASC, v.published_at DESC, v.video_id ASC';
             case 'title_desc':
-                return 'LOWER(v.title) DESC, v.published_at IS NULL ASC, v.published_at DESC, v.id DESC';
+                return 'LOWER(v.title) DESC, v.published_at IS NULL ASC, v.published_at DESC, v.video_id DESC';
             default:
-                return 'v.published_at IS NULL ASC, v.published_at DESC, v.id DESC';
+                return 'v.published_at IS NULL ASC, v.published_at DESC, v.video_id DESC';
         }
     }
 
@@ -97,14 +97,14 @@ export class ViewerVideoQuerySpec
         }
 
         if (this.filters.channelId != null) {
-            where.push('v.channel_id = :channelId');
+            where.push('v.src_channel_id = :channelId');
             params.channelId = this.filters.channelId;
         }
 
         // When a virtual channel is selected, honor assignment mode and selection rules.
         if (this.filters.virtualChannelId != null) {
-            groupJoin = 'JOIN virtual_channel_assignments ga ON ga.source_channel_id = v.channel_id AND ga.virtual_channel_id = :virtualChannelId';
-            selectionJoin = 'LEFT JOIN virtual_channel_assignment_video_selections gavs ON (gavs.assignment_id = ga.id AND gavs.video_id = v.id)';
+            groupJoin = 'JOIN virtual_channel_assignments ga ON ga.src_channel_id = v.src_channel_id AND ga.vchannel_id = :virtualChannelId';
+            selectionJoin = 'LEFT JOIN virtual_channel_assignment_video_selections gavs ON (gavs.src_channel_id = ga.src_channel_id AND gavs.vchannel_id = ga.vchannel_id AND gavs.video_id = v.video_id)';
             params.virtualChannelId = this.filters.virtualChannelId;
 
             where.push(`(

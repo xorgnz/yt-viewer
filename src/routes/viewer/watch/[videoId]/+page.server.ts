@@ -51,7 +51,7 @@ export const actions = {
         }
 
         const form = await ServerActionForm.fromRequest(request);
-        const virtualChannelId = form.getPositiveInteger('virtualChannelId');
+        const virtualChannelId = form.getIdentifier('virtualChannelId');
         const watchSeconds = form.getNumber('watchSeconds', 0);
         if (!Number.isFinite(watchSeconds) || watchSeconds < 1) {
             return fail(400, { message: 'Insufficient watch time for history session' });
@@ -86,7 +86,7 @@ export const actions = {
         }
 
         const form = await ServerActionForm.fromRequest(request);
-        const virtualChannelId = form.getPositiveInteger('virtualChannelId');
+        const virtualChannelId = form.getIdentifier('virtualChannelId');
         const watchSeconds = form.getNumber('watchSeconds', 0);
         if (!Number.isFinite(watchSeconds) || watchSeconds < 0) {
             return fail(400, { message: 'Invalid watch time' });
