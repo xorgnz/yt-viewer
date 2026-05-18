@@ -34,6 +34,48 @@ function createProvider(options?: {
     });
 }
 
+class MockTransactionalQueryProvider extends MockQueryProvider
+{
+    readonly poolCalls: Array<{ text: string; values: unknown[] }> = [];
+    readonly connectionCalls: Array<{ text: string; values: unknown[] }> = [];
+
+    async query<T extends object = Record<string, unknown>>(
+        text: string,
+        values: unknown[] = []
+    )
+    {
+        this.poolCalls.push({ text, values });
+        return await super.query<T>(text, values);
+    }
+
+    async withConnection<T>(work: (connection: {
+        execute<TResult>(text: string, values?: unknown[]): Promise<[TResult]>;
+        release(): void;
+    }) => Promise<T> | T): Promise<T>
+    {
+        const connection = {
+            execute: async <TResult>(text: string, values: unknown[] = []) => {
+                this.connectionCalls.push({ text, values });
+
+                const result = await super.query<Record<string, unknown>>(text, values);
+                if (result.rows.length > 0) {
+                    return [result.rows as TResult] as [TResult];
+                }
+
+                return [{
+                    affectedRows: result.affectedRows,
+                    insertId: result.insertId
+                } as TResult] as [TResult];
+            },
+            release() {
+                return;
+            }
+        };
+
+        return await work(connection);
+    }
+}
+
 describe('database setup scripts', () => {
     it('bootstraps the latest database schema', async () => {
         const client = createProvider();
@@ -58,6 +100,21 @@ describe('database setup scripts', () => {
         expect(sqlCalls.some((sql) => sql.includes('INSERT INTO _meta(`key`, value) VALUES(\'schema_version\', ?)'))).toBe(true);
         expect(client.calls.at(-2)?.values).toEqual([String(SCHEMA_VERSION)]);
         expect(client.calls.at(-1)?.text).toBe('COMMIT');
+    });
+
+    it('pins bootstrap writes to a single connection when available', async () => {
+        const client = new MockTransactionalQueryProvider();
+
+        await runCreateDatabaseWorkflow({
+            pool: client,
+        });
+
+        expect(client.connectionCalls.map((call) => call.text)).toContain('START TRANSACTION');
+        expect(client.connectionCalls.map((call) => call.text)).toContain('COMMIT');
+        expect(client.connectionCalls.some((call) => call.text.includes('CREATE TABLE IF NOT EXISTS virtual_channels'))).toBe(true);
+        expect(client.connectionCalls.some((call) => call.text.includes('INSERT INTO _meta'))).toBe(true);
+        expect(client.poolCalls.map((call) => call.text)).not.toContain('START TRANSACTION');
+        expect(client.poolCalls.map((call) => call.text)).not.toContain('COMMIT');
     });
 
     it('runs registered database migrations', async () => {
@@ -86,6 +143,41 @@ describe('database setup scripts', () => {
         expect(client.calls.some((call) => call.text.includes('INSERT INTO migration_history'))).toBe(false);
     });
 
+    it('accepts legacy migration rows when the schema is already at version 10', async () => {
+        const client = createProvider({
+            schemaVersion: '10',
+            historyTableExists: true,
+            migrationRows: [
+                {
+                    version: 8,
+                    name: 'add_migration_history',
+                    success: 1,
+                },
+                {
+                    version: 9,
+                    name: 'add_virtual_channel_daily_timer_max',
+                    success: 1,
+                },
+                {
+                    version: 10,
+                    name: 'add_virtual_channel_extra_timer_seconds_remaining',
+                    success: 1,
+                }
+            ],
+        });
+
+        const result = await runMigrationWorkflow({
+            pool: client,
+        });
+
+        expect(result.currentVersion).toBe(10);
+        expect(result.targetVersion).toBe(10);
+        expect(result.finalVersion).toBe(10);
+        expect(result.appliedMigrations).toEqual([]);
+        expect(client.calls.map((call) => call.text)).not.toContain('START TRANSACTION');
+        expect(client.calls.map((call) => call.text)).not.toContain('COMMIT');
+    });
+
     it('applies the registered extra timer migration from version 9 to 10', async () => {
         const client = createProvider({
             schemaVersion: '9',
@@ -110,6 +202,41 @@ describe('database setup scripts', () => {
         expect(client.calls.map((call) => call.text)).toContain('COMMIT');
         expect(client.calls.some((call) => call.text.includes('ALTER TABLE virtual_channels'))).toBe(true);
         expect(client.calls.some((call) => call.text.includes('INSERT INTO migration_history'))).toBe(true);
+    });
+
+    it('accepts legacy migration history when applying the version 9 to 10 migration', async () => {
+        const client = createProvider({
+            schemaVersion: '9',
+            historyTableExists: true,
+            migrationRows: [
+                {
+                    version: 8,
+                    name: 'add_migration_history',
+                    success: 1,
+                },
+                {
+                    version: 9,
+                    name: 'add_virtual_channel_daily_timer_max',
+                    success: 1,
+                }
+            ],
+        });
+
+        const result = await runMigrationWorkflow({
+            pool: client,
+        });
+
+        expect(result.currentVersion).toBe(9);
+        expect(result.targetVersion).toBe(10);
+        expect(result.finalVersion).toBe(10);
+        expect(result.appliedMigrations).toEqual([
+            {
+                version: 10,
+                name: 'add_virtual_channel_extra_timer_seconds_remaining',
+            }
+        ]);
+        expect(client.calls.map((call) => call.text)).toContain('START TRANSACTION');
+        expect(client.calls.map((call) => call.text)).toContain('COMMIT');
     });
 
     it('rolls back failed MySQL setup migrations', async () => {

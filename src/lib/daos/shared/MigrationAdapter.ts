@@ -1,20 +1,70 @@
 import type {
+    QueryResult,
+} from 'mysql2/promise';
+import type {
     MigrationAdapter,
     MigrationExecutionContext,
     RecordedMigrationState,
     SqlParams,
 } from '$lib/daos/migrations/migrationTypes';
 import { CREATE_TABLE_META } from '$lib/daos/_schema';
-import type { DatabasePool } from '$lib/daos/shared/DatabasePool';
+import type { DatabaseQueryResult } from '$lib/daos/shared/DatabasePool';
 import { SqlBinder } from '$lib/daos/shared/DAO';
 
-type DatabaseClientProvider = Pick<DatabasePool, 'query'>;
+type DatabaseQueryProvider = {
+    query<T extends object = Record<string, unknown>>(text: string, values?: unknown[]): Promise<DatabaseQueryResult<T>>;
+};
+
+type DatabaseTransactionConnection = {
+    execute<TResult>(text: string, values?: unknown[]): Promise<[TResult]>;
+    release(): void;
+};
+
+type DatabaseClientProvider = DatabaseQueryProvider & {
+    withConnection?<T>(work: (connection: DatabaseTransactionConnection) => Promise<T> | T): Promise<T>;
+};
+
+class DatabaseConnectionQueryProvider implements DatabaseQueryProvider
+{
+    private readonly connection: DatabaseTransactionConnection;
+
+    constructor(connection: DatabaseTransactionConnection)
+    {
+        this.connection = connection;
+    }
+
+    async query<T extends object = Record<string, unknown>>(
+        text: string,
+        values: unknown[] = []
+    ): Promise<DatabaseQueryResult<T>>
+    {
+        const [result] = await this.connection.execute<QueryResult>(text, values as never[]);
+        return DatabaseConnectionQueryProvider.mapResult<T>(result);
+    }
+
+    private static mapResult<T extends object>(result: QueryResult): DatabaseQueryResult<T>
+    {
+        if (Array.isArray(result)) {
+            return {
+                rows: result as T[],
+                affectedRows: result.length,
+                insertId: 0
+            };
+        }
+
+        return {
+            rows: [],
+            affectedRows: result.affectedRows ?? 0,
+            insertId: result.insertId ?? 0
+        };
+    }
+}
 
 class DatabaseMigrationExecutionContext implements MigrationExecutionContext
 {
-    private readonly provider: DatabaseClientProvider;
+    private readonly provider: DatabaseQueryProvider;
 
-    constructor(provider: DatabaseClientProvider)
+    constructor(provider: DatabaseQueryProvider)
     {
         this.provider = provider;
     }
@@ -51,6 +101,7 @@ export class DatabaseMigrationAdapter implements MigrationAdapter
 {
     private readonly provider: DatabaseClientProvider;
     private inTransaction = false;
+    private activeTransactionProvider: DatabaseQueryProvider | null = null;
 
     constructor(provider: DatabaseClientProvider)
     {
@@ -60,7 +111,7 @@ export class DatabaseMigrationAdapter implements MigrationAdapter
     async getCurrentVersion(): Promise<number | null>
     {
         try {
-            const result = await this.provider.query<{ value: string }>(
+            const result = await this.getQueryProvider().query<{ value: string }>(
                 'SELECT value FROM _meta WHERE `key` = ?',
                 ['schema_version']
             );
@@ -75,7 +126,8 @@ export class DatabaseMigrationAdapter implements MigrationAdapter
 
     async getRecordedMigrationState(): Promise<RecordedMigrationState>
     {
-        const tableResult = await this.provider.query<{ table_name: string }>(
+        const queryProvider = this.getQueryProvider();
+        const tableResult = await queryProvider.query<{ table_name: string }>(
             `
                 SELECT table_name
                 FROM information_schema.tables
@@ -92,7 +144,7 @@ export class DatabaseMigrationAdapter implements MigrationAdapter
             };
         }
 
-        const migrations = await this.provider.query<{
+        const migrations = await queryProvider.query<{
             version: number;
             name: string;
             success: boolean | number;
@@ -121,7 +173,7 @@ export class DatabaseMigrationAdapter implements MigrationAdapter
     {
         const now = Date.now();
 
-        await this.provider.query(
+        await this.getQueryProvider().query(
             `
                 INSERT INTO migration_history(
                     version,
@@ -138,9 +190,10 @@ export class DatabaseMigrationAdapter implements MigrationAdapter
 
     async setCurrentVersion(version: number): Promise<void>
     {
-        const context = new DatabaseMigrationExecutionContext(this.provider);
+        const queryProvider = this.getQueryProvider();
+        const context = new DatabaseMigrationExecutionContext(queryProvider);
         await context.exec(CREATE_TABLE_META);
-        await this.provider.query(
+        await queryProvider.query(
             `
                 INSERT INTO _meta(\`key\`, value) VALUES('schema_version', ?)
                 ON DUPLICATE KEY UPDATE value=VALUES(value)
@@ -158,6 +211,38 @@ export class DatabaseMigrationAdapter implements MigrationAdapter
         }
 
         this.inTransaction = true;
+        try {
+            return await this.runPinnedTransaction(operation);
+        } finally {
+            this.inTransaction = false;
+        }
+    }
+
+    private async runPinnedTransaction<T>(
+        operation: (context: MigrationExecutionContext) => Promise<T> | T
+    ): Promise<T>
+    {
+        if (this.provider.withConnection) {
+            return await this.provider.withConnection(async (connection) => {
+                const connectionProvider = new DatabaseConnectionQueryProvider(connection);
+                this.activeTransactionProvider = connectionProvider;
+
+                await connectionProvider.query('START TRANSACTION');
+
+                try {
+                    const context = new DatabaseMigrationExecutionContext(connectionProvider);
+                    const result = await operation(context);
+                    await connectionProvider.query('COMMIT');
+                    return result;
+                } catch (error) {
+                    await connectionProvider.query('ROLLBACK');
+                    throw error;
+                } finally {
+                    this.activeTransactionProvider = null;
+                }
+            });
+        }
+
         await this.provider.query('START TRANSACTION');
 
         try {
@@ -168,9 +253,12 @@ export class DatabaseMigrationAdapter implements MigrationAdapter
         } catch (error) {
             await this.provider.query('ROLLBACK');
             throw error;
-        } finally {
-            this.inTransaction = false;
         }
+    }
+
+    private getQueryProvider(): DatabaseQueryProvider
+    {
+        return this.activeTransactionProvider || this.provider;
     }
 
     static splitStatements(sql: string): string[]

@@ -64,7 +64,7 @@ export async function runCreateDatabaseWorkflow(options: {
     pool: DatabaseClientProvider;
 }): Promise<void>
 {
-    await new LatestSchemaBootstrapper().apply(options.pool);
+    await new LatestSchemaBootstrapper().apply(options.pool as Parameters<LatestSchemaBootstrapper['apply']>[0]);
 }
 
 async function main(): Promise<void>

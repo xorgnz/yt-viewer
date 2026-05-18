@@ -77,7 +77,7 @@ export async function runMigrationWorkflow(options: {
 }): Promise<MigrationRunResult>
 {
     const runner = new MigrationRunner(
-        new DatabaseMigrationAdapter(options.pool),
+        new DatabaseMigrationAdapter(options.pool as ConstructorParameters<typeof DatabaseMigrationAdapter>[0]),
         options.migrations || MIGRATIONS
     );
 

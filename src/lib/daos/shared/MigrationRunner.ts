@@ -10,6 +10,13 @@ type RegisteredMigration = {
     name: string;
 };
 
+const LEGACY_RECORDED_MIGRATIONS = new Map<number, string>([
+    [8, 'add_migration_history'],
+    [9, 'add_virtual_channel_daily_timer_max'],
+]);
+
+type RecordedMigrationNameResolver = (version: number) => string | null;
+
 function sortMigrations<T extends RegisteredMigration>(migrations: T[]): T[]
 {
     const ordered = [...migrations].sort((left, right) => left.version - right.version);
@@ -35,6 +42,74 @@ function sortMigrations<T extends RegisteredMigration>(migrations: T[]): T[]
     return ordered;
 }
 
+function validateSuccessfulRecordedMigrations(
+    recordedState: RecordedMigrationState,
+    resolveExpectedName: RecordedMigrationNameResolver,
+    unsupportedVersionMessage: (version: number) => string,
+    mismatchMessage: (version: number, expectedName: string, actualName: string) => string
+): number | null
+{
+    const successfulMigrations = recordedState.migrations.filter((migration) => migration.success);
+    const failedMigrations = recordedState.migrations.filter((migration) => !migration.success);
+    const seenSuccessfulVersions = new Set<number>();
+
+    if (failedMigrations.length > 0) {
+        throw new Error('Migration metadata contains failed migration attempts. Refusing to continue.');
+    }
+
+    for (const migration of successfulMigrations) {
+        if (seenSuccessfulVersions.has(migration.version)) {
+            throw new Error(`Migration metadata contains duplicate successful version "${migration.version}".`);
+        }
+
+        seenSuccessfulVersions.add(migration.version);
+
+        const expectedName = resolveExpectedName(migration.version);
+        if (!expectedName) {
+            throw new Error(unsupportedVersionMessage(migration.version));
+        }
+
+        if (expectedName !== migration.name) {
+            throw new Error(mismatchMessage(migration.version, expectedName, migration.name));
+        }
+    }
+
+    if (successfulMigrations.length === 0) {
+        return null;
+    }
+
+    return successfulMigrations.reduce(
+        (highest, migration) => Math.max(highest, migration.version),
+        successfulMigrations[0].version
+    );
+}
+
+function validateLegacyRecordedState(recordedState: RecordedMigrationState, currentVersion: number): void
+{
+    const highestSuccessfulVersion = validateSuccessfulRecordedMigrations(
+        recordedState,
+        (version) => LEGACY_RECORDED_MIGRATIONS.get(version) ?? null,
+        (version) => `Migration metadata references unsupported legacy version "${version}".`,
+        (version, expectedName, actualName) => (
+            `Legacy migration metadata name mismatch for version "${version}": expected "${expectedName}", found "${actualName}".`
+        )
+    );
+
+    if (highestSuccessfulVersion != null && highestSuccessfulVersion !== currentVersion) {
+        throw new Error(
+            `Current schema version "${currentVersion}" does not match legacy migration history "${highestSuccessfulVersion}".`
+        );
+    }
+}
+
+function resolveRecordedMigrationName(
+    version: number,
+    registeredByVersion: Map<number, string>
+): string | null
+{
+    return registeredByVersion.get(version) ?? LEGACY_RECORDED_MIGRATIONS.get(version) ?? null;
+}
+
 function validateRecordedState(
     recordedState: RecordedMigrationState,
     migrations: RegisteredMigration[],
@@ -54,41 +129,20 @@ function validateRecordedState(
     }
 
     if (currentVersion < firstRegisteredVersion) {
-        if (recordedState.migrations.length === 0) {
-            return;
-        }
-
-        throw new Error('Migration metadata exists for a database version that predates supported migrations.');
+        validateLegacyRecordedState(recordedState, currentVersion);
+        return;
     }
 
-    const successfulMigrations = recordedState.migrations.filter((migration) => migration.success);
-    const failedMigrations = recordedState.migrations.filter((migration) => !migration.success);
-    const seenSuccessfulVersions = new Set<number>();
+    const highestSuccessfulVersion = validateSuccessfulRecordedMigrations(
+        recordedState,
+        (version) => resolveRecordedMigrationName(version, registeredByVersion),
+        (version) => `Migration metadata references unsupported version "${version}".`,
+        (version, expectedName, actualName) => (
+            `Migration metadata name mismatch for version "${version}": expected "${expectedName}", found "${actualName}".`
+        )
+    );
 
-    if (failedMigrations.length > 0) {
-        throw new Error('Migration metadata contains failed migration attempts. Refusing to continue.');
-    }
-
-    for (const migration of successfulMigrations) {
-        if (seenSuccessfulVersions.has(migration.version)) {
-            throw new Error(`Migration metadata contains duplicate successful version "${migration.version}".`);
-        }
-
-        seenSuccessfulVersions.add(migration.version);
-
-        const registeredName = registeredByVersion.get(migration.version);
-        if (!registeredName) {
-            throw new Error(`Migration metadata references unsupported version "${migration.version}".`);
-        }
-
-        if (registeredName !== migration.name) {
-            throw new Error(
-                `Migration metadata name mismatch for version "${migration.version}": expected "${registeredName}", found "${migration.name}".`
-            );
-        }
-    }
-
-    if (successfulMigrations.length === 0) {
+    if (highestSuccessfulVersion == null) {
         if (currentVersion === targetVersion) {
             return;
         }
@@ -100,12 +154,8 @@ function validateRecordedState(
         if (currentVersion !== targetVersion) {
             throw new Error('Migration metadata is empty for a database that is not already at the latest supported version.');
         }
+        return;
     }
-
-    const highestSuccessfulVersion = successfulMigrations.reduce(
-        (highest, migration) => Math.max(highest, migration.version),
-        successfulMigrations[0].version
-    );
 
     if (highestSuccessfulVersion !== currentVersion) {
         throw new Error(
