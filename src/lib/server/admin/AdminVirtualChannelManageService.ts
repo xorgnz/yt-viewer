@@ -7,27 +7,10 @@ import { VirtualChannelAssignmentMode, type VirtualChannelAssignment } from '$li
 import { VirtualChannelAssignmentVideoReviewState as ReviewState, type VirtualChannelAssignmentVideoReviewState } from '$lib/entities/virtualChannelAssignmentVideoSelection';
 import type { SourceChannel } from '$lib/entities/sourceChannel';
 import { VideoLengthClassification, type Video } from '$lib/entities/video';
+import { ErrorResult, type ErrorFields, type ServiceResult } from '$lib/server/Error';
 import type { VirtualChannel } from '$lib/entities/virtualChannel';
 import { AdminReviewStateFilter as ReviewStateFilter, AdminVideoTypeFilter as VideoTypeFilter } from '$lib/admin/AdminVirtualChannelFilters';
 import type { AdminReviewStateFilter, AdminVideoTypeFilter } from '$lib/admin/AdminVirtualChannelFilters';
-
-interface AdminVirtualChannelServiceError<TCode extends string = string>
-{
-    code: TCode;
-    status: number;
-    message: string;
-}
-
-type AdminVirtualChannelServiceResult<
-    TSuccess,
-    TError extends AdminVirtualChannelServiceError = AdminVirtualChannelServiceError
-> = {
-    ok: true;
-    data: TSuccess;
-} | {
-    ok: false;
-    error: TError;
-};
 
 interface AdminSelectedOnlyVideoViewModel
 {
@@ -87,9 +70,9 @@ export class AdminVirtualChannelManageService
     async loadPageData(
         virtualChannelId: string | number,
         searchParams: URLSearchParams
-    ): Promise<AdminVirtualChannelServiceResult<
+    ): Promise<ServiceResult<
         AdminVirtualChannelManagePageData,
-        AdminVirtualChannelServiceError<'virtual_channel_not_found'>
+        ErrorFields<'virtual_channel_not_found'>
     >>
     {
         const virtualChannel = await this.virtualChannelDAO.get(virtualChannelId);
@@ -121,9 +104,9 @@ export class AdminVirtualChannelManageService
         virtualChannelId: string | number,
         sourceChannelId: string | number,
         mode: VirtualChannelAssignmentMode
-    ): Promise<AdminVirtualChannelServiceResult<
+    ): Promise<ServiceResult<
         string,
-        AdminVirtualChannelServiceError<
+        ErrorFields<
             'virtual_channel_not_found' |
             'source_channel_not_found' |
             'add_association_failed'
@@ -157,9 +140,9 @@ export class AdminVirtualChannelManageService
         virtualChannelId: string | number,
         assignmentId: string | number,
         mode: VirtualChannelAssignmentMode
-    ): Promise<AdminVirtualChannelServiceResult<
+    ): Promise<ServiceResult<
         string,
-        AdminVirtualChannelServiceError<'assignment_not_found'>
+        ErrorFields<'assignment_not_found'>
     >>
     {
         const assignment = await this.assignmentDAO.get(assignmentId);
@@ -177,9 +160,9 @@ export class AdminVirtualChannelManageService
     async removeAssociation(
         virtualChannelId: string | number,
         assignmentId: string | number
-    ): Promise<AdminVirtualChannelServiceResult<
+    ): Promise<ServiceResult<
         string,
-        AdminVirtualChannelServiceError<'assignment_not_found'>
+        ErrorFields<'assignment_not_found'>
     >>
     {
         const assignment = await this.assignmentDAO.get(assignmentId);
@@ -199,9 +182,9 @@ export class AdminVirtualChannelManageService
         assignmentId: string | number,
         videoId: string | number,
         reviewState: VirtualChannelAssignmentVideoReviewState
-    ): Promise<AdminVirtualChannelServiceResult<
+    ): Promise<ServiceResult<
         string,
-        AdminVirtualChannelServiceError<
+        ErrorFields<
             'assignment_not_found' |
             'assignment_mode_invalid' |
             'video_not_found'
@@ -239,9 +222,9 @@ export class AdminVirtualChannelManageService
         videoIds: Array<string | number>,
         reviewState: VirtualChannelAssignmentVideoReviewState,
         returnQuery: string
-    ): Promise<AdminVirtualChannelServiceResult<
+    ): Promise<ServiceResult<
         string,
-        AdminVirtualChannelServiceError<
+        ErrorFields<
             'assignment_not_found' |
             'assignment_mode_invalid' |
             'video_not_found'
@@ -281,9 +264,9 @@ export class AdminVirtualChannelManageService
     async updateTimerSettings(
         virtualChannelId: string | number,
         dailyTimerMax: number | null
-    ): Promise<AdminVirtualChannelServiceResult<
+    ): Promise<ServiceResult<
         string,
-        AdminVirtualChannelServiceError<'virtual_channel_not_found'>
+        ErrorFields<'virtual_channel_not_found'>
     >>
     {
         if (!await this.virtualChannelDAO.get(virtualChannelId)) {
@@ -301,9 +284,9 @@ export class AdminVirtualChannelManageService
     async grantExtraTimerSeconds(
         virtualChannelId: string | number,
         additionalSeconds: number
-    ): Promise<AdminVirtualChannelServiceResult<
+    ): Promise<ServiceResult<
         string,
-        AdminVirtualChannelServiceError<'virtual_channel_not_found'>
+        ErrorFields<'virtual_channel_not_found'>
     >>
     {
         if (!await this.virtualChannelDAO.get(virtualChannelId)) {
@@ -393,16 +376,9 @@ export class AdminVirtualChannelManageService
         code: TCode,
         status: number,
         message: string
-    ): AdminVirtualChannelServiceResult<never, AdminVirtualChannelServiceError<TCode>>
+    ): ServiceResult<never, ErrorFields<TCode>>
     {
-        return {
-            ok: false,
-            error: {
-                code,
-                status,
-                message
-            }
-        };
+        return ErrorResult.error(code, status, message);
     }
 
     private getErrorMessage(error: unknown, fallback: string): string

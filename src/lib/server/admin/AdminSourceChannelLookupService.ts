@@ -1,24 +1,7 @@
 import { AdminSourceChannelYouTubeCoordinator } from '$lib/server/admin/AdminSourceChannelYouTubeCoordinator';
 import { AdminYouTubeClientProvider } from '$lib/server/admin/AdminYouTubeClientProvider';
+import { ErrorResult, type ErrorFields, type ServiceResult } from '$lib/server/Error';
 import { YouTubeApiError } from '$lib/youtube/youTubeClient';
-
-interface AdminSourceChannelServiceError<TCode extends string = string>
-{
-    code: TCode;
-    status: number;
-    message: string;
-}
-
-type AdminSourceChannelServiceResult<
-    TSuccess,
-    TError extends AdminSourceChannelServiceError = AdminSourceChannelServiceError
-> = {
-    ok: true;
-    data: TSuccess;
-} | {
-    ok: false;
-    error: TError;
-};
 
 interface AdminSourceChannelLookupData
 {
@@ -43,9 +26,9 @@ export class AdminSourceChannelLookupService
         this.youTubeCoordinator = youTubeCoordinator;
     }
 
-    async lookupSourceChannel(youtubeInput: string): Promise<AdminSourceChannelServiceResult<
+    async lookupSourceChannel(youtubeInput: string): Promise<ServiceResult<
         AdminSourceChannelLookupData,
-        AdminSourceChannelServiceError
+        ErrorFields
     >>
     {
         let client;
@@ -102,7 +85,7 @@ export class AdminSourceChannelLookupService
         };
     }
 
-    private mapLookupFailure(error: unknown): AdminSourceChannelServiceResult<never, AdminSourceChannelServiceError>
+    private mapLookupFailure(error: unknown): ServiceResult<never, ErrorFields>
     {
         if (error instanceof YouTubeApiError) {
             const reasons = (error.errors || []).map((entry) => entry.reason || '').join(',');
@@ -129,16 +112,9 @@ export class AdminSourceChannelLookupService
         code: TCode,
         status: number,
         message: string
-    ): AdminSourceChannelServiceResult<never, AdminSourceChannelServiceError<TCode>>
+    ): ServiceResult<never, ErrorFields<TCode>>
     {
-        return {
-            ok: false,
-            error: {
-                code,
-                status,
-                message
-            }
-        };
+        return ErrorResult.error(code, status, message);
     }
 
     private getErrorMessage(error: unknown, fallback: string): string

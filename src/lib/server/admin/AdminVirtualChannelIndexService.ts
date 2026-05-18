@@ -2,35 +2,12 @@ import type { AssignmentDAO } from '$lib/daos/assignmentDAO';
 import type { SourceChannelDAO } from '$lib/daos/sourceChannelDAO';
 import type { VirtualChannelDAO } from '$lib/daos/virtualChannelDAO';
 import type { SourceChannel, SourceChannelFields } from '$lib/entities/sourceChannel';
+import { ErrorResult, type ErrorFields, type ServiceResult } from '$lib/server/Error';
 import type { VirtualChannel } from '$lib/entities/virtualChannel';
 import type { VirtualChannelAssignmentFields } from '$lib/entities/virtualChannelAssignment';
 import type { VirtualChannelFields } from '$lib/entities/virtualChannel';
 
 type AdminAssignmentRows = Awaited<ReturnType<AssignmentDAO['listForVirtualChannel']>>;
-
-interface AdminVirtualChannelServiceError<TCode extends string = string>
-{
-    code: TCode;
-    status: number;
-    message: string;
-}
-
-interface AdminVirtualChannelInlineServiceError<TCode extends string = string>
-    extends AdminVirtualChannelServiceError<TCode>
-{
-    virtualChannelId: string | number | null;
-}
-
-type AdminVirtualChannelServiceResult<
-    TSuccess,
-    TError extends AdminVirtualChannelServiceError = AdminVirtualChannelServiceError
-> = {
-    ok: true;
-    data: TSuccess;
-} | {
-    ok: false;
-    error: TError;
-};
 
 interface AdminInlineAssociation
 {
@@ -92,9 +69,9 @@ export class AdminVirtualChannelIndexService
         };
     }
 
-    async createVirtualChannel(name: string): Promise<AdminVirtualChannelServiceResult<
+    async createVirtualChannel(name: string): Promise<ServiceResult<
         string,
-        AdminVirtualChannelServiceError<'create_virtual_channel_failed'>
+        ErrorFields<'create_virtual_channel_failed'>
     >>
     {
         try {
@@ -116,9 +93,9 @@ export class AdminVirtualChannelIndexService
         }
     }
 
-    async renameVirtualChannel(id: string | number, name: string): Promise<AdminVirtualChannelServiceResult<
+    async renameVirtualChannel(id: string | number, name: string): Promise<ServiceResult<
         string,
-        AdminVirtualChannelServiceError<'rename_virtual_channel_failed'>
+        ErrorFields<'rename_virtual_channel_failed'>
     >>
     {
         try {
@@ -140,9 +117,9 @@ export class AdminVirtualChannelIndexService
         }
     }
 
-    async deleteVirtualChannel(id: string | number): Promise<AdminVirtualChannelServiceResult<
+    async deleteVirtualChannel(id: string | number): Promise<ServiceResult<
         string,
-        AdminVirtualChannelServiceError<'delete_virtual_channel_failed'>
+        ErrorFields<'delete_virtual_channel_failed'>
     >>
     {
         try {
@@ -167,7 +144,7 @@ export class AdminVirtualChannelIndexService
     async addInlineAssociation(
         virtualChannelId: string | number,
         sourceChannelId: string | number
-    ): Promise<AdminVirtualChannelServiceResult<
+    ): Promise<ServiceResult<
         AdminVirtualChannelInlineMutationData,
         AdminVirtualChannelInlineServiceError<
             'virtual_channel_not_found' |
@@ -222,7 +199,7 @@ export class AdminVirtualChannelIndexService
     async removeInlineAssociation(
         virtualChannelId: string | number,
         sourceChannelId: string | number
-    ): Promise<AdminVirtualChannelServiceResult<
+    ): Promise<ServiceResult<
         AdminVirtualChannelInlineMutationData,
         AdminVirtualChannelInlineServiceError<
             'virtual_channel_not_found' |
@@ -308,17 +285,9 @@ export class AdminVirtualChannelIndexService
         status: number,
         message: string,
         virtualChannelId: string | number | null
-    ): AdminVirtualChannelServiceResult<never, AdminVirtualChannelInlineServiceError<TCode>>
+    ): ServiceResult<never, AdminVirtualChannelInlineServiceError<TCode>>
     {
-        return {
-            ok: false,
-            error: {
-                code,
-                status,
-                message,
-                virtualChannelId
-            }
-        };
+        return ErrorResult.errorWith(code, status, message, { virtualChannelId });
     }
 
     private getErrorMessage(error: unknown, fallback: string): string
@@ -327,3 +296,7 @@ export class AdminVirtualChannelIndexService
     }
 }
 // apply-patch-anchor - do not delete
+
+type AdminVirtualChannelInlineServiceError<TCode extends string = string> = ErrorFields<TCode> & {
+    virtualChannelId: string | number | null;
+};

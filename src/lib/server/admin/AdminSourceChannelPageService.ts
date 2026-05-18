@@ -2,26 +2,9 @@ import type { SourceChannelDAO } from '$lib/daos/sourceChannelDAO';
 import { SourceChannel } from '$lib/entities/sourceChannel';
 import { AdminSourceChannelYouTubeCoordinator } from '$lib/server/admin/AdminSourceChannelYouTubeCoordinator';
 import { AdminYouTubeClientProvider } from '$lib/server/admin/AdminYouTubeClientProvider';
+import { ErrorResult, type ErrorFields, type ServiceResult } from '$lib/server/Error';
 import type { SourceChannelWithVideoStats } from '$lib/daos/sourceChannelDAO';
 import { YouTubeApiError } from '$lib/youtube/youTubeClient';
-
-interface AdminSourceChannelServiceError<TCode extends string = string>
-{
-    code: TCode;
-    status: number;
-    message: string;
-}
-
-type AdminSourceChannelServiceResult<
-    TSuccess,
-    TError extends AdminSourceChannelServiceError = AdminSourceChannelServiceError
-> = {
-    ok: true;
-    data: TSuccess;
-} | {
-    ok: false;
-    error: TError;
-};
 
 interface AdminSourceChannelPageData
 {
@@ -63,9 +46,9 @@ export class AdminSourceChannelPageService
         description: string,
         thumbnailUrl: string | null,
         publishedAt: number | null
-    ): Promise<AdminSourceChannelServiceResult<
+    ): Promise<ServiceResult<
         string,
-        AdminSourceChannelServiceError
+        ErrorFields
     >>
     {
         let client;
@@ -124,9 +107,9 @@ export class AdminSourceChannelPageService
         description: string,
         thumbnailUrl: string | null,
         publishedAt: number | null
-    ): Promise<AdminSourceChannelServiceResult<
+    ): Promise<ServiceResult<
         string,
-        AdminSourceChannelServiceError<'source_channel_not_found'>
+        ErrorFields<'source_channel_not_found'>
     >>
     {
         const existing = await this.sourceChannelDAO.get(id);
@@ -153,9 +136,9 @@ export class AdminSourceChannelPageService
         return AdminSourceChannelPageService.INDEX_PATH;
     }
 
-    async refreshSourceChannel(id: number): Promise<AdminSourceChannelServiceResult<
+    async refreshSourceChannel(id: number): Promise<ServiceResult<
         string,
-        AdminSourceChannelServiceError
+        ErrorFields
     >>
     {
         const existing = await this.sourceChannelDAO.get(id);
@@ -206,7 +189,7 @@ export class AdminSourceChannelPageService
     private mapYouTubeRequestFailure(
         error: unknown,
         invalidRequestMessage: string
-    ): AdminSourceChannelServiceResult<never, AdminSourceChannelServiceError>
+    ): ServiceResult<never, ErrorFields>
     {
         if (error instanceof YouTubeApiError) {
             const reasons = (error.errors || []).map((entry) => entry.reason || '').join(',');
@@ -260,16 +243,9 @@ export class AdminSourceChannelPageService
         code: TCode,
         status: number,
         message: string
-    ): AdminSourceChannelServiceResult<never, AdminSourceChannelServiceError<TCode>>
+    ): ServiceResult<never, ErrorFields<TCode>>
     {
-        return {
-            ok: false,
-            error: {
-                code,
-                status,
-                message
-            }
-        };
+        return ErrorResult.error(code, status, message);
     }
 
     private getErrorMessage(error: unknown, fallback: string): string
