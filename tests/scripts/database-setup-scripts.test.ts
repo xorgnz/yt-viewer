@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import { CREATE_TABLE_META, SCHEMA_VERSION } from '../../src/lib/daos/_schema';
-import type { MigrationDefinition } from '../../src/lib/daos/migrations/migrationTypes';
 import { runCreateDatabaseWorkflow } from '../../scripts/create_database';
 import { runMigrationWorkflow } from '../../scripts/migrate_database';
 import { MockQueryProvider } from '../helpers/MockQueryProvider';
+import type {MigrationDefinition} from "$lib/daos/migration/migrations/registry";
 
 function createProvider(options?: {
     schemaVersion?: string;
@@ -117,7 +117,7 @@ describe('database setup scripts', () => {
         expect(client.poolCalls.map((call) => call.text)).not.toContain('COMMIT');
     });
 
-    it('runs registered database migrations', async () => {
+    it('runs registered database migration', async () => {
         const client = createProvider({
             schemaVersion: '10',
             historyTableExists: true,
@@ -231,7 +231,7 @@ describe('database setup scripts', () => {
         expect(client.calls.map((call) => call.text)).toContain('COMMIT');
     });
 
-    it('rolls back failed MySQL setup migrations', async () => {
+    it('rolls back failed MySQL setup migration', async () => {
         const client = createProvider({
             schemaVersion: '7',
         });

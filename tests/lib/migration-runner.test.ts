@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { MIGRATIONS } from '../../src/lib/daos/migrations/registry';
-import { DatabaseMigrationAdapter } from '../../src/lib/daos/migrations/MigrationAdapter';
-import { MigrationRunner } from '../../src/lib/daos/migrations/MigrationRunner';
+import { MIGRATIONS } from '$lib/daos/migration/migrations/registry';
+import { DatabaseMigrationAdapter } from '$lib/daos/migration/MigrationAdapter';
+import { MigrationRunner } from '$lib/daos/migration/MigrationRunner';
 
 type QueryCall = {
     sql: string;
@@ -114,7 +114,7 @@ describe('MigrationRunner', () => {
                 }
             ],
         });
-        const runner = new MigrationRunner(new DatabaseMigrationAdapter(provider as never), MIGRATIONS);
+        const runner = new MigrationRunner(new DatabaseMigrationAdapter(provider.query.bind(provider) as ConstructorParameters<typeof DatabaseMigrationAdapter>[0]), MIGRATIONS);
 
         const result = await runner.runToLatest();
 
@@ -150,7 +150,7 @@ describe('MigrationRunner', () => {
                 }
             ],
         });
-        const runner = new MigrationRunner(new DatabaseMigrationAdapter(provider as never), MIGRATIONS);
+        const runner = new MigrationRunner(new DatabaseMigrationAdapter(provider.query.bind(provider) as ConstructorParameters<typeof DatabaseMigrationAdapter>[0]), MIGRATIONS);
 
         const result = await runner.runToLatest();
 
@@ -173,7 +173,7 @@ describe('MigrationRunner', () => {
                 },
             }
         ];
-        const runner = new MigrationRunner(new DatabaseMigrationAdapter(provider as never), migrations);
+        const runner = new MigrationRunner(new DatabaseMigrationAdapter(provider.query.bind(provider) as ConstructorParameters<typeof DatabaseMigrationAdapter>[0]), migrations);
 
         await expect(runner.runToLatest()).rejects.toThrow('migration failed');
 
@@ -182,13 +182,13 @@ describe('MigrationRunner', () => {
         expect(provider.calls.map((call) => call.sql)).not.toContain('COMMIT');
     });
 
-    it('runs explicit migrations when provided', async () => {
+    it('runs explicit migration when provided', async () => {
         const provider = new MockMigrationProvider({
             schemaVersion: '8',
             historyTableExists: false,
             migrationRows: [],
         });
-        const runner = new MigrationRunner(new DatabaseMigrationAdapter(provider as never), [
+        const runner = new MigrationRunner(new DatabaseMigrationAdapter(provider.query.bind(provider) as ConstructorParameters<typeof DatabaseMigrationAdapter>[0]), [
             {
                 version: 9,
                 name: 'add_virtual_channel_daily_timer_max',
@@ -219,7 +219,7 @@ describe('MigrationRunner', () => {
             historyTableExists: true,
             migrationRows: [],
         });
-        const runner = new MigrationRunner(new DatabaseMigrationAdapter(provider as never), MIGRATIONS);
+        const runner = new MigrationRunner(new DatabaseMigrationAdapter(provider.query.bind(provider) as ConstructorParameters<typeof DatabaseMigrationAdapter>[0]), MIGRATIONS);
 
         const result = await runner.runToLatest();
 
@@ -256,7 +256,7 @@ describe('MigrationRunner', () => {
                 }
             ],
         });
-        const runner = new MigrationRunner(new DatabaseMigrationAdapter(provider as never), MIGRATIONS);
+        const runner = new MigrationRunner(new DatabaseMigrationAdapter(provider.query.bind(provider) as ConstructorParameters<typeof DatabaseMigrationAdapter>[0]), MIGRATIONS);
 
         const result = await runner.runToLatest();
 
@@ -279,7 +279,13 @@ describe('MigrationRunner', () => {
             historyTableExists: true,
             migrationRows: [],
         });
-        const runner = new MigrationRunner(new DatabaseMigrationAdapter(provider as never), MIGRATIONS);
+        const runner = new MigrationRunner(
+            new DatabaseMigrationAdapter(
+                provider.query.bind(provider) as ConstructorParameters<typeof DatabaseMigrationAdapter>[0],
+                provider.withConnection.bind(provider) as never
+            ),
+            MIGRATIONS
+        );
 
         const result = await runner.runToLatest();
 

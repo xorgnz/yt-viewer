@@ -3,7 +3,7 @@ import { argv, exit } from 'node:process';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 import { SCHEMA_VERSION } from '$lib/daos/_schema';
-import { LatestSchemaBootstrapper } from '$lib/daos/migrations/LatestSchemaBootstrap';
+import { LatestSchemaBootstrapper } from '$lib/daos/migration/LatestSchemaBootstrap';
 import { DatabaseMode } from '$lib/daos/shared/DatabaseMode';
 import { DatabasePool } from '$lib/daos/shared/DatabasePool';
 import { requireDatabaseUrlForRuntime } from '$lib/server/RuntimeDatabaseUrl';

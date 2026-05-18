@@ -1,8 +1,5 @@
-import type {
-    MigrationAdapter,
-    MigrationDefinition,
-} from '$lib/daos/migrations/migrationTypes';
-import type { RecordedMigrationState } from '$lib/daos/migrations/MigrationMetadata';
+import type { DatabaseMigrationAdapter, RecordedMigrationState } from '$lib/daos/migration/MigrationAdapter';
+import type {MigrationDefinition} from "$lib/daos/migration/migrations/registry";
 
 export interface AppliedMigration
 {
@@ -179,10 +176,10 @@ function validateRecordedState(
 
 export class MigrationRunner
 {
-    private readonly adapter: MigrationAdapter;
+    private readonly adapter: DatabaseMigrationAdapter;
     private readonly migrations: MigrationDefinition[];
 
-    constructor(adapter: MigrationAdapter, migrations: MigrationDefinition[])
+    constructor(adapter: DatabaseMigrationAdapter, migrations: MigrationDefinition[])
     {
         this.adapter = adapter;
         this.migrations = sortMigrations(migrations);

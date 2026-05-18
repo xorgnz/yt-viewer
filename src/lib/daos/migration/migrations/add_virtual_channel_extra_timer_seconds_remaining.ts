@@ -1,4 +1,4 @@
-import type { MigrationDefinition } from '$lib/daos/migrations/migrationTypes';
+import type {MigrationDefinition} from "$lib/daos/migration/migrations/registry";
 
 export const addVirtualChannelExtraTimerSecondsRemainingMigration: MigrationDefinition = {
     version: 10,

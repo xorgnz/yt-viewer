@@ -2,13 +2,13 @@
 import { argv, exit } from 'node:process';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
-import { MIGRATIONS } from '$lib/daos/migrations/registry';
-import type { MigrationDefinition } from '$lib/daos/migrations/migrationTypes';
-import { DatabaseMigrationAdapter } from '$lib/daos/migrations/MigrationAdapter';
-import { MigrationRunner, type MigrationRunResult } from '$lib/daos/migrations/MigrationRunner';
+import { MIGRATIONS } from '$lib/daos/migration/migrations/registry';
+import { DatabaseMigrationAdapter } from '$lib/daos/migration/MigrationAdapter';
+import { MigrationRunner, type MigrationRunResult } from '$lib/daos/migration/MigrationRunner';
 import { DatabaseMode } from '$lib/daos/shared/DatabaseMode';
 import { DatabasePool } from '$lib/daos/shared/DatabasePool';
 import { requireDatabaseUrlForRuntime } from '$lib/server/RuntimeDatabaseUrl';
+import type {MigrationDefinition} from "$lib/daos/migration/migrations/registry";
 
 type ModeArg = DatabaseMode.Dev | DatabaseMode.Live;
 type DatabaseClientProvider = Pick<DatabasePool, 'query'>;
@@ -77,7 +77,12 @@ export async function runMigrationWorkflow(
 ): Promise<MigrationRunResult>
 {
     const runner = new MigrationRunner(
-        new DatabaseMigrationAdapter(pool as ConstructorParameters<typeof DatabaseMigrationAdapter>[0]),
+        new DatabaseMigrationAdapter(
+            pool.query.bind(pool),
+            'withConnection' in pool && typeof pool.withConnection === 'function'
+                ? pool.withConnection.bind(pool) as DatabasePool['withConnection']
+                : undefined
+        ),
         migrations || MIGRATIONS
     );
 
@@ -101,7 +106,7 @@ async function main(): Promise<void>
         console.log(`Target version: ${result.targetVersion}`);
 
         if (result.appliedMigrations.length === 0) {
-            console.log('Applied migrations: none');
+            console.log('Applied migration: none');
             console.log(`Final version: ${result.finalVersion}`);
             return;
         }
