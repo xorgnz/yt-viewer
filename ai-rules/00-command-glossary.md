@@ -21,6 +21,11 @@ timestamp: 2026-05-13 00:00
 - Uses rule 8 ad hoc feature mode.
 - Means: prepare a `feat: <feature-tag>-<task id>+ - <description>` proposal for a focused feature addition without treating it as the main task-completion commit.
 
+### `run 13`
+
+- Uses rule 13 for changelog summarization.
+- Means: inspect recent commits since the last version tag, skip commits already covered in `/ai-work/changes/changes-input.md`, and propose `ignore`, `add`, or `revise` changelog actions with category, stakeholder-facing bullet text, and covered commit ids.
+
 ## Usage Notes
 
 - These commands propose or inspect by default unless the underlying rule says an approved variant may execute directly.
@@ -36,8 +41,8 @@ timestamp: 2026-05-13 00:00
   - rule 4 before documenting a new shared tech-stack decision
   - rule 6 before starting task execution when explicit task approval is not already present
   - rule 8 before creating a commit, unless the same command includes `approve` or `approved`
+  - rule 13 before modifying `/ai-work/changes/changes-input.md`
   - rule 11 before writing or updating `/ai-work/00-project-overview.md`
-  - rule 13 before writing matched commit ids into `/changes/changelog.json`
 - Rule 7 command selection is a choice prompt, not an approval gate.
 - Do not ask additional approval prompts for normal reads/edits inside the agent's standard workspace permissions.
 - Environment/tool permission prompts are separate from workflow approval gates and should be requested only when a command cannot run under normal agent permissions.

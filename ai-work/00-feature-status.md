@@ -1,7 +1,7 @@
 # Feature Status
 
-**Current Feature:** `none`
-**Last Updated:** `2026-05-17`
+**Current Feature:** `10-timers`
+**Last Updated:** `2026-05-18`
 
 ## Shared Feature-State Contract
 
@@ -73,7 +73,7 @@ Additional guidance:
 | `07-refactoring` | `🔵` | `archived` | `2026-04-10` | `2026-04-17` | Repository refactoring work after the migration feature completion |
 | `08-online-deploy` | `🔵` | `archived` | `2026-04-17` | `2026-04-19` | New block of work for deployment online |
 | `09-stable-db-ids` | `🟢` | `completed` | `2026-04-19` | `2026-05-17` | Refactor database relationships away from brittle generated serial row IDs |
-| `10-timers` | `🔴` | `paused` | `2026-04-28` |  | Add playback timers to cap how long channels can play within a defined period |
+| `10-timers` | `🟠` | `active` | `2026-04-28` |  | Add playback timers to cap how long channels can play within a defined period |
 | `11-viewer-structure-refactor` | `🟡` | `planned` | `2026-05-02` |  | Refactor the viewer-layer structure into clearer class-based boundaries with stronger module delineation |
 | `f01-rec-modes` | `🟣` | `future` | `2026-04-28` |  | Add recommendation modes to control how channel content is selected or prioritized |
 | `f02-shorts-mgmt` | `🟣` | `future` | `2026-04-28` |  | Identify YouTube Shorts from duration and API data, allow manual overrides, and support Shorts-aware filtering |
