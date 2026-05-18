@@ -6,10 +6,7 @@ import type { VirtualChannel } from '$lib/entities/virtualChannel';
 import type { VirtualChannelAssignmentFields } from '$lib/entities/virtualChannelAssignment';
 import type { VirtualChannelFields } from '$lib/entities/virtualChannel';
 
-type AdminVirtualChannelDAO = Pick<VirtualChannelDAO, 'create' | 'get' | 'list' | 'remove' | 'rename'>;
-type AdminAssignmentDAO = Pick<AssignmentDAO, 'add' | 'listForVirtualChannel' | 'remove'>;
-type AdminSourceChannelDAO = Pick<SourceChannelDAO, 'get' | 'list'>;
-type AdminAssignmentRows = Awaited<ReturnType<AdminAssignmentDAO['listForVirtualChannel']>>;
+type AdminAssignmentRows = Awaited<ReturnType<AssignmentDAO['listForVirtualChannel']>>;
 
 interface AdminVirtualChannelServiceError<TCode extends string = string>
 {
@@ -65,14 +62,14 @@ export class AdminVirtualChannelIndexService
 {
     private static readonly INDEX_PATH = '/admin/virtual-channels';
 
-    private readonly virtualChannelDAO: AdminVirtualChannelDAO;
-    private readonly assignmentDAO: AdminAssignmentDAO;
-    private readonly sourceChannelDAO: AdminSourceChannelDAO;
+    private readonly virtualChannelDAO: VirtualChannelDAO;
+    private readonly assignmentDAO: AssignmentDAO;
+    private readonly sourceChannelDAO: SourceChannelDAO;
 
     constructor(
-        virtualChannelDAO: AdminVirtualChannelDAO,
-        assignmentDAO: AdminAssignmentDAO,
-        sourceChannelDAO: AdminSourceChannelDAO
+        virtualChannelDAO: VirtualChannelDAO,
+        assignmentDAO: AssignmentDAO,
+        sourceChannelDAO: SourceChannelDAO
     )
     {
         this.virtualChannelDAO = virtualChannelDAO;

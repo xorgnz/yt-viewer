@@ -6,14 +6,14 @@ import type { ViewerVirtualChannel, ViewerVirtualChannelTimerState } from '$lib/
 
 export class ViewerVirtualChannelService
 {
-    private readonly virtualChannelDAO: Pick<VirtualChannelDAO, 'get' | 'list'>;
-    private readonly historyDAO: Pick<HistoryDAO, 'getVirtualChannelWatchSecondsInWindow' | 'resetVirtualChannelWatchSecondsInWindow'>;
+    private readonly virtualChannelDAO: VirtualChannelDAO;
+    private readonly historyDAO: HistoryDAO;
     private readonly profileContext: ServerProfileContext;
     private readonly nowProvider: () => number;
 
     constructor(
-        virtualChannelDAO: Pick<VirtualChannelDAO, 'get' | 'list'>,
-        historyDAO: Pick<HistoryDAO, 'getVirtualChannelWatchSecondsInWindow' | 'resetVirtualChannelWatchSecondsInWindow'>,
+        virtualChannelDAO: VirtualChannelDAO,
+        historyDAO: HistoryDAO,
         profileContext: ServerProfileContext,
         nowProvider: () => number = () => Date.now()
     )

@@ -57,7 +57,7 @@ export class ViewerWatchService
     private readonly historyDAO: HistoryDAO;
     private readonly profileContext: ServerProfileContext;
     private readonly recommendationService: ViewerRecommendationService;
-    private readonly virtualChannelService: Pick<ViewerVirtualChannelService, 'getVirtualChannelById'>;
+    private readonly virtualChannelService: ViewerVirtualChannelService;
 
     constructor(
         viewerVideoReadRepository: ViewerVideoReadRepository,
@@ -65,7 +65,7 @@ export class ViewerWatchService
         historyDAO: HistoryDAO,
         profileContext: ServerProfileContext,
         recommendationService: ViewerRecommendationService,
-        virtualChannelService: Pick<ViewerVirtualChannelService, 'getVirtualChannelById'>
+        virtualChannelService: ViewerVirtualChannelService
     )
     {
         this.viewerVideoReadRepository = viewerVideoReadRepository;

@@ -7,8 +7,6 @@ import {
     type ProfileKey
 } from '$lib/profiles';
 
-type ServerProfileDAO = Pick<ProfileDAO, 'getByKey' | 'list' | 'upsertByKey'>;
-
 export class ServerProfileContext
 {
     readonly activeProfile: Profile;
@@ -20,10 +18,9 @@ export class ServerProfileContext
         this.requestedProfileKey = requestedProfileKey;
     }
 
-    static resolve(profileDAO: ProfileDAO, cookies: Pick<Cookies, 'get'>): Promise<ServerProfileContext>;
     static async resolve(
-        profileDAO: ServerProfileDAO,
-        cookies: Pick<Cookies, 'get'>
+        profileDAO: ProfileDAO,
+        cookies: Cookies
     ): Promise<ServerProfileContext>
     {
         await ProfileCatalog.ensureProfiles(profileDAO);

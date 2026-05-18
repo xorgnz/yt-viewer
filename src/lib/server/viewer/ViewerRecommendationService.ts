@@ -5,11 +5,11 @@ import type {
 
 export class ViewerRecommendationService
 {
-    private readonly viewerVideoReadRepository: Pick<ViewerVideoReadRepository, 'list'>;
+    private readonly viewerVideoReadRepository: ViewerVideoReadRepository;
     private readonly profileId: string | number;
 
     constructor(
-        viewerVideoReadRepository: Pick<ViewerVideoReadRepository, 'list'>,
+        viewerVideoReadRepository: ViewerVideoReadRepository,
         profileId: string | number
     )
     {

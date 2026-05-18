@@ -11,18 +11,6 @@ import type { VirtualChannel } from '$lib/entities/virtualChannel';
 import { AdminReviewStateFilter as ReviewStateFilter, AdminVideoTypeFilter as VideoTypeFilter } from '$lib/admin/AdminVirtualChannelFilters';
 import type { AdminReviewStateFilter, AdminVideoTypeFilter } from '$lib/admin/AdminVirtualChannelFilters';
 
-type AdminVirtualChannelDAO = Pick<
-    VirtualChannelDAO,
-    'get' | 'updateDailyTimerMax' | 'incrementExtraTimerSecondsRemaining'
->;
-type AdminAssignmentDAO = Pick<AssignmentDAO, 'add' | 'get' | 'listForVirtualChannel' | 'remove' | 'updateMode'>;
-type AdminSourceChannelDAO = Pick<SourceChannelDAO, 'get' | 'list'>;
-type AdminVideoDAO = Pick<VideoDAO, 'get' | 'listByChannel'>;
-type AdminSelectionDAO = Pick<
-    VirtualChannelAssignmentVideoSelectionDAO,
-    'listForAssignment' | 'setReviewState'
->;
-
 interface AdminVirtualChannelServiceError<TCode extends string = string>
 {
     code: TCode;
@@ -75,18 +63,18 @@ interface AdminVirtualChannelManagePageData
 
 export class AdminVirtualChannelManageService
 {
-    private readonly virtualChannelDAO: AdminVirtualChannelDAO;
-    private readonly assignmentDAO: AdminAssignmentDAO;
-    private readonly sourceChannelDAO: AdminSourceChannelDAO;
-    private readonly videoDAO: AdminVideoDAO;
-    private readonly selectionDAO: AdminSelectionDAO;
+    private readonly virtualChannelDAO: VirtualChannelDAO;
+    private readonly assignmentDAO: AssignmentDAO;
+    private readonly sourceChannelDAO: SourceChannelDAO;
+    private readonly videoDAO: VideoDAO;
+    private readonly selectionDAO: VirtualChannelAssignmentVideoSelectionDAO;
 
     constructor(
-        virtualChannelDAO: AdminVirtualChannelDAO,
-        assignmentDAO: AdminAssignmentDAO,
-        sourceChannelDAO: AdminSourceChannelDAO,
-        videoDAO: AdminVideoDAO,
-        selectionDAO: AdminSelectionDAO
+        virtualChannelDAO: VirtualChannelDAO,
+        assignmentDAO: AssignmentDAO,
+        sourceChannelDAO: SourceChannelDAO,
+        videoDAO: VideoDAO,
+        selectionDAO: VirtualChannelAssignmentVideoSelectionDAO
     )
     {
         this.virtualChannelDAO = virtualChannelDAO;

@@ -47,8 +47,8 @@ describe('viewer timer services', () => {
             resetVirtualChannelWatchSecondsInWindow: vi.fn(async () => undefined)
         };
         const service = new ViewerVirtualChannelService(
-            { get: vi.fn(), list },
-            historyDAO,
+            { get: vi.fn(), list } as never,
+            historyDAO as never,
             createProfileContext(),
             () => Date.UTC(2026, 4, 2, 15, 0, 0)
         );
@@ -88,7 +88,7 @@ describe('viewer timer services', () => {
             list: vi.fn(async () => [])
         };
         const recommendationService = new ViewerRecommendationService(
-            { list: viewerVideoReadRepository.list },
+            { list: viewerVideoReadRepository.list } as never,
             11
         );
         const service = new ViewerWatchService(
@@ -108,7 +108,7 @@ describe('viewer timer services', () => {
                     timerWindowStartMs: 100,
                     timerWindowEndMs: 200
                 }))
-            }
+            } as never
         );
 
         const result = await service.load('video-3', {
@@ -150,7 +150,7 @@ describe('viewer timer services', () => {
                 list: vi.fn(async () => [])
             };
             const recommendationService = new ViewerRecommendationService(
-                { list: viewerVideoReadRepository.list },
+                { list: viewerVideoReadRepository.list } as never,
                 11
             );
             const service = new ViewerWatchService(
@@ -179,7 +179,7 @@ describe('viewer timer services', () => {
                         timerWindowStartMs: 100,
                         timerWindowEndMs: 200
                     }))
-                }
+                } as never
             );
 
             const result = await service.load('video-6', {
@@ -222,7 +222,7 @@ describe('viewer timer services', () => {
                 list: vi.fn(async () => [])
             };
             const recommendationService = new ViewerRecommendationService(
-                { list: viewerVideoReadRepository.list },
+                { list: viewerVideoReadRepository.list } as never,
                 11
             );
             const service = new ViewerWatchService(
@@ -251,7 +251,7 @@ describe('viewer timer services', () => {
                         timerWindowStartMs: 100,
                         timerWindowEndMs: 200
                     }))
-                }
+                } as never
             );
 
             const result = await service.load('video-7', {
@@ -289,7 +289,7 @@ describe('viewer timer services', () => {
                     extraTimerSecondsRemaining: 0
                 })),
                 list: vi.fn(async () => [])
-            },
+            } as never,
             {
                 getVirtualChannelWatchSecondsInWindow: vi.fn(async () => '65'),
                 resetVirtualChannelWatchSecondsInWindow: vi.fn(async () => undefined)
@@ -352,7 +352,7 @@ describe('viewer timer services', () => {
             historyDAO as never,
             createProfileContext(),
             {} as never,
-            { getVirtualChannelById: availableThenCapped }
+            { getVirtualChannelById: availableThenCapped } as never
         );
 
         const cappedResult = await service.updateHistoryProgress('video-5', 60, '9', 8000);
@@ -396,7 +396,7 @@ describe('viewer timer services', () => {
                     timerWindowStartMs: 100,
                     timerWindowEndMs: 200
                 }))
-            }
+            } as never
         );
 
         const inactiveResult = await inactiveService.updateHistoryProgress('video-5', 60, '9', 1000 + (5 * 60 * 1000) + 1);

@@ -26,7 +26,7 @@ describe('ViewerRecommendationService', () => {
     it('selects deterministic recommendations from the active pool', async () => {
         const videos = Array.from({ length: 12 }, (_, index) => createVideo(index + 1));
         const list = vi.fn(async () => videos);
-        const service = new ViewerRecommendationService({ list }, 'default');
+        const service = new ViewerRecommendationService({ list } as never, 'default');
 
         const first = await service.load(videos[0], 'vc_queue');
         const second = await service.load(videos[0], 'vc_queue');
@@ -47,7 +47,7 @@ describe('ViewerRecommendationService', () => {
     it('falls back to the current source channel when no virtual channel is active', async () => {
         const videos = Array.from({ length: 4 }, (_, index) => createVideo(index + 1));
         const list = vi.fn(async () => videos);
-        const service = new ViewerRecommendationService({ list }, 'child');
+        const service = new ViewerRecommendationService({ list } as never, 'child');
 
         await service.load(videos[0], null, 2);
 

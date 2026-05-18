@@ -5,11 +5,6 @@ import { AdminYouTubeClientProvider } from '$lib/server/admin/AdminYouTubeClient
 import type { SourceChannelWithVideoStats } from '$lib/daos/sourceChannelDAO';
 import { YouTubeApiError } from '$lib/youtube/youTubeClient';
 
-type AdminSourceChannelDAO = Pick<
-    SourceChannelDAO,
-    'create' | 'get' | 'listWithVideoStats' | 'markRefreshed' | 'remove' | 'update'
->;
-
 interface AdminSourceChannelServiceError<TCode extends string = string>
 {
     code: TCode;
@@ -38,13 +33,13 @@ export class AdminSourceChannelPageService
     private static readonly INDEX_PATH = '/admin/source-channels';
 
     private readonly db: unknown;
-    private readonly sourceChannelDAO: AdminSourceChannelDAO;
+    private readonly sourceChannelDAO: SourceChannelDAO;
     private readonly clientProvider: AdminYouTubeClientProvider;
     private readonly youTubeCoordinator: AdminSourceChannelYouTubeCoordinator;
 
     constructor(
         db: unknown,
-        sourceChannelDAO: AdminSourceChannelDAO,
+        sourceChannelDAO: SourceChannelDAO,
         clientProvider: AdminYouTubeClientProvider,
         youTubeCoordinator: AdminSourceChannelYouTubeCoordinator
     )
