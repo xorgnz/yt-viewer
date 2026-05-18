@@ -27,7 +27,7 @@ const parseFiltersMock = vi.fn(() => ({
     dateFromInput: '',
     dateToInput: '',
     channelId: null,
-    virtualChannelId: 5,
+    virtualChannelId: 'vc_queue',
     sort: 'newest',
     limit: 200,
     offset: 0
@@ -73,9 +73,9 @@ describe('viewer watch route', () => {
             ok: true,
             data: {
                 video: {
-                    id: 1,
+                    id: 'video-1',
                     youtube_id: 'video-1',
-                    channel_id: 2,
+                    channel_id: 'channel-2',
                     title: 'Blocked Video',
                     description: '',
                     published_at: null,
@@ -90,10 +90,10 @@ describe('viewer watch route', () => {
                 recommendations: [],
                 previousVideoYoutubeId: null,
                 nextVideoYoutubeId: null,
-                currentVirtualChannelId: 5,
+                currentVirtualChannelId: 'vc_queue',
                 playbackBlockedMessage: 'Daily timer limit reached for this virtual channel.',
                 navigationFilters: parseFiltersMock(),
-                profileId: 3,
+                profileId: 'default',
                 profileKey: 'default',
                 profileName: 'Default'
             }
@@ -102,11 +102,11 @@ describe('viewer watch route', () => {
         const result = await routeModule.load({
             params: { videoId: 'video-1' },
             cookies: {},
-            url: new URL('http://localhost/viewer/watch/video-1?virtualChannelId=5')
+            url: new URL('http://localhost/viewer/watch/video-1?virtualChannelId=vc_queue')
         } as never);
 
         expect(result.playbackBlockedMessage).toBe('Daily timer limit reached for this virtual channel.');
-        expect(watchService.load).toHaveBeenCalledWith('video-1', expect.objectContaining({ virtualChannelId: 5 }));
+        expect(watchService.load).toHaveBeenCalledWith('video-1', expect.objectContaining({ virtualChannelId: 'vc_queue' }));
     });
 
     it('returns a timer-capped failure payload from the history-session action', async () => {
@@ -119,7 +119,7 @@ describe('viewer watch route', () => {
 
         const form = new FormData();
         form.set('watchSeconds', '30');
-        form.set('virtualChannelId', '5');
+        form.set('virtualChannelId', 'vc_queue');
 
         const result = await routeModule.actions.createHistorySession({
             request: new Request('http://localhost/viewer/watch/video-1', {
@@ -140,7 +140,7 @@ describe('viewer watch route', () => {
             code: 'timer_capped',
             timerState: 'capped'
         });
-        expect(watchService.createHistorySession).toHaveBeenCalledWith('video-1', 30, 5);
+        expect(watchService.createHistorySession).toHaveBeenCalledWith('video-1', 30, 'vc_queue');
     });
 });
 // apply-patch-anchor - do not delete

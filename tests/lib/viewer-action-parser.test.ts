@@ -12,7 +12,7 @@ describe('ViewerActionParser', () => {
         const parsed = ViewerActionParser.parseToggleFlag(new ServerActionForm(formData));
 
         expect(parsed).toEqual({
-            videoId: 12,
+            videoId: '12',
             kind: 'favorite',
             value: 1
         });
@@ -32,7 +32,7 @@ describe('ViewerActionParser', () => {
         expect(parsed).toEqual({
             kind: 'watched',
             value: 0,
-            requestedVideoIds: [1, 2, 3],
+            requestedVideoIds: ['1', '2', '3'],
             selectionContextKey: 'profile=default',
             selectedCountHint: 5,
             spansMultiplePages: true
@@ -44,14 +44,14 @@ describe('ViewerActionParser', () => {
         undoFormData.set('kind', 'ignored');
         undoFormData.set('videoIds', '4,5');
         undoFormData.set('originalStates', JSON.stringify([
-            { videoId: 4, value: 1 },
-            { videoId: 5, value: 0 }
+            { videoId: '4', value: 1 },
+            { videoId: '5', value: 0 }
         ]));
 
         const restoreFormData = new FormData();
         restoreFormData.set('videoIds', '9');
         restoreFormData.set('originalStates', JSON.stringify([
-            { videoId: 9, watched: 1, favorite: 0, ignored: 1 }
+            { videoId: '9', watched: 1, favorite: 0, ignored: 1 }
         ]));
 
         const invalidRestoreFormData = new FormData();
@@ -59,17 +59,17 @@ describe('ViewerActionParser', () => {
 
         expect(ViewerActionParser.parseUndoBulkUpdateFlags(new ServerActionForm(undoFormData))).toEqual({
             kind: 'ignored',
-            requestedVideoIds: [4, 5],
+            requestedVideoIds: ['4', '5'],
             undoStates: [
-                { videoId: 4, value: 1 },
-                { videoId: 5, value: 0 }
+                { videoId: '4', value: 1 },
+                { videoId: '5', value: 0 }
             ],
             selectionContextKey: null
         });
         expect(ViewerActionParser.parseRestoreSelectionState(new ServerActionForm(restoreFormData))).toEqual({
-            requestedVideoIds: [9],
+            requestedVideoIds: ['9'],
             restoreStates: [
-                { videoId: 9, watched: 1, favorite: 0, ignored: 1 }
+                { videoId: '9', watched: 1, favorite: 0, ignored: 1 }
             ],
             selectionContextKey: null
         });

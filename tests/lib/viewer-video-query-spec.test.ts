@@ -9,12 +9,12 @@ describe('ViewerVideoQuerySpec', () => {
             dateTo: 200,
             watched: 'watched',
             ignored: 'hide',
-            channelId: 3,
-            virtualChannelId: 8,
+            channelId: 'UC3',
+            virtualChannelId: 'vc_queue',
             sort: 'title_asc',
             limit: 5000,
             offset: -10
-        }, 12);
+        }, 'default');
 
         const queryParts = spec.buildListQueryParts();
 
@@ -23,25 +23,25 @@ describe('ViewerVideoQuerySpec', () => {
         expect(queryParts.whereSql).toContain('v.title LIKE :term');
         expect(queryParts.whereSql).toContain('v.published_at IS NOT NULL AND v.published_at >= :dateFrom');
         expect(queryParts.whereSql).toContain('v.published_at IS NOT NULL AND v.published_at <= :dateTo');
-        expect(queryParts.whereSql).toContain('v.channel_id = :channelId');
+        expect(queryParts.whereSql).toContain('v.src_channel_id = :channelId');
         expect(queryParts.whereSql).toContain("ga.mode = 'selected_only'");
         expect(queryParts.whereSql).toContain('COALESCE(vf.watched, 0) = 1');
         expect(queryParts.whereSql).toContain('COALESCE(vf.ignored, 0) = 0');
         expect(queryParts.params).toEqual({
-            profileId: 12,
+            profileId: 'default',
             term: '%demo%',
             dateFrom: 100,
             dateTo: 200,
-            channelId: 3,
-            virtualChannelId: 8
+            channelId: 'UC3',
+            virtualChannelId: 'vc_queue'
         });
         expect(queryParts.limit).toBe(1000);
         expect(queryParts.offset).toBe(0);
-        expect(spec.getOrderBySql()).toBe('LOWER(v.title) ASC, v.published_at IS NULL ASC, v.published_at DESC, v.id ASC');
+        expect(spec.getOrderBySql()).toBe('LOWER(v.title) ASC, v.published_at IS NULL ASC, v.published_at DESC, v.video_id ASC');
     });
 
     it('defaults to hiding ignored videos without extra joins when no group filter is active', () => {
-        const spec = new ViewerVideoQuerySpec({}, 7);
+        const spec = new ViewerVideoQuerySpec({}, 'adult');
 
         const queryParts = spec.buildCountQueryParts();
 
@@ -49,9 +49,9 @@ describe('ViewerVideoQuerySpec', () => {
         expect(queryParts.selectionJoin).toBe('');
         expect(queryParts.whereSql).toBe('WHERE COALESCE(vf.ignored, 0) = 0');
         expect(queryParts.params).toEqual({
-            profileId: 7
+            profileId: 'adult'
         });
-        expect(spec.getOrderBySql()).toBe('v.published_at IS NULL ASC, v.published_at DESC, v.id DESC');
+        expect(spec.getOrderBySql()).toBe('v.published_at IS NULL ASC, v.published_at DESC, v.video_id DESC');
     });
 });
 // apply-patch-anchor - do not delete

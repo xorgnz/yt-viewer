@@ -39,7 +39,7 @@ abstract class HistoryReadQuerySpec
         }
 
         if (this.filters.channelId != null) {
-            where.push('v.channel_id = :channelId');
+            where.push('v.src_channel_id = :channelId');
             params.channelId = this.filters.channelId;
         }
 

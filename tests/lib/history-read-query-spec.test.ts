@@ -7,8 +7,8 @@ import {
 describe('History read query specs', () => {
     it('builds shared session filters with bounded pagination', () => {
         const spec = new HistorySessionReadQuerySpec({
-            profileId: 4,
-            channelId: 9,
+            profileId: 'child',
+            channelId: 'UC_DEMO',
             dateFrom: 1000,
             dateTo: 2000,
             limit: 2005,
@@ -18,12 +18,12 @@ describe('History read query specs', () => {
         const queryParts = spec.buildQueryParts();
 
         expect(queryParts.whereSql).toContain('h.profile_id = :profileId');
-        expect(queryParts.whereSql).toContain('v.channel_id = :channelId');
+        expect(queryParts.whereSql).toContain('v.src_channel_id = :channelId');
         expect(queryParts.whereSql).toContain('h.session_started_at >= :dateFrom');
         expect(queryParts.whereSql).toContain('h.session_started_at <= :dateTo');
         expect(queryParts.params).toEqual({
-            profileId: 4,
-            channelId: 9,
+            profileId: 'child',
+            channelId: 'UC_DEMO',
             dateFrom: 1000,
             dateTo: 2000
         });

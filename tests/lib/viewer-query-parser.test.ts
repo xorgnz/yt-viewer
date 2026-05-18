@@ -31,7 +31,7 @@ describe('ViewerQueryParser', () => {
         expect(filters.ignored).toBe('show');
     });
 
-    it('parses date boundaries and numeric filters from the query string', () => {
+    it('parses date boundaries and stable identifier filters from the query string', () => {
         const filters = ViewerQueryParser.parse(
             new URL('http://localhost/viewer?dateFrom=2026-04-01&dateTo=2026-04-02&channelId=3&virtualChannelId=8&sort=title_desc&limit=25&offset=50'),
             'default'
@@ -39,22 +39,23 @@ describe('ViewerQueryParser', () => {
 
         expect(filters.dateFrom).toBe(new Date(2026, 3, 1, 0, 0, 0, 0).getTime());
         expect(filters.dateTo).toBe(new Date(2026, 3, 2, 23, 59, 59, 999).getTime());
-        expect(filters.channelId).toBe(3);
-        expect(filters.virtualChannelId).toBe(8);
+        expect(filters.channelId).toBe('3');
+        expect(filters.virtualChannelId).toBe('8');
         expect(filters.sort).toBe('title_desc');
         expect(filters.limit).toBe(25);
         expect(filters.offset).toBe(50);
     });
 
-    it('falls back to all when watched is unsupported and leaves invalid numbers as NaN-compatible output', () => {
+    it('falls back to all when watched is unsupported and clears invalid identifier and pagination input', () => {
         const filters = ViewerQueryParser.parse(
-            new URL('http://localhost/viewer?watched=maybe&channelId=nope&limit=bad'),
+            new URL('http://localhost/viewer?watched=maybe&channelId=   &limit=bad&offset=nope'),
             'default'
         );
 
         expect(filters.watched).toBe('all');
-        expect(Number.isNaN(filters.channelId)).toBe(true);
-        expect(Number.isNaN(filters.limit)).toBe(true);
+        expect(filters.channelId).toBeNull();
+        expect(filters.limit).toBe(200);
+        expect(filters.offset).toBe(0);
     });
 });
 // apply-patch-anchor - do not delete

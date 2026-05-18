@@ -70,10 +70,13 @@ describe('YouTubeChannelImportService', () => {
 
         const result = await service.importChannel('UC123');
 
+        expect(sourceChannelDAO.getByExternalId).toHaveBeenNthCalledWith(1, 'UC123');
+        expect(sourceChannelDAO.getByExternalId).toHaveBeenNthCalledWith(2, 'UC123');
         expect(sourceChannelDAO.create).toHaveBeenCalledWith(expect.objectContaining({
             id: 'UC123',
             youtubeId: 'UC123'
         }));
+        expect(videoDAO.getByExternalId).toHaveBeenCalledWith('vid-1');
         expect(videoDAO.create).toHaveBeenCalledWith(expect.objectContaining({
             id: 'vid-1',
             youtube_id: 'vid-1',

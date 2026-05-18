@@ -19,11 +19,13 @@ describe('ServerActionForm', () => {
         const formData = new FormData();
         formData.set('intent', '');
         formData.set('watchSeconds', '');
+        formData.set('videoId', '  vid-1  ');
 
         const form = new ServerActionForm(formData);
 
         expect(form.getTrimmedString('intent', 'watch')).toBe('watch');
         expect(form.getNumber('watchSeconds', 0)).toBe(0);
+        expect(form.getIdentifier('videoId')).toBe('vid-1');
     });
 
     it('merges repeated and csv integer lists into one deduplicated positive-id list', () => {
@@ -38,6 +40,20 @@ describe('ServerActionForm', () => {
             repeatedField: 'video_id',
             csvField: 'video_ids'
         })).toEqual([5, 7, 9, 11]);
+    });
+
+    it('merges repeated and csv identifier lists into one deduplicated stable-id list', () => {
+        const formData = new FormData();
+        formData.append('videoId', ' vid-1 ');
+        formData.append('videoId', 'vid-2');
+        formData.set('videoIds', 'vid-2, vid-3, , vid-1, vid-4');
+
+        const form = new ServerActionForm(formData);
+
+        expect(form.getIdentifierList({
+            repeatedField: 'videoId',
+            csvField: 'videoIds'
+        })).toEqual(['vid-1', 'vid-2', 'vid-3', 'vid-4']);
     });
 
     it('sanitizes return queries and parses enabled flags', () => {

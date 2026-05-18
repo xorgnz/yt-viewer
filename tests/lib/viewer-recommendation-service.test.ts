@@ -5,9 +5,9 @@ import type { ViewerVideoRecord } from '../../src/lib/daos/readers/ViewerVideoRe
 function createVideo(id: number): ViewerVideoRecord
 {
     return {
-        id,
+        id: `video-${id}`,
         youtube_id: `video-${id}`,
-        channel_id: 7,
+        channel_id: 'channel-7',
         title: `Video ${id}`,
         description: '',
         published_at: id * 1000,
@@ -26,19 +26,19 @@ describe('ViewerRecommendationService', () => {
     it('selects deterministic recommendations from the active pool', async () => {
         const videos = Array.from({ length: 12 }, (_, index) => createVideo(index + 1));
         const list = vi.fn(async () => videos);
-        const service = new ViewerRecommendationService({ list }, 17);
+        const service = new ViewerRecommendationService({ list }, 'default');
 
-        const first = await service.load(videos[0], 99);
-        const second = await service.load(videos[0], 99);
+        const first = await service.load(videos[0], 'vc_queue');
+        const second = await service.load(videos[0], 'vc_queue');
 
         expect(list).toHaveBeenCalledWith({
             watched: 'all',
             ignored: 'hide',
             channelId: null,
-            virtualChannelId: 99,
+            virtualChannelId: 'vc_queue',
             limit: 1000,
             offset: 0
-        }, 17);
+        }, 'default');
         expect(first).toHaveLength(8);
         expect(first.map((video) => video.id)).toEqual(second.map((video) => video.id));
         expect(first.some((video) => video.id === videos[0].id)).toBe(false);
@@ -47,18 +47,18 @@ describe('ViewerRecommendationService', () => {
     it('falls back to the current source channel when no virtual channel is active', async () => {
         const videos = Array.from({ length: 4 }, (_, index) => createVideo(index + 1));
         const list = vi.fn(async () => videos);
-        const service = new ViewerRecommendationService({ list }, 3);
+        const service = new ViewerRecommendationService({ list }, 'child');
 
         await service.load(videos[0], null, 2);
 
         expect(list).toHaveBeenCalledWith({
             watched: 'all',
             ignored: 'hide',
-            channelId: 7,
+            channelId: 'channel-7',
             virtualChannelId: null,
             limit: 1000,
             offset: 0
-        }, 3);
+        }, 'child');
     });
 });
 // apply-patch-anchor - do not delete
