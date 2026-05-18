@@ -135,6 +135,31 @@ describe('viewer timer services', () => {
         expect(result.data.nextVideoYoutubeId).toBe('video-4');
     });
 
+    it('normalizes string watch-history aggregates before deriving timer state', async () => {
+        const service = new ViewerVirtualChannelService(
+            {
+                get: vi.fn(async () => new VirtualChannel({ id: '2', name: 'Timers', dailyTimerMax: 120 })),
+                list: vi.fn(async () => [])
+            },
+            {
+                getVirtualChannelWatchSecondsInWindow: vi.fn(async () => '65'),
+                resetVirtualChannelWatchSecondsInWindow: vi.fn(async () => undefined)
+            } as never,
+            createProfileContext(),
+            () => Date.UTC(2026, 4, 2, 15, 0, 0)
+        );
+
+        const group = await service.getVirtualChannelById('2');
+
+        expect(group).toMatchObject({
+            id: '2',
+            dailyTimerMax: 120,
+            timerState: 'available',
+            timerUsageSeconds: 65,
+            timerRemainingSeconds: 55
+        });
+    });
+
     it('returns timer-capped enforcement after a progress write and keeps session-expiry failures distinct', async () => {
         const video = createVideo(5);
         const viewerVideoReadRepository = {

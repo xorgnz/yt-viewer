@@ -195,12 +195,12 @@ export class ViewerVirtualChannelService
             };
         }
 
-        const timerUsageSeconds = await this.historyDAO.getVirtualChannelWatchSecondsInWindow(
+        const timerUsageSeconds = Number(await this.historyDAO.getVirtualChannelWatchSecondsInWindow(
             this.profileContext.activeProfileId,
             group.id,
             window.startMs,
             window.endMs
-        );
+        ));
         const timerMaxSeconds = dailyTimerMax;
         const timerRemainingSeconds = Math.max(0, timerMaxSeconds - timerUsageSeconds);
 

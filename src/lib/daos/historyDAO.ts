@@ -104,7 +104,7 @@ export class HistoryDAO extends DAO
             windowEndMs
         ]);
 
-        return row?.totalWatchSeconds ?? 0;
+        return Number(row?.totalWatchSeconds ?? 0);
     }
 
     async resetVirtualChannelWatchSecondsInWindow(

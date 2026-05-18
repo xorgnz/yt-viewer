@@ -51,5 +51,23 @@ describe('HistoryDAO', () => {
             20_000
         )).resolves.toBe(0);
     });
+
+    it('coerces aggregate watch seconds to a number when mysql returns a string', async () => {
+        const provider = new MockQueryProvider((text) => {
+            if (text.includes('COALESCE(SUM(h.time_watched_seconds), 0) AS totalWatchSeconds')) {
+                return MockQueryProvider.result([{ totalWatchSeconds: '65' }]);
+            }
+
+            return undefined;
+        });
+        const dao = new HistoryDAO(provider as never);
+
+        await expect(dao.getVirtualChannelWatchSecondsInWindow(
+            2,
+            5,
+            10_000,
+            20_000
+        )).resolves.toBe(65);
+    });
 });
 // apply-patch-anchor - do not delete
