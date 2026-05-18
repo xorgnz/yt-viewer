@@ -85,9 +85,7 @@ describe('admin source channel routes', () => {
     it('redirects after a successful create action using the page service result', async () => {
         pageService.createSourceChannel.mockResolvedValue({
             ok: true,
-            data: {
-                redirectTo: '/admin/source-channels'
-            }
+            data: '/admin/source-channels'
         });
 
         const form = new FormData();
@@ -107,13 +105,13 @@ describe('admin source channel routes', () => {
             location: '/admin/source-channels'
         });
 
-        expect(pageService.createSourceChannel).toHaveBeenCalledWith({
-            youtubeInput: '@created',
-            title: 'Created Route Channel',
-            description: 'Created from route test',
-            thumbnail_url: 'https://example.test/thumb.jpg',
-            published_at: 12345
-        });
+        expect(pageService.createSourceChannel).toHaveBeenCalledWith(
+            '@created',
+            'Created Route Channel',
+            'Created from route test',
+            'https://example.test/thumb.jpg',
+            12345
+        );
     });
 
     it('returns an action failure when create validation passes but the service rejects the request', async () => {
@@ -174,9 +172,7 @@ describe('admin source channel routes', () => {
         expect(runMock).not.toHaveBeenCalled();
         expect(resolveServiceContextMock).not.toHaveBeenCalled();
         expect(resolveLookupServiceMock).toHaveBeenCalledTimes(1);
-        expect(lookupService.lookupSourceChannel).toHaveBeenCalledWith({
-            youtubeInput: '@lookup'
-        });
+        expect(lookupService.lookupSourceChannel).toHaveBeenCalledWith('@lookup');
     });
 
     it('returns 400 for missing lookup input without touching lookup service dependencies', async () => {

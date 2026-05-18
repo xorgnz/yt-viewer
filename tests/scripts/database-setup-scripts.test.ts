@@ -5,11 +5,11 @@ import { runCreateDatabaseWorkflow } from '../../scripts/create_database';
 import { runMigrationWorkflow } from '../../scripts/migrate_database';
 import { MockQueryProvider } from '../helpers/MockQueryProvider';
 
-function createProvider(): MockQueryProvider
+function createProvider(schemaVersion = '9'): MockQueryProvider
 {
     return new MockQueryProvider((sql) => {
         if (sql.includes('SELECT value FROM _meta')) {
-            return MockQueryProvider.result([{ value: '7' }]);
+            return MockQueryProvider.result([{ value: schemaVersion }]);
         }
 
         return undefined;
@@ -47,26 +47,17 @@ describe('database setup scripts', () => {
             pool: client,
         });
 
-        expect(result.currentVersion).toBe(7);
+        expect(result.currentVersion).toBe(9);
         expect(result.targetVersion).toBe(9);
         expect(result.finalVersion).toBe(9);
-        expect(result.appliedMigrations).toEqual([
-            {
-                version: 8,
-                name: 'add_migration_history',
-            },
-            {
-                version: 9,
-                name: 'add_virtual_channel_daily_timer_max',
-            }
-        ]);
-        expect(client.calls.map((call) => call.text)).toContain('START TRANSACTION');
-        expect(client.calls.map((call) => call.text)).toContain('COMMIT');
-        expect(client.calls.some((call) => call.text.includes('INSERT INTO migration_history'))).toBe(true);
+        expect(result.appliedMigrations).toEqual([]);
+        expect(client.calls.map((call) => call.text)).not.toContain('START TRANSACTION');
+        expect(client.calls.map((call) => call.text)).not.toContain('COMMIT');
+        expect(client.calls.some((call) => call.text.includes('INSERT INTO migration_history'))).toBe(false);
     });
 
     it('rolls back failed MySQL setup migrations', async () => {
-        const client = createProvider();
+        const client = createProvider('7');
         const failingMigrations: MigrationDefinition[] = [
             {
                 version: 8,

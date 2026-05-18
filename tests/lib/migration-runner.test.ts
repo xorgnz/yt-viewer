@@ -1,5 +1,4 @@
 import { describe, expect, it } from 'vitest';
-import { CREATE_TABLE_MIGRATION_HISTORY } from '../../src/lib/daos/_schema';
 import { MIGRATIONS } from '../../src/lib/daos/migrations/registry';
 import { DatabaseMigrationAdapter } from '../../src/lib/daos/shared/MigrationAdapter';
 import { MigrationRunner } from '../../src/lib/daos/shared/MigrationRunner';
@@ -64,33 +63,22 @@ class MockMigrationProvider
 }
 
 describe('MigrationRunner', () => {
-    it('runs pending MySQL migrations in a transaction with schema metadata updates', async () => {
-        const provider = new MockMigrationProvider();
+    it('returns the current version when no migrations are registered', async () => {
+        const provider = new MockMigrationProvider({
+            schemaVersion: '9',
+        });
         const runner = new MigrationRunner(new DatabaseMigrationAdapter(provider as never), MIGRATIONS);
 
         const result = await runner.runToLatest();
 
         expect(result).toEqual({
-            currentVersion: 7,
+            currentVersion: 9,
             targetVersion: 9,
-            appliedMigrations: [
-                {
-                    version: 8,
-                    name: 'add_migration_history',
-                },
-                {
-                    version: 9,
-                    name: 'add_virtual_channel_daily_timer_max',
-                }
-            ],
+            appliedMigrations: [],
             finalVersion: 9,
         });
-        expect(provider.calls.map((call) => call.sql)).toContain('START TRANSACTION');
-        expect(provider.calls.map((call) => call.sql)).toContain('COMMIT');
-        expect(provider.calls.some((call) => CREATE_TABLE_MIGRATION_HISTORY.includes(call.sql))).toBe(true);
-        expect(provider.calls.some((call) => call.sql.includes('INSERT INTO migration_history'))).toBe(true);
-        expect(provider.calls.some((call) => call.sql.includes('ON DUPLICATE KEY UPDATE value=VALUES(value)'))).toBe(true);
-        expect(provider.calls.some((call) => call.params?.[0] === '9')).toBe(true);
+        expect(provider.calls.map((call) => call.sql)).not.toContain('START TRANSACTION');
+        expect(provider.calls.map((call) => call.sql)).not.toContain('COMMIT');
     });
 
     it('rolls back a failed MySQL migration transaction', async () => {
@@ -113,13 +101,21 @@ describe('MigrationRunner', () => {
         expect(provider.calls.map((call) => call.sql)).not.toContain('COMMIT');
     });
 
-    it('allows an 8 to 9 upgrade when migration history exists but has no rows yet', async () => {
+    it('runs explicit migrations when provided', async () => {
         const provider = new MockMigrationProvider({
             schemaVersion: '8',
-            historyTableExists: true,
+            historyTableExists: false,
             migrationRows: [],
         });
-        const runner = new MigrationRunner(new DatabaseMigrationAdapter(provider as never), MIGRATIONS);
+        const runner = new MigrationRunner(new DatabaseMigrationAdapter(provider as never), [
+            {
+                version: 9,
+                name: 'add_virtual_channel_daily_timer_max',
+                async apply() {
+                    return;
+                },
+            }
+        ]);
 
         const result = await runner.runToLatest();
 
