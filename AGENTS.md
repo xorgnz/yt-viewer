@@ -102,9 +102,14 @@ Do only what the user explicitly asks. Do not propose follow-on work, suggest ne
 - Keep helper types readable; avoid type-level cleverness unless the existing codebase already uses that style.
 - Avoid anonymous object types wherever practical. Prefer named types for reusable payloads, public contracts, cross-module boundaries, and any non-trivial data shape.
 - Keep inline object types only for very local, obvious, one-use transport values where introducing a named type would not improve clarity.
+- Do not introduce one-off input interfaces or inline object parameter types for a single function, method, or constructor call. This is an anti-pattern.
+- If the data is a real concept, model it as a named class or other durable concept-owning type with a clear home.
+- If the data is not a real concept, pass explicit parameters instead of wrapping them in an anonymous object.
+- Do not create `*Input`, `*Params`, or similar types solely to simulate named arguments.
 - For a real domain concept, prefer a simple field-value type plus an entity class when behavior or invariants need a clear home.
 - Keep entity and field-value names in domain/TypeScript shape. Do not let storage-specific naming conventions leak through the rest of the application.
-- Treat anonymous objects as transport values at boundaries. If logic, invariants, or lifecycle accumulate around a concept, promote it to a named type or class.
+- Use anonymous object transport values only at true framework or wire boundaries such as HTTP/form/query parsing, page-load return payloads, or database row mapping. Do not use them as internal API wrappers between your own classes.
+- When a parameter list becomes long, that is usually a signal to identify the real concept and give it a proper type or class rather than hiding the call behind a one-off interface.
 - When a query returns a one-off aggregate or projection rather than a real domain object, keep that result shape local to the persistence or service layer unless it is reused meaningfully elsewhere.
 - Keep names aligned across layers unless there is a real boundary reason to translate them.
 - Prefer test builders, fixtures, or named helpers over repeating large ad hoc object literals across tests.
