@@ -81,6 +81,11 @@ export class ViewerWatchService
         let playbackBlockedMessage: string | null = null;
         let activeVirtualChannel: ViewerVirtualChannel | null = null;
 
+        const video = await this.loadVideo(videoYoutubeId);
+        if (!video) {
+            return { ok: false, status: 404, message: 'Video not found' };
+        }
+
         if (filters.virtualChannelId != null) {
             const group = await this.virtualChannelService.getVirtualChannelById(filters.virtualChannelId);
 
@@ -90,7 +95,7 @@ export class ViewerWatchService
 
             activeVirtualChannel = group;
 
-            if (group.timerState === 'capped') {
+            if (group.timerState === 'capped' || await this.shouldBlockReloadForNearlyCappedSession(video.id, group)) {
                 playbackBlockedMessage = 'Daily timer limit reached for this virtual channel.';
             }
         }
@@ -102,11 +107,6 @@ export class ViewerWatchService
             activeVirtualChannelRemainingSeconds: activeVirtualChannel?.timerRemainingSeconds ?? null,
             activeVirtualChannelState: activeVirtualChannel?.timerState ?? null
         });
-
-        const video = await this.loadVideo(videoYoutubeId);
-        if (!video) {
-            return { ok: false, status: 404, message: 'Video not found' };
-        }
 
         const adjacent = await this.viewerVideoReadRepository.findAdjacentYoutubeIds(
             { youtube_id: video.youtube_id },
@@ -337,6 +337,28 @@ export class ViewerWatchService
         }
 
         return { ok: true };
+    }
+
+    private async shouldBlockReloadForNearlyCappedSession(
+        videoId: string | number,
+        group: ViewerVirtualChannel,
+        now = Date.now()
+    ): Promise<boolean>
+    {
+        if (group.dailyTimerMax == null || group.timerState === 'capped') {
+            return false;
+        }
+
+        if ((group.timerRemainingSeconds ?? 0) > 1) {
+            return false;
+        }
+
+        const latestSession = await this.historyDAO.findMostRecentSession(videoId, this.profileContext.activeProfileId);
+        if (!latestSession) {
+            return false;
+        }
+
+        return (now - latestSession.last_updated_at) <= HISTORY_SESSION_GAP_MS;
     }
 }
 // apply-patch-anchor - do not delete

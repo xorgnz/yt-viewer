@@ -135,6 +135,150 @@ describe('viewer timer services', () => {
         expect(result.data.nextVideoYoutubeId).toBe('video-4');
     });
 
+    it('blocks watch-page reload when an active session leaves one second remaining', async () => {
+        vi.useFakeTimers();
+        vi.setSystemTime(8000);
+
+        try {
+            const video = createVideo(6);
+            const viewerVideoReadRepository = {
+                getByYoutubeId: vi.fn(async () => video),
+                findAdjacentYoutubeIds: vi.fn(async () => ({
+                    previousYoutubeId: null,
+                    nextYoutubeId: null
+                })),
+                list: vi.fn(async () => [])
+            };
+            const recommendationService = new ViewerRecommendationService(
+                { list: viewerVideoReadRepository.list },
+                11
+            );
+            const service = new ViewerWatchService(
+                viewerVideoReadRepository as never,
+                {} as never,
+                {
+                    findMostRecentSession: vi.fn(async () => ({
+                        id: 91,
+                        video_id: video.id,
+                        profile_id: 11,
+                        session_started_at: 1000,
+                        last_updated_at: 5000,
+                        time_watched_seconds: 119
+                    }))
+                } as never,
+                createProfileContext(),
+                recommendationService,
+                {
+                    getVirtualChannelById: vi.fn(async () => ({
+                        id: '10',
+                        name: 'Timers',
+                        dailyTimerMax: 120,
+                        timerState: 'available' as const,
+                        timerUsageSeconds: 119,
+                        timerRemainingSeconds: 1,
+                        timerWindowStartMs: 100,
+                        timerWindowEndMs: 200
+                    }))
+                }
+            );
+
+            const result = await service.load('video-6', {
+                watched: 'all',
+                ignored: 'hide',
+                dateFrom: null,
+                dateTo: null,
+                dateFromInput: '',
+                dateToInput: '',
+                channelId: null,
+                virtualChannelId: '10',
+                sort: 'newest',
+                limit: 200,
+                offset: 0
+            });
+
+            expect(result.ok).toBe(true);
+            if (!result.ok) {
+                throw new Error('Expected successful watch load.');
+            }
+
+            expect(result.data.playbackBlockedMessage).toBe('Daily timer limit reached for this virtual channel.');
+        } finally {
+            vi.useRealTimers();
+        }
+    });
+
+    it('does not block watch-page reload when the recent session is inactive', async () => {
+        vi.useFakeTimers();
+        vi.setSystemTime(301001);
+
+        try {
+            const video = createVideo(7);
+            const viewerVideoReadRepository = {
+                getByYoutubeId: vi.fn(async () => video),
+                findAdjacentYoutubeIds: vi.fn(async () => ({
+                    previousYoutubeId: null,
+                    nextYoutubeId: null
+                })),
+                list: vi.fn(async () => [])
+            };
+            const recommendationService = new ViewerRecommendationService(
+                { list: viewerVideoReadRepository.list },
+                11
+            );
+            const service = new ViewerWatchService(
+                viewerVideoReadRepository as never,
+                {} as never,
+                {
+                    findMostRecentSession: vi.fn(async () => ({
+                        id: 92,
+                        video_id: video.id,
+                        profile_id: 11,
+                        session_started_at: 1000,
+                        last_updated_at: 1000,
+                        time_watched_seconds: 119
+                    }))
+                } as never,
+                createProfileContext(),
+                recommendationService,
+                {
+                    getVirtualChannelById: vi.fn(async () => ({
+                        id: '10',
+                        name: 'Timers',
+                        dailyTimerMax: 120,
+                        timerState: 'available' as const,
+                        timerUsageSeconds: 119,
+                        timerRemainingSeconds: 1,
+                        timerWindowStartMs: 100,
+                        timerWindowEndMs: 200
+                    }))
+                }
+            );
+
+            const result = await service.load('video-7', {
+                watched: 'all',
+                ignored: 'hide',
+                dateFrom: null,
+                dateTo: null,
+                dateFromInput: '',
+                dateToInput: '',
+                channelId: null,
+                virtualChannelId: '10',
+                sort: 'newest',
+                limit: 200,
+                offset: 0
+            });
+
+            expect(result.ok).toBe(true);
+            if (!result.ok) {
+                throw new Error('Expected successful watch load.');
+            }
+
+            expect(result.data.playbackBlockedMessage).toBeNull();
+        } finally {
+            vi.useRealTimers();
+        }
+    });
+
     it('normalizes string watch-history aggregates before deriving timer state', async () => {
         const service = new ViewerVirtualChannelService(
             {
