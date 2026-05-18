@@ -258,6 +258,8 @@ async function assertLegacySchemaShape(pool: DatabaseClientProvider): Promise<vo
     `, [...LEGACY_TABLE_NAMES]);
     const columnsByTable = new Map<string, Set<string>>();
 
+    console.log(rows);
+
     for (const row of rows.rows) {
         if (!columnsByTable.has(row.table_name)) {
             columnsByTable.set(row.table_name, new Set());
@@ -801,8 +803,8 @@ export async function runStableIdMigrationWorkflow(options: {
         if (foreignKeyChecksDisabled) {
             try {
                 await options.pool.query('SET FOREIGN_KEY_CHECKS = 1');
-            } catch {
-                // Leave the original error intact; the operator can restore from backup if needed.
+            } catch (restoreError) {
+                console.error('Stable-id migration cleanup failed while re-enabling FOREIGN_KEY_CHECKS:', restoreError);
             }
         }
 
@@ -816,16 +818,17 @@ async function main(): Promise<void>
     const databaseUrl = requireDatabaseUrlForRuntime('Stable-id migration script', {
         allowMissingInTest: false,
     });
-    const pool = new DatabasePool({ connectionString: databaseUrl });
 
+    console.log(`Database mode: ${mode}`);
+    console.log(`Database target: ${databaseUrl}`);
+
+    const pool = new DatabasePool({ connectionString: databaseUrl });
     try {
         const result = await runStableIdMigrationWorkflow({
             pool,
             apply
         });
 
-        console.log(`Database mode: ${mode}`);
-        console.log('Database target: DATABASE_URL');
         console.log(`Legacy row counts: ${JSON.stringify(result.counts)}`);
         console.log(`Deterministic virtual channel mappings: ${JSON.stringify(result.mappings)}`);
 
@@ -849,7 +852,7 @@ const scriptPath = fileURLToPath(import.meta.url);
 
 if (entryPath === scriptPath) {
     main().catch((err) => {
-        console.error('Stable-id migration failed:', err?.message || err);
+        console.error('Stable-id migration failed:', err);
         exit(1);
     });
 }

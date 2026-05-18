@@ -92,11 +92,11 @@ async function main(): Promise<void>
     });
     const pool = new DatabasePool({ connectionString: databaseUrl });
 
+    console.log(`Database mode: ${mode}`);
+    console.log(`Database target: ${databaseUrl}`);
     try {
         const result = await runMigrationWorkflow({ pool });
 
-        console.log(`Database mode: ${mode}`);
-        console.log('Database target: DATABASE_URL');
         console.log(`Detected version: ${result.currentVersion}`);
         console.log(`Target version: ${result.targetVersion}`);
 
@@ -118,7 +118,7 @@ const scriptPath = fileURLToPath(import.meta.url);
 
 if (entryPath === scriptPath) {
     main().catch((err) => {
-        console.error('Database migration failed:', err?.message || err);
+        console.error('Database migration failed:', err);
         exit(1);
     });
 }

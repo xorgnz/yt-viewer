@@ -64,10 +64,12 @@ export class DatabaseMigrationAdapter implements MigrationAdapter
                 'SELECT value FROM _meta WHERE `key` = ?',
                 ['schema_version']
             );
+
             const value = result.rows[0]?.value;
             return value === undefined ? null : Number(value);
-        } catch {
-            return null;
+        } catch (error) {
+            console.error('Failed to read _meta.schema_version:', error);
+            throw error;
         }
     }
 
