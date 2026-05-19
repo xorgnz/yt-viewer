@@ -1,51 +1,7 @@
-import type {QueryResult,} from 'mysql2/promise';
 import type {SqlParams} from '$lib/daos/shared/DAO';
 import {SqlBinder} from '$lib/daos/shared/DAO';
 import {CREATE_TABLE_META} from '$lib/daos/_schema';
-import type {DatabasePool, DatabaseQueryResult} from '$lib/daos/shared/DatabasePool';
-
-class DatabaseConnectionQueryRunner
-{
-    private readonly connection: Parameters<NonNullable<DatabasePool['withConnection']>>[0] extends (connection: infer T) => unknown
-        ? T
-        : never;
-
-    constructor(
-        connection: Parameters<NonNullable<DatabasePool['withConnection']>>[0] extends (connection: infer T) => unknown
-            ? T
-            : never
-    )
-    {
-        this.connection = connection;
-    }
-
-    async query<T extends object = Record<string, unknown>>(
-        text: string,
-        values: unknown[] = []
-    ): Promise<DatabaseQueryResult<T>>
-    {
-        const [result] = await this.connection.execute<QueryResult>(text, values as never[]);
-        return DatabaseConnectionQueryRunner.mapResult<T>(result);
-    }
-
-    private static mapResult<T extends object>(result: QueryResult): DatabaseQueryResult<T>
-    {
-        if (Array.isArray(result))
-        {
-            return {
-                rows: result as T[],
-                affectedRows: result.length,
-                insertId: 0
-            };
-        }
-
-        return {
-            rows: [],
-            affectedRows: result.affectedRows ?? 0,
-            insertId: result.insertId ?? 0
-        };
-    }
-}
+import { DatabasePool, type DatabaseExecuteConnection } from '$lib/daos/shared/DatabasePool';
 
 export class DatabaseMigrationExecutionContext
 {
@@ -238,8 +194,10 @@ export class DatabaseMigrationAdapter
         {
             return await this.withConnection(async (connection) =>
             {
-                const connectionRunner = new DatabaseConnectionQueryRunner(connection);
-                this.activeQuery = connectionRunner.query.bind(connectionRunner);
+                const pinnedConnection = connection as DatabaseExecuteConnection;
+                this.activeQuery = async <T extends object = Record<string, unknown>>(text: string, values?: unknown[]) => {
+                    return await DatabasePool.queryOnConnection<T>(pinnedConnection, text, values);
+                };
 
                 await this.activeQuery('START TRANSACTION');
 

@@ -17,6 +17,10 @@ export type DatabaseQueryResult<T> = {
     insertId: number;
 };
 
+export type DatabaseExecuteConnection = {
+    execute<T extends QueryResult>(text: string, values?: unknown[]): Promise<[T, unknown]>;
+};
+
 export class DatabasePool
 {
     private readonly connectionString: string;
@@ -70,8 +74,7 @@ export class DatabasePool
         values?: unknown[]
     ): Promise<DatabaseQueryResult<T>>
     {
-        const [result] = await this.open().execute<QueryResult>(text, (values || []) as never[]);
-        return DatabasePool.mapResult<T>(result);
+        return await DatabasePool.queryOnConnection<T>(this.open(), text, values);
     }
 
     async close(): Promise<void>
@@ -90,7 +93,17 @@ export class DatabasePool
         return this.pool;
     }
 
-    private static mapResult<T extends object>(result: QueryResult): DatabaseQueryResult<T>
+    static async queryOnConnection<T extends object = Record<string, unknown>>(
+        connection: DatabaseExecuteConnection | Pool,
+        text: string,
+        values?: unknown[]
+    ): Promise<DatabaseQueryResult<T>>
+    {
+        const [result] = await connection.execute<QueryResult>(text, (values || []) as never[]);
+        return DatabasePool.mapResult<T>(result);
+    }
+
+    static mapResult<T extends object>(result: QueryResult): DatabaseQueryResult<T>
     {
         if (Array.isArray(result)) {
             return {

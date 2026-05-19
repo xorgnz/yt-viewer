@@ -1,17 +1,11 @@
-import type { QueryResult } from 'mysql2/promise';
 import { ALL_DDL, CREATE_TABLE_META, SCHEMA_VERSION } from '$lib/daos/_schema';
-import type { DatabaseQueryResult } from '$lib/daos/shared/DatabasePool';
+import { DatabasePool, type DatabaseExecuteConnection, type DatabaseQueryResult } from '$lib/daos/shared/DatabasePool';
 
 type DatabaseQueryProvider = {
     query<T extends object = Record<string, unknown>>(text: string, values?: unknown[]): Promise<DatabaseQueryResult<T>>;
 };
-type DatabaseTransactionConnection = {
-    execute<TResult>(text: string, values?: unknown[]): Promise<[TResult]>;
-    release(): void;
-};
-
 type DatabaseClientProvider = DatabaseQueryProvider & {
-    withConnection?<T>(work: (connection: DatabaseTransactionConnection) => Promise<T> | T): Promise<T>;
+    withConnection?<T>(work: (connection: DatabaseExecuteConnection) => Promise<T> | T): Promise<T>;
 };
 
 export class LatestSchemaBootstrapper
@@ -22,21 +16,7 @@ export class LatestSchemaBootstrapper
             await pool.withConnection(async (connection) => {
                 const queryProvider: DatabaseQueryProvider = {
                     query: async <T extends object = Record<string, unknown>>(text: string, values?: unknown[]) => {
-                        const [result] = await connection.execute<QueryResult>(text, (values || []) as never[]);
-
-                        if (Array.isArray(result)) {
-                            return {
-                                rows: result as T[],
-                                affectedRows: result.length,
-                                insertId: 0
-                            } satisfies DatabaseQueryResult<T>;
-                        }
-
-                        return {
-                            rows: [],
-                            affectedRows: result.affectedRows ?? 0,
-                            insertId: result.insertId ?? 0
-                        } satisfies DatabaseQueryResult<T>;
+                        return await DatabasePool.queryOnConnection<T>(connection, text, values);
                     }
                 };
 
