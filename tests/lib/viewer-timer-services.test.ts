@@ -365,6 +365,68 @@ describe('viewer timer services', () => {
         });
     });
 
+    it('keeps a channel available after the daily allowance is exhausted when extra time remains', async () => {
+        const service = new ViewerVirtualChannelService(
+            {
+                get: vi.fn(async () => new VirtualChannel({
+                    id: '2',
+                    name: 'Timers',
+                    dailyTimerMax: 120,
+                    extraTimerSecondsRemaining: 30
+                })),
+                list: vi.fn(async () => [])
+            } as never,
+            {
+                getVirtualChannelWatchSecondsInWindow: vi.fn(async () => '120'),
+                resetVirtualChannelWatchSecondsInWindow: vi.fn(async () => undefined)
+            } as never,
+            createProfileContext(),
+            () => Date.UTC(2026, 4, 2, 15, 0, 0)
+        );
+
+        const virtualChannel = await service.getVirtualChannelById('2');
+
+        expect(virtualChannel).toMatchObject({
+            id: '2',
+            timerState: ViewerVirtualChannelTimerState.Available,
+            timerUsageSeconds: 120,
+            dailyTimerRemainingSeconds: 0,
+            extraTimerSecondsRemaining: 30,
+            combinedTimerRemainingSeconds: 30
+        });
+    });
+
+    it('keeps extra time available across a new day window until it is consumed', async () => {
+        const service = new ViewerVirtualChannelService(
+            {
+                get: vi.fn(async () => new VirtualChannel({
+                    id: '2',
+                    name: 'Timers',
+                    dailyTimerMax: 120,
+                    extraTimerSecondsRemaining: 30
+                })),
+                list: vi.fn(async () => [])
+            } as never,
+            {
+                getVirtualChannelWatchSecondsInWindow: vi.fn(async () => '0'),
+                resetVirtualChannelWatchSecondsInWindow: vi.fn(async () => undefined)
+            } as never,
+            createProfileContext(),
+            () => Date.UTC(2026, 4, 3, 15, 0, 0)
+        );
+
+        const virtualChannel = await service.getVirtualChannelById('2');
+
+        expect(virtualChannel).toMatchObject({
+            id: '2',
+            timerState: ViewerVirtualChannelTimerState.Available,
+            timerUsageSeconds: 0,
+            dailyTimerRemainingSeconds: 120,
+            extraTimerSecondsRemaining: 30,
+            combinedTimerRemainingSeconds: 150
+        });
+    });
+
     it('decrements persisted extra time only for watch delta spillover beyond daily remaining', async () => {
         const updateExtraTimerSecondsRemaining = vi.fn(async () => undefined);
         const service = new ViewerVirtualChannelService(
@@ -624,6 +686,81 @@ describe('viewer timer services', () => {
             last_updated_at: 8000,
             time_watched_seconds: 40
         });
+    });
+
+    it('does not block reload for an active session when daily time is exhausted but extra time remains', async () => {
+        vi.useFakeTimers();
+        vi.setSystemTime(8000);
+
+        try {
+            const video = createVideo(9);
+            const viewerVideoReadRepository = {
+                getByYoutubeId: vi.fn(async () => video),
+                findAdjacentYoutubeIds: vi.fn(async () => ({
+                    previousYoutubeId: null,
+                    nextYoutubeId: null
+                })),
+                list: vi.fn(async () => [])
+            };
+            const recommendationService = new ViewerRecommendationService(
+                { list: viewerVideoReadRepository.list } as never,
+                11
+            );
+            const service = new ViewerWatchService(
+                viewerVideoReadRepository as never,
+                {} as never,
+                {
+                    findMostRecentSession: vi.fn(async () => ({
+                        id: 93,
+                        video_id: video.id,
+                        profile_id: 11,
+                        session_started_at: 1000,
+                        last_updated_at: 5000,
+                        time_watched_seconds: 120
+                    }))
+                } as never,
+                createProfileContext(),
+                recommendationService,
+                {
+                    getVirtualChannelById: vi.fn(async () => ({
+                        id: '11',
+                        name: 'Timers',
+                        dailyTimerMax: 120,
+                        timerState: ViewerVirtualChannelTimerState.Available,
+                        timerUsageSeconds: 120,
+                        timerRemainingSeconds: 0,
+                        dailyTimerRemainingSeconds: 0,
+                        extraTimerSecondsRemaining: 30,
+                        combinedTimerRemainingSeconds: 30,
+                        timerWindowStartMs: 100,
+                        timerWindowEndMs: 200
+                    }))
+                } as never
+            );
+
+            const result = await service.load('video-9', {
+                watched: ViewerWatchedFilter.All,
+                ignored: ViewerIgnoredFilter.Hide,
+                dateFrom: null,
+                dateTo: null,
+                dateFromInput: '',
+                dateToInput: '',
+                channelId: null,
+                virtualChannelId: '11',
+                sort: ViewerSort.Newest,
+                limit: 200,
+                offset: 0
+            });
+
+            expect(result.ok).toBe(true);
+            if (!result.ok) {
+                throw new Error('Expected successful watch load.');
+            }
+
+            expect(result.data.playbackBlockedMessage).toBeNull();
+        } finally {
+            vi.useRealTimers();
+        }
     });
 });
 // apply-patch-anchor - do not delete

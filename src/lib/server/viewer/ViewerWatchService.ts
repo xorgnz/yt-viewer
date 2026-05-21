@@ -379,7 +379,7 @@ export class ViewerWatchService
             return false;
         }
 
-        if ((virtualChannel.timerRemainingSeconds ?? 0) > 1) {
+        if ((virtualChannel.combinedTimerRemainingSeconds ?? 0) > 1) {
             return false;
         }
 

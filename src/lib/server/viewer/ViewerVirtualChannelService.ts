@@ -246,14 +246,15 @@ export class ViewerVirtualChannelService
         const timerMaxSeconds = dailyTimerMax;
         const dailyTimerRemainingSeconds = Math.max(0, timerMaxSeconds - timerUsageSeconds);
         const combinedTimerRemainingSeconds = dailyTimerRemainingSeconds + virtualChannel.extraTimerSecondsRemaining;
+        const timerState = combinedTimerRemainingSeconds === 0
+            ? ViewerVirtualChannelTimerState.Capped
+            : ViewerVirtualChannelTimerState.Available;
 
         return {
             id: virtualChannel.id,
             name: virtualChannel.name,
             dailyTimerMax,
-            timerState: timerUsageSeconds >= timerMaxSeconds
-                ? ViewerVirtualChannelTimerState.Capped
-                : ViewerVirtualChannelTimerState.Available,
+            timerState,
             timerUsageSeconds,
             timerRemainingSeconds: dailyTimerRemainingSeconds,
             dailyTimerRemainingSeconds,
