@@ -15,6 +15,7 @@ export const load: LayoutServerLoad = async ({ cookies }) =>
             profiles: (await profileDAO.list()).map((profile) => profile.toFields()),
             activeProfileKey: profileContext.activeProfileKey,
             activeProfileName: profileContext.activeProfileName,
+            activeProfileSplitTimerModeEnabled: profileContext.activeProfile.splitTimerModeEnabled,
             isAdminLoggedIn: ServerAdminSession.isLoggedIn(cookies)
         };
     });

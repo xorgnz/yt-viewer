@@ -76,5 +76,5 @@
   - [x] 9.5 - Change watch-session persistence so each newly consumed watch-time delta burns daily allowance first and decrements extra-time balance only for spillover.
   - [x] 9.6 - Make the timer-cap enforcement path treat extra time as persistent carryover across day boundaries until it is consumed.
   - [x] 9.7 - Add a split-timer-mode flag that defaults to `true`, and expose it through a placeholder settings page so the complex daily-plus-extra display can be disabled for simpler profiles.
-  - [ ] 9.8 - Update viewer and admin timer displays so, when split-timer mode is enabled, the user can see both the configured daily allowance and any remaining granted extra time where that context matters.
+  - [x] 9.8 - Update viewer and admin timer displays so, when split-timer mode is enabled, the user can see both the configured daily allowance and any remaining granted extra time where that context matters.
   - [ ] 9.9 - Add focused tests for mixed daily-plus-extra consumption, carryover across reset boundaries, capped behavior when extra time is exhausted, and split-timer-mode on/off behavior.

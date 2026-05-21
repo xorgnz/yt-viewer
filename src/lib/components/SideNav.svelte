@@ -6,9 +6,10 @@
 
     // Simple side navigation used across all pages
     export let appName: string = 'YT Viewer';
-    export let profiles: Array<{ id: number; key: string; name: string }> = [];
+    export let profiles: Array<{ id: string | number; key: string; name: string; splitTimerModeEnabled: boolean }> = [];
     export let activeProfileKey: string = 'default';
     export let activeProfileName: string = 'Adult';
+    export let activeProfileSplitTimerModeEnabled: boolean = true;
     export let isAdminLoggedIn: boolean = false;
 
     function profileTone(profileKey: string): 'adult' | 'child'
@@ -101,7 +102,10 @@
     </nav>
 
     {#if shouldShowVirtualChannelPanel}
-        <SideNavVirtualChannelPanel virtualChannel={activeVirtualChannel} />
+        <SideNavVirtualChannelPanel
+            virtualChannel={activeVirtualChannel}
+            splitTimerModeEnabled={activeProfileSplitTimerModeEnabled}
+        />
     {/if}
 
     <details class="profile-switcher" data-profile-tone={profileTone(activeProfileKey)}>

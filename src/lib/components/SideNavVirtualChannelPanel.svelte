@@ -6,11 +6,12 @@
     import { ViewerVirtualChannelTimerState } from '$lib/viewer/types';
 
     export let virtualChannel: SideNavVirtualChannelViewModel | null;
+    export let splitTimerModeEnabled = true;
     let liveVirtualChannel: SideNavVirtualChannelViewModel | null = virtualChannel;
 
     $: liveVirtualChannel = virtualChannel;
     $: presenter = liveVirtualChannel
-        ? new SideNavVirtualChannelPanelPresenter(liveVirtualChannel)
+        ? new SideNavVirtualChannelPanelPresenter(liveVirtualChannel, splitTimerModeEnabled)
         : null;
 
     onMount(() => {
@@ -34,7 +35,7 @@
                 0,
                 (liveVirtualChannel.combinedTimerRemainingSeconds ?? 0) - deltaSeconds
             );
-            const nextState = nextDailyRemaining === 0
+            const nextState = nextCombinedRemaining === 0
                 ? ViewerVirtualChannelTimerState.Capped
                 : ViewerVirtualChannelTimerState.Available;
 
@@ -72,6 +73,18 @@
                     <span class="nav-virtual-channel-total">/ {presenter.getTotalDurationLabel()}</span>
                 {/if}
             </div>
+            {#if presenter.getDailyAllowanceLabel()}
+                <div class="nav-virtual-channel-detail-row">
+                    <span class="nav-virtual-channel-detail-label">Daily cap</span>
+                    <span class="nav-virtual-channel-detail-value">{presenter.getDailyAllowanceLabel()}</span>
+                </div>
+            {/if}
+            {#if presenter.getExtraRemainingLabel()}
+                <div class="nav-virtual-channel-detail-row">
+                    <span class="nav-virtual-channel-detail-label">Extra left</span>
+                    <span class="nav-virtual-channel-detail-value">{presenter.getExtraRemainingLabel()}</span>
+                </div>
+            {/if}
         </div>
         <form method="POST" action="/viewer/debug/reset-virtual-channel-timer" class="nav-virtual-channel-debug-form">
             <input type="hidden" name="virtualChannelId" value={liveVirtualChannel.id} />
@@ -157,6 +170,26 @@
         flex: 0 0 auto;
         color: var(--text-muted);
         font-size: clamp(0.8rem, 2.5vh, 1rem);
+        font-weight: 600;
+    }
+
+    .nav-virtual-channel-detail-row {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: var(--space-2);
+        color: var(--text-muted);
+        font-size: 0.8rem;
+        line-height: 1.35;
+    }
+
+    .nav-virtual-channel-detail-label {
+        flex: 0 0 auto;
+    }
+
+    .nav-virtual-channel-detail-value {
+        flex: 0 0 auto;
+        color: var(--text);
         font-weight: 600;
     }
 

@@ -30,24 +30,42 @@ describe('SideNavVirtualChannelPanelPresenter', () => {
             timerState: ViewerVirtualChannelTimerState.Unlimited,
             timerUsageSeconds: 1860,
             timerRemainingSeconds: null
-        }));
+        }), true);
 
         expect(presenter.getTimerModeLabel()).toBe('Unlimited');
         expect(presenter.getConsumedDurationLabel()).toBe('31:00');
         expect(presenter.getTotalDurationLabel()).toBeNull();
+        expect(presenter.getDailyAllowanceLabel()).toBeNull();
+        expect(presenter.getExtraRemainingLabel()).toBeNull();
     });
 
-    it('formats available limited virtual channel status and remaining time', () => {
+    it('shows split daily and extra timer details when split mode is enabled', () => {
         const presenter = new SideNavVirtualChannelPanelPresenter(createViewModel({
             dailyTimerMax: 90,
             timerState: ViewerVirtualChannelTimerState.Available,
             timerUsageSeconds: 18,
-            timerRemainingSeconds: 72
-        }));
+            timerRemainingSeconds: 72,
+            extraTimerSecondsRemaining: 30
+        }), true);
 
         expect(presenter.getTimerModeLabel()).toBe('');
         expect(presenter.getConsumedDurationLabel()).toBe('0:18');
         expect(presenter.getTotalDurationLabel()).toBe('1:30');
+        expect(presenter.getDailyAllowanceLabel()).toBe('1:30');
+        expect(presenter.getExtraRemainingLabel()).toBe('0:30');
+    });
+
+    it('hides split timer details when split mode is disabled', () => {
+        const presenter = new SideNavVirtualChannelPanelPresenter(createViewModel({
+            dailyTimerMax: 90,
+            timerState: ViewerVirtualChannelTimerState.Available,
+            timerUsageSeconds: 18,
+            timerRemainingSeconds: 72,
+            extraTimerSecondsRemaining: 30
+        }), false);
+
+        expect(presenter.getDailyAllowanceLabel()).toBeNull();
+        expect(presenter.getExtraRemainingLabel()).toBeNull();
     });
 
     it('formats capped virtual channel status and consumed usage', () => {
@@ -56,10 +74,11 @@ describe('SideNavVirtualChannelPanelPresenter', () => {
             timerState: ViewerVirtualChannelTimerState.Capped,
             timerUsageSeconds: 45,
             timerRemainingSeconds: 0
-        }));
+        }), true);
 
         expect(presenter.getTimerModeLabel()).toBe('');
         expect(presenter.getConsumedDurationLabel()).toBe('0:45');
         expect(presenter.getTotalDurationLabel()).toBe('0:45');
+        expect(presenter.getDailyAllowanceLabel()).toBe('0:45');
     });
 });

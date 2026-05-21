@@ -7,6 +7,7 @@
     profiles: Array<{ id: string | number; key: string; name: string; splitTimerModeEnabled: boolean }>;
     activeProfileKey: string;
     activeProfileName: string;
+    activeProfileSplitTimerModeEnabled: boolean;
     isAdminLoggedIn: boolean;
   };
 </script>
@@ -17,6 +18,7 @@
     profiles={data.profiles}
     activeProfileKey={data.activeProfileKey}
     activeProfileName={data.activeProfileName}
+    activeProfileSplitTimerModeEnabled={data.activeProfileSplitTimerModeEnabled}
     isAdminLoggedIn={data.isAdminLoggedIn}
   />
   <div class="app-content">

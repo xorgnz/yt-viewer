@@ -72,6 +72,15 @@
         return `${minutes}:${seconds.toString().padStart(2, '0')}`;
     }
 
+    function getCombinedTimerAllowanceSeconds(): number | null
+    {
+        if (data.virtualChannel.dailyTimerMax == null) {
+            return null;
+        }
+
+        return data.virtualChannel.dailyTimerMax + data.virtualChannel.extraTimerSecondsRemaining;
+    }
+
     function formatLengthClassification(lengthClassification: VideoLengthClassification): string
     {
         if (lengthClassification === VideoLengthClassification.Long) {
@@ -213,11 +222,12 @@
                 <p class="error-text">{timerFormState.message}</p>
             {:else if data.virtualChannel.dailyTimerMax == null}
                 <p class="muted">This virtual channel is currently unlimited.</p>
-            {:else}
+            {:else if data.activeProfileSplitTimerModeEnabled}
                 <p class="muted">Current daily limit: {data.virtualChannel.dailyTimerMax} second(s).</p>
+                <p class="muted">Extra time remaining: {data.virtualChannel.extraTimerSecondsRemaining} second(s).</p>
+            {:else}
+                <p class="muted">Current available time: {getCombinedTimerAllowanceSeconds()} second(s).</p>
             {/if}
-
-            <p class="muted">Extra time remaining: {data.virtualChannel.extraTimerSecondsRemaining} second(s).</p>
 
             <div class="inline-actions">
                 <button type="submit">Save Timer Settings</button>
