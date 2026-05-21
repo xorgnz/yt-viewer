@@ -1,13 +1,17 @@
 import type {
     ViewerSelectionContextInput
 } from '$lib/viewer/selection/types';
+import type {
+    ViewerIgnoredFilter,
+    ViewerWatchedFilter
+} from '$lib/viewer/types';
 
 export class ViewerSelectionContext
 {
     public readonly profileKey: string;
     public readonly term: string;
-    public readonly watched: 'all' | 'watched' | 'unwatched';
-    public readonly ignored: 'hide' | 'show';
+    public readonly watched: ViewerWatchedFilter;
+    public readonly ignored: ViewerIgnoredFilter;
     public readonly dateFromInput: string;
     public readonly dateToInput: string;
     public readonly channelId: string | null;

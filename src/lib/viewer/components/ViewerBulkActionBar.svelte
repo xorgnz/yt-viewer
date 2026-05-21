@@ -2,7 +2,7 @@
     import type {
         BulkActionFeedback
     } from '$lib/viewer/types';
-    import type {
+    import {
         ViewerSelectionControlState,
         ViewerSelectionFlagKind
     } from '$lib/viewer/selection/types';
@@ -12,9 +12,9 @@
     export let offPageSelectedCount = 0;
     export let bulkActionPending = false;
     export let bulkActionFeedback: BulkActionFeedback | null = null;
-    export let watchedControlState: ViewerSelectionControlState = 'unchecked';
-    export let favoriteControlState: ViewerSelectionControlState = 'unchecked';
-    export let ignoredControlState: ViewerSelectionControlState = 'unchecked';
+    export let watchedControlState: ViewerSelectionControlState = ViewerSelectionControlState.Unchecked;
+    export let favoriteControlState: ViewerSelectionControlState = ViewerSelectionControlState.Unchecked;
+    export let ignoredControlState: ViewerSelectionControlState = ViewerSelectionControlState.Unchecked;
     export let onBulkUndo: () => void | Promise<void> = () => undefined;
     export let onBulkFlagToggle:
         (kind: ViewerSelectionFlagKind, controlState: ViewerSelectionControlState) => void | Promise<void>
@@ -22,11 +22,11 @@
 
     function getGlyph(controlState: ViewerSelectionControlState): string
     {
-        if (controlState === 'checked') {
+        if (controlState === ViewerSelectionControlState.Checked) {
             return '\u2713';
         }
 
-        if (controlState === 'mixed') {
+        if (controlState === ViewerSelectionControlState.Mixed) {
             return '\u25A0';
         }
 
@@ -71,7 +71,7 @@
                     class="bulk-flag-control"
                     data-state={watchedControlState}
                     disabled={bulkActionPending}
-                    on:click={() => void onBulkFlagToggle('watched', watchedControlState)}
+                    on:click={() => void onBulkFlagToggle(ViewerSelectionFlagKind.Watched, watchedControlState)}
                 >
                     <span class="bulk-flag-box" data-state={watchedControlState}>
                         {getGlyph(watchedControlState)}
@@ -83,7 +83,7 @@
                     class="bulk-flag-control"
                     data-state={favoriteControlState}
                     disabled={bulkActionPending}
-                    on:click={() => void onBulkFlagToggle('favorite', favoriteControlState)}
+                    on:click={() => void onBulkFlagToggle(ViewerSelectionFlagKind.Favorite, favoriteControlState)}
                 >
                     <span class="bulk-flag-box" data-state={favoriteControlState}>
                         {getGlyph(favoriteControlState)}
@@ -95,7 +95,7 @@
                     class="bulk-flag-control"
                     data-state={ignoredControlState}
                     disabled={bulkActionPending}
-                    on:click={() => void onBulkFlagToggle('ignored', ignoredControlState)}
+                    on:click={() => void onBulkFlagToggle(ViewerSelectionFlagKind.Ignored, ignoredControlState)}
                 >
                     <span class="bulk-flag-box" data-state={ignoredControlState}>
                         {getGlyph(ignoredControlState)}

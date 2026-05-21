@@ -1,10 +1,13 @@
-import type { ViewerSort } from '$lib/viewer/types';
+import { ViewerSort } from '$lib/viewer/types';
 
 const VIEWER_SORT_SESSION_KEY = 'viewer.sort';
 
 function isViewerSort(value: string | null): value is ViewerSort
 {
-    return value === 'newest' || value === 'oldest' || value === 'title_asc' || value === 'title_desc';
+    return value === ViewerSort.Newest
+        || value === ViewerSort.Oldest
+        || value === ViewerSort.TitleAsc
+        || value === ViewerSort.TitleDesc;
 }
 
 function load(): ViewerSort | null

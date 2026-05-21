@@ -18,10 +18,15 @@
     import {
         viewerSelectionInteractions
     } from '$lib/viewer/selectionInteractions';
+    import {
+        BulkActionFeedbackTone,
+        ViewerSort,
+        ViewerVirtualChannelTimerState,
+        ViewerWatchedFilter
+    } from '$lib/viewer/types';
     import type {
         BulkActionFeedback,
         ViewerPageData,
-        ViewerSort,
         ViewerVideo,
         ViewerVisiblePage
     } from '$lib/viewer/types';
@@ -33,6 +38,9 @@
         ViewerSelectionFlagKind,
         ViewerSelectionVideoSnapshot,
         ViewerSelectionState
+    } from '$lib/viewer/selection/types';
+    import {
+        ViewerSelectionControlState as ViewerSelectionControlStateValue
     } from '$lib/viewer/selection/types';
 
     export let data: ViewerPageData;
@@ -48,9 +56,9 @@
     let dateFromInput = '';
     let dateToInput = '';
     let channelIdInput = '';
-    let sortMode: ViewerSort = 'newest';
+    let sortMode: ViewerSort = ViewerSort.Newest;
     let limitInput = '';
-    let watchedMode: 'all' | 'watched' | 'unwatched' = 'all';
+    let watchedMode: ViewerWatchedFilter = ViewerWatchedFilter.All;
     let showIgnored = false;
     let debounceTimer: ReturnType<typeof setTimeout> | null = null;
     let selectionState: ViewerSelectionState = viewerSelectionStateManager.create('', []);
@@ -60,9 +68,9 @@
     let offPageSelectedCount = 0;
     let visibleVideos: ViewerVideo[] = data.videos;
     let currentPageSelectionVideos: ViewerSelectionVideoSnapshot[] = [];
-    let watchedControlState: ViewerSelectionControlState = 'unchecked';
-    let favoriteControlState: ViewerSelectionControlState = 'unchecked';
-    let ignoredControlState: ViewerSelectionControlState = 'unchecked';
+    let watchedControlState: ViewerSelectionControlState = ViewerSelectionControlStateValue.Unchecked;
+    let favoriteControlState: ViewerSelectionControlState = ViewerSelectionControlStateValue.Unchecked;
+    let ignoredControlState: ViewerSelectionControlState = ViewerSelectionControlStateValue.Unchecked;
     let bulkActionPending = false;
     let bulkActionFeedback: BulkActionFeedback | null = null;
     let sortPreferenceInitialized = false;
@@ -146,7 +154,9 @@
     function handleWatchedOnlyChange(event: Event)
     {
         const checked = (event.currentTarget as HTMLInputElement).checked;
-        watchedMode = checked ? 'unwatched' : (watchedMode === 'unwatched' ? 'all' : watchedMode);
+        watchedMode = checked
+            ? ViewerWatchedFilter.Unwatched
+            : (watchedMode === ViewerWatchedFilter.Unwatched ? ViewerWatchedFilter.All : watchedMode);
         void applyFiltersNow();
     }
 
@@ -221,7 +231,7 @@
             if (!actionResult) {
                 bulkActionFeedback = {
                     message: 'Bulk update failed.',
-                    tone: 'error',
+                    tone: BulkActionFeedbackTone.Error,
                     undo: null
                 };
                 return;
@@ -271,7 +281,7 @@
             if (!actionResult) {
                 bulkActionFeedback = {
                     message: 'Bulk undo failed.',
-                    tone: 'error',
+                    tone: BulkActionFeedbackTone.Error,
                     undo
                 };
                 return;
@@ -305,7 +315,7 @@
     $: ({ termInput, dateFromInput, dateToInput, channelIdInput, sortMode, limitInput, watchedMode, showIgnored } =
         viewerPageState.deriveViewerFilterInputState(f));
     $: activeVirtualChannel = data.activeVirtualChannel;
-    $: activeVirtualChannelIsCapped = activeVirtualChannel?.timerState === 'capped';
+    $: activeVirtualChannelIsCapped = activeVirtualChannel?.timerState === ViewerVirtualChannelTimerState.Capped;
     $: ({ totalPages, currentPage, visiblePages } = viewerPageState.deriveViewerPaginationState(f, data.totalCount));
     $: ({ hasActiveSelection, selectedCount, offPageSelectedCount, watchedControlState, favoriteControlState, ignoredControlState } =
         viewerPageState.deriveViewerSelectionSummary(selectionState));

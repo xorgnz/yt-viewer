@@ -1,6 +1,24 @@
-export type ViewerSelectionFlagKind = 'watched' | 'favorite' | 'ignored';
+import type {
+    ViewerIgnoredFilter,
+    ViewerWatchedFilter
+} from '$lib/viewer/types';
+
+export enum ViewerSelectionFlagKind
+{
+    Watched = 'watched',
+    Favorite = 'favorite',
+    Ignored = 'ignored'
+}
+
 export type ViewerSelectionFlagValue = 0 | 1;
-export type ViewerSelectionControlState = 'unchecked' | 'checked' | 'mixed';
+
+export enum ViewerSelectionControlState
+{
+    Unchecked = 'unchecked',
+    Checked = 'checked',
+    Mixed = 'mixed'
+}
+
 export type ViewerSelectableId = string;
 
 export interface ViewerSelectionVideoSnapshot
@@ -33,8 +51,8 @@ export interface ViewerSelectionContextInput
 {
     profileKey: string;
     term?: string;
-    watched: 'all' | 'watched' | 'unwatched';
-    ignored: 'hide' | 'show';
+    watched: ViewerWatchedFilter;
+    ignored: ViewerIgnoredFilter;
     dateFromInput: string;
     dateToInput: string;
     channelId: string | null;

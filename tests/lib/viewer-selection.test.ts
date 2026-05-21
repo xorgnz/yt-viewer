@@ -3,6 +3,15 @@ import { ViewerSelectionContext } from '../../src/lib/viewer/selection/context';
 import { viewerSelectionStateManager } from '../../src/lib/viewer/selection/core';
 import { viewerSelectionSessionStore } from '../../src/lib/viewer/selection/persistence';
 import { viewerSelectionInspector } from '../../src/lib/viewer/selection/summary';
+import {
+    ViewerIgnoredFilter,
+    ViewerSort,
+    ViewerWatchedFilter
+} from '../../src/lib/viewer/types';
+import {
+    ViewerSelectionControlState,
+    ViewerSelectionFlagKind
+} from '../../src/lib/viewer/selection/types';
 import type { ViewerSelectionContextInput } from '../../src/lib/viewer/selection/types';
 
 describe('viewerSelection filter-context behavior', () => {
@@ -20,13 +29,13 @@ describe('viewerSelection filter-context behavior', () => {
         return ViewerSelectionContext.createKey({
             profileKey: 'default',
             term: '',
-            watched: 'all',
-            ignored: 'hide',
+            watched: ViewerWatchedFilter.All,
+            ignored: ViewerIgnoredFilter.Hide,
             dateFromInput: '',
             dateToInput: '',
             channelId: null,
             virtualChannelId: null,
-            sort: 'newest',
+            sort: ViewerSort.Newest,
             ...overrides
         });
     }
@@ -56,7 +65,7 @@ describe('viewerSelection filter-context behavior', () => {
         state = viewerSelectionStateManager.toggle(state, '1');
         state = viewerSelectionStateManager.toggle(state, '2');
 
-        const filteredContextKey = createContextKey({ watched: 'unwatched', term: 'music' });
+        const filteredContextKey = createContextKey({ watched: ViewerWatchedFilter.Unwatched, term: 'music' });
         const nextState = viewerSelectionStateManager.reconcile(state, filteredContextKey, pageOneVideos);
 
         expect(nextState.contextKey).toBe(filteredContextKey);
@@ -119,7 +128,7 @@ describe('viewerSelection filter-context behavior', () => {
 
         expect(viewerSelectionInspector.hasSelectionOutsideCurrentPage(state)).toBe(true);
         expect(viewerSelectionInspector.getCurrentPageSelectedIds(state)).toEqual([]);
-        expect(viewerSelectionInspector.getControlState(state, 'watched')).toBe('mixed');
+        expect(viewerSelectionInspector.getControlState(state, ViewerSelectionFlagKind.Watched)).toBe(ViewerSelectionControlState.Mixed);
     });
 
     it('persists and restores selection state through the session store', () => {

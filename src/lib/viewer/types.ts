@@ -2,12 +2,31 @@ import type {
     ViewerSelectionFlagValue
 } from '$lib/viewer/selection/types';
 
-export type ViewerSort = 'newest' | 'oldest' | 'title_asc' | 'title_desc';
+export enum ViewerSort
+{
+    Newest = 'newest',
+    Oldest = 'oldest',
+    TitleAsc = 'title_asc',
+    TitleDesc = 'title_desc'
+}
+
+export enum ViewerWatchedFilter
+{
+    All = 'all',
+    Watched = 'watched',
+    Unwatched = 'unwatched'
+}
+
+export enum ViewerIgnoredFilter
+{
+    Hide = 'hide',
+    Show = 'show'
+}
 
 export type ViewerFilters = {
     term?: string;
-    watched: 'all' | 'watched' | 'unwatched';
-    ignored: 'hide' | 'show';
+    watched: ViewerWatchedFilter;
+    ignored: ViewerIgnoredFilter;
     dateFrom: number | null;
     dateTo: number | null;
     dateFromInput: string;
@@ -58,7 +77,12 @@ export type ViewerVirtualChannel = {
     timerWindowEndMs: number;
 };
 
-export type ViewerVirtualChannelTimerState = 'unlimited' | 'available' | 'capped';
+export enum ViewerVirtualChannelTimerState
+{
+    Unlimited = 'unlimited',
+    Available = 'available',
+    Capped = 'capped'
+}
 
 export type ViewerPageData = {
     filters: ViewerFilters;
@@ -84,11 +108,23 @@ export type BulkActionUndoState = {
 
 export type BulkActionFeedback = {
     message: string;
-    tone: 'success' | 'warning' | 'error';
+    tone: BulkActionFeedbackTone;
     undo: BulkActionUndoState | null;
 };
 
-export type ViewerVisiblePage = number | 'ellipsis';
+export enum BulkActionFeedbackTone
+{
+    Success = 'success',
+    Warning = 'warning',
+    Error = 'error'
+}
+
+export enum ViewerVisiblePageMarker
+{
+    Ellipsis = 'ellipsis'
+}
+
+export type ViewerVisiblePage = number | ViewerVisiblePageMarker;
 
 export type ViewerFilterInputState = {
     termInput: string;

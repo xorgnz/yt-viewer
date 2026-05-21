@@ -1,12 +1,16 @@
-import type { ViewerSort } from '$lib/viewer/types';
+import {
+    ViewerIgnoredFilter,
+    ViewerSort,
+    ViewerWatchedFilter
+} from '$lib/viewer/types';
 
 export interface ViewerVideoQueryFilters
 {
     term?: string;
     dateFrom?: number | null;
     dateTo?: number | null;
-    watched?: 'all' | 'watched' | 'unwatched';
-    ignored?: 'hide' | 'show';
+    watched?: ViewerWatchedFilter;
+    ignored?: ViewerIgnoredFilter;
     channelId?: string | number | null;
     virtualChannelId?: string | number | null;
     sort?: ViewerSort;
@@ -60,11 +64,11 @@ export class ViewerVideoQuerySpec
     getOrderBySql(): string
     {
         switch (this.resolveSort()) {
-            case 'oldest':
+            case ViewerSort.Oldest:
                 return 'v.published_at IS NULL ASC, v.published_at ASC, v.video_id ASC';
-            case 'title_asc':
+            case ViewerSort.TitleAsc:
                 return 'LOWER(v.title) ASC, v.published_at IS NULL ASC, v.published_at DESC, v.video_id ASC';
-            case 'title_desc':
+            case ViewerSort.TitleDesc:
                 return 'LOWER(v.title) DESC, v.published_at IS NULL ASC, v.published_at DESC, v.video_id DESC';
             default:
                 return 'v.published_at IS NULL ASC, v.published_at DESC, v.video_id DESC';
@@ -115,14 +119,14 @@ export class ViewerVideoQuerySpec
         }
 
         // Apply profile-specific watch and ignore flags after the structural joins are resolved.
-        const watchedFilter = this.filters.watched || 'all';
-        if (watchedFilter === 'watched') {
+        const watchedFilter = this.filters.watched || ViewerWatchedFilter.All;
+        if (watchedFilter === ViewerWatchedFilter.Watched) {
             where.push('COALESCE(vf.watched, 0) = 1');
-        } else if (watchedFilter === 'unwatched') {
+        } else if (watchedFilter === ViewerWatchedFilter.Unwatched) {
             where.push('COALESCE(vf.watched, 0) = 0');
         }
 
-        if ((this.filters.ignored || 'hide') !== 'show') {
+        if ((this.filters.ignored || ViewerIgnoredFilter.Hide) !== ViewerIgnoredFilter.Show) {
             where.push('COALESCE(vf.ignored, 0) = 0');
         }
 
@@ -147,12 +151,12 @@ export class ViewerVideoQuerySpec
     private resolveSort(): ViewerSort
     {
         switch (this.filters.sort) {
-            case 'oldest':
-            case 'title_asc':
-            case 'title_desc':
+            case ViewerSort.Oldest:
+            case ViewerSort.TitleAsc:
+            case ViewerSort.TitleDesc:
                 return this.filters.sort;
             default:
-                return 'newest';
+                return ViewerSort.Newest;
         }
     }
 }

@@ -4,6 +4,11 @@ import {
 } from '../../src/lib/viewer/pageState';
 import { ViewerSelectionContext } from '../../src/lib/viewer/selection/context';
 import { viewerSelectionStateManager } from '../../src/lib/viewer/selection/core';
+import {
+    ViewerIgnoredFilter,
+    ViewerSort,
+    ViewerWatchedFilter
+} from '../../src/lib/viewer/types';
 import type { ViewerFilters } from '../../src/lib/viewer/types';
 
 describe('viewer page state helpers', () => {
@@ -11,15 +16,15 @@ describe('viewer page state helpers', () => {
     {
         return {
             term: '',
-            watched: 'all',
-            ignored: 'hide',
+            watched: ViewerWatchedFilter.All,
+            ignored: ViewerIgnoredFilter.Hide,
             dateFrom: null,
             dateTo: null,
             dateFromInput: '',
             dateToInput: '',
             channelId: null,
             virtualChannelId: null,
-            sort: 'newest',
+            sort: ViewerSort.Newest,
             limit: 10,
             offset: 0,
             ...overrides
@@ -31,8 +36,8 @@ describe('viewer page state helpers', () => {
         const inputState = viewerPageState.deriveViewerFilterInputState({
             ...filters,
             term: 'space',
-            watched: 'unwatched',
-            ignored: 'show',
+            watched: ViewerWatchedFilter.Unwatched,
+            ignored: ViewerIgnoredFilter.Show,
             dateFromInput: '2026-04-01',
             dateToInput: '2026-04-10',
             channelId: '22',
@@ -69,13 +74,13 @@ describe('viewer page state helpers', () => {
         const contextKey = ViewerSelectionContext.createKey({
             profileKey: 'default',
             term: '',
-            watched: 'all',
-            ignored: 'hide',
+            watched: ViewerWatchedFilter.All,
+            ignored: ViewerIgnoredFilter.Hide,
             dateFromInput: '',
             dateToInput: '',
             channelId: null,
             virtualChannelId: null,
-            sort: 'newest'
+            sort: ViewerSort.Newest
         });
         const pageOneVideos = [
             { id: '1', watched: 0 as const, favorite: 0 as const, ignored: 0 as const },
@@ -103,11 +108,11 @@ describe('viewer page state helpers', () => {
     it('builds watch hrefs with the current viewer filters and sort', () => {
         const href = viewerPageState.buildViewerWatchHref(createFilters({
             term: 'ramen',
-            watched: 'unwatched',
-            ignored: 'show',
+            watched: ViewerWatchedFilter.Unwatched,
+            ignored: ViewerIgnoredFilter.Show,
             channelId: '7',
             virtualChannelId: '3',
-            sort: 'title_desc'
+            sort: ViewerSort.TitleDesc
         }), 'abc123');
 
         const url = new URL(`http://localhost${href}`);

@@ -1,8 +1,8 @@
-import type {
+import {
     ViewerSelectionControlState,
-    ViewerSelectionFlagKind,
-    ViewerSelectionState
+    ViewerSelectionFlagKind
 } from '$lib/viewer/selection/types';
+import type { ViewerSelectionState } from '$lib/viewer/selection/types';
 
 class ViewerSelectionInspector
 {
@@ -23,7 +23,7 @@ class ViewerSelectionInspector
     ): ViewerSelectionControlState
     {
         if (state.selectedVideoIds.length === 0) {
-            return 'unchecked';
+            return ViewerSelectionControlState.Unchecked;
         }
 
         let hasChecked = false;
@@ -41,11 +41,11 @@ class ViewerSelectionInspector
             }
 
             if (hasChecked && hasUnchecked) {
-                return 'mixed';
+                return ViewerSelectionControlState.Mixed;
             }
         }
 
-        return hasChecked ? 'checked' : 'unchecked';
+        return hasChecked ? ViewerSelectionControlState.Checked : ViewerSelectionControlState.Unchecked;
     }
 }
 

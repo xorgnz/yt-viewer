@@ -4,6 +4,12 @@ import { VirtualChannel } from '../../src/lib/entities/virtualChannel';
 import { ViewerRecommendationService } from '../../src/lib/server/viewer/ViewerRecommendationService';
 import { ViewerVirtualChannelService } from '../../src/lib/server/viewer/ViewerVirtualChannelService';
 import { ViewerWatchService } from '../../src/lib/server/viewer/ViewerWatchService';
+import {
+    ViewerIgnoredFilter,
+    ViewerSort,
+    ViewerVirtualChannelTimerState,
+    ViewerWatchedFilter
+} from '../../src/lib/viewer/types';
 
 function createVideo(id: number): ViewerVideoRecord
 {
@@ -58,7 +64,7 @@ describe('viewer timer services', () => {
         expect(virtualChannels).toHaveLength(2);
         expect(virtualChannels[0]).toMatchObject({
             id: '1',
-            timerState: 'unlimited',
+            timerState: ViewerVirtualChannelTimerState.Unlimited,
             timerUsageSeconds: 0,
             timerRemainingSeconds: null,
             dailyTimerRemainingSeconds: null,
@@ -67,7 +73,7 @@ describe('viewer timer services', () => {
         });
         expect(virtualChannels[1]).toMatchObject({
             id: '2',
-            timerState: 'capped',
+            timerState: ViewerVirtualChannelTimerState.Capped,
             timerUsageSeconds: 60,
             timerRemainingSeconds: 0,
             dailyTimerRemainingSeconds: 0,
@@ -108,7 +114,7 @@ describe('viewer timer services', () => {
                     id: '8',
                     name: 'Timers',
                     dailyTimerMax: 60,
-                    timerState: 'capped' as const,
+                    timerState: ViewerVirtualChannelTimerState.Capped,
                     timerUsageSeconds: 60,
                     timerRemainingSeconds: 0,
                     dailyTimerRemainingSeconds: 0,
@@ -121,15 +127,15 @@ describe('viewer timer services', () => {
         );
 
         const result = await service.load('video-3', {
-            watched: 'all',
-            ignored: 'hide',
+            watched: ViewerWatchedFilter.All,
+            ignored: ViewerIgnoredFilter.Hide,
             dateFrom: null,
             dateTo: null,
             dateFromInput: '',
             dateToInput: '',
             channelId: null,
             virtualChannelId: '8',
-            sort: 'newest',
+            sort: ViewerSort.Newest,
             limit: 200,
             offset: 0
         });
@@ -182,7 +188,7 @@ describe('viewer timer services', () => {
                         id: '10',
                         name: 'Timers',
                         dailyTimerMax: 120,
-                        timerState: 'available' as const,
+                        timerState: ViewerVirtualChannelTimerState.Available,
                         timerUsageSeconds: 119,
                         timerRemainingSeconds: 1,
                         dailyTimerRemainingSeconds: 1,
@@ -195,15 +201,15 @@ describe('viewer timer services', () => {
             );
 
             const result = await service.load('video-6', {
-                watched: 'all',
-                ignored: 'hide',
+                watched: ViewerWatchedFilter.All,
+                ignored: ViewerIgnoredFilter.Hide,
                 dateFrom: null,
                 dateTo: null,
                 dateFromInput: '',
                 dateToInput: '',
                 channelId: null,
                 virtualChannelId: '10',
-                sort: 'newest',
+                sort: ViewerSort.Newest,
                 limit: 200,
                 offset: 0
             });
@@ -257,7 +263,7 @@ describe('viewer timer services', () => {
                         id: '10',
                         name: 'Timers',
                         dailyTimerMax: 120,
-                        timerState: 'available' as const,
+                        timerState: ViewerVirtualChannelTimerState.Available,
                         timerUsageSeconds: 119,
                         timerRemainingSeconds: 1,
                         dailyTimerRemainingSeconds: 1,
@@ -270,15 +276,15 @@ describe('viewer timer services', () => {
             );
 
             const result = await service.load('video-7', {
-                watched: 'all',
-                ignored: 'hide',
+                watched: ViewerWatchedFilter.All,
+                ignored: ViewerIgnoredFilter.Hide,
                 dateFrom: null,
                 dateTo: null,
                 dateFromInput: '',
                 dateToInput: '',
                 channelId: null,
                 virtualChannelId: '10',
-                sort: 'newest',
+                sort: ViewerSort.Newest,
                 limit: 200,
                 offset: 0
             });
@@ -318,7 +324,7 @@ describe('viewer timer services', () => {
         expect(virtualChannel).toMatchObject({
             id: '2',
             dailyTimerMax: 120,
-            timerState: 'available',
+            timerState: ViewerVirtualChannelTimerState.Available,
             timerUsageSeconds: 65,
             timerRemainingSeconds: 55,
             dailyTimerRemainingSeconds: 55,
@@ -380,7 +386,7 @@ describe('viewer timer services', () => {
                 id: '9',
                 name: 'Timers',
                 dailyTimerMax: 60,
-                timerState: 'available' as const,
+                timerState: ViewerVirtualChannelTimerState.Available,
                 timerUsageSeconds: 50,
                 timerRemainingSeconds: 10,
                 dailyTimerRemainingSeconds: 10,
@@ -393,7 +399,7 @@ describe('viewer timer services', () => {
                 id: '9',
                 name: 'Timers',
                 dailyTimerMax: 60,
-                timerState: 'capped' as const,
+                timerState: ViewerVirtualChannelTimerState.Capped,
                 timerUsageSeconds: 60,
                 timerRemainingSeconds: 0,
                 dailyTimerRemainingSeconds: 0,
@@ -446,7 +452,7 @@ describe('viewer timer services', () => {
                     id: '9',
                     name: 'Timers',
                     dailyTimerMax: 60,
-                    timerState: 'available' as const,
+                    timerState: ViewerVirtualChannelTimerState.Available,
                     timerUsageSeconds: 50,
                     timerRemainingSeconds: 10,
                     dailyTimerRemainingSeconds: 10,

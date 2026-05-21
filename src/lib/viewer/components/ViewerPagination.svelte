@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { ViewerVisiblePageMarker } from '$lib/viewer/types';
     import type {
         ViewerVisiblePage
     } from '$lib/viewer/types';
@@ -14,7 +15,7 @@
     <div class="toolbar">
         <div class="pager" aria-label="Pagination">
             {#each visiblePages as page}
-                {#if page === 'ellipsis'}
+                {#if page === ViewerVisiblePageMarker.Ellipsis}
                     <span class="pager-ellipsis">..</span>
                 {:else if page === currentPage}
                     <span class="pager-link pager-link-current" aria-current="page">{page}</span>

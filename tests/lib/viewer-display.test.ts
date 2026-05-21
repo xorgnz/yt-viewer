@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { ViewerVideoDisplayPresenter } from '../../src/lib/viewer/display';
 import type { ViewerVideo } from '../../src/lib/viewer/types';
+import { ViewerSelectionFlagKind } from '../../src/lib/viewer/selection/types';
 
 describe('ViewerVideoDisplayPresenter', () => {
     function createVideo(overrides: Partial<ViewerVideo> = {}): ViewerVideo
@@ -48,11 +49,11 @@ describe('ViewerVideoDisplayPresenter', () => {
             ignored: 1
         }));
 
-        expect(presenter.getNextFlagValue('watched')).toBe(0);
-        expect(presenter.getNextFlagValue('favorite')).toBe(1);
-        expect(presenter.getToggleTitle('watched')).toBe('Mark unwatched');
-        expect(presenter.getToggleTitle('favorite')).toBe('Mark favorite');
-        expect(presenter.getToggleLabel('ignored')).toBe('Unignore');
+        expect(presenter.getNextFlagValue(ViewerSelectionFlagKind.Watched)).toBe(0);
+        expect(presenter.getNextFlagValue(ViewerSelectionFlagKind.Favorite)).toBe(1);
+        expect(presenter.getToggleTitle(ViewerSelectionFlagKind.Watched)).toBe('Mark unwatched');
+        expect(presenter.getToggleTitle(ViewerSelectionFlagKind.Favorite)).toBe('Mark favorite');
+        expect(presenter.getToggleLabel(ViewerSelectionFlagKind.Ignored)).toBe('Unignore');
     });
 
     it('returns an empty date when published_at is missing', () => {

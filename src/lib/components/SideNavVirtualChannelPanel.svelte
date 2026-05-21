@@ -3,6 +3,7 @@
     import { page } from '$app/stores';
     import { SideNavVirtualChannelPanelPresenter } from '$lib/components/SideNavVirtualChannelPanelPresenter';
     import type { SideNavVirtualChannelViewModel } from '$lib/components/SideNavVirtualChannelPanelViewModel';
+    import { ViewerVirtualChannelTimerState } from '$lib/viewer/types';
 
     export let virtualChannel: SideNavVirtualChannelViewModel | null;
     let liveVirtualChannel: SideNavVirtualChannelViewModel | null = virtualChannel;
@@ -19,7 +20,10 @@
                 return;
             }
 
-            if (liveVirtualChannel.dailyTimerMax == null || liveVirtualChannel.timerState === 'capped') {
+            if (
+                liveVirtualChannel.dailyTimerMax == null
+                || liveVirtualChannel.timerState === ViewerVirtualChannelTimerState.Capped
+            ) {
                 return;
             }
 
@@ -30,7 +34,9 @@
                 0,
                 (liveVirtualChannel.combinedTimerRemainingSeconds ?? 0) - deltaSeconds
             );
-            const nextState = nextDailyRemaining === 0 ? 'capped' : 'available';
+            const nextState = nextDailyRemaining === 0
+                ? ViewerVirtualChannelTimerState.Capped
+                : ViewerVirtualChannelTimerState.Available;
 
             liveVirtualChannel = {
                 ...liveVirtualChannel,
@@ -51,7 +57,7 @@
 
 <section
     class="nav-virtual-channel"
-    class:nav-virtual-channel-capped={liveVirtualChannel?.timerState === 'capped'}
+    class:nav-virtual-channel-capped={liveVirtualChannel?.timerState === ViewerVirtualChannelTimerState.Capped}
     aria-label="Active virtual channel"
 >
     {#if liveVirtualChannel && presenter}

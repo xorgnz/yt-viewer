@@ -2,6 +2,10 @@ import type {
     ViewerVideoRecord,
     ViewerVideoReadRepository
 } from '$lib/daos/readers/ViewerVideoReadRepository';
+import {
+    ViewerIgnoredFilter,
+    ViewerWatchedFilter
+} from '$lib/viewer/types';
 
 export class ViewerRecommendationService
 {
@@ -20,8 +24,8 @@ export class ViewerRecommendationService
     async load(currentVideo: ViewerVideoRecord, virtualChannelId: string | number | null, limit = 8): Promise<ViewerVideoRecord[]>
     {
         const candidates = await this.viewerVideoReadRepository.list({
-            watched: 'all',
-            ignored: 'hide',
+            watched: ViewerWatchedFilter.All,
+            ignored: ViewerIgnoredFilter.Hide,
             channelId: virtualChannelId == null ? currentVideo.channel_id : null,
             virtualChannelId,
             limit: 1000,

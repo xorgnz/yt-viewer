@@ -2,6 +2,7 @@
     import { page } from '$app/stores';
     import SideNavVirtualChannelPanel from '$lib/components/SideNavVirtualChannelPanel.svelte';
     import type { SideNavVirtualChannelViewModel } from '$lib/components/SideNavVirtualChannelPanelViewModel';
+    import { ViewerVirtualChannelTimerState } from '$lib/viewer/types';
 
     // Simple side navigation used across all pages
     export let appName: string = 'YT Viewer';
@@ -50,9 +51,13 @@
         const timerRemainingSeconds = typeof candidate.timerRemainingSeconds === 'number'
             ? candidate.timerRemainingSeconds
             : dailyTimerRemainingSeconds;
-        const timerState = candidate.timerState === 'unlimited' || candidate.timerState === 'available' || candidate.timerState === 'capped'
+        const timerState = candidate.timerState === ViewerVirtualChannelTimerState.Unlimited
+            || candidate.timerState === ViewerVirtualChannelTimerState.Available
+            || candidate.timerState === ViewerVirtualChannelTimerState.Capped
             ? candidate.timerState
-            : (dailyTimerMax == null ? 'unlimited' : (timerRemainingSeconds === 0 ? 'capped' : 'available'));
+            : (dailyTimerMax == null
+                ? ViewerVirtualChannelTimerState.Unlimited
+                : (timerRemainingSeconds === 0 ? ViewerVirtualChannelTimerState.Capped : ViewerVirtualChannelTimerState.Available));
 
         return {
             id: candidate.id,

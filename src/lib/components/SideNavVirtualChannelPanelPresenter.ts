@@ -1,4 +1,5 @@
 import type { SideNavVirtualChannelViewModel } from '$lib/components/SideNavVirtualChannelPanelViewModel';
+import { ViewerVirtualChannelTimerState } from '$lib/viewer/types';
 
 export class SideNavVirtualChannelPanelPresenter
 {
@@ -11,7 +12,10 @@ export class SideNavVirtualChannelPanelPresenter
 
     getTimerModeLabel(): string
     {
-        if (this.virtualChannel.timerState === 'unlimited' || this.virtualChannel.dailyTimerMax == null) {
+        if (
+            this.virtualChannel.timerState === ViewerVirtualChannelTimerState.Unlimited
+            || this.virtualChannel.dailyTimerMax == null
+        ) {
             return 'Unlimited';
         }
 
@@ -25,7 +29,10 @@ export class SideNavVirtualChannelPanelPresenter
 
     getTotalDurationLabel(): string | null
     {
-        if (this.virtualChannel.dailyTimerMax == null || this.virtualChannel.timerState === 'unlimited') {
+        if (
+            this.virtualChannel.dailyTimerMax == null
+            || this.virtualChannel.timerState === ViewerVirtualChannelTimerState.Unlimited
+        ) {
             return null;
         }
 

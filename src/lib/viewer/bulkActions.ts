@@ -2,9 +2,12 @@ import type {
     BulkActionUndoState,
     ViewerVideo
 } from '$lib/viewer/types';
-import type {
+import { BulkActionFeedbackTone } from '$lib/viewer/types';
+import {
     ViewerSelectionControlState,
-    ViewerSelectionFlagKind,
+    ViewerSelectionFlagKind
+} from '$lib/viewer/selection/types';
+import type {
     ViewerSelectionFlagValue,
     ViewerSelectionState,
     ViewerSelectionVideoSnapshot
@@ -12,20 +15,20 @@ import type {
 
 function getNextBulkFlagValue(controlState: ViewerSelectionControlState): ViewerSelectionFlagValue
 {
-    return controlState === 'checked' ? 0 : 1;
+    return controlState === ViewerSelectionControlState.Checked ? 0 : 1;
 }
 
-function getBulkActionFeedbackTone(outcome: unknown, ok: unknown): 'success' | 'warning' | 'error'
+function getBulkActionFeedbackTone(outcome: unknown, ok: unknown): BulkActionFeedbackTone
 {
     if (outcome === 'partial_success') {
-        return 'warning';
+        return BulkActionFeedbackTone.Warning;
     }
 
     if (ok === true || outcome === 'full_success') {
-        return 'success';
+        return BulkActionFeedbackTone.Success;
     }
 
-    return 'error';
+    return BulkActionFeedbackTone.Error;
 }
 
 function buildViewerSelectionUndoPayload(state: ViewerSelectionState): BulkActionUndoState | null

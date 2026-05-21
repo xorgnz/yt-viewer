@@ -1,7 +1,8 @@
-import type { ViewerSort } from '$lib/viewer/types';
-
-export type ViewerWatchedFilter = 'all' | 'watched' | 'unwatched';
-export type ViewerIgnoredFilter = 'hide' | 'show';
+import {
+    ViewerIgnoredFilter,
+    ViewerSort,
+    ViewerWatchedFilter
+} from '$lib/viewer/types';
 
 export type ViewerQueryFilters = {
     term?: string;
@@ -32,16 +33,18 @@ export class ViewerQueryParser
 
         // Preserve the legacy watched/ignored query compatibility while normalizing the final filters.
         const watchedParam = unwatchedOnly === '1'
-            ? 'unwatched'
-            : (watchedParamRaw ?? (activeProfileKey === 'child' ? 'unwatched' : 'all'));
+            ? ViewerWatchedFilter.Unwatched
+            : (watchedParamRaw ?? (activeProfileKey === 'child' ? ViewerWatchedFilter.Unwatched : ViewerWatchedFilter.All));
         const ignoredParam = showIgnored === '1'
-            ? 'show'
-            : (url.searchParams.get('ignored') || 'hide');
+            ? ViewerIgnoredFilter.Show
+            : (url.searchParams.get('ignored') || ViewerIgnoredFilter.Hide);
 
         return {
             term,
-            watched: watchedParam === 'watched' || watchedParam === 'unwatched' ? watchedParam : 'all',
-            ignored: ignoredParam === 'show' ? 'show' : 'hide',
+            watched: watchedParam === ViewerWatchedFilter.Watched || watchedParam === ViewerWatchedFilter.Unwatched
+                ? watchedParam
+                : ViewerWatchedFilter.All,
+            ignored: ignoredParam === ViewerIgnoredFilter.Show ? ViewerIgnoredFilter.Show : ViewerIgnoredFilter.Hide,
             dateFrom: ViewerQueryParser.parseDateOnly(dateFromInput, 'start'),
             dateTo: ViewerQueryParser.parseDateOnly(dateToInput, 'end'),
             dateFromInput,
@@ -74,11 +77,13 @@ export class ViewerQueryParser
     {
         switch ((value || '').trim()) {
             case 'oldest':
+                return ViewerSort.Oldest;
             case 'title_asc':
+                return ViewerSort.TitleAsc;
             case 'title_desc':
-                return value as ViewerSort;
+                return ViewerSort.TitleDesc;
             default:
-                return 'newest';
+                return ViewerSort.Newest;
         }
     }
 

@@ -1,6 +1,8 @@
 import type { ViewerVideo } from '$lib/viewer/types';
+import {
+    ViewerSelectionFlagKind
+} from '$lib/viewer/selection/types';
 import type {
-    ViewerSelectionFlagKind,
     ViewerSelectionFlagValue
 } from '$lib/viewer/selection/types';
 
@@ -60,11 +62,11 @@ export class ViewerVideoDisplayPresenter
     {
         const isActive = !!this.video[kind];
 
-        if (kind === 'favorite') {
+        if (kind === ViewerSelectionFlagKind.Favorite) {
             return isActive ? 'Unfavorite' : 'Mark favorite';
         }
 
-        if (kind === 'watched') {
+        if (kind === ViewerSelectionFlagKind.Watched) {
             return isActive ? 'Mark unwatched' : 'Mark watched';
         }
 

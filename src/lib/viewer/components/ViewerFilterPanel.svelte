@@ -1,9 +1,12 @@
 <script lang="ts">
     import DatePicker from '$lib/components/DatePicker.svelte';
+    import {
+        ViewerSort,
+        ViewerWatchedFilter
+    } from '$lib/viewer/types';
     import type {
         ViewerChannel,
         ViewerFilters,
-        ViewerSort
     } from '$lib/viewer/types';
 
     export let filters: ViewerFilters;
@@ -14,9 +17,9 @@
     export let dateFromInput = '';
     export let dateToInput = '';
     export let channelIdInput = '';
-    export let sortMode: ViewerSort = 'newest';
+    export let sortMode: ViewerSort = ViewerSort.Newest;
     export let limitInput = '';
-    export let watchedMode: ViewerFilters['watched'] = 'all';
+    export let watchedMode: ViewerFilters['watched'] = ViewerWatchedFilter.All;
     export let showIgnored = false;
     export let onSubmit: (event: SubmitEvent) => void = () => undefined;
     export let onTermInput: () => void = () => undefined;
@@ -76,10 +79,10 @@
             <label class="boxed-field compact-sort-field">
                 <span class="boxed-field-label">Sort</span>
                 <select name="sort" bind:value={sortMode} on:change={onSortChange}>
-                    <option value="newest">Newest first</option>
-                    <option value="oldest">Oldest first</option>
-                    <option value="title_asc">Title A-Z</option>
-                    <option value="title_desc">Title Z-A</option>
+                    <option value={ViewerSort.Newest}>Newest first</option>
+                    <option value={ViewerSort.Oldest}>Oldest first</option>
+                    <option value={ViewerSort.TitleAsc}>Title A-Z</option>
+                    <option value={ViewerSort.TitleDesc}>Title Z-A</option>
                 </select>
             </label>
             <label class="boxed-field compact-field">
@@ -94,13 +97,17 @@
                     on:keydown={onTextKeydown}
                 />
             </label>
-            <input type="hidden" name="watched" value={watchedMode === 'watched' ? 'watched' : 'all'} />
+            <input
+                type="hidden"
+                name="watched"
+                value={watchedMode === ViewerWatchedFilter.Watched ? ViewerWatchedFilter.Watched : ViewerWatchedFilter.All}
+            />
             <label class="filter-toggle">
                 <input
                     type="checkbox"
                     name="unwatchedOnly"
                     value="1"
-                    checked={watchedMode === 'unwatched'}
+                    checked={watchedMode === ViewerWatchedFilter.Unwatched}
                     on:change={onWatchedOnlyChange}
                 />
                 <span>Unwatched only</span>

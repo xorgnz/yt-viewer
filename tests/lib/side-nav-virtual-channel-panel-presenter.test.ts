@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { SideNavVirtualChannelPanelPresenter } from '../../src/lib/components/SideNavVirtualChannelPanelPresenter';
 import type { SideNavVirtualChannelViewModel } from '../../src/lib/components/SideNavVirtualChannelPanelViewModel';
+import { ViewerVirtualChannelTimerState } from '../../src/lib/viewer/types';
 
 describe('SideNavVirtualChannelPanelPresenter', () => {
     function createViewModel(
@@ -11,7 +12,7 @@ describe('SideNavVirtualChannelPanelPresenter', () => {
             id: 'vc_demo',
             name: 'Timers',
             dailyTimerMax: 60,
-            timerState: 'available',
+            timerState: ViewerVirtualChannelTimerState.Available,
             timerUsageSeconds: 1200,
             timerRemainingSeconds: 2400,
             dailyTimerRemainingSeconds: 2400,
@@ -26,7 +27,7 @@ describe('SideNavVirtualChannelPanelPresenter', () => {
     it('formats unlimited virtual channel status and usage', () => {
         const presenter = new SideNavVirtualChannelPanelPresenter(createViewModel({
             dailyTimerMax: null,
-            timerState: 'unlimited',
+            timerState: ViewerVirtualChannelTimerState.Unlimited,
             timerUsageSeconds: 1860,
             timerRemainingSeconds: null
         }));
@@ -39,7 +40,7 @@ describe('SideNavVirtualChannelPanelPresenter', () => {
     it('formats available limited virtual channel status and remaining time', () => {
         const presenter = new SideNavVirtualChannelPanelPresenter(createViewModel({
             dailyTimerMax: 90,
-            timerState: 'available',
+            timerState: ViewerVirtualChannelTimerState.Available,
             timerUsageSeconds: 18,
             timerRemainingSeconds: 72
         }));
@@ -52,7 +53,7 @@ describe('SideNavVirtualChannelPanelPresenter', () => {
     it('formats capped virtual channel status and consumed usage', () => {
         const presenter = new SideNavVirtualChannelPanelPresenter(createViewModel({
             dailyTimerMax: 45,
-            timerState: 'capped',
+            timerState: ViewerVirtualChannelTimerState.Capped,
             timerUsageSeconds: 45,
             timerRemainingSeconds: 0
         }));

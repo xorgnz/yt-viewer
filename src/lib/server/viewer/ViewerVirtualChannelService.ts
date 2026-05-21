@@ -2,7 +2,10 @@ import type { HistoryDAO } from '$lib/daos/historyDAO';
 import type { VirtualChannelDAO } from '$lib/daos/virtualChannelDAO';
 import { AppTimezonePolicy } from '$lib/server/AppTimezonePolicy';
 import type { ServerProfileContext } from '$lib/server/ServerProfileContext';
-import type { ViewerVirtualChannel, ViewerVirtualChannelTimerState } from '$lib/viewer/types';
+import {
+    ViewerVirtualChannelTimerState
+} from '$lib/viewer/types';
+import type { ViewerVirtualChannel } from '$lib/viewer/types';
 
 export class ViewerVirtualChannelService
 {
@@ -188,7 +191,7 @@ export class ViewerVirtualChannelService
                 id: virtualChannel.id,
                 name: virtualChannel.name,
                 dailyTimerMax: null,
-                timerState: 'unlimited' as ViewerVirtualChannelTimerState,
+                timerState: ViewerVirtualChannelTimerState.Unlimited,
                 timerUsageSeconds: 0,
                 timerRemainingSeconds: null,
                 dailyTimerRemainingSeconds: null,
@@ -213,7 +216,9 @@ export class ViewerVirtualChannelService
             id: virtualChannel.id,
             name: virtualChannel.name,
             dailyTimerMax,
-            timerState: timerUsageSeconds >= timerMaxSeconds ? 'capped' : 'available',
+            timerState: timerUsageSeconds >= timerMaxSeconds
+                ? ViewerVirtualChannelTimerState.Capped
+                : ViewerVirtualChannelTimerState.Available,
             timerUsageSeconds,
             timerRemainingSeconds: dailyTimerRemainingSeconds,
             dailyTimerRemainingSeconds,

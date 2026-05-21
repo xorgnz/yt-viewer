@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { ViewerVideoQuerySpec } from '$lib/daos/queries/ViewerVideoQuerySpec';
+import {
+    ViewerIgnoredFilter,
+    ViewerSort,
+    ViewerWatchedFilter
+} from '$lib/viewer/types';
 
 describe('ViewerVideoQuerySpec', () => {
     it('builds viewer list filters with virtual-channel joins and pagination', () => {
@@ -7,11 +12,11 @@ describe('ViewerVideoQuerySpec', () => {
             term: 'demo',
             dateFrom: 100,
             dateTo: 200,
-            watched: 'watched',
-            ignored: 'hide',
+            watched: ViewerWatchedFilter.Watched,
+            ignored: ViewerIgnoredFilter.Hide,
             channelId: 'UC3',
             virtualChannelId: 'vc_queue',
-            sort: 'title_asc',
+            sort: ViewerSort.TitleAsc,
             limit: 5000,
             offset: -10
         }, 'default');

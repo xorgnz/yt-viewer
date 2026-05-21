@@ -6,6 +6,12 @@ import type {
     ViewerVisiblePage
 } from '$lib/viewer/types';
 import {
+    ViewerIgnoredFilter,
+    ViewerVisiblePageMarker,
+    ViewerWatchedFilter
+} from '$lib/viewer/types';
+import {
+    ViewerSelectionFlagKind,
     type ViewerSelectionControlState,
     type ViewerSelectionState,
     type ViewerSelectionVideoSnapshot
@@ -79,7 +85,7 @@ function getViewerVisiblePages(current: number, total: number): ViewerVisiblePag
     const pages: ViewerVisiblePage[] = [1];
 
     if (start > 2) {
-        pages.push('ellipsis');
+        pages.push(ViewerVisiblePageMarker.Ellipsis);
     }
 
     for (let page = start; page <= end; page += 1) {
@@ -87,7 +93,7 @@ function getViewerVisiblePages(current: number, total: number): ViewerVisiblePag
     }
 
     if (end < total - 1) {
-        pages.push('ellipsis');
+        pages.push(ViewerVisiblePageMarker.Ellipsis);
     }
 
     pages.push(total);
@@ -116,7 +122,7 @@ function deriveViewerFilterInputState(filters: ViewerFilters): ViewerFilterInput
         sortMode: filters.sort,
         limitInput: String(filters.limit),
         watchedMode: filters.watched,
-        showIgnored: filters.ignored === 'show'
+        showIgnored: filters.ignored === ViewerIgnoredFilter.Show
     };
 }
 
@@ -127,8 +133,10 @@ function buildViewerFilterQuery(
 {
     const params = new URLSearchParams({
         term: inputState.termInput,
-        watched: inputState.watchedMode === 'watched' ? 'watched' : 'all',
-        ignored: inputState.showIgnored ? 'show' : 'hide',
+        watched: inputState.watchedMode === ViewerWatchedFilter.Watched
+            ? ViewerWatchedFilter.Watched
+            : ViewerWatchedFilter.All,
+        ignored: inputState.showIgnored ? ViewerIgnoredFilter.Show : ViewerIgnoredFilter.Hide,
         dateFrom: inputState.dateFromInput,
         dateTo: inputState.dateToInput,
         channelId: inputState.channelIdInput,
@@ -138,7 +146,7 @@ function buildViewerFilterQuery(
         offset: '0'
     });
 
-    if (inputState.watchedMode === 'unwatched') {
+    if (inputState.watchedMode === ViewerWatchedFilter.Unwatched) {
         params.set('unwatchedOnly', '1');
     }
 
@@ -171,9 +179,9 @@ function deriveViewerSelectionSummary(state: ViewerSelectionState): ViewerSelect
         hasActiveSelection,
         selectedCount,
         offPageSelectedCount,
-        watchedControlState: viewerSelectionInspector.getControlState(state, 'watched'),
-        favoriteControlState: viewerSelectionInspector.getControlState(state, 'favorite'),
-        ignoredControlState: viewerSelectionInspector.getControlState(state, 'ignored')
+        watchedControlState: viewerSelectionInspector.getControlState(state, ViewerSelectionFlagKind.Watched),
+        favoriteControlState: viewerSelectionInspector.getControlState(state, ViewerSelectionFlagKind.Favorite),
+        ignoredControlState: viewerSelectionInspector.getControlState(state, ViewerSelectionFlagKind.Ignored)
     };
 }
 
