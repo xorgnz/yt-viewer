@@ -60,13 +60,19 @@ describe('viewer timer services', () => {
             id: '1',
             timerState: 'unlimited',
             timerUsageSeconds: 0,
-            timerRemainingSeconds: null
+            timerRemainingSeconds: null,
+            dailyTimerRemainingSeconds: null,
+            extraTimerSecondsRemaining: 0,
+            combinedTimerRemainingSeconds: null
         });
         expect(virtualChannels[1]).toMatchObject({
             id: '2',
             timerState: 'capped',
             timerUsageSeconds: 60,
-            timerRemainingSeconds: 0
+            timerRemainingSeconds: 0,
+            dailyTimerRemainingSeconds: 0,
+            extraTimerSecondsRemaining: 0,
+            combinedTimerRemainingSeconds: 0
         });
         expect(historyDAO.getVirtualChannelWatchSecondsInWindow).toHaveBeenCalledTimes(1);
         expect(historyDAO.getVirtualChannelWatchSecondsInWindow).toHaveBeenCalledWith(
@@ -105,6 +111,9 @@ describe('viewer timer services', () => {
                     timerState: 'capped' as const,
                     timerUsageSeconds: 60,
                     timerRemainingSeconds: 0,
+                    dailyTimerRemainingSeconds: 0,
+                    extraTimerSecondsRemaining: 0,
+                    combinedTimerRemainingSeconds: 0,
                     timerWindowStartMs: 100,
                     timerWindowEndMs: 200
                 }))
@@ -176,6 +185,9 @@ describe('viewer timer services', () => {
                         timerState: 'available' as const,
                         timerUsageSeconds: 119,
                         timerRemainingSeconds: 1,
+                        dailyTimerRemainingSeconds: 1,
+                        extraTimerSecondsRemaining: 0,
+                        combinedTimerRemainingSeconds: 1,
                         timerWindowStartMs: 100,
                         timerWindowEndMs: 200
                     }))
@@ -248,6 +260,9 @@ describe('viewer timer services', () => {
                         timerState: 'available' as const,
                         timerUsageSeconds: 119,
                         timerRemainingSeconds: 1,
+                        dailyTimerRemainingSeconds: 1,
+                        extraTimerSecondsRemaining: 0,
+                        combinedTimerRemainingSeconds: 1,
                         timerWindowStartMs: 100,
                         timerWindowEndMs: 200
                     }))
@@ -305,7 +320,42 @@ describe('viewer timer services', () => {
             dailyTimerMax: 120,
             timerState: 'available',
             timerUsageSeconds: 65,
-            timerRemainingSeconds: 55
+            timerRemainingSeconds: 55,
+            dailyTimerRemainingSeconds: 55,
+            extraTimerSecondsRemaining: 0,
+            combinedTimerRemainingSeconds: 55
+        });
+    });
+
+    it('exposes daily remaining, extra-time balance, and combined remaining separately', async () => {
+        const service = new ViewerVirtualChannelService(
+            {
+                get: vi.fn(async () => new VirtualChannel({
+                    id: '2',
+                    name: 'Timers',
+                    dailyTimerMax: 120,
+                    extraTimerSecondsRemaining: 30
+                })),
+                list: vi.fn(async () => [])
+            } as never,
+            {
+                getVirtualChannelWatchSecondsInWindow: vi.fn(async () => '65'),
+                resetVirtualChannelWatchSecondsInWindow: vi.fn(async () => undefined)
+            } as never,
+            createProfileContext(),
+            () => Date.UTC(2026, 4, 2, 15, 0, 0)
+        );
+
+        const virtualChannel = await service.getVirtualChannelById('2');
+
+        expect(virtualChannel).toMatchObject({
+            id: '2',
+            dailyTimerMax: 120,
+            timerUsageSeconds: 65,
+            timerRemainingSeconds: 55,
+            dailyTimerRemainingSeconds: 55,
+            extraTimerSecondsRemaining: 30,
+            combinedTimerRemainingSeconds: 85
         });
     });
 
@@ -333,6 +383,9 @@ describe('viewer timer services', () => {
                 timerState: 'available' as const,
                 timerUsageSeconds: 50,
                 timerRemainingSeconds: 10,
+                dailyTimerRemainingSeconds: 10,
+                extraTimerSecondsRemaining: 0,
+                combinedTimerRemainingSeconds: 10,
                 timerWindowStartMs: 100,
                 timerWindowEndMs: 200
             })
@@ -343,6 +396,9 @@ describe('viewer timer services', () => {
                 timerState: 'capped' as const,
                 timerUsageSeconds: 60,
                 timerRemainingSeconds: 0,
+                dailyTimerRemainingSeconds: 0,
+                extraTimerSecondsRemaining: 0,
+                combinedTimerRemainingSeconds: 0,
                 timerWindowStartMs: 100,
                 timerWindowEndMs: 200
             });
@@ -393,6 +449,9 @@ describe('viewer timer services', () => {
                     timerState: 'available' as const,
                     timerUsageSeconds: 50,
                     timerRemainingSeconds: 10,
+                    dailyTimerRemainingSeconds: 10,
+                    extraTimerSecondsRemaining: 0,
+                    combinedTimerRemainingSeconds: 10,
                     timerWindowStartMs: 100,
                     timerWindowEndMs: 200
                 }))

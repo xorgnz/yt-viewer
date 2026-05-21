@@ -25,13 +25,19 @@
 
             const deltaSeconds = Math.max(0, detail.deltaSeconds || 0);
             const nextUsage = Math.max(0, liveVirtualChannel.timerUsageSeconds + deltaSeconds);
-            const nextRemaining = Math.max(0, (liveVirtualChannel.timerRemainingSeconds ?? 0) - deltaSeconds);
-            const nextState = nextRemaining === 0 ? 'capped' : 'available';
+            const nextDailyRemaining = Math.max(0, (liveVirtualChannel.dailyTimerRemainingSeconds ?? 0) - deltaSeconds);
+            const nextCombinedRemaining = Math.max(
+                0,
+                (liveVirtualChannel.combinedTimerRemainingSeconds ?? 0) - deltaSeconds
+            );
+            const nextState = nextDailyRemaining === 0 ? 'capped' : 'available';
 
             liveVirtualChannel = {
                 ...liveVirtualChannel,
                 timerUsageSeconds: nextUsage,
-                timerRemainingSeconds: nextRemaining,
+                timerRemainingSeconds: nextDailyRemaining,
+                dailyTimerRemainingSeconds: nextDailyRemaining,
+                combinedTimerRemainingSeconds: nextCombinedRemaining,
                 timerState: nextState
             };
         };

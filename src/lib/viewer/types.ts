@@ -51,6 +51,9 @@ export type ViewerVirtualChannel = {
     timerState: ViewerVirtualChannelTimerState;
     timerUsageSeconds: number;
     timerRemainingSeconds: number | null;
+    dailyTimerRemainingSeconds: number | null;
+    extraTimerSecondsRemaining: number;
+    combinedTimerRemainingSeconds: number | null;
     timerWindowStartMs: number;
     timerWindowEndMs: number;
 };

@@ -14,6 +14,9 @@ describe('SideNavVirtualChannelPanelPresenter', () => {
             timerState: 'available',
             timerUsageSeconds: 1200,
             timerRemainingSeconds: 2400,
+            dailyTimerRemainingSeconds: 2400,
+            extraTimerSecondsRemaining: 0,
+            combinedTimerRemainingSeconds: 2400,
             timerWindowStartMs: 100,
             timerWindowEndMs: 200,
             ...overrides

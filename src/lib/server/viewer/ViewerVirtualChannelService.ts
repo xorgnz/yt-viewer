@@ -176,6 +176,7 @@ export class ViewerVirtualChannelService
             id: string | number;
             name: string;
             dailyTimerMax: number | null;
+            extraTimerSecondsRemaining: number;
         },
         window: { startMs: number; endMs: number }
     ): Promise<ViewerVirtualChannel>
@@ -190,6 +191,9 @@ export class ViewerVirtualChannelService
                 timerState: 'unlimited' as ViewerVirtualChannelTimerState,
                 timerUsageSeconds: 0,
                 timerRemainingSeconds: null,
+                dailyTimerRemainingSeconds: null,
+                extraTimerSecondsRemaining: virtualChannel.extraTimerSecondsRemaining,
+                combinedTimerRemainingSeconds: null,
                 timerWindowStartMs: window.startMs,
                 timerWindowEndMs: window.endMs,
             };
@@ -202,7 +206,8 @@ export class ViewerVirtualChannelService
             window.endMs
         ));
         const timerMaxSeconds = dailyTimerMax;
-        const timerRemainingSeconds = Math.max(0, timerMaxSeconds - timerUsageSeconds);
+        const dailyTimerRemainingSeconds = Math.max(0, timerMaxSeconds - timerUsageSeconds);
+        const combinedTimerRemainingSeconds = dailyTimerRemainingSeconds + virtualChannel.extraTimerSecondsRemaining;
 
         return {
             id: virtualChannel.id,
@@ -210,7 +215,10 @@ export class ViewerVirtualChannelService
             dailyTimerMax,
             timerState: timerUsageSeconds >= timerMaxSeconds ? 'capped' : 'available',
             timerUsageSeconds,
-            timerRemainingSeconds,
+            timerRemainingSeconds: dailyTimerRemainingSeconds,
+            dailyTimerRemainingSeconds,
+            extraTimerSecondsRemaining: virtualChannel.extraTimerSecondsRemaining,
+            combinedTimerRemainingSeconds,
             timerWindowStartMs: window.startMs,
             timerWindowEndMs: window.endMs,
         };

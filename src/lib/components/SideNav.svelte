@@ -38,9 +38,18 @@
         // Normalize partial load payloads so nav rendering does not silently drop an active channel.
         const dailyTimerMax = typeof candidate.dailyTimerMax === 'number' ? candidate.dailyTimerMax : null;
         const timerUsageSeconds = typeof candidate.timerUsageSeconds === 'number' ? candidate.timerUsageSeconds : 0;
+        const dailyTimerRemainingSeconds = typeof candidate.dailyTimerRemainingSeconds === 'number'
+            ? candidate.dailyTimerRemainingSeconds
+            : (dailyTimerMax == null ? null : Math.max(0, dailyTimerMax - timerUsageSeconds));
+        const extraTimerSecondsRemaining = typeof candidate.extraTimerSecondsRemaining === 'number'
+            ? candidate.extraTimerSecondsRemaining
+            : 0;
+        const combinedTimerRemainingSeconds = typeof candidate.combinedTimerRemainingSeconds === 'number'
+            ? candidate.combinedTimerRemainingSeconds
+            : (dailyTimerRemainingSeconds == null ? null : dailyTimerRemainingSeconds + extraTimerSecondsRemaining);
         const timerRemainingSeconds = typeof candidate.timerRemainingSeconds === 'number'
             ? candidate.timerRemainingSeconds
-            : (dailyTimerMax == null ? null : Math.max(0, dailyTimerMax - timerUsageSeconds));
+            : dailyTimerRemainingSeconds;
         const timerState = candidate.timerState === 'unlimited' || candidate.timerState === 'available' || candidate.timerState === 'capped'
             ? candidate.timerState
             : (dailyTimerMax == null ? 'unlimited' : (timerRemainingSeconds === 0 ? 'capped' : 'available'));
@@ -52,6 +61,9 @@
             timerState,
             timerUsageSeconds,
             timerRemainingSeconds,
+            dailyTimerRemainingSeconds,
+            extraTimerSecondsRemaining,
+            combinedTimerRemainingSeconds,
             timerWindowStartMs: typeof candidate.timerWindowStartMs === 'number' ? candidate.timerWindowStartMs : 0,
             timerWindowEndMs: typeof candidate.timerWindowEndMs === 'number' ? candidate.timerWindowEndMs : 0,
         };
