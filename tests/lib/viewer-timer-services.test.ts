@@ -365,6 +365,66 @@ describe('viewer timer services', () => {
         });
     });
 
+    it('decrements persisted extra time only for watch delta spillover beyond daily remaining', async () => {
+        const updateExtraTimerSecondsRemaining = vi.fn(async () => undefined);
+        const service = new ViewerVirtualChannelService(
+            {
+                get: vi.fn(),
+                list: vi.fn(),
+                updateExtraTimerSecondsRemaining
+            } as never,
+            {} as never,
+            createProfileContext(),
+            () => Date.UTC(2026, 4, 2, 15, 0, 0)
+        );
+
+        await service.consumeExtraTimerSecondsForWatchDelta('2', {
+            id: '2',
+            name: 'Timers',
+            dailyTimerMax: 120,
+            timerState: ViewerVirtualChannelTimerState.Available,
+            timerUsageSeconds: 110,
+            timerRemainingSeconds: 10,
+            dailyTimerRemainingSeconds: 10,
+            extraTimerSecondsRemaining: 30,
+            combinedTimerRemainingSeconds: 40,
+            timerWindowStartMs: 100,
+            timerWindowEndMs: 200
+        }, 15);
+
+        expect(updateExtraTimerSecondsRemaining).toHaveBeenCalledWith('2', 25);
+    });
+
+    it('does not decrement extra time when the new watch delta fits inside the daily remaining budget', async () => {
+        const updateExtraTimerSecondsRemaining = vi.fn(async () => undefined);
+        const service = new ViewerVirtualChannelService(
+            {
+                get: vi.fn(),
+                list: vi.fn(),
+                updateExtraTimerSecondsRemaining
+            } as never,
+            {} as never,
+            createProfileContext(),
+            () => Date.UTC(2026, 4, 2, 15, 0, 0)
+        );
+
+        await service.consumeExtraTimerSecondsForWatchDelta('2', {
+            id: '2',
+            name: 'Timers',
+            dailyTimerMax: 120,
+            timerState: ViewerVirtualChannelTimerState.Available,
+            timerUsageSeconds: 110,
+            timerRemainingSeconds: 10,
+            dailyTimerRemainingSeconds: 10,
+            extraTimerSecondsRemaining: 30,
+            combinedTimerRemainingSeconds: 40,
+            timerWindowStartMs: 100,
+            timerWindowEndMs: 200
+        }, 10);
+
+        expect(updateExtraTimerSecondsRemaining).not.toHaveBeenCalled();
+    });
+
     it('returns timer-capped enforcement after a progress write and keeps session-expiry failures distinct', async () => {
         const video = createVideo(5);
         const viewerVideoReadRepository = {
@@ -399,6 +459,19 @@ describe('viewer timer services', () => {
                 id: '9',
                 name: 'Timers',
                 dailyTimerMax: 60,
+                timerState: ViewerVirtualChannelTimerState.Available,
+                timerUsageSeconds: 50,
+                timerRemainingSeconds: 10,
+                dailyTimerRemainingSeconds: 10,
+                extraTimerSecondsRemaining: 0,
+                combinedTimerRemainingSeconds: 10,
+                timerWindowStartMs: 100,
+                timerWindowEndMs: 200
+            })
+            .mockResolvedValueOnce({
+                id: '9',
+                name: 'Timers',
+                dailyTimerMax: 60,
                 timerState: ViewerVirtualChannelTimerState.Capped,
                 timerUsageSeconds: 60,
                 timerRemainingSeconds: 0,
@@ -414,7 +487,10 @@ describe('viewer timer services', () => {
             historyDAO as never,
             createProfileContext(),
             {} as never,
-            { getVirtualChannelById: availableThenCapped } as never
+            {
+                getVirtualChannelById: availableThenCapped,
+                consumeExtraTimerSecondsForWatchDelta: vi.fn(async () => undefined)
+            } as never
         );
 
         const cappedResult = await service.updateHistoryProgress('video-5', 60, '9', 8000);
@@ -460,7 +536,8 @@ describe('viewer timer services', () => {
                     combinedTimerRemainingSeconds: 10,
                     timerWindowStartMs: 100,
                     timerWindowEndMs: 200
-                }))
+                })),
+                consumeExtraTimerSecondsForWatchDelta: vi.fn(async () => undefined)
             } as never
         );
 
@@ -473,6 +550,80 @@ describe('viewer timer services', () => {
             code: 'history_session_inactive'
         });
         expect(inactiveHistoryDAO.updateSessionProgress).not.toHaveBeenCalled();
+    });
+
+    it('uses only the newly consumed watch delta when applying extra-time spillover during progress updates', async () => {
+        const video = createVideo(8);
+        const viewerVideoReadRepository = {
+            getByYoutubeId: vi.fn(async () => video)
+        };
+        const historyDAO = {
+            findMostRecentSession: vi.fn(async () => ({
+                id: 101,
+                video_id: video.id,
+                profile_id: 11,
+                session_started_at: 1000,
+                last_updated_at: 5000,
+                time_watched_seconds: 25
+            })),
+            updateSessionProgress: vi.fn(async () => undefined)
+        };
+        const preWriteVirtualChannel = {
+            id: '9',
+            name: 'Timers',
+            dailyTimerMax: 60,
+            timerState: ViewerVirtualChannelTimerState.Available,
+            timerUsageSeconds: 50,
+            timerRemainingSeconds: 10,
+            dailyTimerRemainingSeconds: 10,
+            extraTimerSecondsRemaining: 30,
+            combinedTimerRemainingSeconds: 40,
+            timerWindowStartMs: 100,
+            timerWindowEndMs: 200
+        };
+        const postWriteVirtualChannel = {
+            ...preWriteVirtualChannel,
+            timerUsageSeconds: 60,
+            timerRemainingSeconds: 0,
+            dailyTimerRemainingSeconds: 0,
+            extraTimerSecondsRemaining: 20,
+            combinedTimerRemainingSeconds: 20,
+            timerState: ViewerVirtualChannelTimerState.Capped
+        };
+        const getVirtualChannelById = vi.fn()
+            .mockResolvedValueOnce(preWriteVirtualChannel)
+            .mockResolvedValueOnce(preWriteVirtualChannel)
+            .mockResolvedValueOnce(postWriteVirtualChannel);
+        const consumeExtraTimerSecondsForWatchDelta = vi.fn(async () => undefined);
+        const service = new ViewerWatchService(
+            viewerVideoReadRepository as never,
+            {} as never,
+            historyDAO as never,
+            createProfileContext(),
+            {} as never,
+            {
+                getVirtualChannelById,
+                consumeExtraTimerSecondsForWatchDelta
+            } as never
+        );
+
+        const result = await service.updateHistoryProgress('video-8', 40, '9', 8000);
+
+        expect(result).toEqual({
+            ok: false,
+            status: 409,
+            message: 'Virtual channel timer limit reached',
+            code: 'timer_capped'
+        });
+        expect(consumeExtraTimerSecondsForWatchDelta).toHaveBeenCalledWith(
+            '9',
+            preWriteVirtualChannel,
+            15
+        );
+        expect(historyDAO.updateSessionProgress).toHaveBeenCalledWith(101, {
+            last_updated_at: 8000,
+            time_watched_seconds: 40
+        });
     });
 });
 // apply-patch-anchor - do not delete

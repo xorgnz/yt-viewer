@@ -73,7 +73,7 @@
   - [x] 9.2 - Add forward-only migration coverage for the new extra-time balance field and validate both fresh-create and migration paths.
   - [x] 9.3 - Add admin-side controls to grant additional time by incrementing the persisted remaining extra-time balance.
   - [x] 9.4 - Update viewer timer view models to expose daily allowance, extra-time balance, and combined remaining allowance clearly.
-  - [ ] 9.5 - Change watch-session persistence so each newly consumed watch-time delta burns daily allowance first and decrements extra-time balance only for spillover.
+  - [x] 9.5 - Change watch-session persistence so each newly consumed watch-time delta burns daily allowance first and decrements extra-time balance only for spillover.
   - [ ] 9.6 - Make the timer-cap enforcement path treat extra time as persistent carryover across day boundaries until it is consumed.
   - [ ] 9.7 - Add a split-timer-mode flag that defaults to `true`, and expose it through a placeholder settings page so the complex daily-plus-extra display can be disabled for simpler profiles.
   - [ ] 9.8 - Update viewer and admin timer displays so, when split-timer mode is enabled, the user can see both the configured daily allowance and any remaining granted extra time where that context matters.

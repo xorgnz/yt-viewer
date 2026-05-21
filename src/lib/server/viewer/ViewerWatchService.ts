@@ -166,8 +166,15 @@ export class ViewerWatchService
             return { ok: false, status: 404, message: 'Video not found', code: 'video_not_found' };
         }
 
+        const preWriteVirtualChannel = virtualChannelId == null
+            ? null
+            : await this.virtualChannelService.getVirtualChannelById(virtualChannelId);
         const latestSession = await this.historyDAO.findMostRecentSession(video.id, this.profileContext.activeProfileId);
         const timeWatchedSeconds = Math.floor(watchSeconds);
+        const previousWatchSeconds = latestSession && (now - latestSession.last_updated_at) <= HISTORY_SESSION_GAP_MS
+            ? Math.max(0, Math.floor(latestSession.time_watched_seconds))
+            : 0;
+        const consumedSecondsDelta = Math.max(0, timeWatchedSeconds - previousWatchSeconds);
 
         if (latestSession && (now - latestSession.last_updated_at) <= HISTORY_SESSION_GAP_MS)
         {
@@ -195,6 +202,14 @@ export class ViewerWatchService
                 last_updated_at: now,
                 time_watched_seconds: timeWatchedSeconds
             });
+        }
+
+        if (virtualChannelId != null) {
+            await this.virtualChannelService.consumeExtraTimerSecondsForWatchDelta(
+                virtualChannelId,
+                preWriteVirtualChannel,
+                consumedSecondsDelta
+            );
         }
 
         const postWriteVirtualChannelCheck = await this.ensureVirtualChannelAllowsPlayback(virtualChannelId);
@@ -241,6 +256,9 @@ export class ViewerWatchService
             return { ok: false, status: 404, message: 'Video not found', code: 'video_not_found' };
         }
 
+        const preWriteVirtualChannel = virtualChannelId == null
+            ? null
+            : await this.virtualChannelService.getVirtualChannelById(virtualChannelId);
         const session = await this.historyDAO.findMostRecentSession(video.id, this.profileContext.activeProfileId);
         if (!session) {
             return {
@@ -260,15 +278,27 @@ export class ViewerWatchService
             };
         }
 
+        const previousWatchSeconds = Math.max(0, Math.floor(session.time_watched_seconds));
+        const nextWatchSeconds = Math.floor(watchSeconds);
+        const consumedSecondsDelta = Math.max(0, nextWatchSeconds - previousWatchSeconds);
+
         await this.historyDAO.updateSessionProgress(session.id, {
             last_updated_at: now,
-            time_watched_seconds: Math.floor(watchSeconds)
+            time_watched_seconds: nextWatchSeconds
         });
 
         console.info('[viewer-watch.updateHistoryProgress.updated]', {
             sessionId: session.id,
-            watchSeconds: Math.floor(watchSeconds)
+            watchSeconds: nextWatchSeconds
         });
+
+        if (virtualChannelId != null) {
+            await this.virtualChannelService.consumeExtraTimerSecondsForWatchDelta(
+                virtualChannelId,
+                preWriteVirtualChannel,
+                consumedSecondsDelta
+            );
+        }
 
         const postWriteVirtualChannelCheck = await this.ensureVirtualChannelAllowsPlayback(virtualChannelId);
         if (!postWriteVirtualChannelCheck.ok) {

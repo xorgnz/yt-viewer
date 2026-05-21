@@ -80,6 +80,41 @@ export class ViewerVirtualChannelService
         return true;
     }
 
+    async consumeExtraTimerSecondsForWatchDelta(
+        virtualChannelId: string | number,
+        virtualChannel: ViewerVirtualChannel | null,
+        consumedSecondsDelta: number
+    ): Promise<void>
+    {
+        if (!virtualChannel || virtualChannel.dailyTimerMax == null) {
+            return;
+        }
+
+        const normalizedDelta = Math.max(0, Math.floor(consumedSecondsDelta));
+        if (normalizedDelta === 0) {
+            return;
+        }
+
+        const dailyRemainingSeconds = Math.max(0, virtualChannel.dailyTimerRemainingSeconds ?? 0);
+        const spilloverSeconds = Math.max(0, normalizedDelta - dailyRemainingSeconds);
+        if (spilloverSeconds === 0) {
+            return;
+        }
+
+        const nextExtraTimerSecondsRemaining = Math.max(
+            0,
+            virtualChannel.extraTimerSecondsRemaining - spilloverSeconds
+        );
+        if (nextExtraTimerSecondsRemaining === virtualChannel.extraTimerSecondsRemaining) {
+            return;
+        }
+
+        await this.virtualChannelDAO.updateExtraTimerSecondsRemaining(
+            virtualChannelId,
+            nextExtraTimerSecondsRemaining
+        );
+    }
+
     private static getCurrentDayWindow(nowMs: number, timezone: string): { startMs: number; endMs: number }
     {
         const today = ViewerVirtualChannelService.getZonedDateTimeParts(nowMs, timezone);
