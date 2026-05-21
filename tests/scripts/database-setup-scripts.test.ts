@@ -11,7 +11,7 @@ function createProvider(options?: {
     migrationRows?: Array<{ version: number; name: string; success: boolean | number }>;
 }): MockQueryProvider
 {
-    const schemaVersion = options?.schemaVersion ?? '10';
+    const schemaVersion = options?.schemaVersion ?? '11';
     const historyTableExists = options?.historyTableExists ?? false;
     const migrationRows = options?.migrationRows ?? [];
 
@@ -94,6 +94,7 @@ describe('database setup scripts', () => {
         expect(sqlCalls.some((sql) => sql.includes('PRIMARY KEY (src_channel_id)'))).toBe(true);
         expect(sqlCalls.some((sql) => sql.includes('CREATE TABLE IF NOT EXISTS virtual_channels'))).toBe(true);
         expect(sqlCalls.some((sql) => sql.includes('extra_timer_seconds_remaining INT NOT NULL DEFAULT 0'))).toBe(true);
+        expect(sqlCalls.some((sql) => sql.includes('split_timer_mode_enabled TINYINT NOT NULL DEFAULT 1'))).toBe(true);
         expect(sqlCalls.some((sql) => sql.includes('CREATE TABLE IF NOT EXISTS videos'))).toBe(true);
         expect(sqlCalls.some((sql) => sql.includes('video_id VARCHAR(255) NOT NULL'))).toBe(true);
         expect(sqlCalls.some((sql) => sql.includes('FOREIGN KEY (src_channel_id) REFERENCES source_channels(src_channel_id) ON DELETE CASCADE ON UPDATE CASCADE'))).toBe(true);
@@ -119,12 +120,17 @@ describe('database setup scripts', () => {
 
     it('runs registered database migration', async () => {
         const client = createProvider({
-            schemaVersion: '10',
+            schemaVersion: '11',
             historyTableExists: true,
             migrationRows: [
                 {
                     version: 10,
                     name: 'add_virtual_channel_extra_timer_seconds_remaining',
+                    success: 1,
+                },
+                {
+                    version: 11,
+                    name: 'add_profile_split_timer_mode_enabled',
                     success: 1,
                 }
             ],
@@ -132,9 +138,9 @@ describe('database setup scripts', () => {
 
         const result = await runMigrationWorkflow(client);
 
-        expect(result.currentVersion).toBe(10);
-        expect(result.targetVersion).toBe(10);
-        expect(result.finalVersion).toBe(10);
+        expect(result.currentVersion).toBe(11);
+        expect(result.targetVersion).toBe(11);
+        expect(result.finalVersion).toBe(11);
         expect(result.appliedMigrations).toEqual([]);
         expect(client.calls.map((call) => call.text)).not.toContain('START TRANSACTION');
         expect(client.calls.map((call) => call.text)).not.toContain('COMMIT');
@@ -143,7 +149,7 @@ describe('database setup scripts', () => {
 
     it('accepts legacy migration rows when the schema is already at version 10', async () => {
         const client = createProvider({
-            schemaVersion: '10',
+            schemaVersion: '11',
             historyTableExists: true,
             migrationRows: [
                 {
@@ -160,21 +166,26 @@ describe('database setup scripts', () => {
                     version: 10,
                     name: 'add_virtual_channel_extra_timer_seconds_remaining',
                     success: 1,
+                },
+                {
+                    version: 11,
+                    name: 'add_profile_split_timer_mode_enabled',
+                    success: 1,
                 }
             ],
         });
 
         const result = await runMigrationWorkflow(client);
 
-        expect(result.currentVersion).toBe(10);
-        expect(result.targetVersion).toBe(10);
-        expect(result.finalVersion).toBe(10);
+        expect(result.currentVersion).toBe(11);
+        expect(result.targetVersion).toBe(11);
+        expect(result.finalVersion).toBe(11);
         expect(result.appliedMigrations).toEqual([]);
         expect(client.calls.map((call) => call.text)).not.toContain('START TRANSACTION');
         expect(client.calls.map((call) => call.text)).not.toContain('COMMIT');
     });
 
-    it('applies the registered extra timer migration from version 9 to 10', async () => {
+    it('applies the registered extra timer and profile split-timer migrations from version 9 to 11', async () => {
         const client = createProvider({
             schemaVersion: '9',
             historyTableExists: true,
@@ -184,21 +195,26 @@ describe('database setup scripts', () => {
         const result = await runMigrationWorkflow(client);
 
         expect(result.currentVersion).toBe(9);
-        expect(result.targetVersion).toBe(10);
-        expect(result.finalVersion).toBe(10);
+        expect(result.targetVersion).toBe(11);
+        expect(result.finalVersion).toBe(11);
         expect(result.appliedMigrations).toEqual([
             {
                 version: 10,
                 name: 'add_virtual_channel_extra_timer_seconds_remaining',
+            },
+            {
+                version: 11,
+                name: 'add_profile_split_timer_mode_enabled',
             }
         ]);
         expect(client.calls.map((call) => call.text)).toContain('START TRANSACTION');
         expect(client.calls.map((call) => call.text)).toContain('COMMIT');
         expect(client.calls.some((call) => call.text.includes('ALTER TABLE virtual_channels'))).toBe(true);
+        expect(client.calls.some((call) => call.text.includes('ALTER TABLE profiles'))).toBe(true);
         expect(client.calls.some((call) => call.text.includes('INSERT INTO migration_history'))).toBe(true);
     });
 
-    it('accepts legacy migration history when applying the version 9 to 10 migration', async () => {
+    it('accepts legacy migration history when applying the version 9 to 11 migrations', async () => {
         const client = createProvider({
             schemaVersion: '9',
             historyTableExists: true,
@@ -219,12 +235,16 @@ describe('database setup scripts', () => {
         const result = await runMigrationWorkflow(client);
 
         expect(result.currentVersion).toBe(9);
-        expect(result.targetVersion).toBe(10);
-        expect(result.finalVersion).toBe(10);
+        expect(result.targetVersion).toBe(11);
+        expect(result.finalVersion).toBe(11);
         expect(result.appliedMigrations).toEqual([
             {
                 version: 10,
                 name: 'add_virtual_channel_extra_timer_seconds_remaining',
+            },
+            {
+                version: 11,
+                name: 'add_profile_split_timer_mode_enabled',
             }
         ]);
         expect(client.calls.map((call) => call.text)).toContain('START TRANSACTION');

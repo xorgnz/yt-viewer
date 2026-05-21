@@ -86,6 +86,7 @@
         <a href="/">Home</a>
         <a href="/viewer/virtual-channels">Channels</a>
         <a href="/history">History</a>
+        <a href="/settings">Settings</a>
         <div class="sep" aria-hidden="true"></div>
         {#if isAdminLoggedIn}
             <a href="/admin">Admin Home</a>

@@ -4,7 +4,7 @@
   const appName = 'YT Viewer';
 
   export let data: {
-    profiles: Array<{ id: number; key: string; name: string }>;
+    profiles: Array<{ id: string | number; key: string; name: string; splitTimerModeEnabled: boolean }>;
     activeProfileKey: string;
     activeProfileName: string;
     isAdminLoggedIn: boolean;

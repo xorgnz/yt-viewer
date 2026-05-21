@@ -2,12 +2,12 @@ import type { Cookies } from '@sveltejs/kit';
 import type { ProfileDAO } from '$lib/daos/profileDAO';
 
 const PROFILE_DEFINITIONS = [
-    { key: 'default', name: 'Adult' },
-    { key: 'child', name: 'Child' }
+    { key: 'default', name: 'Adult', splitTimerModeEnabled: true },
+    { key: 'child', name: 'Child', splitTimerModeEnabled: true }
 ] as const;
 
 export type ProfileKey = (typeof PROFILE_DEFINITIONS)[number]['key'];
-type ProfileCatalogDAO = Pick<ProfileDAO, 'upsertByKey'>;
+type ProfileCatalogDAO = Pick<ProfileDAO, 'upsertByKey' | 'getByKey' | 'updateSplitTimerModeEnabled'>;
 
 type ProfileSelectionCookies = Partial<Pick<Cookies, 'get' | 'set'>>;
 
@@ -31,6 +31,11 @@ export class ProfileCatalog
     {
         for (const profile of PROFILE_DEFINITIONS) {
             await profileDAO.upsertByKey(profile.key, profile.name);
+
+            const existingProfile = await profileDAO.getByKey(profile.key);
+            if (existingProfile && existingProfile.splitTimerModeEnabled !== profile.splitTimerModeEnabled) {
+                await profileDAO.updateSplitTimerModeEnabled(profile.key, profile.splitTimerModeEnabled);
+            }
         }
     }
 }

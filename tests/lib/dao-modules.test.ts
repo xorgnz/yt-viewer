@@ -51,6 +51,7 @@ describe('DAO modules', () => {
         }));
         await new VideoDAO(provider).listExistingIds(['video-1', 'video-2']);
         await new ProfileDAO(provider).upsertByKey('default', 'Default');
+        await new ProfileDAO(provider).updateSplitTimerModeEnabled('default', false);
         await new VirtualChannelDAO(provider).create('Queue');
         await new AssignmentDAO(provider).add('channel-1', 'vc_queue', VirtualChannelAssignmentMode.All);
         await new VirtualChannelAssignmentVideoSelectionDAO(provider).setReviewState('channel-1::vc_queue', 'video-1', VirtualChannelAssignmentVideoReviewState.Included);
@@ -87,6 +88,7 @@ describe('DAO modules', () => {
         expect(provider.calls.some((call) => call.text.includes('v.youtube_id'))).toBe(false);
         expect(provider.calls.some((call) => call.text.includes('INSERT INTO profiles(profile_id, name) VALUES(?,?)'))).toBe(true);
         expect(provider.calls.some((call) => call.text.includes('ON DUPLICATE KEY UPDATE name=VALUES(name)'))).toBe(true);
+        expect(provider.calls.some((call) => call.text.includes('UPDATE profiles SET split_timer_mode_enabled = ? WHERE profile_id = ?'))).toBe(true);
         expect(provider.calls.some((call) => call.text.includes('LEFT JOIN video_flags vf ON (vf.video_id = v.video_id AND vf.profile_id = :profileId)'))).toBe(false);
     });
 });

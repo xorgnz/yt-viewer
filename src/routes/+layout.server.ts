@@ -12,7 +12,7 @@ export const load: LayoutServerLoad = async ({ cookies }) =>
         const profileContext = await ServerProfileContext.resolve(profileDAO, cookies);
 
         return {
-            profiles: await profileDAO.list(),
+            profiles: (await profileDAO.list()).map((profile) => profile.toFields()),
             activeProfileKey: profileContext.activeProfileKey,
             activeProfileName: profileContext.activeProfileName,
             isAdminLoggedIn: ServerAdminSession.isLoggedIn(cookies)
