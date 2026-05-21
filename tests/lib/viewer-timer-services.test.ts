@@ -427,6 +427,107 @@ describe('viewer timer services', () => {
         });
     });
 
+    it('returns timer-capped enforcement once a watch delta exhausts the remaining extra time', async () => {
+        const video = createVideo(12);
+        const viewerVideoReadRepository = {
+            getByYoutubeId: vi.fn(async () => video)
+        };
+        const historyDAO = {
+            findMostRecentSession: vi.fn(async () => ({
+                id: 121,
+                video_id: video.id,
+                profile_id: 11,
+                session_started_at: 1000,
+                last_updated_at: 5000,
+                time_watched_seconds: 110
+            })),
+            updateSessionProgress: vi.fn(async () => undefined)
+        };
+        const preWriteVirtualChannel = {
+            id: '12',
+            name: 'Timers',
+            dailyTimerMax: 120,
+            timerState: ViewerVirtualChannelTimerState.Available,
+            timerUsageSeconds: 110,
+            timerRemainingSeconds: 10,
+            dailyTimerRemainingSeconds: 10,
+            extraTimerSecondsRemaining: 5,
+            combinedTimerRemainingSeconds: 15,
+            timerWindowStartMs: 100,
+            timerWindowEndMs: 200
+        };
+        const postWriteVirtualChannel = {
+            ...preWriteVirtualChannel,
+            timerUsageSeconds: 125,
+            timerRemainingSeconds: 0,
+            dailyTimerRemainingSeconds: 0,
+            extraTimerSecondsRemaining: 0,
+            combinedTimerRemainingSeconds: 0,
+            timerState: ViewerVirtualChannelTimerState.Capped
+        };
+        const getVirtualChannelById = vi.fn()
+            .mockResolvedValueOnce(preWriteVirtualChannel)
+            .mockResolvedValueOnce(preWriteVirtualChannel)
+            .mockResolvedValueOnce(postWriteVirtualChannel);
+        const consumeExtraTimerSecondsForWatchDelta = vi.fn(async () => undefined);
+        const service = new ViewerWatchService(
+            viewerVideoReadRepository as never,
+            {} as never,
+            historyDAO as never,
+            createProfileContext(),
+            {} as never,
+            {
+                getVirtualChannelById,
+                consumeExtraTimerSecondsForWatchDelta
+            } as never
+        );
+
+        const result = await service.updateHistoryProgress('video-12', 125, '12', 8000);
+
+        expect(result).toEqual({
+            ok: false,
+            status: 409,
+            message: 'Virtual channel timer limit reached',
+            code: 'timer_capped'
+        });
+        expect(consumeExtraTimerSecondsForWatchDelta).toHaveBeenCalledWith(
+            '12',
+            preWriteVirtualChannel,
+            15
+        );
+    });
+
+    it('resets only the current day watch usage window and keeps extra time carryover separate', async () => {
+        const historyDAO = {
+            getVirtualChannelWatchSecondsInWindow: vi.fn(async () => 0),
+            resetVirtualChannelWatchSecondsInWindow: vi.fn(async () => undefined)
+        };
+        const service = new ViewerVirtualChannelService(
+            {
+                get: vi.fn(async () => new VirtualChannel({
+                    id: '2',
+                    name: 'Timers',
+                    dailyTimerMax: 120,
+                    extraTimerSecondsRemaining: 30
+                })),
+                list: vi.fn(async () => [])
+            } as never,
+            historyDAO as never,
+            createProfileContext(),
+            () => Date.UTC(2026, 4, 3, 15, 0, 0)
+        );
+
+        const result = await service.resetVirtualChannelTimer('2');
+
+        expect(result).toBe(true);
+        expect(historyDAO.resetVirtualChannelWatchSecondsInWindow).toHaveBeenCalledWith(
+            11,
+            '2',
+            expect.any(Number),
+            expect.any(Number)
+        );
+    });
+
     it('decrements persisted extra time only for watch delta spillover beyond daily remaining', async () => {
         const updateExtraTimerSecondsRemaining = vi.fn(async () => undefined);
         const service = new ViewerVirtualChannelService(
@@ -686,6 +787,77 @@ describe('viewer timer services', () => {
             last_updated_at: 8000,
             time_watched_seconds: 40
         });
+    });
+
+    it('uses only the newly consumed watch delta when applying extra-time spillover during session create or refresh', async () => {
+        const video = createVideo(10);
+        const viewerVideoReadRepository = {
+            getByYoutubeId: vi.fn(async () => video)
+        };
+        const historyDAO = {
+            findMostRecentSession: vi.fn(async () => ({
+                id: 111,
+                video_id: video.id,
+                profile_id: 11,
+                session_started_at: 1000,
+                last_updated_at: 5000,
+                time_watched_seconds: 25
+            })),
+            updateSessionProgress: vi.fn(async () => undefined),
+            createSession: vi.fn(async () => undefined)
+        };
+        const preWriteVirtualChannel = {
+            id: '9',
+            name: 'Timers',
+            dailyTimerMax: 60,
+            timerState: ViewerVirtualChannelTimerState.Available,
+            timerUsageSeconds: 50,
+            timerRemainingSeconds: 10,
+            dailyTimerRemainingSeconds: 10,
+            extraTimerSecondsRemaining: 30,
+            combinedTimerRemainingSeconds: 40,
+            timerWindowStartMs: 100,
+            timerWindowEndMs: 200
+        };
+        const postWriteVirtualChannel = {
+            ...preWriteVirtualChannel,
+            timerUsageSeconds: 60,
+            timerRemainingSeconds: 0,
+            dailyTimerRemainingSeconds: 0,
+            extraTimerSecondsRemaining: 20,
+            combinedTimerRemainingSeconds: 20,
+            timerState: ViewerVirtualChannelTimerState.Available
+        };
+        const getVirtualChannelById = vi.fn()
+            .mockResolvedValueOnce(preWriteVirtualChannel)
+            .mockResolvedValueOnce(preWriteVirtualChannel)
+            .mockResolvedValueOnce(postWriteVirtualChannel);
+        const consumeExtraTimerSecondsForWatchDelta = vi.fn(async () => undefined);
+        const service = new ViewerWatchService(
+            viewerVideoReadRepository as never,
+            {} as never,
+            historyDAO as never,
+            createProfileContext(),
+            {} as never,
+            {
+                getVirtualChannelById,
+                consumeExtraTimerSecondsForWatchDelta
+            } as never
+        );
+
+        const result = await service.createHistorySession('video-10', 40, '9', 8000);
+
+        expect(result).toEqual({ ok: true });
+        expect(consumeExtraTimerSecondsForWatchDelta).toHaveBeenCalledWith(
+            '9',
+            preWriteVirtualChannel,
+            15
+        );
+        expect(historyDAO.updateSessionProgress).toHaveBeenCalledWith(111, {
+            last_updated_at: 8000,
+            time_watched_seconds: 40
+        });
+        expect(historyDAO.createSession).not.toHaveBeenCalled();
     });
 
     it('does not block reload for an active session when daily time is exhausted but extra time remains', async () => {

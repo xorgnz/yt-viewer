@@ -77,4 +77,4 @@
   - [x] 9.6 - Make the timer-cap enforcement path treat extra time as persistent carryover across day boundaries until it is consumed.
   - [x] 9.7 - Add a split-timer-mode flag that defaults to `true`, and expose it through a placeholder settings page so the complex daily-plus-extra display can be disabled for simpler profiles.
   - [x] 9.8 - Update viewer and admin timer displays so, when split-timer mode is enabled, the user can see both the configured daily allowance and any remaining granted extra time where that context matters.
-  - [ ] 9.9 - Add focused tests for mixed daily-plus-extra consumption, carryover across reset boundaries, capped behavior when extra time is exhausted, and split-timer-mode on/off behavior.
+  - [x] 9.9 - Add focused tests for mixed daily-plus-extra consumption, carryover across reset boundaries, capped behavior when extra time is exhausted, and split-timer-mode on/off behavior.
