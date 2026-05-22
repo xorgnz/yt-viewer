@@ -1,9 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { YouTubeClient } from '$lib/youtube/youTubeClient';
-import {
-    YouTubeChannelDataService,
-    YouTubeChannelReferenceResolver
-} from '../../../src/lib/youtube/fetch';
+import { YouTubeChannelDataService } from '../../../src/lib/youtube/YouTubeChannelDataService';
+import { YouTubeChannelReferenceResolver } from '../../../src/lib/youtube/YouTubeChannelReferenceResolver';
 
 const okJson = (body: unknown) => new Response(JSON.stringify(body), { status: 200, headers: { 'content-type': 'application/json' } });
 const validChannelId = 'UC1234567890123456789012';

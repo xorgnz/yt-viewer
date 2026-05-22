@@ -1,12 +1,12 @@
 import { SourceChannelDAO } from '$lib/daos/sourceChannelDAO';
 import type { DatabasePool } from '$lib/daos/shared/DatabasePool';
 import { VideoDAO } from '$lib/daos/videoDAO';
+import { type ImportResult, YouTubeChannelImportService } from '$lib/youtube/YouTubeChannelImportService';
+import { YouTubeChannelDataService } from '$lib/youtube/YouTubeChannelDataService';
 import {
     type ResolvedChannelReference,
-    YouTubeChannelDataService,
     YouTubeChannelReferenceResolver
-} from '$lib/youtube/fetch';
-import { type ImportResult, YouTubeChannelImportService } from '$lib/youtube/YouTubeChannelImportService';
+} from '$lib/youtube/YouTubeChannelReferenceResolver';
 import type { ChannelsListResponse, YouTubeClient } from '$lib/youtube/youTubeClient';
 
 export class AdminSourceChannelYouTubeCoordinator

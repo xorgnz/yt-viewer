@@ -1,9 +1,9 @@
 import type { SourceChannelDAO } from '../daos/sourceChannelDAO';
 import type { VideoDAO } from '../daos/videoDAO';
 import { SourceChannel } from '../entities/sourceChannel';
-import { YouTubeVideoUpsertMapper } from './YouTubeVideoUpsertMapper';
-import { YouTubeChannelDataService } from './fetch';
 import type { YouTubeClient } from './youTubeClient';
+import { YouTubeChannelDataService } from './YouTubeChannelDataService';
+import { YouTubeVideoUpsertMapper } from './YouTubeVideoUpsertMapper';
 
 export interface ImportResult
 {
