@@ -1,5 +1,6 @@
 import type { HistoryDAO } from '$lib/daos/historyDAO';
 import type { VirtualChannelDAO } from '$lib/daos/virtualChannelDAO';
+import type { VirtualChannel } from '$lib/entities/virtualChannel';
 import { AppTimezonePolicy } from '$lib/server/AppTimezonePolicy';
 import type { ServerProfileContext } from '$lib/server/ServerProfileContext';
 import type { ViewerVirtualChannel } from '$lib/viewer/types';
@@ -202,12 +203,7 @@ export class ViewerVirtualChannelService
     }
 
     private async buildVirtualChannelView(
-        virtualChannel: {
-            id: string | number;
-            name: string;
-            dailyTimerMax: number | null;
-            extraTimerSecondsRemaining: number;
-        },
+        virtualChannel: VirtualChannel,
         window: { startMs: number; endMs: number }
     ): Promise<ViewerVirtualChannel>
     {

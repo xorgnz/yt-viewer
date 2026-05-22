@@ -1,13 +1,8 @@
-import type { VirtualChannelFields } from '$lib/entities/virtualChannel';
+import { VirtualChannel } from '$lib/entities/virtualChannel';
 import {
     ViewerVirtualChannelTimerState,
     type ViewerVirtualChannel
 } from '$lib/viewer/types';
-
-type ViewerVirtualChannelTimerSource = Pick<
-    VirtualChannelFields,
-    'id' | 'name' | 'dailyTimerMax' | 'extraTimerSecondsRemaining'
->;
 
 type ViewerVirtualChannelTimerWindow = {
     startMs: number;
@@ -22,7 +17,7 @@ type ViewerVirtualChannelTimerAdvanceResult = {
 export class ViewerVirtualChannelTimer
 {
     createSnapshot(
-        virtualChannel: ViewerVirtualChannelTimerSource,
+        virtualChannel: VirtualChannel,
         timerUsageSeconds: number,
         timerWindow: ViewerVirtualChannelTimerWindow
     ): ViewerVirtualChannel
@@ -166,20 +161,20 @@ export class ViewerVirtualChannelTimer
         };
 
         if (dailyTimerMax == null) {
-            return this.createSnapshot({
+            return this.createSnapshot(new VirtualChannel({
                 id: candidate.id,
                 name: candidate.name,
                 dailyTimerMax: null,
                 extraTimerSecondsRemaining
-            }, timerUsageSeconds, timerWindow);
+            }), timerUsageSeconds, timerWindow);
         }
 
-        const fallbackSnapshot = this.createSnapshot({
+        const fallbackSnapshot = this.createSnapshot(new VirtualChannel({
             id: candidate.id,
             name: candidate.name,
             dailyTimerMax,
             extraTimerSecondsRemaining
-        }, timerUsageSeconds, timerWindow);
+        }), timerUsageSeconds, timerWindow);
 
         return {
             ...fallbackSnapshot,
