@@ -1,8 +1,7 @@
 import type { SourceChannelDAO } from '../daos/sourceChannelDAO';
 import type { VideoDAO } from '../daos/videoDAO';
 import { SourceChannel } from '../entities/sourceChannel';
-import type { YouTubeClient } from './youTubeClient';
-import { YouTubeChannelDataService } from './YouTubeChannelDataService';
+import { YouTubeChannelService } from './YouTubeChannelService';
 import { YouTubeVideoUpsertMapper } from './YouTubeVideoUpsertMapper';
 
 export interface ImportResult
@@ -13,25 +12,24 @@ export interface ImportResult
 
 export class YouTubeChannelImportService
 {
-    private readonly channelDataService: YouTubeChannelDataService;
+    private readonly youTubeChannelService: YouTubeChannelService;
     private readonly sourceChannelDAO: SourceChannelDAO;
     private readonly videoDAO: VideoDAO;
 
     constructor(
-        client: YouTubeClient,
-        channelDataService: YouTubeChannelDataService = new YouTubeChannelDataService(client),
+        youTubeChannelService: YouTubeChannelService,
         sourceChannelDAO: SourceChannelDAO,
         videoDAO: VideoDAO
     )
     {
-        this.channelDataService = channelDataService;
+        this.youTubeChannelService = youTubeChannelService;
         this.sourceChannelDAO = sourceChannelDAO;
         this.videoDAO = videoDAO;
     }
 
     async importChannel(channelExternalId: string): Promise<ImportResult>
     {
-        const { channel, videos } = await this.channelDataService.fetchChannelWithUploads(channelExternalId);
+        const { channel, videos } = await this.youTubeChannelService.fetchChannelWithUploads(channelExternalId);
         if (!channel) {
             return { channelId: null, videosUpserted: 0 };
         }
@@ -39,7 +37,7 @@ export class YouTubeChannelImportService
         const videoIds = videos
             .map((item) => item.contentDetails?.videoId || item.snippet?.resourceId?.videoId || '')
             .filter(Boolean);
-        const videoMetadataItems = await this.channelDataService.fetchVideosMetadata(
+        const videoMetadataItems = await this.youTubeChannelService.fetchVideosMetadata(
             videoIds,
             ['snippet', 'contentDetails']
         );

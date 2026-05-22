@@ -1,9 +1,10 @@
-import type { SourceChannelDAO } from '$lib/daos/sourceChannelDAO';
+import { SourceChannelDAO, type SourceChannelWithVideoStats } from '$lib/daos/sourceChannelDAO';
+import type { DatabasePool } from '$lib/daos/shared/DatabasePool';
+import { VideoDAO } from '$lib/daos/videoDAO';
 import { SourceChannel } from '$lib/entities/sourceChannel';
-import { AdminSourceChannelYouTubeCoordinator } from '$lib/server/admin/AdminSourceChannelYouTubeCoordinator';
-import { AdminYouTubeClientProvider } from '$lib/server/admin/AdminYouTubeClientProvider';
 import { ErrorResult, type ErrorFields, type ServiceResult } from '$lib/server/Error';
-import type { SourceChannelWithVideoStats } from '$lib/daos/sourceChannelDAO';
+import { YouTubeChannelImportService } from '$lib/youtube/YouTubeChannelImportService';
+import { YouTubeChannelService } from '$lib/youtube/YouTubeChannelService';
 import { YouTubeApiError } from '$lib/youtube/youTubeClient';
 
 interface AdminSourceChannelPageData
@@ -17,20 +18,14 @@ export class AdminSourceChannelPageService
 
     private readonly db: unknown;
     private readonly sourceChannelDAO: SourceChannelDAO;
-    private readonly clientProvider: AdminYouTubeClientProvider;
-    private readonly youTubeCoordinator: AdminSourceChannelYouTubeCoordinator;
 
     constructor(
         db: unknown,
-        sourceChannelDAO: SourceChannelDAO,
-        clientProvider: AdminYouTubeClientProvider,
-        youTubeCoordinator: AdminSourceChannelYouTubeCoordinator
+        sourceChannelDAO: SourceChannelDAO
     )
     {
         this.db = db;
         this.sourceChannelDAO = sourceChannelDAO;
-        this.clientProvider = clientProvider;
-        this.youTubeCoordinator = youTubeCoordinator;
     }
 
     async loadPageData(): Promise<AdminSourceChannelPageData>
@@ -51,9 +46,9 @@ export class AdminSourceChannelPageService
         ErrorFields
     >>
     {
-        let client;
+        let youTubeChannelService: YouTubeChannelService;
         try {
-            client = this.clientProvider.createClient();
+            youTubeChannelService = YouTubeChannelService.createDefault();
         } catch (error: unknown) {
             return this.buildError(
                 'youtube_not_configured',
@@ -63,7 +58,7 @@ export class AdminSourceChannelPageService
         }
 
         try {
-            const resolved = await this.youTubeCoordinator.resolveChannelReference(client, youtubeInput);
+            const resolved = await youTubeChannelService.resolveChannelReference(youtubeInput);
             if (!resolved.channelId) {
                 return this.buildError(
                     'youtube_reference_invalid',
@@ -72,7 +67,7 @@ export class AdminSourceChannelPageService
                 );
             }
 
-            const metadata = await this.youTubeCoordinator.fetchChannelMetadata(client, resolved.channelId);
+            const metadata = await youTubeChannelService.fetchChannelMetadata(resolved.channelId);
             const snippet = metadata?.snippet || {};
             const metadataThumbnailUrl = this.getBestThumbnailUrl(snippet.thumbnails as Record<string, { url?: string }> | undefined);
             const metadataPublishedAt = snippet.publishedAt ? Date.parse(snippet.publishedAt) : null;
@@ -146,9 +141,9 @@ export class AdminSourceChannelPageService
             return this.buildError('source_channel_not_found', 404, 'SourceChannel not found.');
         }
 
-        let client;
+        let youTubeChannelService: YouTubeChannelService;
         try {
-            client = this.clientProvider.createClient();
+            youTubeChannelService = YouTubeChannelService.createDefault();
         } catch (error: unknown) {
             return this.buildError(
                 'youtube_not_configured',
@@ -158,11 +153,12 @@ export class AdminSourceChannelPageService
         }
 
         try {
-            const result = await this.youTubeCoordinator.importChannelFromYouTube(
-                this.db,
-                client,
-                existing.youtubeId
-            );
+            const database = this.db as DatabasePool;
+            const result = await new YouTubeChannelImportService(
+                youTubeChannelService,
+                new SourceChannelDAO(database),
+                new VideoDAO(database)
+            ).importChannel(existing.youtubeId);
 
             if (result.channelId === null) {
                 return this.buildError(

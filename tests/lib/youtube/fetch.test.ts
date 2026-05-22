@@ -1,7 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { YouTubeClient } from '$lib/youtube/youTubeClient';
-import { YouTubeChannelDataService } from '../../../src/lib/youtube/YouTubeChannelDataService';
-import { YouTubeChannelReferenceResolver } from '../../../src/lib/youtube/YouTubeChannelReferenceResolver';
+import { YouTubeChannelService } from '../../../src/lib/youtube/YouTubeChannelService';
 
 const okJson = (body: unknown) => new Response(JSON.stringify(body), { status: 200, headers: { 'content-type': 'application/json' } });
 const validChannelId = 'UC1234567890123456789012';
@@ -18,7 +17,7 @@ describe('YouTube fetch services', () => {
             okJson({ items: [{ id: 'UC123', contentDetails: { relatedPlaylists: { uploads: 'UU123' } } }] })
         );
         const yt = new YouTubeClient({ apiKey: 'KEY', fetchImpl: fetchMock });
-        const service = new YouTubeChannelDataService(yt);
+        const service = new YouTubeChannelService(yt);
         const ch = await service.fetchChannelMetadata('UC123');
         expect(ch?.id).toBe('UC123');
     });
@@ -38,7 +37,7 @@ describe('YouTube fetch services', () => {
             .mockResolvedValueOnce(okJson({ items: [{ id: 'p3' }] }));
 
         const yt = new YouTubeClient({ apiKey: 'KEY', fetchImpl: fetchMock });
-        const service = new YouTubeChannelDataService(yt);
+        const service = new YouTubeChannelService(yt);
         const out = await service.fetchChannelWithUploads('UC123');
 
         expect(out.uploadsPlaylistId).toBe('UU123');
@@ -50,7 +49,7 @@ describe('YouTube fetch services', () => {
     it('fetchChannelWithUploads returns empty when channel not found', async () => {
         const fetchMock = vi.fn(async () => okJson({ items: [] }));
         const yt = new YouTubeClient({ apiKey: 'KEY', fetchImpl: fetchMock });
-        const service = new YouTubeChannelDataService(yt);
+        const service = new YouTubeChannelService(yt);
         const out = await service.fetchChannelWithUploads('UC_NOPE');
         expect(out.channel).toBeNull();
         expect(out.uploadsPlaylistId).toBeNull();
@@ -65,7 +64,7 @@ describe('YouTube fetch services', () => {
                 .mockResolvedValueOnce({ items: [{ id: 'V50' }, { id: 'V51' }] })
         } as unknown as YouTubeClient;
 
-        const service = new YouTubeChannelDataService(client);
+        const service = new YouTubeChannelService(client);
         const ids = [
             ...Array.from({ length: 52 }, (_, index) => `V${index}`),
             'V0',
@@ -92,18 +91,16 @@ describe('YouTube fetch services', () => {
     });
 
     it('resolves direct channel ids without fetching the handle page', async () => {
-        const metadataService = {
-            fetchChannelMetadata: vi.fn()
-        } as unknown as YouTubeChannelDataService;
-        const resolver = new YouTubeChannelReferenceResolver({} as YouTubeClient, metadataService);
+        const service = new YouTubeChannelService({} as YouTubeClient);
+        const fetchChannelMetadata = vi.spyOn(service, 'fetchChannelMetadata');
 
-        const result = await resolver.resolveChannelReference(validChannelId);
+        const result = await service.resolveChannelReference(validChannelId);
 
         expect(result).toEqual({
             channelId: validChannelId,
             normalizedInput: validChannelId
         });
-        expect(metadataService.fetchChannelMetadata).not.toHaveBeenCalled();
+        expect(fetchChannelMetadata).not.toHaveBeenCalled();
     });
 
     it('resolves handle URLs by scraping the page and confirming the channel metadata', async () => {
@@ -111,14 +108,13 @@ describe('YouTube fetch services', () => {
             `<script>var ytInitialData = {"externalId":"${validChannelId}"}</script>`,
             { status: 200, headers: { 'content-type': 'text/html' } }
         ));
-        const metadataService = {
-            fetchChannelMetadata: vi.fn(async () => ({ id: validChannelId }))
-        } as unknown as YouTubeChannelDataService;
+        const service = new YouTubeChannelService({} as YouTubeClient);
+        const fetchChannelMetadata = vi.spyOn(service, 'fetchChannelMetadata')
+            .mockResolvedValue({ id: validChannelId } as never);
 
         vi.stubGlobal('fetch', fetchMock);
 
-        const resolver = new YouTubeChannelReferenceResolver({} as YouTubeClient, metadataService);
-        const result = await resolver.resolveChannelReference('https://www.youtube.com/@demo-handle');
+        const result = await service.resolveChannelReference('https://www.youtube.com/@demo-handle');
 
         expect(result).toEqual({
             channelId: validChannelId,
@@ -131,7 +127,7 @@ describe('YouTube fetch services', () => {
                 method: 'GET'
             })
         );
-        expect(metadataService.fetchChannelMetadata).toHaveBeenCalledWith(validChannelId);
+        expect(fetchChannelMetadata).toHaveBeenCalledWith(validChannelId);
     });
 });
 // apply-patch-anchor - do not delete

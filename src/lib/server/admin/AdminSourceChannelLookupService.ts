@@ -1,6 +1,5 @@
-import { AdminSourceChannelYouTubeCoordinator } from '$lib/server/admin/AdminSourceChannelYouTubeCoordinator';
-import { AdminYouTubeClientProvider } from '$lib/server/admin/AdminYouTubeClientProvider';
 import { ErrorResult, type ErrorFields, type ServiceResult } from '$lib/server/Error';
+import { YouTubeChannelService } from '$lib/youtube/YouTubeChannelService';
 import { YouTubeApiError } from '$lib/youtube/youTubeClient';
 
 interface AdminSourceChannelLookupData
@@ -14,26 +13,14 @@ interface AdminSourceChannelLookupData
 
 export class AdminSourceChannelLookupService
 {
-    private readonly clientProvider: AdminYouTubeClientProvider;
-    private readonly youTubeCoordinator: AdminSourceChannelYouTubeCoordinator;
-
-    constructor(
-        clientProvider: AdminYouTubeClientProvider,
-        youTubeCoordinator: AdminSourceChannelYouTubeCoordinator
-    )
-    {
-        this.clientProvider = clientProvider;
-        this.youTubeCoordinator = youTubeCoordinator;
-    }
-
     async lookupSourceChannel(youtubeInput: string): Promise<ServiceResult<
         AdminSourceChannelLookupData,
         ErrorFields
     >>
     {
-        let client;
+        let youTubeChannelService: YouTubeChannelService;
         try {
-            client = this.clientProvider.createClient();
+            youTubeChannelService = YouTubeChannelService.createDefault();
         } catch (error: unknown) {
             return this.buildError(
                 'youtube_not_configured',
@@ -43,7 +30,7 @@ export class AdminSourceChannelLookupService
         }
 
         try {
-            const resolved = await this.youTubeCoordinator.resolveChannelReference(client, youtubeInput);
+            const resolved = await youTubeChannelService.resolveChannelReference(youtubeInput);
             if (!resolved.channelId) {
                 return this.buildError(
                     'source_channel_not_found',
@@ -52,7 +39,7 @@ export class AdminSourceChannelLookupService
                 );
             }
 
-            const item = await this.youTubeCoordinator.fetchChannelMetadata(client, resolved.channelId);
+            const item = await youTubeChannelService.fetchChannelMetadata(resolved.channelId);
             if (!item) {
                 return this.buildError(
                     'source_channel_not_found',
@@ -70,7 +57,7 @@ export class AdminSourceChannelLookupService
         }
     }
 
-    private buildLookupData(item: Awaited<ReturnType<AdminSourceChannelYouTubeCoordinator['fetchChannelMetadata']>> extends infer TItem ? Exclude<TItem, null> : never): AdminSourceChannelLookupData
+    private buildLookupData(item: NonNullable<Awaited<ReturnType<YouTubeChannelService['fetchChannelMetadata']>>>): AdminSourceChannelLookupData
     {
         const snippet = item.snippet || {};
         const thumbUrl = this.getBestThumbnailUrl(snippet.thumbnails as Record<string, { url?: string }> | undefined);

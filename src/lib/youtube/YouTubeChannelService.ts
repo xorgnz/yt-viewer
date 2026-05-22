@@ -1,5 +1,12 @@
-import type { YouTubeClient } from './youTubeClient';
-import { YouTubeChannelDataService } from './YouTubeChannelDataService';
+import type { ChannelsListResponse, PlaylistItemsListResponse, VideosListResponse } from './youTubeClient';
+import { YouTubeClient } from './youTubeClient';
+
+export interface ChannelWithUploads
+{
+    channel: ChannelsListResponse['items'][number] | null;
+    uploadsPlaylistId: string | null;
+    videos: PlaylistItemsListResponse['items'];
+}
 
 export interface ResolvedChannelReference
 {
@@ -7,7 +14,7 @@ export interface ResolvedChannelReference
     normalizedInput: string;
 }
 
-export class YouTubeChannelReferenceResolver
+export class YouTubeChannelService
 {
     private static readonly YOUTUBE_HANDLE_HOSTS = new Set([
         'youtube.com',
@@ -15,14 +22,83 @@ export class YouTubeChannelReferenceResolver
         'm.youtube.com'
     ]);
 
-    private readonly channelDataService: YouTubeChannelDataService;
+    private readonly client: YouTubeClient;
 
-    constructor(
-        client: YouTubeClient,
-        channelDataService: YouTubeChannelDataService = new YouTubeChannelDataService(client)
-    )
+    static createDefault(): YouTubeChannelService
     {
-        this.channelDataService = channelDataService;
+        return new YouTubeChannelService(new YouTubeClient());
+    }
+
+    constructor(client: YouTubeClient)
+    {
+        this.client = client;
+    }
+
+    async fetchChannelMetadata(channelId: string): Promise<ChannelsListResponse['items'][number] | null>
+    {
+        const response = await this.client.getChannelById(channelId, ['snippet', 'contentDetails']);
+        const item = response?.items?.[0] || null;
+        return item ?? null;
+    }
+
+    async fetchAllPlaylistItems(
+        playlistId: string,
+        parts: string[] = ['snippet', 'contentDetails']
+    ): Promise<PlaylistItemsListResponse['items']>
+    {
+        const all: PlaylistItemsListResponse['items'] = [];
+        let pageToken: string | undefined = undefined;
+
+        do {
+            const page = await this.client.listPlaylistItems({
+                playlistId,
+                pageToken,
+                parts,
+                maxResults: 50
+            });
+
+            if (page?.items?.length) {
+                all.push(...page.items);
+            }
+
+            pageToken = page.nextPageToken;
+        } while (pageToken);
+
+        return all;
+    }
+
+    async fetchVideosMetadata(
+        videoIds: string[],
+        parts: string[] = ['snippet', 'contentDetails']
+    ): Promise<VideosListResponse['items']>
+    {
+        const uniqueIds = Array.from(new Set(videoIds.map((id) => String(id).trim()).filter(Boolean)));
+        const all: VideosListResponse['items'] = [];
+
+        for (let index = 0; index < uniqueIds.length; index += 50) {
+            const batchIds = uniqueIds.slice(index, index + 50);
+            const page = await this.client.listVideos({ ids: batchIds, parts });
+            if (page?.items?.length) {
+                all.push(...page.items);
+            }
+        }
+
+        return all;
+    }
+
+    async fetchChannelWithUploads(channelId: string): Promise<ChannelWithUploads>
+    {
+        const channel = await this.fetchChannelMetadata(channelId);
+        const uploadsPlaylistId = channel?.contentDetails?.relatedPlaylists?.uploads || null;
+        const videos = uploadsPlaylistId
+            ? await this.fetchAllPlaylistItems(uploadsPlaylistId)
+            : [];
+
+        return {
+            channel,
+            uploadsPlaylistId,
+            videos
+        };
     }
 
     async resolveChannelReference(input: string): Promise<ResolvedChannelReference>
@@ -60,7 +136,7 @@ export class YouTubeChannelReferenceResolver
 
         try {
             const url = new URL(trimmed);
-            if (!YouTubeChannelReferenceResolver.YOUTUBE_HANDLE_HOSTS.has(url.hostname)) {
+            if (!YouTubeChannelService.YOUTUBE_HANDLE_HOSTS.has(url.hostname)) {
                 return null;
             }
 
@@ -115,7 +191,7 @@ export class YouTubeChannelReferenceResolver
                 return null;
             }
 
-            const channel = await this.channelDataService.fetchChannelMetadata(channelId);
+            const channel = await this.fetchChannelMetadata(channelId);
             return channel?.id || null;
         } finally {
             clearTimeout(timeoutId);
