@@ -1,20 +1,17 @@
 <script lang="ts">
     import VideoCard from '$lib/components/VideoCard.svelte';
+    import type { Video } from '$lib/entities/video';
     import { VideoMutationService } from '$lib/viewer/VideoMutationService';
-    import type {
-        ViewerCardClickHandler,
-        ViewerCardMouseDownHandler,
-        ViewerVideo
-    } from '$lib/viewer/ViewerVideo';
+    import type { ViewerCardClickHandler, ViewerCardMouseDownHandler } from '$lib/components/VideoCard.svelte';
 
-    export let videos: ViewerVideo[] = [];
+    export let videos: Video[] = [];
     export let selectedVideoIds: Array<string | number> = [];
     export let disabled = false;
-    export let buildVideoWatchHref: ((video: ViewerVideo) => string) | null = null;
+    export let buildVideoWatchHref: ((video: Video) => string) | null = null;
     export let videoMutationService: VideoMutationService | null = null;
     export let onCardMouseDown: ViewerCardMouseDownHandler | null = null;
     export let onCardClick: ViewerCardClickHandler | null = null;
-    export let onVideoChange: ((video: ViewerVideo) => void) | null = null;
+    export let onVideoChange: ((video: Video) => void) | null = null;
 </script>
 
 <section class="panel viewer-results-panel">

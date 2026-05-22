@@ -1,8 +1,8 @@
 import type {
     BulkActionUndoState,
 } from '$lib/viewer/BulkActionUndoState';
+import type { Video } from '$lib/entities/video';
 import { BulkActionFeedbackTone } from '$lib/viewer/BulkActionFeedback';
-import type { ViewerVideo } from '$lib/viewer/ViewerVideo';
 import {
     ViewerSelectionControlState,
     ViewerSelectionFlagKind
@@ -61,11 +61,11 @@ function buildViewerSelectionUndoPayload(state: ViewerSelectionState): BulkActio
 }
 
 function applyBulkFlagToVisibleVideos(
-    videos: ViewerVideo[],
+    videos: Video[],
     kind: ViewerSelectionFlagKind,
     value: ViewerSelectionFlagValue,
     updatedVideoIds: Array<string | number>
-): ViewerVideo[]
+): Video[]
 {
     const updatedIdSet = new Set(updatedVideoIds);
     if (updatedIdSet.size === 0) {
@@ -77,17 +77,16 @@ function applyBulkFlagToVisibleVideos(
             return video;
         }
 
-        return {
-            ...video,
+        return video.with({
             [kind]: value
-        };
+        } as Partial<Video>);
     });
 }
 
 function restoreVisibleVideoSnapshots(
-    videos: ViewerVideo[],
+    videos: Video[],
     restoredStates: ViewerSelectionVideoSnapshot[]
-): ViewerVideo[]
+): Video[]
 {
     const restoredStateMap = new Map<string, Omit<ViewerSelectionVideoSnapshot, 'id'>>();
 
@@ -109,10 +108,7 @@ function restoreVisibleVideoSnapshots(
             return video;
         }
 
-        return {
-            ...video,
-            ...restoredStateMap.get(normalizedVideoId)!
-        };
+        return video.with(restoredStateMap.get(normalizedVideoId)! as Partial<Video>);
     });
 }
 

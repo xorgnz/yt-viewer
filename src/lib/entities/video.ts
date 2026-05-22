@@ -15,6 +15,11 @@ export type VideoFields = {
     duration_seconds?: number | null;
     thumbnail_url?: string | null;
     length_classification: VideoLengthClassification;
+    channel_title?: string;
+    channel_youtube_id?: string;
+    watched?: number;
+    favorite?: number;
+    ignored?: number;
 };
 
 export class Video
@@ -28,6 +33,11 @@ export class Video
     readonly duration_seconds?: number | null;
     readonly thumbnail_url?: string | null;
     readonly length_classification: VideoLengthClassification;
+    readonly channel_title: string;
+    readonly channel_youtube_id: string;
+    readonly watched: number;
+    readonly favorite: number;
+    readonly ignored: number;
 
     constructor(data: VideoFields)
     {
@@ -40,6 +50,11 @@ export class Video
         this.duration_seconds = data.duration_seconds;
         this.thumbnail_url = data.thumbnail_url;
         this.length_classification = data.length_classification;
+        this.channel_title = data.channel_title ?? '';
+        this.channel_youtube_id = data.channel_youtube_id ?? '';
+        this.watched = data.watched ?? 0;
+        this.favorite = data.favorite ?? 0;
+        this.ignored = data.ignored ?? 0;
     }
 
     toFields(): VideoFields
@@ -54,6 +69,11 @@ export class Video
             duration_seconds: this.duration_seconds,
             thumbnail_url: this.thumbnail_url,
             length_classification: this.length_classification,
+            channel_title: this.channel_title,
+            channel_youtube_id: this.channel_youtube_id,
+            watched: this.watched,
+            favorite: this.favorite,
+            ignored: this.ignored
         };
     }
 
@@ -71,6 +91,11 @@ export class Video
             ((value as any).published_at === undefined || (value as any).published_at === null || typeof (value as any).published_at === 'number') &&
             ((value as any).duration_seconds === undefined || (value as any).duration_seconds === null || typeof (value as any).duration_seconds === 'number') &&
             ((value as any).thumbnail_url === undefined || (value as any).thumbnail_url === null || typeof (value as any).thumbnail_url === 'string') &&
+            ((value as any).channel_title === undefined || typeof (value as any).channel_title === 'string') &&
+            ((value as any).channel_youtube_id === undefined || typeof (value as any).channel_youtube_id === 'string') &&
+            ((value as any).watched === undefined || typeof (value as any).watched === 'number') &&
+            ((value as any).favorite === undefined || typeof (value as any).favorite === 'number') &&
+            ((value as any).ignored === undefined || typeof (value as any).ignored === 'number') &&
             (
                 (value as any).length_classification === VideoLengthClassification.Long ||
                 (value as any).length_classification === VideoLengthClassification.Short ||
@@ -90,7 +115,12 @@ export class Video
             published_at: (patch as any).published_at ?? this.published_at,
             duration_seconds: (patch as any).duration_seconds ?? this.duration_seconds,
             thumbnail_url: (patch as any).thumbnail_url ?? this.thumbnail_url,
-            length_classification: (patch as any).length_classification ?? this.length_classification
+            length_classification: (patch as any).length_classification ?? this.length_classification,
+            channel_title: (patch as any).channel_title ?? this.channel_title,
+            channel_youtube_id: (patch as any).channel_youtube_id ?? this.channel_youtube_id,
+            watched: (patch as any).watched ?? this.watched,
+            favorite: (patch as any).favorite ?? this.favorite,
+            ignored: (patch as any).ignored ?? this.ignored
         });
     }
 }

@@ -1,17 +1,15 @@
 import { describe, expect, it } from 'vitest';
 import { SideNavVirtualChannelPanelPresenter } from '../../src/lib/components/SideNavVirtualChannelPanelPresenter';
 import type { SideNavVirtualChannelViewModel } from '../../src/lib/components/SideNavVirtualChannelPanelViewModel';
-import {
-    ViewerVirtualChannel,
-    ViewerVirtualChannelTimerState
-} from '../../src/lib/viewer/ViewerVirtualChannel';
+import { VirtualChannel } from '../../src/lib/entities/virtualChannel';
+import { ViewerVirtualChannelTimerState } from '../../src/lib/viewer/ViewerVirtualChannelTimer';
 
 describe('SideNavVirtualChannelPanelPresenter', () => {
     function createViewModel(
         overrides: Partial<SideNavVirtualChannelViewModel> = {}
     ): SideNavVirtualChannelViewModel
     {
-        return new ViewerVirtualChannel({
+        return new VirtualChannel({
             id: 'vc_demo',
             name: 'Timers',
             dailyTimerMax: 60,

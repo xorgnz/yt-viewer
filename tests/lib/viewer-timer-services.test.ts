@@ -4,16 +4,15 @@ import { VirtualChannel } from '../../src/lib/entities/virtualChannel';
 import { ViewerRecommendationService } from '../../src/lib/server/viewer/ViewerRecommendationService';
 import { ViewerVirtualChannelService } from '../../src/lib/server/viewer/ViewerVirtualChannelService';
 import { ViewerWatchService } from '../../src/lib/server/viewer/ViewerWatchService';
-import { viewerVirtualChannelTimer } from '../../src/lib/viewer/ViewerVirtualChannelTimer';
+import {
+    viewerVirtualChannelTimer,
+    ViewerVirtualChannelTimerState
+} from '../../src/lib/viewer/ViewerVirtualChannelTimer';
 import {
     ViewerIgnoredFilter,
     ViewerSort,
     ViewerWatchedFilter
 } from '../../src/lib/viewer/ViewerFilters';
-import {
-    ViewerVirtualChannel,
-    ViewerVirtualChannelTimerState
-} from '../../src/lib/viewer/ViewerVirtualChannel';
 
 function createVideo(id: number): ViewerVideoRecord
 {
@@ -44,9 +43,9 @@ function createProfileContext()
     } as any;
 }
 
-function createViewerVirtualChannel(overrides: Partial<ViewerVirtualChannel> = {}): ViewerVirtualChannel
+function createViewerVirtualChannel(overrides: Partial<VirtualChannel> = {}): VirtualChannel
 {
-    return new ViewerVirtualChannel({
+    return new VirtualChannel({
         id: '2',
         name: 'Timers',
         dailyTimerMax: 120,

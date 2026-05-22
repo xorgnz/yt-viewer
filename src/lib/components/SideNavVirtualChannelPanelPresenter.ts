@@ -1,5 +1,5 @@
 import type { SideNavVirtualChannelViewModel } from '$lib/components/SideNavVirtualChannelPanelViewModel';
-import { ViewerVirtualChannelTimerState } from '$lib/viewer/ViewerVirtualChannel';
+import { ViewerVirtualChannelTimerState } from '$lib/viewer/ViewerVirtualChannelTimer';
 
 export class SideNavVirtualChannelPanelPresenter
 {
@@ -26,7 +26,7 @@ export class SideNavVirtualChannelPanelPresenter
 
     getConsumedDurationLabel(): string
     {
-        return this.formatDuration(this.virtualChannel.timerUsageSeconds);
+        return this.formatDuration(this.virtualChannel.timerUsageSeconds ?? 0);
     }
 
     getTotalDurationLabel(): string | null
@@ -40,7 +40,7 @@ export class SideNavVirtualChannelPanelPresenter
 
         const totalAvailableSeconds = Math.max(
             0,
-            this.virtualChannel.timerUsageSeconds + (this.virtualChannel.combinedTimerRemainingSeconds ?? 0)
+            (this.virtualChannel.timerUsageSeconds ?? 0) + (this.virtualChannel.combinedTimerRemainingSeconds ?? 0)
         );
 
         return this.formatDuration(totalAvailableSeconds);
@@ -71,12 +71,12 @@ export class SideNavVirtualChannelPanelPresenter
         if (
             this.virtualChannel.dailyTimerMax == null
             || this.virtualChannel.timerState === ViewerVirtualChannelTimerState.Unlimited
-            || this.virtualChannel.extraTimerSecondsRemaining <= 0
+            || (this.virtualChannel.extraTimerSecondsRemaining ?? 0) <= 0
         ) {
             return null;
         }
 
-        return this.formatDuration(this.virtualChannel.extraTimerSecondsRemaining);
+        return this.formatDuration(this.virtualChannel.extraTimerSecondsRemaining ?? 0);
     }
 
     private formatDuration(seconds: number): string

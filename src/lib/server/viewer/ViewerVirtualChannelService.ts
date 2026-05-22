@@ -3,7 +3,6 @@ import type { VirtualChannelDAO } from '$lib/daos/virtualChannelDAO';
 import type { VirtualChannel } from '$lib/entities/virtualChannel';
 import { AppTimezonePolicy } from '$lib/server/AppTimezonePolicy';
 import type { ServerProfileContext } from '$lib/server/ServerProfileContext';
-import { ViewerVirtualChannel } from '$lib/viewer/ViewerVirtualChannel';
 import { viewerVirtualChannelTimer } from '$lib/viewer/ViewerVirtualChannelTimer';
 
 export class ViewerVirtualChannelService
@@ -34,7 +33,7 @@ export class ViewerVirtualChannelService
         };
     }
 
-    async loadVirtualChannels(): Promise<ViewerVirtualChannel[]>
+    async loadVirtualChannels(): Promise<VirtualChannel[]>
     {
         const virtualChannels = await this.virtualChannelDAO.list();
         const timezone = AppTimezonePolicy.configuredTimezone;
@@ -44,7 +43,7 @@ export class ViewerVirtualChannelService
         return await Promise.all(virtualChannels.map((virtualChannel) => this.buildVirtualChannelView(virtualChannel, window)));
     }
 
-    async getVirtualChannelById(virtualChannelId: string | number): Promise<ViewerVirtualChannel | null>
+    async getVirtualChannelById(virtualChannelId: string | number): Promise<VirtualChannel | null>
     {
         const virtualChannel = await this.virtualChannelDAO.get(virtualChannelId);
         if (!virtualChannel) {
@@ -81,7 +80,7 @@ export class ViewerVirtualChannelService
 
     async consumeExtraTimerSecondsForWatchDelta(
         virtualChannelId: string | number,
-        virtualChannel: ViewerVirtualChannel | null,
+        virtualChannel: VirtualChannel | null,
         consumedSecondsDelta: number
     ): Promise<void>
     {
@@ -205,7 +204,7 @@ export class ViewerVirtualChannelService
     private async buildVirtualChannelView(
         virtualChannel: VirtualChannel,
         window: { startMs: number; endMs: number }
-    ): Promise<ViewerVirtualChannel>
+    ): Promise<VirtualChannel>
     {
         if (virtualChannel.dailyTimerMax == null) {
             return viewerVirtualChannelTimer.createSnapshot(virtualChannel, 0, window);

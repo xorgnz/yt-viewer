@@ -2,7 +2,7 @@ import type {
     ViewerFilterInputState,
     ViewerFilters,
 } from '$lib/viewer/ViewerFilters';
-import type { ViewerVideo } from '$lib/viewer/ViewerVideo';
+import type { Video } from '$lib/entities/video';
 import type { ViewerPaginationState, ViewerVisiblePage } from '$lib/viewer/ViewerPagination';
 import {
     ViewerIgnoredFilter,
@@ -156,7 +156,7 @@ function buildViewerFilterQuery(
     return params.toString();
 }
 
-function createViewerSelectionSnapshots(videos: ViewerVideo[]): ViewerSelectionVideoSnapshot[]
+function createViewerSelectionSnapshots(videos: Video[]): ViewerSelectionVideoSnapshot[]
 {
     return videos.map((video) => ({
         id: video.id,

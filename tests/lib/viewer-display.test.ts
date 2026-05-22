@@ -1,12 +1,12 @@
 import { describe, expect, it } from 'vitest';
+import { Video, VideoLengthClassification } from '../../src/lib/entities/video';
 import { ViewerVideoDisplayPresenter } from '../../src/lib/viewer/display';
-import type { ViewerVideo } from '../../src/lib/viewer/ViewerVideo';
 import { ViewerSelectionFlagKind } from '../../src/lib/viewer/selection/types';
 
 describe('ViewerVideoDisplayPresenter', () => {
-    function createVideo(overrides: Partial<ViewerVideo> = {}): ViewerVideo
+    function createVideo(overrides: Partial<Video> = {}): Video
     {
-        return {
+        return new Video({
             id: 1,
             youtube_id: 'abc123',
             channel_id: 10,
@@ -15,13 +15,14 @@ describe('ViewerVideoDisplayPresenter', () => {
             published_at: Date.UTC(2026, 3, 10),
             duration_seconds: 120,
             thumbnail_url: 'https://example.test/thumb.jpg',
+            length_classification: VideoLengthClassification.Short,
             channel_title: 'Channel',
             channel_youtube_id: 'chan123',
             watched: 0,
             favorite: 0,
             ignored: 0,
             ...overrides
-        };
+        });
     }
 
     it('builds display state for a favorite watched video', () => {

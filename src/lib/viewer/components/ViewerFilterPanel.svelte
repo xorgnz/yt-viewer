@@ -1,18 +1,16 @@
 <script lang="ts">
     import DatePicker from '$lib/components/DatePicker.svelte';
+    import type { SourceChannel } from '$lib/entities/sourceChannel';
     import {
         ViewerSort,
         ViewerWatchedFilter
     } from '$lib/viewer/ViewerFilters';
     import type {
-        ViewerChannel
-    } from '$lib/viewer/ViewerChannel';
-    import type {
         ViewerFilters,
     } from '$lib/viewer/ViewerFilters';
 
     export let filters: ViewerFilters;
-    export let channels: ViewerChannel[] = [];
+    export let channels: SourceChannel[] = [];
     export let activeVirtualChannelName: string | null = null;
     export let today = '';
     export let termInput = '';

@@ -1,6 +1,6 @@
 import { deserialize } from '$app/forms';
+import type { Video } from '$lib/entities/video';
 import type { BulkActionUndoState } from '$lib/viewer/BulkActionUndoState';
-import type { ViewerVideo } from '$lib/viewer/ViewerVideo';
 import type { ViewerSelectionFlagKind, ViewerSelectionFlagValue } from '$lib/viewer/selection/types';
 
 type MutationActionResult = {
@@ -37,10 +37,10 @@ export class VideoMutationService
     }
 
     async toggleVideoFlag(
-        video: ViewerVideo,
+        video: Video,
         kind: ViewerSelectionFlagKind,
         value: ViewerSelectionFlagValue
-    ): Promise<ViewerVideo | null>
+    ): Promise<Video | null>
     {
         const form = new FormData();
         form.set('videoId', String(video.id));
@@ -53,10 +53,9 @@ export class VideoMutationService
             return null;
         }
 
-        return {
-            ...video,
+        return video.with({
             [kind]: value
-        };
+        } as Partial<Video>);
     }
 
     async bulkUpdateFlags(input: {

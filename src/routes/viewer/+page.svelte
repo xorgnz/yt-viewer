@@ -2,6 +2,8 @@
     import { browser } from '$app/environment';
     import { goto } from '$app/navigation';
     import { onMount } from 'svelte';
+    import { SourceChannel } from '$lib/entities/sourceChannel';
+    import { Video } from '$lib/entities/video';
     import { VideoMutationService } from '$lib/viewer/VideoMutationService';
     import {
         viewerBulkActions
@@ -27,12 +29,11 @@
     } from '$lib/viewer/ViewerFilters';
     import {
         ViewerVirtualChannelTimerState,
-    } from '$lib/viewer/ViewerVirtualChannel';
+    } from '$lib/viewer/ViewerVirtualChannelTimer';
     import type {
         BulkActionFeedback,
     } from '$lib/viewer/BulkActionFeedback';
     import type { ViewerPageData } from '$lib/viewer/ViewerPageData';
-    import type { ViewerVideo } from '$lib/viewer/ViewerVideo';
     import type { ViewerVisiblePage } from '$lib/viewer/ViewerPagination';
     import { ViewerSelectionContext } from '$lib/viewer/selection/context';
     import { viewerSelectionStateManager } from '$lib/viewer/selection/core';
@@ -70,7 +71,7 @@
     let hasActiveSelection = false;
     let selectedCount = 0;
     let offPageSelectedCount = 0;
-    let visibleVideos: ViewerVideo[] = data.videos;
+    let visibleVideos: Video[] = data.videos.map((video) => new Video(video));
     let currentPageSelectionVideos: ViewerSelectionVideoSnapshot[] = [];
     let watchedControlState: ViewerSelectionControlState = ViewerSelectionControlStateValue.Unchecked;
     let favoriteControlState: ViewerSelectionControlState = ViewerSelectionControlStateValue.Unchecked;
@@ -79,13 +80,14 @@
     let bulkActionFeedback: BulkActionFeedback | null = null;
     let sortPreferenceInitialized = false;
     const videoMutationService = new VideoMutationService();
+    let sourceChannels = data.channels.map((channel) => new SourceChannel(channel));
 
     function buildPageHref(page: number): string
     {
         return viewerPageState.buildViewerPageHref(f, page);
     }
 
-    function buildVideoWatchHref(video: ViewerVideo): string
+    function buildVideoWatchHref(video: Video): string
     {
         return viewerPageState.buildViewerWatchHref(f, video.youtube_id);
     }
@@ -208,7 +210,7 @@
         selectionState = viewerSelectionStateManager.clear(selectionState);
     }
 
-    function handleVisibleVideoChange(video: ViewerVideo)
+    function handleVisibleVideoChange(video: Video)
     {
         visibleVideos = visibleVideos.map((item) => item.id === video.id ? video : item);
     }
@@ -314,7 +316,8 @@
     }
 
     $: f = data.filters;
-    $: visibleVideos = data.videos;
+    $: visibleVideos = data.videos.map((video) => new Video(video));
+    $: sourceChannels = data.channels.map((channel) => new SourceChannel(channel));
     $: currentPageSelectionVideos = viewerPageState.createViewerSelectionSnapshots(visibleVideos);
     $: ({ termInput, dateFromInput, dateToInput, channelIdInput, sortMode, limitInput, watchedMode, showIgnored } =
         viewerPageState.deriveViewerFilterInputState(f));
@@ -414,7 +417,7 @@
 <div class="page stack viewer-page">
     <ViewerFilterPanel
         filters={f}
-        channels={data.channels}
+        channels={sourceChannels}
         activeVirtualChannelName={activeVirtualChannel?.name ?? null}
         {today}
         bind:termInput

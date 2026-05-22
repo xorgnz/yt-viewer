@@ -8,7 +8,7 @@ import type { ViewerQueryFilters } from '$lib/server/viewer/ViewerQueryParser';
 import { ViewerRecommendationService } from '$lib/server/viewer/ViewerRecommendationService';
 import type { ViewerVirtualChannelService } from '$lib/server/viewer/ViewerVirtualChannelService';
 import type { ServerProfileContext } from '$lib/server/ServerProfileContext';
-import type { ViewerVirtualChannel, ViewerVirtualChannelFields } from '$lib/viewer/ViewerVirtualChannel';
+import type { VirtualChannel, VirtualChannelFields } from '$lib/entities/virtualChannel';
 import { viewerVirtualChannelTimer } from '$lib/viewer/ViewerVirtualChannelTimer';
 
 const HISTORY_SESSION_GAP_MS = 5 * 60 * 1000;
@@ -21,7 +21,7 @@ export type ViewerWatchLoadModel = {
     previousVideoYoutubeId: string | null;
     nextVideoYoutubeId: string | null;
     currentVirtualChannelId: string | number | null;
-    activeVirtualChannel: ViewerVirtualChannelFields | null;
+    activeVirtualChannel: VirtualChannelFields | null;
     playbackBlockedMessage: string | null;
     activeHistorySessionWatchSecondsBaseline: number;
     activeHistorySessionLastUpdatedAt: number | null;
@@ -82,7 +82,7 @@ export class ViewerWatchService
     async load(videoYoutubeId: string, filters: ViewerQueryFilters): Promise<ViewerWatchLoadResult>
     {
         let playbackBlockedMessage: string | null = null;
-        let activeVirtualChannel: ViewerVirtualChannel | null = null;
+        let activeVirtualChannel: VirtualChannel | null = null;
 
         const video = await this.loadVideo(videoYoutubeId);
         if (!video) {
@@ -390,7 +390,7 @@ export class ViewerWatchService
 
     private async shouldBlockReloadForNearlyCappedSession(
         videoId: string | number,
-        virtualChannel: ViewerVirtualChannel,
+        virtualChannel: VirtualChannel,
         now = Date.now()
     ): Promise<boolean>
     {

@@ -1,4 +1,4 @@
-import type { ViewerVideo } from '$lib/viewer/ViewerVideo';
+import type { Video } from '$lib/entities/video';
 import {
     ViewerSelectionFlagKind
 } from '$lib/viewer/selection/types';
@@ -27,9 +27,9 @@ export interface ViewerVideoDisplayState
 
 export class ViewerVideoDisplayPresenter
 {
-    private readonly video: ViewerVideo;
+    private readonly video: Video;
 
-    public constructor(video: ViewerVideo)
+    public constructor(video: Video)
     {
         this.video = video;
     }
@@ -78,7 +78,7 @@ export class ViewerVideoDisplayPresenter
         return this.getToggleTitle(kind);
     }
 
-    private formatDate(ms: number | null): string
+    private formatDate(ms: number | null | undefined): string
     {
         if (!ms) {
             return '';

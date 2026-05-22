@@ -1,15 +1,15 @@
-import type { ViewerChannelFields } from '$lib/viewer/ViewerChannel';
+import type { SourceChannelFields } from '$lib/entities/sourceChannel';
+import type { VideoFields } from '$lib/entities/video';
+import type { VirtualChannelFields } from '$lib/entities/virtualChannel';
 import type { ViewerFilters } from '$lib/viewer/ViewerFilters';
-import type { ViewerVideoFields } from '$lib/viewer/ViewerVideo';
-import type { ViewerVirtualChannelFields } from '$lib/viewer/ViewerVirtualChannel';
 
 export type ViewerPageData = {
     filters: ViewerFilters;
-    videos: ViewerVideoFields[];
+    videos: VideoFields[];
     totalCount: number;
-    channels: ViewerChannelFields[];
-    virtualChannels: ViewerVirtualChannelFields[];
-    activeVirtualChannel: ViewerVirtualChannelFields | null;
+    channels: SourceChannelFields[];
+    virtualChannels: VirtualChannelFields[];
+    activeVirtualChannel: VirtualChannelFields | null;
     profileId: string | number;
     profileKey: string;
     profileName: string;

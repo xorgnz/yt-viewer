@@ -1,18 +1,17 @@
 <script lang="ts">
     import { createEventDispatcher } from 'svelte';
+    import type { Video } from '$lib/entities/video';
     import ThumbnailImage from '$lib/components/ThumbnailImage.svelte';
     import {
         ViewerVideoDisplayPresenter
     } from '$lib/viewer/display';
     import { VideoMutationService } from '$lib/viewer/VideoMutationService';
     import type { ViewerSelectionFlagKind, ViewerSelectionFlagValue } from '$lib/viewer/selection/types';
-    import type {
-        ViewerCardClickHandler,
-        ViewerCardMouseDownHandler,
-        ViewerVideo
-    } from '$lib/viewer/ViewerVideo';
 
-    export let video: ViewerVideo;
+    export type ViewerCardClickHandler = (event: MouseEvent | KeyboardEvent, videoId: string | number) => void;
+    export type ViewerCardMouseDownHandler = (event: MouseEvent, videoId: string | number) => void;
+
+    export let video: Video;
     export let watchHref: string | null = null;
     export let disabled = false;
     export let isSelected = false;
@@ -20,7 +19,7 @@
     export let onCardClick: ViewerCardClickHandler | null = null;
     export let onCardMouseDown: ViewerCardMouseDownHandler | null = null;
     const dispatch = createEventDispatcher<{
-        videochange: ViewerVideo;
+        videochange: Video;
     }>();
     let currentVideo = video;
     let flagMutationPending = false;

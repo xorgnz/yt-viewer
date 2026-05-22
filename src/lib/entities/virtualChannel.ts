@@ -1,8 +1,17 @@
+import type { ViewerVirtualChannelTimerState } from '$lib/viewer/ViewerVirtualChannelTimer';
+
 export type VirtualChannelFields = {
     id: string | number;
     name: string;
     dailyTimerMax: number | null;
     extraTimerSecondsRemaining: number;
+    timerState?: ViewerVirtualChannelTimerState;
+    timerUsageSeconds?: number;
+    timerRemainingSeconds?: number | null;
+    dailyTimerRemainingSeconds?: number | null;
+    combinedTimerRemainingSeconds?: number | null;
+    timerWindowStartMs?: number;
+    timerWindowEndMs?: number;
 };
 
 export class VirtualChannel
@@ -11,12 +20,26 @@ export class VirtualChannel
     readonly name: string;
     readonly dailyTimerMax: number | null;
     readonly extraTimerSecondsRemaining: number;
+    readonly timerState?: ViewerVirtualChannelTimerState;
+    readonly timerUsageSeconds?: number;
+    readonly timerRemainingSeconds?: number | null;
+    readonly dailyTimerRemainingSeconds?: number | null;
+    readonly combinedTimerRemainingSeconds?: number | null;
+    readonly timerWindowStartMs?: number;
+    readonly timerWindowEndMs?: number;
 
     constructor(data: VirtualChannelFields) {
         this.id = data.id;
         this.name = data.name;
         this.dailyTimerMax = data.dailyTimerMax;
         this.extraTimerSecondsRemaining = data.extraTimerSecondsRemaining;
+        this.timerState = data.timerState;
+        this.timerUsageSeconds = data.timerUsageSeconds;
+        this.timerRemainingSeconds = data.timerRemainingSeconds;
+        this.dailyTimerRemainingSeconds = data.dailyTimerRemainingSeconds;
+        this.combinedTimerRemainingSeconds = data.combinedTimerRemainingSeconds;
+        this.timerWindowStartMs = data.timerWindowStartMs;
+        this.timerWindowEndMs = data.timerWindowEndMs;
     }
 
     toFields(): VirtualChannelFields
@@ -26,6 +49,13 @@ export class VirtualChannel
             name: this.name,
             dailyTimerMax: this.dailyTimerMax,
             extraTimerSecondsRemaining: this.extraTimerSecondsRemaining,
+            timerState: this.timerState,
+            timerUsageSeconds: this.timerUsageSeconds,
+            timerRemainingSeconds: this.timerRemainingSeconds,
+            dailyTimerRemainingSeconds: this.dailyTimerRemainingSeconds,
+            combinedTimerRemainingSeconds: this.combinedTimerRemainingSeconds,
+            timerWindowStartMs: this.timerWindowStartMs,
+            timerWindowEndMs: this.timerWindowEndMs
         };
     }
 
@@ -50,6 +80,13 @@ export class VirtualChannel
                 name: patch.name ?? this.name,
                 dailyTimerMax: patch.dailyTimerMax ?? this.dailyTimerMax,
                 extraTimerSecondsRemaining: patch.extraTimerSecondsRemaining ?? this.extraTimerSecondsRemaining,
+                timerState: patch.timerState ?? this.timerState,
+                timerUsageSeconds: patch.timerUsageSeconds ?? this.timerUsageSeconds,
+                timerRemainingSeconds: patch.timerRemainingSeconds ?? this.timerRemainingSeconds,
+                dailyTimerRemainingSeconds: patch.dailyTimerRemainingSeconds ?? this.dailyTimerRemainingSeconds,
+                combinedTimerRemainingSeconds: patch.combinedTimerRemainingSeconds ?? this.combinedTimerRemainingSeconds,
+                timerWindowStartMs: patch.timerWindowStartMs ?? this.timerWindowStartMs,
+                timerWindowEndMs: patch.timerWindowEndMs ?? this.timerWindowEndMs,
             }
         );
     }

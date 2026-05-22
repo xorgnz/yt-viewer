@@ -1,30 +1,17 @@
 <script lang="ts">
     import VideoCard from '$lib/components/VideoCard.svelte';
+    import { Video } from '$lib/entities/video';
+    import type { VideoFields } from '$lib/entities/video';
+    import type { VirtualChannelFields } from '$lib/entities/virtualChannel';
     import {onMount, onDestroy} from 'svelte';
     import type { ViewerFilters } from '$lib/viewer/ViewerFilters';
-    import type { ViewerVideo } from '$lib/viewer/ViewerVideo';
-    import type { ViewerVirtualChannelFields } from '$lib/viewer/ViewerVirtualChannel';
     import { VideoMutationService } from '$lib/viewer/VideoMutationService';
     import { viewerVirtualChannelTimer } from '$lib/viewer/ViewerVirtualChannelTimer';
     import { viewerPageState } from '$lib/viewer/pageState';
 
     export let data: {
-        video: {
-            id: string | number;
-            youtube_id: string;
-            channel_id: string | number;
-            title: string;
-            description: string;
-            published_at: number | null;
-            duration_seconds: number | null;
-            thumbnail_url: string | null;
-            channel_title: string;
-            channel_youtube_id: string;
-            watched: number;
-            favorite: number;
-            ignored: number;
-        };
-        recommendations: ViewerVideo[];
+        video: VideoFields;
+        recommendations: VideoFields[];
         navigationFilters: ViewerFilters;
         profileId: string | number;
         profileKey: string;
@@ -32,15 +19,16 @@
         previousVideoYoutubeId: string | null;
         nextVideoYoutubeId: string | null;
         currentVirtualChannelId: string | number | null;
-        activeVirtualChannel: ViewerVirtualChannelFields | null;
+        activeVirtualChannel: VirtualChannelFields | null;
         playbackBlockedMessage: string | null;
         activeHistorySessionWatchSecondsBaseline: number;
         activeHistorySessionLastUpdatedAt: number | null;
     };
 
-    let watched = !!data.video.watched;
-    let favorite = !!data.video.favorite;
-    let ignored = !!data.video.ignored;
+    let currentVideo = new Video(data.video);
+    let watched = !!currentVideo.watched;
+    let favorite = !!currentVideo.favorite;
+    let ignored = !!currentVideo.ignored;
     let thresholdReached = watched;
     let suppressThresholdWatch = false;
     let thresholdWatchSubmitted = watched;
@@ -59,14 +47,14 @@
     let watchMutationPending = false;
     let timerPlaybackBlocked = false;
     let timerStatusMessage: string | null = data.playbackBlockedMessage;
-    let activeVideoYoutubeId = data.video.youtube_id;
+    let activeVideoYoutubeId = currentVideo.youtube_id;
     let activeVirtualChannelId = data.currentVirtualChannelId;
     let activeVirtualChannelUsageBaselineSeconds = data.activeVirtualChannel?.timerUsageSeconds ?? 0;
     let activeHistorySessionWatchSecondsBaseline = data.activeHistorySessionWatchSecondsBaseline ?? 0;
     let localActiveVirtualChannel = data.activeVirtualChannel == null
         ? null
         : viewerVirtualChannelTimer.normalizeViewModel(data.activeVirtualChannel);
-    let recommendations = data.recommendations;
+    let recommendations = data.recommendations.map((video) => new Video(video));
     let lastDebugEvent = 'init';
     let lastDebugResponse = 'n/a';
     const videoMutationService = new VideoMutationService({
@@ -77,11 +65,12 @@
     const HISTORY_SESSION_UPDATE_INTERVAL_SECONDS = 1;
 
     $: showWatched = watched || (thresholdReached && !suppressThresholdWatch);
-    $: recommendations = data.recommendations;
+    $: currentVideo = new Video(data.video);
+    $: recommendations = data.recommendations.map((video) => new Video(video));
     $: timerStatusMessage = data.playbackBlockedMessage;
     $: timerPlaybackBlocked = !!timerStatusMessage;
 
-    $: if (data.video.youtube_id !== activeVideoYoutubeId)
+    $: if (currentVideo.youtube_id !== activeVideoYoutubeId)
     {
         const previousVirtualChannelId = activeVirtualChannelId;
         const previousUsageSeconds = previousVirtualChannelId == null
@@ -95,9 +84,9 @@
 
         lastDebugEvent = `route-change: flush ${activeVideoYoutubeId}`;
         flushPendingHistory(activeVideoYoutubeId, false, previousVirtualChannelId);
-        activeVideoYoutubeId = data.video.youtube_id;
+        activeVideoYoutubeId = currentVideo.youtube_id;
         resetForVideoChange(
-            !!data.video.watched,
+            !!currentVideo.watched,
             data.playbackBlockedMessage,
             nextVirtualChannelId,
             nextUsageBaselineSeconds,
@@ -156,11 +145,11 @@
         historySessionLastUpdatedAt: number | null
     )
     {
-        lastDebugEvent = `resetForVideoChange: ${data.video.youtube_id}`;
+        lastDebugEvent = `resetForVideoChange: ${currentVideo.youtube_id}`;
         stopPolling();
         watched = serverWatched;
-        favorite = !!data.video.favorite;
-        ignored = !!data.video.ignored;
+        favorite = !!currentVideo.favorite;
+        ignored = !!currentVideo.ignored;
         thresholdReached = serverWatched;
         thresholdWatchSubmitted = serverWatched;
         suppressThresholdWatch = false;
@@ -244,7 +233,7 @@
                 lastPlaybackTickAt = now;
 
                 const current: number = Number(player.getCurrentTime());
-                let duration: number = Number(typeof player.getDuration === 'function' ? player.getDuration() : (data.video.duration_seconds || 0));
+                let duration: number = Number(typeof player.getDuration === 'function' ? player.getDuration() : (currentVideo.duration_seconds || 0));
                 if (!duration || !Number.isFinite(duration) || duration <= 0) return;
 
                 if (!historySessionCreated && !historySessionCreatePending && elapsedWatchSeconds >= HISTORY_SESSION_CREATE_THRESHOLD_SECONDS)
@@ -615,7 +604,7 @@
 
         try
         {
-            const updatedVideo = await videoMutationService.toggleVideoFlag(data.video, kind, nextValue);
+            const updatedVideo = await videoMutationService.toggleVideoFlag(currentVideo, kind, nextValue);
 
             if (!updatedVideo) {
                 return;
@@ -634,7 +623,7 @@
         }
     }
 
-    function handleRecommendationVideoChange(video: ViewerVideo)
+    function handleRecommendationVideoChange(video: Video)
     {
         recommendations = recommendations.map((item) => item.id === video.id ? video : item);
     }
@@ -652,7 +641,7 @@
             if ((window as any).YT && (window as any).YT.Player)
             {
                 player = new (window as any).YT.Player('player', {
-                    videoId: data.video.youtube_id,
+                    videoId: currentVideo.youtube_id,
                     width: '100%',
                     height: '100%',
                     playerVars: {
@@ -775,7 +764,7 @@
                     </div>
                 {/if}
 
-                <div id="player" title={data.video.title}></div>
+                        <div id="player" title={currentVideo.title}></div>
             </div>
 
             {#if data.nextVideoYoutubeId}
@@ -792,7 +781,7 @@
 
     <div id="div_video_meta_panel">
         <div id="div_title_row">
-            <h1 id="h1_video_title">{data.video.title}</h1>
+            <h1 id="h1_video_title">{currentVideo.title}</h1>
             <div id="div_title_meta">
                 <div id="div_title_flag_actions">
                     <button
@@ -831,10 +820,10 @@
                     </button>
                 </div>
                 <a id="a_channel_link"
-                   href={`/viewer?channelId=${data.video.channel_id}`}>{data.video.channel_title}</a>
-                {#if data.video.published_at}
+                   href={`/viewer?channelId=${currentVideo.channel_id}`}>{currentVideo.channel_title}</a>
+                {#if currentVideo.published_at}
                     <span id="span_title_separator">|</span>
-                    <span id="span_published_date">{formatDate(data.video.published_at)}</span>
+                    <span id="span_published_date">{formatDate(currentVideo.published_at)}</span>
                 {/if}
             </div>
         </div>
@@ -874,12 +863,12 @@
         </div>
     </section>
 
-    {#if data.video.description}
+    {#if currentVideo.description}
         <section id="section_description_panel">
             <div id="div_description_header">
                 <h2 id="h2_description">Description</h2>
             </div>
-            <pre id="pre_video_description">{data.video.description}</pre>
+            <pre id="pre_video_description">{currentVideo.description}</pre>
         </section>
     {/if}
 </div>
