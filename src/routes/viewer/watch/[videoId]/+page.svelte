@@ -2,6 +2,7 @@
     import VideoCard from '$lib/components/VideoCard.svelte';
     import {onMount, onDestroy} from 'svelte';
     import { VideoMutationService } from '$lib/viewer/VideoMutationService';
+    import { viewerVirtualChannelTimer } from '$lib/viewer/ViewerVirtualChannelTimer';
     import { viewerPageState } from '$lib/viewer/pageState';
     import type { ViewerFilters, ViewerVirtualChannel, ViewerVideo } from '$lib/viewer/types';
 
@@ -60,6 +61,7 @@
     let activeVirtualChannelId = data.currentVirtualChannelId;
     let activeVirtualChannelUsageBaselineSeconds = data.activeVirtualChannel?.timerUsageSeconds ?? 0;
     let activeHistorySessionWatchSecondsBaseline = data.activeHistorySessionWatchSecondsBaseline ?? 0;
+    let localActiveVirtualChannel: ViewerVirtualChannel | null = data.activeVirtualChannel;
     let recommendations = data.recommendations;
     let lastDebugEvent = 'init';
     let lastDebugResponse = 'n/a';
@@ -172,6 +174,16 @@
         activeVirtualChannelId = virtualChannelId;
         activeVirtualChannelUsageBaselineSeconds = usageBaselineSeconds;
         activeHistorySessionWatchSecondsBaseline = historySessionWatchSecondsBaseline;
+        localActiveVirtualChannel = data.activeVirtualChannel == null
+            ? null
+            : viewerVirtualChannelTimer.createSnapshot(
+                data.activeVirtualChannel,
+                usageBaselineSeconds,
+                {
+                    startMs: data.activeVirtualChannel.timerWindowStartMs,
+                    endMs: data.activeVirtualChannel.timerWindowEndMs
+                }
+            );
     }
 
     function getLocalVirtualChannelUsageSeconds(): number
@@ -186,18 +198,7 @@
 
     function shouldLocallyCapPlayback(): boolean
     {
-        if (!data.activeVirtualChannel || data.currentVirtualChannelId == null) {
-            return false;
-        }
-
-        if (data.activeVirtualChannel.dailyTimerMax == null) {
-            return false;
-        }
-
-        const totalAvailableSeconds = activeVirtualChannelUsageBaselineSeconds
-            + Math.max(0, data.activeVirtualChannel.combinedTimerRemainingSeconds ?? 0);
-
-        return getLocalVirtualChannelUsageSeconds() >= totalAvailableSeconds;
+        return viewerVirtualChannelTimer.isPlaybackCapped(localActiveVirtualChannel);
     }
 
     function startPolling()
@@ -217,6 +218,13 @@
                 {
                     const deltaSeconds = Math.max(0, (now - lastPlaybackTickAt) / 1000);
                     elapsedWatchSeconds += deltaSeconds;
+
+                    if (localActiveVirtualChannel && deltaSeconds > 0) {
+                        localActiveVirtualChannel = viewerVirtualChannelTimer.advanceSnapshot(
+                            localActiveVirtualChannel,
+                            deltaSeconds
+                        ).virtualChannel;
+                    }
 
                     if (data.currentVirtualChannelId != null && deltaSeconds > 0) {
                         window.dispatchEvent(new CustomEvent('viewer:playback-tick', {
@@ -303,6 +311,8 @@
 
         if (active && lastHistoryActivityAt != null && (Date.now() - lastHistoryActivityAt) > HISTORY_SESSION_GAP_MS)
         {
+            activeVirtualChannelUsageBaselineSeconds = localActiveVirtualChannel?.timerUsageSeconds
+                ?? getLocalVirtualChannelUsageSeconds();
             elapsedWatchSeconds = 0;
             historySessionCreated = false;
             historySessionCreatePending = false;

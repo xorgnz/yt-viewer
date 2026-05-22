@@ -9,6 +9,7 @@ import { ViewerRecommendationService } from '$lib/server/viewer/ViewerRecommenda
 import type { ViewerVirtualChannelService } from '$lib/server/viewer/ViewerVirtualChannelService';
 import type { ServerProfileContext } from '$lib/server/ServerProfileContext';
 import type { ViewerVirtualChannel } from '$lib/viewer/types';
+import { viewerVirtualChannelTimer } from '$lib/viewer/ViewerVirtualChannelTimer';
 
 const HISTORY_SESSION_GAP_MS = 5 * 60 * 1000;
 
@@ -97,7 +98,10 @@ export class ViewerWatchService
 
             activeVirtualChannel = virtualChannel;
 
-            if (virtualChannel.timerState === 'capped' || await this.shouldBlockReloadForNearlyCappedSession(video.id, virtualChannel)) {
+            if (
+                viewerVirtualChannelTimer.isPlaybackCapped(virtualChannel)
+                || await this.shouldBlockReloadForNearlyCappedSession(video.id, virtualChannel)
+            ) {
                 playbackBlockedMessage = 'Daily timer limit reached for this virtual channel.';
             }
         }
@@ -372,7 +376,7 @@ export class ViewerWatchService
             };
         }
 
-        if (virtualChannel.timerState === 'capped') {
+        if (viewerVirtualChannelTimer.isPlaybackCapped(virtualChannel)) {
             return {
                 ok: false,
                 status: 409,
@@ -390,11 +394,7 @@ export class ViewerWatchService
         now = Date.now()
     ): Promise<boolean>
     {
-        if (virtualChannel.dailyTimerMax == null || virtualChannel.timerState === 'capped') {
-            return false;
-        }
-
-        if ((virtualChannel.combinedTimerRemainingSeconds ?? 0) > 1) {
+        if (!viewerVirtualChannelTimer.shouldBlockActiveSessionReload(virtualChannel, 1)) {
             return false;
         }
 

@@ -4,6 +4,7 @@ import { VirtualChannel } from '../../src/lib/entities/virtualChannel';
 import { ViewerRecommendationService } from '../../src/lib/server/viewer/ViewerRecommendationService';
 import { ViewerVirtualChannelService } from '../../src/lib/server/viewer/ViewerVirtualChannelService';
 import { ViewerWatchService } from '../../src/lib/server/viewer/ViewerWatchService';
+import { viewerVirtualChannelTimer } from '../../src/lib/viewer/ViewerVirtualChannelTimer';
 import {
     ViewerIgnoredFilter,
     ViewerSort,
@@ -41,6 +42,52 @@ function createProfileContext()
 }
 
 describe('viewer timer services', () => {
+    it('advances a timer snapshot through daily time and then extra time in one place', () => {
+        const advanced = viewerVirtualChannelTimer.advanceSnapshot({
+            id: '2',
+            name: 'Timers',
+            dailyTimerMax: 120,
+            timerState: ViewerVirtualChannelTimerState.Available,
+            timerUsageSeconds: 119,
+            timerRemainingSeconds: 1,
+            dailyTimerRemainingSeconds: 1,
+            extraTimerSecondsRemaining: 30,
+            combinedTimerRemainingSeconds: 31,
+            timerWindowStartMs: 100,
+            timerWindowEndMs: 200
+        }, 5);
+
+        expect(advanced.extraTimerSecondsConsumed).toBe(4);
+        expect(advanced.virtualChannel).toMatchObject({
+            timerState: ViewerVirtualChannelTimerState.Available,
+            timerUsageSeconds: 124,
+            timerRemainingSeconds: 0,
+            dailyTimerRemainingSeconds: 0,
+            extraTimerSecondsRemaining: 26,
+            combinedTimerRemainingSeconds: 26
+        });
+    });
+
+    it('normalizes partial timer payloads through the shared timer class for nav rendering', () => {
+        const virtualChannel = viewerVirtualChannelTimer.normalizeViewModel({
+            id: '2',
+            name: 'Timers',
+            dailyTimerMax: 120,
+            timerUsageSeconds: 60,
+            extraTimerSecondsRemaining: 30,
+            timerWindowStartMs: 100,
+            timerWindowEndMs: 200
+        });
+
+        expect(virtualChannel).toMatchObject({
+            timerState: ViewerVirtualChannelTimerState.Available,
+            timerRemainingSeconds: 60,
+            dailyTimerRemainingSeconds: 60,
+            extraTimerSecondsRemaining: 30,
+            combinedTimerRemainingSeconds: 90
+        });
+    });
+
     it('derives unlimited and capped virtual-channel timer states from watch-history aggregates', async () => {
         const list = vi.fn(async () => ([
             new VirtualChannel({ id: '1', name: 'Unlimited', dailyTimerMax: null, extraTimerSecondsRemaining: 0 }),

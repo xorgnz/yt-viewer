@@ -2,10 +2,8 @@ import type { HistoryDAO } from '$lib/daos/historyDAO';
 import type { VirtualChannelDAO } from '$lib/daos/virtualChannelDAO';
 import { AppTimezonePolicy } from '$lib/server/AppTimezonePolicy';
 import type { ServerProfileContext } from '$lib/server/ServerProfileContext';
-import {
-    ViewerVirtualChannelTimerState
-} from '$lib/viewer/types';
 import type { ViewerVirtualChannel } from '$lib/viewer/types';
+import { viewerVirtualChannelTimer } from '$lib/viewer/ViewerVirtualChannelTimer';
 
 export class ViewerVirtualChannelService
 {
@@ -90,21 +88,15 @@ export class ViewerVirtualChannelService
             return;
         }
 
-        const normalizedDelta = Math.max(0, Math.floor(consumedSecondsDelta));
-        if (normalizedDelta === 0) {
-            return;
-        }
-
-        const dailyRemainingSeconds = Math.max(0, virtualChannel.dailyTimerRemainingSeconds ?? 0);
-        const spilloverSeconds = Math.max(0, normalizedDelta - dailyRemainingSeconds);
-        if (spilloverSeconds === 0) {
-            return;
-        }
-
-        const nextExtraTimerSecondsRemaining = Math.max(
-            0,
-            virtualChannel.extraTimerSecondsRemaining - spilloverSeconds
+        const advanceResult = viewerVirtualChannelTimer.advanceSnapshot(
+            virtualChannel,
+            consumedSecondsDelta
         );
+        if (advanceResult.extraTimerSecondsConsumed === 0) {
+            return;
+        }
+
+        const nextExtraTimerSecondsRemaining = advanceResult.virtualChannel.extraTimerSecondsRemaining;
         if (nextExtraTimerSecondsRemaining === virtualChannel.extraTimerSecondsRemaining) {
             return;
         }
@@ -219,22 +211,8 @@ export class ViewerVirtualChannelService
         window: { startMs: number; endMs: number }
     ): Promise<ViewerVirtualChannel>
     {
-        const dailyTimerMax = virtualChannel.dailyTimerMax;
-
-        if (dailyTimerMax == null) {
-            return {
-                id: virtualChannel.id,
-                name: virtualChannel.name,
-                dailyTimerMax: null,
-                timerState: ViewerVirtualChannelTimerState.Unlimited,
-                timerUsageSeconds: 0,
-                timerRemainingSeconds: null,
-                dailyTimerRemainingSeconds: null,
-                extraTimerSecondsRemaining: virtualChannel.extraTimerSecondsRemaining,
-                combinedTimerRemainingSeconds: null,
-                timerWindowStartMs: window.startMs,
-                timerWindowEndMs: window.endMs,
-            };
+        if (virtualChannel.dailyTimerMax == null) {
+            return viewerVirtualChannelTimer.createSnapshot(virtualChannel, 0, window);
         }
 
         const timerUsageSeconds = Number(await this.historyDAO.getVirtualChannelWatchSecondsInWindow(
@@ -243,26 +221,8 @@ export class ViewerVirtualChannelService
             window.startMs,
             window.endMs
         ));
-        const timerMaxSeconds = dailyTimerMax;
-        const dailyTimerRemainingSeconds = Math.max(0, timerMaxSeconds - timerUsageSeconds);
-        const combinedTimerRemainingSeconds = dailyTimerRemainingSeconds + virtualChannel.extraTimerSecondsRemaining;
-        const timerState = combinedTimerRemainingSeconds === 0
-            ? ViewerVirtualChannelTimerState.Capped
-            : ViewerVirtualChannelTimerState.Available;
 
-        return {
-            id: virtualChannel.id,
-            name: virtualChannel.name,
-            dailyTimerMax,
-            timerState,
-            timerUsageSeconds,
-            timerRemainingSeconds: dailyTimerRemainingSeconds,
-            dailyTimerRemainingSeconds,
-            extraTimerSecondsRemaining: virtualChannel.extraTimerSecondsRemaining,
-            combinedTimerRemainingSeconds,
-            timerWindowStartMs: window.startMs,
-            timerWindowEndMs: window.endMs,
-        };
+        return viewerVirtualChannelTimer.createSnapshot(virtualChannel, timerUsageSeconds, window);
     }
 }
 // apply-patch-anchor - do not delete

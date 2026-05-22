@@ -4,6 +4,7 @@
     import { SideNavVirtualChannelPanelPresenter } from '$lib/components/SideNavVirtualChannelPanelPresenter';
     import type { SideNavVirtualChannelViewModel } from '$lib/components/SideNavVirtualChannelPanelViewModel';
     import { ViewerVirtualChannelTimerState } from '$lib/viewer/types';
+    import { viewerVirtualChannelTimer } from '$lib/viewer/ViewerVirtualChannelTimer';
 
     export let virtualChannel: SideNavVirtualChannelViewModel | null;
     export let splitTimerModeEnabled = true;
@@ -28,25 +29,10 @@
                 return;
             }
 
-            const deltaSeconds = Math.max(0, detail.deltaSeconds || 0);
-            const nextUsage = Math.max(0, liveVirtualChannel.timerUsageSeconds + deltaSeconds);
-            const nextDailyRemaining = Math.max(0, (liveVirtualChannel.dailyTimerRemainingSeconds ?? 0) - deltaSeconds);
-            const nextCombinedRemaining = Math.max(
-                0,
-                (liveVirtualChannel.combinedTimerRemainingSeconds ?? 0) - deltaSeconds
-            );
-            const nextState = nextCombinedRemaining === 0
-                ? ViewerVirtualChannelTimerState.Capped
-                : ViewerVirtualChannelTimerState.Available;
-
-            liveVirtualChannel = {
-                ...liveVirtualChannel,
-                timerUsageSeconds: nextUsage,
-                timerRemainingSeconds: nextDailyRemaining,
-                dailyTimerRemainingSeconds: nextDailyRemaining,
-                combinedTimerRemainingSeconds: nextCombinedRemaining,
-                timerState: nextState
-            };
+            liveVirtualChannel = viewerVirtualChannelTimer.advanceSnapshot(
+                liveVirtualChannel,
+                detail.deltaSeconds || 0
+            ).virtualChannel;
         };
 
         window.addEventListener('viewer:playback-tick', onPlaybackTick as EventListener);

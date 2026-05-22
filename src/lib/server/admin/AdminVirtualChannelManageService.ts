@@ -3,18 +3,18 @@ import type { SourceChannelDAO } from '$lib/daos/sourceChannelDAO';
 import type { VideoDAO } from '$lib/daos/videoDAO';
 import type { VirtualChannelAssignmentVideoSelectionDAO } from '$lib/daos/virtualChannelAssignmentVideoSelectionDAO';
 import type { VirtualChannelDAO } from '$lib/daos/virtualChannelDAO';
-import { VirtualChannelAssignmentMode, type VirtualChannelAssignment } from '$lib/entities/virtualChannelAssignment';
+import { VirtualChannelAssignmentMode, type VirtualChannelAssignment, type VirtualChannelAssignmentFields } from '$lib/entities/virtualChannelAssignment';
 import { VirtualChannelAssignmentVideoReviewState as ReviewState, type VirtualChannelAssignmentVideoReviewState } from '$lib/entities/virtualChannelAssignmentVideoSelection';
-import type { SourceChannel } from '$lib/entities/sourceChannel';
-import { VideoLengthClassification, type Video } from '$lib/entities/video';
+import type { SourceChannel, SourceChannelFields } from '$lib/entities/sourceChannel';
+import { VideoLengthClassification, type VideoFields } from '$lib/entities/video';
 import { ErrorResult, type ErrorFields, type ServiceResult } from '$lib/server/Error';
-import type { VirtualChannel } from '$lib/entities/virtualChannel';
+import type { VirtualChannelFields } from '$lib/entities/virtualChannel';
 import { AdminReviewStateFilter as ReviewStateFilter, AdminVideoTypeFilter as VideoTypeFilter } from '$lib/admin/AdminVirtualChannelFilters';
 import type { AdminReviewStateFilter, AdminVideoTypeFilter } from '$lib/admin/AdminVirtualChannelFilters';
 
 interface AdminSelectedOnlyVideoViewModel
 {
-    video: Video;
+    video: VideoFields;
     reviewState: VirtualChannelAssignmentVideoReviewState;
 }
 
@@ -27,9 +27,9 @@ interface AdminSelectedOnlyCounts
 
 interface AdminAssociatedSourceChannelView
 {
-    assignment: VirtualChannelAssignment;
-    sourceChannel: SourceChannel | null;
-    automaticVideos: Video[];
+    assignment: VirtualChannelAssignmentFields;
+    sourceChannel: SourceChannelFields | null;
+    automaticVideos: VideoFields[];
     selectedOnlyVideos: AdminSelectedOnlyVideoViewModel[];
     selectedOnlyCounts: AdminSelectedOnlyCounts | null;
     reviewStateFilter: AdminReviewStateFilter;
@@ -39,9 +39,9 @@ interface AdminAssociatedSourceChannelView
 
 interface AdminVirtualChannelManagePageData
 {
-    virtualChannel: VirtualChannel;
+    virtualChannel: VirtualChannelFields;
     associatedSourceChannels: AdminAssociatedSourceChannelView[];
-    availableSourceChannels: SourceChannel[];
+    availableSourceChannels: SourceChannelFields[];
 }
 
 export class AdminVirtualChannelManageService
@@ -93,9 +93,9 @@ export class AdminVirtualChannelManageService
         return {
             ok: true,
             data: {
-                virtualChannel,
+                virtualChannel: virtualChannel.toFields(),
                 associatedSourceChannels,
-                availableSourceChannels
+                availableSourceChannels: availableSourceChannels.map((channel) => channel.toFields())
             }
         };
     }
@@ -328,7 +328,7 @@ export class AdminVirtualChannelManageService
         const selectedOnlyVideos = assignment.mode !== VirtualChannelAssignmentMode.SelectedOnly
             ? []
             : sourceVideos.map((video) => ({
-                video,
+                video: video.toFields(),
                 reviewState: selectionByVideoId.get(String(video.id))?.reviewState ?? ReviewState.NotYetReviewed
             }));
         const selectedOnlyCounts = assignment.mode !== VirtualChannelAssignmentMode.SelectedOnly
@@ -340,9 +340,9 @@ export class AdminVirtualChannelManageService
             };
 
         return {
-            assignment,
-            sourceChannel: sourceChannelsById.get(assignment.sourceChannelId) ?? null,
-            automaticVideos,
+            assignment: assignment.toFields(),
+            sourceChannel: sourceChannelsById.get(assignment.sourceChannelId)?.toFields() ?? null,
+            automaticVideos: automaticVideos.map((video) => video.toFields()),
             selectedOnlyVideos,
             selectedOnlyCounts,
             reviewStateFilter: this.getReviewStateFilter(searchParams, assignment.id),

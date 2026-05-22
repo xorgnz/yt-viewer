@@ -2,7 +2,7 @@
     import { page } from '$app/stores';
     import SideNavVirtualChannelPanel from '$lib/components/SideNavVirtualChannelPanel.svelte';
     import type { SideNavVirtualChannelViewModel } from '$lib/components/SideNavVirtualChannelPanelViewModel';
-    import { ViewerVirtualChannelTimerState } from '$lib/viewer/types';
+    import { viewerVirtualChannelTimer } from '$lib/viewer/ViewerVirtualChannelTimer';
 
     // Simple side navigation used across all pages
     export let appName: string = 'YT Viewer';
@@ -24,55 +24,7 @@
 
     function readActiveVirtualChannel(value: unknown): SideNavVirtualChannelViewModel | null
     {
-        if (!value || typeof value !== 'object') {
-            return null;
-        }
-
-        const candidate = value as Partial<SideNavVirtualChannelViewModel>;
-
-        if (
-            (typeof candidate.id !== 'string' && typeof candidate.id !== 'number')
-            || typeof candidate.name !== 'string'
-        ) {
-            return null;
-        }
-
-        // Normalize partial load payloads so nav rendering does not silently drop an active channel.
-        const dailyTimerMax = typeof candidate.dailyTimerMax === 'number' ? candidate.dailyTimerMax : null;
-        const timerUsageSeconds = typeof candidate.timerUsageSeconds === 'number' ? candidate.timerUsageSeconds : 0;
-        const dailyTimerRemainingSeconds = typeof candidate.dailyTimerRemainingSeconds === 'number'
-            ? candidate.dailyTimerRemainingSeconds
-            : (dailyTimerMax == null ? null : Math.max(0, dailyTimerMax - timerUsageSeconds));
-        const extraTimerSecondsRemaining = typeof candidate.extraTimerSecondsRemaining === 'number'
-            ? candidate.extraTimerSecondsRemaining
-            : 0;
-        const combinedTimerRemainingSeconds = typeof candidate.combinedTimerRemainingSeconds === 'number'
-            ? candidate.combinedTimerRemainingSeconds
-            : (dailyTimerRemainingSeconds == null ? null : dailyTimerRemainingSeconds + extraTimerSecondsRemaining);
-        const timerRemainingSeconds = typeof candidate.timerRemainingSeconds === 'number'
-            ? candidate.timerRemainingSeconds
-            : dailyTimerRemainingSeconds;
-        const timerState = candidate.timerState === ViewerVirtualChannelTimerState.Unlimited
-            || candidate.timerState === ViewerVirtualChannelTimerState.Available
-            || candidate.timerState === ViewerVirtualChannelTimerState.Capped
-            ? candidate.timerState
-            : (dailyTimerMax == null
-                ? ViewerVirtualChannelTimerState.Unlimited
-                : (timerRemainingSeconds === 0 ? ViewerVirtualChannelTimerState.Capped : ViewerVirtualChannelTimerState.Available));
-
-        return {
-            id: candidate.id,
-            name: candidate.name,
-            dailyTimerMax,
-            timerState,
-            timerUsageSeconds,
-            timerRemainingSeconds,
-            dailyTimerRemainingSeconds,
-            extraTimerSecondsRemaining,
-            combinedTimerRemainingSeconds,
-            timerWindowStartMs: typeof candidate.timerWindowStartMs === 'number' ? candidate.timerWindowStartMs : 0,
-            timerWindowEndMs: typeof candidate.timerWindowEndMs === 'number' ? candidate.timerWindowEndMs : 0,
-        };
+        return viewerVirtualChannelTimer.normalizeViewModel(value);
     }
 
     $: activeVirtualChannel = readActiveVirtualChannel($page.data.activeVirtualChannel);
