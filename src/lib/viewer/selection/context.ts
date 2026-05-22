@@ -4,7 +4,7 @@ import type {
 import type {
     ViewerIgnoredFilter,
     ViewerWatchedFilter
-} from '$lib/viewer/types';
+} from '$lib/viewer/ViewerFilters';
 
 export class ViewerSelectionContext
 {

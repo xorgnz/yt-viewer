@@ -1,10 +1,12 @@
 <script lang="ts">
     import VideoCard from '$lib/components/VideoCard.svelte';
     import {onMount, onDestroy} from 'svelte';
+    import type { ViewerFilters } from '$lib/viewer/ViewerFilters';
+    import type { ViewerVideo } from '$lib/viewer/ViewerVideo';
+    import type { ViewerVirtualChannelFields } from '$lib/viewer/ViewerVirtualChannel';
     import { VideoMutationService } from '$lib/viewer/VideoMutationService';
     import { viewerVirtualChannelTimer } from '$lib/viewer/ViewerVirtualChannelTimer';
     import { viewerPageState } from '$lib/viewer/pageState';
-    import type { ViewerFilters, ViewerVirtualChannel, ViewerVideo } from '$lib/viewer/types';
 
     export let data: {
         video: {
@@ -30,7 +32,7 @@
         previousVideoYoutubeId: string | null;
         nextVideoYoutubeId: string | null;
         currentVirtualChannelId: string | number | null;
-        activeVirtualChannel: ViewerVirtualChannel | null;
+        activeVirtualChannel: ViewerVirtualChannelFields | null;
         playbackBlockedMessage: string | null;
         activeHistorySessionWatchSecondsBaseline: number;
         activeHistorySessionLastUpdatedAt: number | null;
@@ -61,7 +63,9 @@
     let activeVirtualChannelId = data.currentVirtualChannelId;
     let activeVirtualChannelUsageBaselineSeconds = data.activeVirtualChannel?.timerUsageSeconds ?? 0;
     let activeHistorySessionWatchSecondsBaseline = data.activeHistorySessionWatchSecondsBaseline ?? 0;
-    let localActiveVirtualChannel: ViewerVirtualChannel | null = data.activeVirtualChannel;
+    let localActiveVirtualChannel = data.activeVirtualChannel == null
+        ? null
+        : viewerVirtualChannelTimer.normalizeViewModel(data.activeVirtualChannel);
     let recommendations = data.recommendations;
     let lastDebugEvent = 'init';
     let lastDebugResponse = 'n/a';
@@ -176,14 +180,10 @@
         activeHistorySessionWatchSecondsBaseline = historySessionWatchSecondsBaseline;
         localActiveVirtualChannel = data.activeVirtualChannel == null
             ? null
-            : viewerVirtualChannelTimer.createSnapshot(
-                data.activeVirtualChannel,
-                usageBaselineSeconds,
-                {
-                    startMs: data.activeVirtualChannel.timerWindowStartMs,
-                    endMs: data.activeVirtualChannel.timerWindowEndMs
-                }
-            );
+            : viewerVirtualChannelTimer.normalizeViewModel({
+                ...data.activeVirtualChannel,
+                timerUsageSeconds: usageBaselineSeconds
+            });
     }
 
     function getLocalVirtualChannelUsageSeconds(): number

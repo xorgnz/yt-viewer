@@ -2,7 +2,7 @@ import {
     ViewerIgnoredFilter,
     ViewerSort,
     ViewerWatchedFilter
-} from '$lib/viewer/types';
+} from '$lib/viewer/ViewerFilters';
 
 export interface ViewerVideoQueryFilters
 {

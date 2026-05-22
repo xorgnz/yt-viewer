@@ -7,7 +7,7 @@ import {
     ViewerIgnoredFilter,
     ViewerSort,
     ViewerWatchedFilter
-} from '../../src/lib/viewer/types';
+} from '../../src/lib/viewer/ViewerFilters';
 import {
     ViewerSelectionControlState,
     ViewerSelectionFlagKind

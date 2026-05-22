@@ -20,16 +20,20 @@
     } from '$lib/viewer/selectionInteractions';
     import {
         BulkActionFeedbackTone,
+    } from '$lib/viewer/BulkActionFeedback';
+    import {
         ViewerSort,
-        ViewerVirtualChannelTimerState,
         ViewerWatchedFilter
-    } from '$lib/viewer/types';
+    } from '$lib/viewer/ViewerFilters';
+    import {
+        ViewerVirtualChannelTimerState,
+    } from '$lib/viewer/ViewerVirtualChannel';
     import type {
         BulkActionFeedback,
-        ViewerPageData,
-        ViewerVideo,
-        ViewerVisiblePage
-    } from '$lib/viewer/types';
+    } from '$lib/viewer/BulkActionFeedback';
+    import type { ViewerPageData } from '$lib/viewer/ViewerPageData';
+    import type { ViewerVideo } from '$lib/viewer/ViewerVideo';
+    import type { ViewerVisiblePage } from '$lib/viewer/ViewerPagination';
     import { ViewerSelectionContext } from '$lib/viewer/selection/context';
     import { viewerSelectionStateManager } from '$lib/viewer/selection/core';
     import { viewerSelectionSessionStore } from '$lib/viewer/selection/persistence';

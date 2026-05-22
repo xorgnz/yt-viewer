@@ -5,7 +5,7 @@
         ViewerCardClickHandler,
         ViewerCardMouseDownHandler,
         ViewerVideo
-    } from '$lib/viewer/types';
+    } from '$lib/viewer/ViewerVideo';
 
     export let videos: ViewerVideo[] = [];
     export let selectedVideoIds: Array<string | number> = [];

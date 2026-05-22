@@ -3,11 +3,13 @@
     import {
         ViewerSort,
         ViewerWatchedFilter
-    } from '$lib/viewer/types';
+    } from '$lib/viewer/ViewerFilters';
     import type {
-        ViewerChannel,
+        ViewerChannel
+    } from '$lib/viewer/ViewerChannel';
+    import type {
         ViewerFilters,
-    } from '$lib/viewer/types';
+    } from '$lib/viewer/ViewerFilters';
 
     export let filters: ViewerFilters;
     export let channels: ViewerChannel[] = [];

@@ -1,8 +1,9 @@
 import { VirtualChannel } from '$lib/entities/virtualChannel';
 import {
-    ViewerVirtualChannelTimerState,
-    type ViewerVirtualChannel
-} from '$lib/viewer/types';
+    ViewerVirtualChannel,
+    type ViewerVirtualChannelFields,
+    ViewerVirtualChannelTimerState
+} from '$lib/viewer/ViewerVirtualChannel';
 
 type ViewerVirtualChannelTimerWindow = {
     startMs: number;
@@ -28,7 +29,7 @@ export class ViewerVirtualChannelTimer
         );
 
         if (virtualChannel.dailyTimerMax == null) {
-            return {
+            return new ViewerVirtualChannel({
                 id: virtualChannel.id,
                 name: virtualChannel.name,
                 dailyTimerMax: null,
@@ -40,14 +41,14 @@ export class ViewerVirtualChannelTimer
                 combinedTimerRemainingSeconds: null,
                 timerWindowStartMs: timerWindow.startMs,
                 timerWindowEndMs: timerWindow.endMs
-            };
+            });
         }
 
         const normalizedDailyTimerMax = this.normalizeWholeSeconds(virtualChannel.dailyTimerMax);
         const dailyTimerRemainingSeconds = Math.max(0, normalizedDailyTimerMax - normalizedUsageSeconds);
         const combinedTimerRemainingSeconds = dailyTimerRemainingSeconds + normalizedExtraTimerSecondsRemaining;
 
-        return {
+        return new ViewerVirtualChannel({
             id: virtualChannel.id,
             name: virtualChannel.name,
             dailyTimerMax: normalizedDailyTimerMax,
@@ -61,7 +62,7 @@ export class ViewerVirtualChannelTimer
             combinedTimerRemainingSeconds,
             timerWindowStartMs: timerWindow.startMs,
             timerWindowEndMs: timerWindow.endMs
-        };
+        });
     }
 
     advanceSnapshot(
@@ -101,7 +102,7 @@ export class ViewerVirtualChannelTimer
         const nextCombinedTimerRemainingSeconds = nextDailyTimerRemainingSeconds + nextExtraTimerSecondsRemaining;
 
         return {
-            virtualChannel: {
+            virtualChannel: new ViewerVirtualChannel({
                 ...virtualChannel,
                 timerState: nextCombinedTimerRemainingSeconds === 0
                     ? ViewerVirtualChannelTimerState.Capped
@@ -111,7 +112,7 @@ export class ViewerVirtualChannelTimer
                 dailyTimerRemainingSeconds: nextDailyTimerRemainingSeconds,
                 extraTimerSecondsRemaining: nextExtraTimerSecondsRemaining,
                 combinedTimerRemainingSeconds: nextCombinedTimerRemainingSeconds
-            },
+            }),
             extraTimerSecondsConsumed
         };
     }
@@ -142,7 +143,7 @@ export class ViewerVirtualChannelTimer
             return null;
         }
 
-        const candidate = value as Partial<ViewerVirtualChannel>;
+        const candidate = value as Partial<ViewerVirtualChannelFields>;
         if (
             (typeof candidate.id !== 'string' && typeof candidate.id !== 'number')
             || typeof candidate.name !== 'string'
@@ -176,7 +177,7 @@ export class ViewerVirtualChannelTimer
             extraTimerSecondsRemaining
         }), timerUsageSeconds, timerWindow);
 
-        return {
+        return new ViewerVirtualChannel({
             ...fallbackSnapshot,
             timerState: candidate.timerState === ViewerVirtualChannelTimerState.Unlimited
                 || candidate.timerState === ViewerVirtualChannelTimerState.Available
@@ -192,7 +193,7 @@ export class ViewerVirtualChannelTimer
             combinedTimerRemainingSeconds: typeof candidate.combinedTimerRemainingSeconds === 'number'
                 ? this.normalizeWholeSeconds(candidate.combinedTimerRemainingSeconds)
                 : fallbackSnapshot.combinedTimerRemainingSeconds
-        };
+        });
     }
 
     private normalizeWholeSeconds(value: number): number

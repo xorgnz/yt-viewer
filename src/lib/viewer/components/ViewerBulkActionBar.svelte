@@ -1,7 +1,7 @@
 <script lang="ts">
     import type {
         BulkActionFeedback
-    } from '$lib/viewer/types';
+    } from '$lib/viewer/BulkActionFeedback';
     import {
         ViewerSelectionControlState,
         ViewerSelectionFlagKind

@@ -8,9 +8,12 @@ import { viewerVirtualChannelTimer } from '../../src/lib/viewer/ViewerVirtualCha
 import {
     ViewerIgnoredFilter,
     ViewerSort,
-    ViewerVirtualChannelTimerState,
     ViewerWatchedFilter
-} from '../../src/lib/viewer/types';
+} from '../../src/lib/viewer/ViewerFilters';
+import {
+    ViewerVirtualChannel,
+    ViewerVirtualChannelTimerState
+} from '../../src/lib/viewer/ViewerVirtualChannel';
 
 function createVideo(id: number): ViewerVideoRecord
 {
@@ -41,21 +44,32 @@ function createProfileContext()
     } as any;
 }
 
+function createViewerVirtualChannel(overrides: Partial<ViewerVirtualChannel> = {}): ViewerVirtualChannel
+{
+    return new ViewerVirtualChannel({
+        id: '2',
+        name: 'Timers',
+        dailyTimerMax: 120,
+        timerState: ViewerVirtualChannelTimerState.Available,
+        timerUsageSeconds: 110,
+        timerRemainingSeconds: 10,
+        dailyTimerRemainingSeconds: 10,
+        extraTimerSecondsRemaining: 30,
+        combinedTimerRemainingSeconds: 40,
+        timerWindowStartMs: 100,
+        timerWindowEndMs: 200,
+        ...overrides
+    });
+}
+
 describe('viewer timer services', () => {
     it('advances a timer snapshot through daily time and then extra time in one place', () => {
-        const advanced = viewerVirtualChannelTimer.advanceSnapshot({
-            id: '2',
-            name: 'Timers',
-            dailyTimerMax: 120,
-            timerState: ViewerVirtualChannelTimerState.Available,
+        const advanced = viewerVirtualChannelTimer.advanceSnapshot(createViewerVirtualChannel({
             timerUsageSeconds: 119,
             timerRemainingSeconds: 1,
             dailyTimerRemainingSeconds: 1,
-            extraTimerSecondsRemaining: 30,
-            combinedTimerRemainingSeconds: 31,
-            timerWindowStartMs: 100,
-            timerWindowEndMs: 200
-        }, 5);
+            combinedTimerRemainingSeconds: 31
+        }), 5);
 
         expect(advanced.extraTimerSecondsConsumed).toBe(4);
         expect(advanced.virtualChannel).toMatchObject({
@@ -667,19 +681,7 @@ describe('viewer timer services', () => {
             () => Date.UTC(2026, 4, 2, 15, 0, 0)
         );
 
-        await service.consumeExtraTimerSecondsForWatchDelta('2', {
-            id: '2',
-            name: 'Timers',
-            dailyTimerMax: 120,
-            timerState: ViewerVirtualChannelTimerState.Available,
-            timerUsageSeconds: 110,
-            timerRemainingSeconds: 10,
-            dailyTimerRemainingSeconds: 10,
-            extraTimerSecondsRemaining: 30,
-            combinedTimerRemainingSeconds: 40,
-            timerWindowStartMs: 100,
-            timerWindowEndMs: 200
-        }, 15);
+        await service.consumeExtraTimerSecondsForWatchDelta('2', createViewerVirtualChannel(), 15);
 
         expect(updateExtraTimerSecondsRemaining).toHaveBeenCalledWith('2', 25);
     });
@@ -697,19 +699,7 @@ describe('viewer timer services', () => {
             () => Date.UTC(2026, 4, 2, 15, 0, 0)
         );
 
-        await service.consumeExtraTimerSecondsForWatchDelta('2', {
-            id: '2',
-            name: 'Timers',
-            dailyTimerMax: 120,
-            timerState: ViewerVirtualChannelTimerState.Available,
-            timerUsageSeconds: 110,
-            timerRemainingSeconds: 10,
-            dailyTimerRemainingSeconds: 10,
-            extraTimerSecondsRemaining: 30,
-            combinedTimerRemainingSeconds: 40,
-            timerWindowStartMs: 100,
-            timerWindowEndMs: 200
-        }, 10);
+        await service.consumeExtraTimerSecondsForWatchDelta('2', createViewerVirtualChannel(), 10);
 
         expect(updateExtraTimerSecondsRemaining).not.toHaveBeenCalled();
     });

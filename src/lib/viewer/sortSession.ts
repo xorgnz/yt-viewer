@@ -1,4 +1,4 @@
-import { ViewerSort } from '$lib/viewer/types';
+import { ViewerSort } from '$lib/viewer/ViewerFilters';
 
 const VIEWER_SORT_SESSION_KEY = 'viewer.sort';
 

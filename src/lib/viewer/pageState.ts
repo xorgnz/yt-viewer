@@ -1,15 +1,14 @@
 import type {
     ViewerFilterInputState,
     ViewerFilters,
-    ViewerPaginationState,
-    ViewerVideo,
-    ViewerVisiblePage
-} from '$lib/viewer/types';
+} from '$lib/viewer/ViewerFilters';
+import type { ViewerVideo } from '$lib/viewer/ViewerVideo';
+import type { ViewerPaginationState, ViewerVisiblePage } from '$lib/viewer/ViewerPagination';
 import {
     ViewerIgnoredFilter,
-    ViewerVisiblePageMarker,
     ViewerWatchedFilter
-} from '$lib/viewer/types';
+} from '$lib/viewer/ViewerFilters';
+import { ViewerVisiblePageMarker } from '$lib/viewer/ViewerPagination';
 import {
     ViewerSelectionFlagKind,
     type ViewerSelectionControlState,

@@ -1,4 +1,4 @@
-import type { ViewerVideo } from '$lib/viewer/types';
+import type { ViewerVideo } from '$lib/viewer/ViewerVideo';
 import {
     ViewerSelectionFlagKind
 } from '$lib/viewer/selection/types';

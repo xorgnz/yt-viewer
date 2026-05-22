@@ -1,8 +1,8 @@
 <script lang="ts">
-    import type { ViewerVirtualChannel } from '$lib/viewer/types';
+    import type { ViewerVirtualChannelFields } from '$lib/viewer/ViewerVirtualChannel';
 
     export let data: {
-        virtualChannels: ViewerVirtualChannel[];
+        virtualChannels: ViewerVirtualChannelFields[];
         profileKey: string;
     };
 </script>

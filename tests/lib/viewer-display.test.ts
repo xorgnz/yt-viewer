@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { ViewerVideoDisplayPresenter } from '../../src/lib/viewer/display';
-import type { ViewerVideo } from '../../src/lib/viewer/types';
+import type { ViewerVideo } from '../../src/lib/viewer/ViewerVideo';
 import { ViewerSelectionFlagKind } from '../../src/lib/viewer/selection/types';
 
 describe('ViewerVideoDisplayPresenter', () => {

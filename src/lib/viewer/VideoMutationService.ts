@@ -1,5 +1,6 @@
 import { deserialize } from '$app/forms';
-import type { BulkActionUndoState, ViewerVideo } from '$lib/viewer/types';
+import type { BulkActionUndoState } from '$lib/viewer/BulkActionUndoState';
+import type { ViewerVideo } from '$lib/viewer/ViewerVideo';
 import type { ViewerSelectionFlagKind, ViewerSelectionFlagValue } from '$lib/viewer/selection/types';
 
 type MutationActionResult = {

@@ -3,7 +3,7 @@ import type { VirtualChannelDAO } from '$lib/daos/virtualChannelDAO';
 import type { VirtualChannel } from '$lib/entities/virtualChannel';
 import { AppTimezonePolicy } from '$lib/server/AppTimezonePolicy';
 import type { ServerProfileContext } from '$lib/server/ServerProfileContext';
-import type { ViewerVirtualChannel } from '$lib/viewer/types';
+import { ViewerVirtualChannel } from '$lib/viewer/ViewerVirtualChannel';
 import { viewerVirtualChannelTimer } from '$lib/viewer/ViewerVirtualChannelTimer';
 
 export class ViewerVirtualChannelService
@@ -29,7 +29,7 @@ export class ViewerVirtualChannelService
     async loadNavigation()
     {
         return {
-            virtualChannels: await this.loadVirtualChannels(),
+            virtualChannels: (await this.loadVirtualChannels()).map((virtualChannel) => virtualChannel.toFields()),
             profileKey: this.profileContext.activeProfileKey
         };
     }

@@ -4,7 +4,7 @@ import {
     ViewerIgnoredFilter,
     ViewerSort,
     ViewerWatchedFilter
-} from '$lib/viewer/types';
+} from '$lib/viewer/ViewerFilters';
 
 describe('ViewerVideoQuerySpec', () => {
     it('builds viewer list filters with virtual-channel joins and pagination', () => {

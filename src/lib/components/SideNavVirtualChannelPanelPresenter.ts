@@ -1,5 +1,5 @@
 import type { SideNavVirtualChannelViewModel } from '$lib/components/SideNavVirtualChannelPanelViewModel';
-import { ViewerVirtualChannelTimerState } from '$lib/viewer/types';
+import { ViewerVirtualChannelTimerState } from '$lib/viewer/ViewerVirtualChannel';
 
 export class SideNavVirtualChannelPanelPresenter
 {

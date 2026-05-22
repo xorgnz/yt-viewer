@@ -46,8 +46,8 @@ export class ViewerPageLoader
             videos,
             totalCount,
             channels: channels.map((channel) => channel.toFields()),
-            virtualChannels,
-            activeVirtualChannel,
+            virtualChannels: virtualChannels.map((virtualChannel) => virtualChannel.toFields()),
+            activeVirtualChannel: activeVirtualChannel?.toFields() ?? null,
             profileId: profileContext.activeProfileId,
             profileKey: profileContext.activeProfileKey,
             profileName: profileContext.activeProfileName

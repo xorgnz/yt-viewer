@@ -3,7 +3,7 @@
     import { page } from '$app/stores';
     import { SideNavVirtualChannelPanelPresenter } from '$lib/components/SideNavVirtualChannelPanelPresenter';
     import type { SideNavVirtualChannelViewModel } from '$lib/components/SideNavVirtualChannelPanelViewModel';
-    import { ViewerVirtualChannelTimerState } from '$lib/viewer/types';
+    import { ViewerVirtualChannelTimerState } from '$lib/viewer/ViewerVirtualChannel';
     import { viewerVirtualChannelTimer } from '$lib/viewer/ViewerVirtualChannelTimer';
 
     export let virtualChannel: SideNavVirtualChannelViewModel | null;

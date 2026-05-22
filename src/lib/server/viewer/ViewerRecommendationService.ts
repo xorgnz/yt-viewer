@@ -5,7 +5,7 @@ import type {
 import {
     ViewerIgnoredFilter,
     ViewerWatchedFilter
-} from '$lib/viewer/types';
+} from '$lib/viewer/ViewerFilters';
 
 export class ViewerRecommendationService
 {

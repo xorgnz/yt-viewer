@@ -1,8 +1,8 @@
 <script lang="ts">
-    import { ViewerVisiblePageMarker } from '$lib/viewer/types';
+    import { ViewerVisiblePageMarker } from '$lib/viewer/ViewerPagination';
     import type {
         ViewerVisiblePage
-    } from '$lib/viewer/types';
+    } from '$lib/viewer/ViewerPagination';
 
     export let totalCount = 0;
     export let totalPages = 1;

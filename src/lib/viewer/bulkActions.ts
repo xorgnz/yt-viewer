@@ -1,8 +1,8 @@
 import type {
     BulkActionUndoState,
-    ViewerVideo
-} from '$lib/viewer/types';
-import { BulkActionFeedbackTone } from '$lib/viewer/types';
+} from '$lib/viewer/BulkActionUndoState';
+import { BulkActionFeedbackTone } from '$lib/viewer/BulkActionFeedback';
+import type { ViewerVideo } from '$lib/viewer/ViewerVideo';
 import {
     ViewerSelectionControlState,
     ViewerSelectionFlagKind

@@ -8,8 +8,8 @@ import {
     ViewerIgnoredFilter,
     ViewerSort,
     ViewerWatchedFilter
-} from '../../src/lib/viewer/types';
-import type { ViewerFilters } from '../../src/lib/viewer/types';
+} from '../../src/lib/viewer/ViewerFilters';
+import type { ViewerFilters } from '../../src/lib/viewer/ViewerFilters';
 
 describe('viewer page state helpers', () => {
     function createFilters(overrides: Partial<ViewerFilters> = {}): ViewerFilters

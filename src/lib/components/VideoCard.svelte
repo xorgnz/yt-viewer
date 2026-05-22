@@ -10,7 +10,7 @@
         ViewerCardClickHandler,
         ViewerCardMouseDownHandler,
         ViewerVideo
-    } from '$lib/viewer/types';
+    } from '$lib/viewer/ViewerVideo';
 
     export let video: ViewerVideo;
     export let watchHref: string | null = null;
