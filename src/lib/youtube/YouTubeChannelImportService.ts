@@ -11,20 +11,17 @@ export interface ImportResult
     videosUpserted: number;
 }
 
-type ImportSourceChannelDAO = Pick<SourceChannelDAO, 'create' | 'getByExternalId' | 'update'>;
-type ImportVideoDAO = Pick<VideoDAO, 'create' | 'getByExternalId' | 'update'>;
-
 export class YouTubeChannelImportService
 {
     private readonly channelDataService: YouTubeChannelDataService;
-    private readonly sourceChannelDAO: ImportSourceChannelDAO;
-    private readonly videoDAO: ImportVideoDAO;
+    private readonly sourceChannelDAO: SourceChannelDAO;
+    private readonly videoDAO: VideoDAO;
 
     constructor(
         client: YouTubeClient,
         channelDataService: YouTubeChannelDataService = new YouTubeChannelDataService(client),
-        sourceChannelDAO: ImportSourceChannelDAO,
-        videoDAO: ImportVideoDAO
+        sourceChannelDAO: SourceChannelDAO,
+        videoDAO: VideoDAO
     )
     {
         this.channelDataService = channelDataService;

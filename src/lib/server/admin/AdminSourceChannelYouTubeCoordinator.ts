@@ -6,7 +6,7 @@ import {
     YouTubeChannelDataService,
     YouTubeChannelReferenceResolver
 } from '$lib/youtube/fetch';
-import { type ImportResult, YouTubeChannelImportService } from '$lib/youtube/importer';
+import { type ImportResult, YouTubeChannelImportService } from '$lib/youtube/YouTubeChannelImportService';
 import type { ChannelsListResponse, YouTubeClient } from '$lib/youtube/youTubeClient';
 
 export class AdminSourceChannelYouTubeCoordinator

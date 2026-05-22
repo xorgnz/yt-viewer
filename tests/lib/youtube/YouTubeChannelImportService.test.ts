@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import { SourceChannel } from '../../../src/lib/entities/sourceChannel';
 import { VideoLengthClassification } from '../../../src/lib/entities/video';
-import { YouTubeChannelImportService } from '../../../src/lib/youtube/importer';
+import { YouTubeChannelImportService } from '../../../src/lib/youtube/YouTubeChannelImportService';
 
 describe('YouTubeChannelImportService', () => {
     it('upserts source channels and videos using stable youtube-derived ids', async () => {
