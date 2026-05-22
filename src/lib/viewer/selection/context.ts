@@ -1,10 +1,20 @@
 import type {
-    ViewerSelectionContextInput
-} from '$lib/viewer/selection/types';
-import type {
     ViewerIgnoredFilter,
     ViewerWatchedFilter
 } from '$lib/viewer/ViewerFilters';
+
+export interface ViewerSelectionContextInput
+{
+    profileKey: string;
+    term?: string;
+    watched: ViewerWatchedFilter;
+    ignored: ViewerIgnoredFilter;
+    dateFromInput: string;
+    dateToInput: string;
+    channelId: string | null;
+    virtualChannelId: string | null;
+    sort: string;
+}
 
 export class ViewerSelectionContext
 {

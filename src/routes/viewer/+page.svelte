@@ -12,10 +12,7 @@
     import ViewerFilterPanel from '$lib/viewer/components/ViewerFilterPanel.svelte';
     import ViewerPagination from '$lib/viewer/components/ViewerPagination.svelte';
     import ViewerResultsGrid from '$lib/viewer/components/ViewerResultsGrid.svelte';
-    import {
-        FILTER_DEBOUNCE_MS,
-        viewerPageState
-    } from '$lib/viewer/pageState';
+    import { ViewerSelectionControlState, viewerPageSelection } from '$lib/viewer/ViewerPageSelection';
     import { viewerSortSession } from '$lib/viewer/sortSession';
     import {
         viewerSelectionInteractions
@@ -33,25 +30,26 @@
     import type {
         BulkActionFeedback,
     } from '$lib/viewer/BulkActionFeedback';
-    import type { ViewerPageData } from '$lib/viewer/ViewerPageData';
-    import type { ViewerVisiblePage } from '$lib/viewer/ViewerPagination';
+    import {
+        ViewerPageState,
+        type ViewerPageStateFields,
+        type ViewerVisiblePage
+    } from '$lib/viewer/ViewerPageState';
     import { ViewerSelectionContext } from '$lib/viewer/selection/context';
     import { viewerSelectionStateManager } from '$lib/viewer/selection/core';
     import { viewerSelectionSessionStore } from '$lib/viewer/selection/persistence';
     import type {
-        ViewerSelectionControlState,
         ViewerSelectionFlagKind,
         ViewerSelectionVideoSnapshot,
         ViewerSelectionState
     } from '$lib/viewer/selection/types';
-    import {
-        ViewerSelectionControlState as ViewerSelectionControlStateValue
-    } from '$lib/viewer/selection/types';
 
-    export let data: ViewerPageData;
+    export let data: ViewerPageStateFields;
 
-    let f = data.filters;
-    let activeVirtualChannel = data.activeVirtualChannel;
+    let pageState = new ViewerPageState(data);
+
+    let f = pageState.filters;
+    let activeVirtualChannel = pageState.activeVirtualChannel;
     let activeVirtualChannelIsCapped = false;
     const today = new Date().toISOString().slice(0, 10);
     let totalPages = 1;
@@ -71,25 +69,26 @@
     let hasActiveSelection = false;
     let selectedCount = 0;
     let offPageSelectedCount = 0;
-    let visibleVideos: Video[] = data.videos.map((video) => new Video(video));
+    let visibleVideos: Video[] = pageState.videos.map((video) => new Video(video));
     let currentPageSelectionVideos: ViewerSelectionVideoSnapshot[] = [];
-    let watchedControlState: ViewerSelectionControlState = ViewerSelectionControlStateValue.Unchecked;
-    let favoriteControlState: ViewerSelectionControlState = ViewerSelectionControlStateValue.Unchecked;
-    let ignoredControlState: ViewerSelectionControlState = ViewerSelectionControlStateValue.Unchecked;
+    let watchedControlState: ViewerSelectionControlState = ViewerSelectionControlState.Unchecked;
+    let favoriteControlState: ViewerSelectionControlState = ViewerSelectionControlState.Unchecked;
+    let ignoredControlState: ViewerSelectionControlState = ViewerSelectionControlState.Unchecked;
     let bulkActionPending = false;
     let bulkActionFeedback: BulkActionFeedback | null = null;
     let sortPreferenceInitialized = false;
+    const FILTER_DEBOUNCE_MS = 450;
     const videoMutationService = new VideoMutationService();
-    let sourceChannels = data.channels.map((channel) => new SourceChannel(channel));
+    let sourceChannels = pageState.channels.map((channel) => new SourceChannel(channel));
 
     function buildPageHref(page: number): string
     {
-        return viewerPageState.buildViewerPageHref(f, page);
+        return pageState.navigation.buildPageHref(page);
     }
 
     function buildVideoWatchHref(video: Video): string
     {
-        return viewerPageState.buildViewerWatchHref(f, video.youtube_id);
+        return pageState.navigation.buildWatchHref(video.youtube_id);
     }
 
     function clearPendingApply()
@@ -102,7 +101,7 @@
 
     function buildFilterQuery(): string
     {
-        return viewerPageState.buildViewerFilterQuery(f, {
+        return pageState.navigation.buildFilterQuery({
             termInput,
             dateFromInput,
             dateToInput,
@@ -315,20 +314,21 @@
         }
     }
 
-    $: f = data.filters;
-    $: visibleVideos = data.videos.map((video) => new Video(video));
-    $: sourceChannels = data.channels.map((channel) => new SourceChannel(channel));
-    $: currentPageSelectionVideos = viewerPageState.createViewerSelectionSnapshots(visibleVideos);
+    $: pageState = new ViewerPageState(data);
+    $: f = pageState.filters;
+    $: visibleVideos = pageState.videos.map((video) => new Video(video));
+    $: sourceChannels = pageState.channels.map((channel) => new SourceChannel(channel));
+    $: currentPageSelectionVideos = viewerPageSelection.createSnapshots(visibleVideos);
     $: ({ termInput, dateFromInput, dateToInput, channelIdInput, sortMode, limitInput, watchedMode, showIgnored } =
-        viewerPageState.deriveViewerFilterInputState(f));
-    $: activeVirtualChannel = data.activeVirtualChannel;
+        pageState.navigation.deriveFilterInputState());
+    $: activeVirtualChannel = pageState.activeVirtualChannel;
     $: activeVirtualChannelIsCapped = activeVirtualChannel?.timerState === ViewerVirtualChannelTimerState.Capped;
-    $: ({ totalPages, currentPage, visiblePages } = viewerPageState.deriveViewerPaginationState(f, data.totalCount));
+    $: ({ totalPages, currentPage, visiblePages } = pageState.derivePaginationState());
     $: ({ hasActiveSelection, selectedCount, offPageSelectedCount, watchedControlState, favoriteControlState, ignoredControlState } =
-        viewerPageState.deriveViewerSelectionSummary(selectionState));
+        viewerPageSelection.deriveSummary(selectionState));
     $: {
         const nextContextKey = ViewerSelectionContext.createKey({
-            profileKey: data.profileKey,
+            profileKey: pageState.profileKey,
             term: f.term,
             watched: f.watched,
             ignored: f.ignored,
@@ -387,7 +387,7 @@
 
         if (!hasSortParam && storedSort && storedSort !== f.sort) {
             sortMode = storedSort;
-            void goto(`?${viewerPageState.buildViewerFilterQuery(f, {
+            void goto(`?${pageState.navigation.buildFilterQuery({
                 termInput,
                 dateFromInput,
                 dateToInput,
@@ -453,7 +453,7 @@
     />
 
     <ViewerPagination
-        totalCount={data.totalCount}
+        totalCount={pageState.totalCount}
         {totalPages}
         {currentPage}
         {visiblePages}
@@ -472,7 +472,7 @@
     />
 
     <ViewerPagination
-        totalCount={data.totalCount}
+        totalCount={pageState.totalCount}
         {totalPages}
         {currentPage}
         {visiblePages}

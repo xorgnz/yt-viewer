@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import {
-    viewerPageState
-} from '../../src/lib/viewer/pageState';
+import { ViewerPageNavigation } from '../../src/lib/viewer/ViewerPageNavigation';
+import { viewerPageSelection } from '../../src/lib/viewer/ViewerPageSelection';
+import { ViewerPageState } from '../../src/lib/viewer/ViewerPageState';
 import { ViewerSelectionContext } from '../../src/lib/viewer/selection/context';
 import { viewerSelectionStateManager } from '../../src/lib/viewer/selection/core';
 import {
@@ -33,7 +33,7 @@ describe('viewer page state helpers', () => {
 
     it('builds filter query flags from input state', () => {
         const filters = createFilters({ virtualChannelId: '4' });
-        const inputState = viewerPageState.deriveViewerFilterInputState({
+        const navigation = new ViewerPageNavigation({
             ...filters,
             term: 'space',
             watched: ViewerWatchedFilter.Unwatched,
@@ -43,8 +43,9 @@ describe('viewer page state helpers', () => {
             channelId: '22',
             limit: 25
         });
+        const inputState = navigation.deriveFilterInputState();
 
-        const query = new URLSearchParams(viewerPageState.buildViewerFilterQuery(filters, inputState));
+        const query = new URLSearchParams(new ViewerPageNavigation(filters).buildFilterQuery(inputState));
 
         expect(query.get('term')).toBe('space');
         expect(query.get('watched')).toBe('all');
@@ -58,10 +59,20 @@ describe('viewer page state helpers', () => {
     });
 
     it('derives visible pagination state for large result sets', () => {
-        const pagination = viewerPageState.deriveViewerPaginationState(createFilters({
-            limit: 10,
-            offset: 110
-        }), 250);
+        const pagination = new ViewerPageState({
+            filters: createFilters({
+                limit: 10,
+                offset: 110
+            }),
+            videos: [],
+            totalCount: 250,
+            channels: [],
+            virtualChannels: [],
+            activeVirtualChannel: null,
+            profileId: 'default',
+            profileKey: 'default',
+            profileName: 'Default'
+        }).derivePaginationState();
 
         expect(pagination.totalPages).toBe(25);
         expect(pagination.currentPage).toBe(12);
@@ -95,7 +106,7 @@ describe('viewer page state helpers', () => {
         state = viewerSelectionStateManager.toggle(state, '2');
         state = viewerSelectionStateManager.reconcile(state, contextKey, pageTwoVideos);
 
-        const summary = viewerPageState.deriveViewerSelectionSummary(state);
+        const summary = viewerPageSelection.deriveSummary(state);
 
         expect(summary.hasActiveSelection).toBe(true);
         expect(summary.selectedCount).toBe(2);
@@ -106,14 +117,14 @@ describe('viewer page state helpers', () => {
     });
 
     it('builds watch hrefs with the current viewer filters and sort', () => {
-        const href = viewerPageState.buildViewerWatchHref(createFilters({
+        const href = new ViewerPageNavigation(createFilters({
             term: 'ramen',
             watched: ViewerWatchedFilter.Unwatched,
             ignored: ViewerIgnoredFilter.Show,
             channelId: '7',
             virtualChannelId: '3',
             sort: ViewerSort.TitleDesc
-        }), 'abc123');
+        })).buildWatchHref('abc123');
 
         const url = new URL(`http://localhost${href}`);
 

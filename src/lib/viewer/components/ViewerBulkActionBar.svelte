@@ -2,8 +2,8 @@
     import type {
         BulkActionFeedback
     } from '$lib/viewer/BulkActionFeedback';
+    import { ViewerSelectionControlState } from '$lib/viewer/ViewerPageSelection';
     import {
-        ViewerSelectionControlState,
         ViewerSelectionFlagKind
     } from '$lib/viewer/selection/types';
 

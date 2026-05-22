@@ -1,8 +1,3 @@
-import type {
-    ViewerIgnoredFilter,
-    ViewerWatchedFilter
-} from '$lib/viewer/ViewerFilters';
-
 export enum ViewerSelectionFlagKind
 {
     Watched = 'watched',
@@ -11,13 +6,6 @@ export enum ViewerSelectionFlagKind
 }
 
 export type ViewerSelectionFlagValue = 0 | 1;
-
-export enum ViewerSelectionControlState
-{
-    Unchecked = 'unchecked',
-    Checked = 'checked',
-    Mixed = 'mixed'
-}
 
 export type ViewerSelectableId = string;
 
@@ -47,16 +35,4 @@ export interface ViewerSelectionState
     baselineSelectedVideoState: Record<ViewerSelectableId, ViewerSelectionVideoState>;
 }
 
-export interface ViewerSelectionContextInput
-{
-    profileKey: string;
-    term?: string;
-    watched: ViewerWatchedFilter;
-    ignored: ViewerIgnoredFilter;
-    dateFromInput: string;
-    dateToInput: string;
-    channelId: string | null;
-    virtualChannelId: string | null;
-    sort: string;
-}
 // apply-patch-anchor - do not delete

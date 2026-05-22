@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { ViewerSelectionControlState } from '../../src/lib/viewer/ViewerPageSelection';
 import { ViewerSelectionContext } from '../../src/lib/viewer/selection/context';
 import { viewerSelectionStateManager } from '../../src/lib/viewer/selection/core';
 import { viewerSelectionSessionStore } from '../../src/lib/viewer/selection/persistence';
@@ -9,10 +10,9 @@ import {
     ViewerWatchedFilter
 } from '../../src/lib/viewer/ViewerFilters';
 import {
-    ViewerSelectionControlState,
     ViewerSelectionFlagKind
 } from '../../src/lib/viewer/selection/types';
-import type { ViewerSelectionContextInput } from '../../src/lib/viewer/selection/types';
+import type { ViewerSelectionContextInput } from '../../src/lib/viewer/selection/context';
 
 describe('viewerSelection filter-context behavior', () => {
     const pageOneVideos = [

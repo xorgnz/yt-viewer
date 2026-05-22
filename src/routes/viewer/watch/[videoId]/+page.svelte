@@ -5,9 +5,9 @@
     import type { VirtualChannelFields } from '$lib/entities/virtualChannel';
     import {onMount, onDestroy} from 'svelte';
     import type { ViewerFilters } from '$lib/viewer/ViewerFilters';
+    import { ViewerPageNavigation } from '$lib/viewer/ViewerPageNavigation';
     import { VideoMutationService } from '$lib/viewer/VideoMutationService';
     import { viewerVirtualChannelTimer } from '$lib/viewer/ViewerVirtualChannelTimer';
-    import { viewerPageState } from '$lib/viewer/pageState';
 
     export let data: {
         video: VideoFields;
@@ -55,6 +55,7 @@
         ? null
         : viewerVirtualChannelTimer.normalizeViewModel(data.activeVirtualChannel);
     let recommendations = data.recommendations.map((video) => new Video(video));
+    let pageNavigation = new ViewerPageNavigation(data.navigationFilters);
     let lastDebugEvent = 'init';
     let lastDebugResponse = 'n/a';
     const videoMutationService = new VideoMutationService({
@@ -67,6 +68,7 @@
     $: showWatched = watched || (thresholdReached && !suppressThresholdWatch);
     $: currentVideo = new Video(data.video);
     $: recommendations = data.recommendations.map((video) => new Video(video));
+    $: pageNavigation = new ViewerPageNavigation(data.navigationFilters);
     $: timerStatusMessage = data.playbackBlockedMessage;
     $: timerPlaybackBlocked = !!timerStatusMessage;
 
@@ -133,7 +135,7 @@
             return '#';
         }
 
-        return viewerPageState.buildViewerWatchHref(data.navigationFilters, videoYoutubeId);
+        return pageNavigation.buildWatchHref(videoYoutubeId);
     }
 
     function resetForVideoChange(

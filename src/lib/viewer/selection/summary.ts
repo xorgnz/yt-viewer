@@ -1,5 +1,5 @@
+import { ViewerSelectionControlState } from '$lib/viewer/ViewerPageSelection';
 import {
-    ViewerSelectionControlState,
     ViewerSelectionFlagKind
 } from '$lib/viewer/selection/types';
 import type { ViewerSelectionState } from '$lib/viewer/selection/types';

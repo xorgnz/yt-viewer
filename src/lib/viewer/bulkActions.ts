@@ -3,8 +3,8 @@ import type {
 } from '$lib/viewer/BulkActionUndoState';
 import type { Video } from '$lib/entities/video';
 import { BulkActionFeedbackTone } from '$lib/viewer/BulkActionFeedback';
+import { ViewerSelectionControlState } from '$lib/viewer/ViewerPageSelection';
 import {
-    ViewerSelectionControlState,
     ViewerSelectionFlagKind
 } from '$lib/viewer/selection/types';
 import type {
