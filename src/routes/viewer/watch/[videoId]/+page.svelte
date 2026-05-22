@@ -31,6 +31,8 @@
         currentVirtualChannelId: string | number | null;
         activeVirtualChannel: ViewerVirtualChannel | null;
         playbackBlockedMessage: string | null;
+        activeHistorySessionWatchSecondsBaseline: number;
+        activeHistorySessionLastUpdatedAt: number | null;
     };
 
     let watched = !!data.video.watched;
@@ -45,17 +47,19 @@
     let isActivelyPlaying = false;
     let lastPlaybackTickAt: number | null = null;
     let elapsedWatchSeconds = 0;
-    let historySessionCreated = false;
+    let historySessionCreated = (data.activeHistorySessionLastUpdatedAt ?? null) != null
+        && (data.activeHistorySessionWatchSecondsBaseline ?? 0) > 0;
     let historySessionCreatePending = false;
     let historyProgressUpdatePending = false;
-    let lastPersistedWatchSeconds = 0;
-    let lastHistoryActivityAt: number | null = null;
+    let lastPersistedWatchSeconds = data.activeHistorySessionWatchSecondsBaseline ?? 0;
+    let lastHistoryActivityAt: number | null = data.activeHistorySessionLastUpdatedAt ?? null;
     let watchMutationPending = false;
     let timerPlaybackBlocked = false;
     let timerStatusMessage: string | null = data.playbackBlockedMessage;
     let activeVideoYoutubeId = data.video.youtube_id;
     let activeVirtualChannelId = data.currentVirtualChannelId;
     let activeVirtualChannelUsageBaselineSeconds = data.activeVirtualChannel?.timerUsageSeconds ?? 0;
+    let activeHistorySessionWatchSecondsBaseline = data.activeHistorySessionWatchSecondsBaseline ?? 0;
     let recommendations = data.recommendations;
     let lastDebugEvent = 'init';
     let lastDebugResponse = 'n/a';
@@ -90,7 +94,9 @@
             !!data.video.watched,
             data.playbackBlockedMessage,
             nextVirtualChannelId,
-            nextUsageBaselineSeconds
+            nextUsageBaselineSeconds,
+            data.activeHistorySessionWatchSecondsBaseline ?? 0,
+            data.activeHistorySessionLastUpdatedAt ?? null
         );
 
         if (player && typeof player.cueVideoById === 'function')
@@ -139,7 +145,9 @@
         serverWatched: boolean,
         playbackBlockedMessage: string | null,
         virtualChannelId: string | number | null,
-        usageBaselineSeconds: number
+        usageBaselineSeconds: number,
+        historySessionWatchSecondsBaseline: number,
+        historySessionLastUpdatedAt: number | null
     )
     {
         lastDebugEvent = `resetForVideoChange: ${data.video.youtube_id}`;
@@ -154,20 +162,26 @@
         watchMutationPending = false;
         isActivelyPlaying = false;
         elapsedWatchSeconds = 0;
-        historySessionCreated = false;
+        historySessionCreated = historySessionLastUpdatedAt != null && historySessionWatchSecondsBaseline > 0;
         historySessionCreatePending = false;
         historyProgressUpdatePending = false;
-        lastPersistedWatchSeconds = 0;
-        lastHistoryActivityAt = null;
+        lastPersistedWatchSeconds = historySessionWatchSecondsBaseline;
+        lastHistoryActivityAt = historySessionLastUpdatedAt;
         timerStatusMessage = playbackBlockedMessage;
         timerPlaybackBlocked = !!playbackBlockedMessage;
         activeVirtualChannelId = virtualChannelId;
         activeVirtualChannelUsageBaselineSeconds = usageBaselineSeconds;
+        activeHistorySessionWatchSecondsBaseline = historySessionWatchSecondsBaseline;
     }
 
     function getLocalVirtualChannelUsageSeconds(): number
     {
         return activeVirtualChannelUsageBaselineSeconds + Math.floor(elapsedWatchSeconds);
+    }
+
+    function getCurrentHistorySessionWatchSeconds(): number
+    {
+        return activeHistorySessionWatchSecondsBaseline + Math.floor(elapsedWatchSeconds);
     }
 
     function shouldLocallyCapPlayback(): boolean
@@ -180,7 +194,10 @@
             return false;
         }
 
-        return getLocalVirtualChannelUsageSeconds() >= data.activeVirtualChannel.dailyTimerMax;
+        const totalAvailableSeconds = activeVirtualChannelUsageBaselineSeconds
+            + Math.max(0, data.activeVirtualChannel.combinedTimerRemainingSeconds ?? 0);
+
+        return getLocalVirtualChannelUsageSeconds() >= totalAvailableSeconds;
     }
 
     function startPolling()
@@ -292,6 +309,7 @@
             historyProgressUpdatePending = false;
             lastPersistedWatchSeconds = 0;
             lastHistoryActivityAt = null;
+            activeHistorySessionWatchSecondsBaseline = 0;
         }
 
         isActivelyPlaying = active;
@@ -347,14 +365,14 @@
     async function createHistorySession()
     {
         const formData = new FormData();
-        formData.set('watchSeconds', String(Math.floor(elapsedWatchSeconds)));
+        formData.set('watchSeconds', String(getCurrentHistorySessionWatchSeconds()));
         if (data.currentVirtualChannelId != null) {
             formData.set('virtualChannelId', String(data.currentVirtualChannelId));
         }
 
         try
         {
-            const watchSeconds = Math.floor(elapsedWatchSeconds);
+            const watchSeconds = getCurrentHistorySessionWatchSeconds();
             historySessionCreatePending = true;
             lastDebugEvent = `createHistorySession: send ${watchSeconds}s`;
             const response = await fetch('?/createHistorySession', {
@@ -376,7 +394,7 @@
             }
             historySessionCreated = true;
             historySessionCreatePending = false;
-            lastPersistedWatchSeconds = Math.floor(elapsedWatchSeconds);
+            lastPersistedWatchSeconds = watchSeconds;
             lastHistoryActivityAt = Date.now();
             lastDebugEvent = `createHistorySession: persisted ${lastPersistedWatchSeconds}s`;
         }
@@ -391,7 +409,7 @@
     function shouldFlushPendingHistory(): boolean
     {
         const persistedSeconds = Math.floor(lastPersistedWatchSeconds);
-        const currentSeconds = Math.floor(elapsedWatchSeconds);
+        const currentSeconds = getCurrentHistorySessionWatchSeconds();
 
         if (currentSeconds <= persistedSeconds) {
             return false;
@@ -407,7 +425,7 @@
     function buildHistoryProgressFormData(virtualChannelId: string | number | null = activeVirtualChannelId): FormData
     {
         const formData = new FormData();
-        formData.set('watchSeconds', String(Math.floor(elapsedWatchSeconds)));
+        formData.set('watchSeconds', String(getCurrentHistorySessionWatchSeconds()));
 
         if (virtualChannelId != null) {
             formData.set('virtualChannelId', String(virtualChannelId));
@@ -423,7 +441,7 @@
             return;
         }
 
-        const currentSeconds = Math.floor(elapsedWatchSeconds);
+        const currentSeconds = getCurrentHistorySessionWatchSeconds();
         const targetAction = historySessionCreated && Math.floor(lastPersistedWatchSeconds) > 0
             ? 'updateHistoryProgress'
             : 'createHistorySession';
@@ -465,7 +483,7 @@
     {
         try
         {
-            const watchSeconds = Math.floor(elapsedWatchSeconds);
+            const watchSeconds = getCurrentHistorySessionWatchSeconds();
             historyProgressUpdatePending = true;
             lastDebugEvent = `updateHistoryProgress: send ${watchSeconds}s`;
             const response = await fetch('?/updateHistoryProgress', {
@@ -475,7 +493,7 @@
             lastDebugResponse = `updateHistoryProgress: ${response.status}`;
             if (response.ok)
             {
-                lastPersistedWatchSeconds = Math.floor(elapsedWatchSeconds);
+                lastPersistedWatchSeconds = watchSeconds;
                 lastHistoryActivityAt = Date.now();
                 lastDebugEvent = `updateHistoryProgress: persisted ${lastPersistedWatchSeconds}s`;
             }
@@ -499,6 +517,7 @@
                     historySessionCreatePending = false;
                     lastPersistedWatchSeconds = 0;
                     lastHistoryActivityAt = null;
+                    activeHistorySessionWatchSecondsBaseline = 0;
                 }
             }
         }

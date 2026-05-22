@@ -106,7 +106,9 @@ describe('viewer timer services', () => {
         const service = new ViewerWatchService(
             viewerVideoReadRepository as never,
             {} as never,
-            {} as never,
+            {
+                findMostRecentSession: vi.fn(async () => null)
+            } as never,
             createProfileContext(),
             recommendationService,
             {
@@ -295,6 +297,83 @@ describe('viewer timer services', () => {
             }
 
             expect(result.data.playbackBlockedMessage).toBeNull();
+        } finally {
+            vi.useRealTimers();
+        }
+    });
+
+    it('returns the active history-session baseline on watch-page reload so refreshes do not restart the session at zero', async () => {
+        vi.useFakeTimers();
+        vi.setSystemTime(8000);
+
+        try {
+            const video = createVideo(13);
+            const viewerVideoReadRepository = {
+                getByYoutubeId: vi.fn(async () => video),
+                findAdjacentYoutubeIds: vi.fn(async () => ({
+                    previousYoutubeId: null,
+                    nextYoutubeId: null
+                })),
+                list: vi.fn(async () => [])
+            };
+            const recommendationService = new ViewerRecommendationService(
+                { list: viewerVideoReadRepository.list } as never,
+                11
+            );
+            const historyDAO = {
+                findMostRecentSession: vi.fn(async () => ({
+                    id: 131,
+                    video_id: video.id,
+                    profile_id: 11,
+                    session_started_at: 1000,
+                    last_updated_at: 5000,
+                    time_watched_seconds: 120
+                }))
+            };
+            const service = new ViewerWatchService(
+                viewerVideoReadRepository as never,
+                {} as never,
+                historyDAO as never,
+                createProfileContext(),
+                recommendationService,
+                {
+                    getVirtualChannelById: vi.fn(async () => ({
+                        id: '13',
+                        name: 'Timers',
+                        dailyTimerMax: 300,
+                        timerState: ViewerVirtualChannelTimerState.Available,
+                        timerUsageSeconds: 120,
+                        timerRemainingSeconds: 180,
+                        dailyTimerRemainingSeconds: 180,
+                        extraTimerSecondsRemaining: 0,
+                        combinedTimerRemainingSeconds: 180,
+                        timerWindowStartMs: 100,
+                        timerWindowEndMs: 200
+                    }))
+                } as never
+            );
+
+            const result = await service.load('video-13', {
+                watched: ViewerWatchedFilter.All,
+                ignored: ViewerIgnoredFilter.Hide,
+                dateFrom: null,
+                dateTo: null,
+                dateFromInput: '',
+                dateToInput: '',
+                channelId: null,
+                virtualChannelId: '13',
+                sort: ViewerSort.Newest,
+                limit: 200,
+                offset: 0
+            });
+
+            expect(result.ok).toBe(true);
+            if (!result.ok) {
+                throw new Error('Expected successful watch load.');
+            }
+
+            expect(result.data.activeHistorySessionWatchSecondsBaseline).toBe(120);
+            expect(result.data.activeHistorySessionLastUpdatedAt).toBe(5000);
         } finally {
             vi.useRealTimers();
         }

@@ -41,29 +41,34 @@ describe('SideNavVirtualChannelPanelPresenter', () => {
 
     it('shows split daily and extra timer details when split mode is enabled', () => {
         const presenter = new SideNavVirtualChannelPanelPresenter(createViewModel({
-            dailyTimerMax: 90,
+            dailyTimerMax: 120,
             timerState: ViewerVirtualChannelTimerState.Available,
-            timerUsageSeconds: 18,
-            timerRemainingSeconds: 72,
-            extraTimerSecondsRemaining: 30
+            timerUsageSeconds: 60,
+            timerRemainingSeconds: 60,
+            dailyTimerRemainingSeconds: 60,
+            extraTimerSecondsRemaining: 180,
+            combinedTimerRemainingSeconds: 240
         }), true);
 
         expect(presenter.getTimerModeLabel()).toBe('');
-        expect(presenter.getConsumedDurationLabel()).toBe('0:18');
-        expect(presenter.getTotalDurationLabel()).toBe('1:30');
-        expect(presenter.getDailyAllowanceLabel()).toBe('1:30');
-        expect(presenter.getExtraRemainingLabel()).toBe('0:30');
+        expect(presenter.getConsumedDurationLabel()).toBe('1:00');
+        expect(presenter.getTotalDurationLabel()).toBe('5:00');
+        expect(presenter.getDailyAllowanceLabel()).toBe('2:00');
+        expect(presenter.getExtraRemainingLabel()).toBe('3:00');
     });
 
     it('hides split timer details when split mode is disabled', () => {
         const presenter = new SideNavVirtualChannelPanelPresenter(createViewModel({
-            dailyTimerMax: 90,
+            dailyTimerMax: 120,
             timerState: ViewerVirtualChannelTimerState.Available,
-            timerUsageSeconds: 18,
-            timerRemainingSeconds: 72,
-            extraTimerSecondsRemaining: 30
+            timerUsageSeconds: 60,
+            timerRemainingSeconds: 60,
+            dailyTimerRemainingSeconds: 60,
+            extraTimerSecondsRemaining: 180,
+            combinedTimerRemainingSeconds: 240
         }), false);
 
+        expect(presenter.getTotalDurationLabel()).toBe('5:00');
         expect(presenter.getDailyAllowanceLabel()).toBeNull();
         expect(presenter.getExtraRemainingLabel()).toBeNull();
     });
@@ -73,7 +78,10 @@ describe('SideNavVirtualChannelPanelPresenter', () => {
             dailyTimerMax: 45,
             timerState: ViewerVirtualChannelTimerState.Capped,
             timerUsageSeconds: 45,
-            timerRemainingSeconds: 0
+            timerRemainingSeconds: 0,
+            dailyTimerRemainingSeconds: 0,
+            extraTimerSecondsRemaining: 0,
+            combinedTimerRemainingSeconds: 0
         }), true);
 
         expect(presenter.getTimerModeLabel()).toBe('');

@@ -38,7 +38,12 @@ export class SideNavVirtualChannelPanelPresenter
             return null;
         }
 
-        return this.formatDuration(this.virtualChannel.dailyTimerMax);
+        const totalAvailableSeconds = Math.max(
+            0,
+            this.virtualChannel.timerUsageSeconds + (this.virtualChannel.combinedTimerRemainingSeconds ?? 0)
+        );
+
+        return this.formatDuration(totalAvailableSeconds);
     }
 
     getDailyAllowanceLabel(): string | null

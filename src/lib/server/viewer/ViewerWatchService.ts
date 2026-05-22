@@ -22,6 +22,8 @@ export type ViewerWatchLoadModel = {
     currentVirtualChannelId: string | number | null;
     activeVirtualChannel: ViewerVirtualChannel | null;
     playbackBlockedMessage: string | null;
+    activeHistorySessionWatchSecondsBaseline: number;
+    activeHistorySessionLastUpdatedAt: number | null;
     navigationFilters: ViewerQueryFilters;
     profileId: string | number;
     profileKey: string;
@@ -100,12 +102,23 @@ export class ViewerWatchService
             }
         }
 
+        const latestSession = await this.historyDAO.findMostRecentSession(video.id, this.profileContext.activeProfileId);
+        const hasActiveHistorySession = latestSession != null
+            && (Date.now() - latestSession.last_updated_at) <= HISTORY_SESSION_GAP_MS;
+        const activeHistorySessionWatchSecondsBaseline = hasActiveHistorySession
+            ? Math.max(0, Math.floor(latestSession.time_watched_seconds))
+            : 0;
+        const activeHistorySessionLastUpdatedAt = hasActiveHistorySession
+            ? latestSession.last_updated_at
+            : null;
+
         console.info('[viewer-watch.load]', {
             videoYoutubeId,
             virtualChannelId: filters.virtualChannelId,
             activeVirtualChannelUsageSeconds: activeVirtualChannel?.timerUsageSeconds ?? null,
             activeVirtualChannelRemainingSeconds: activeVirtualChannel?.timerRemainingSeconds ?? null,
-            activeVirtualChannelState: activeVirtualChannel?.timerState ?? null
+            activeVirtualChannelState: activeVirtualChannel?.timerState ?? null,
+            activeHistorySessionWatchSecondsBaseline
         });
 
         const adjacent = await this.viewerVideoReadRepository.findAdjacentYoutubeIds(
@@ -133,6 +146,8 @@ export class ViewerWatchService
                 currentVirtualChannelId: filters.virtualChannelId,
                 activeVirtualChannel,
                 playbackBlockedMessage,
+                activeHistorySessionWatchSecondsBaseline,
+                activeHistorySessionLastUpdatedAt,
                 navigationFilters: filters,
                 profileId: this.profileContext.activeProfileId,
                 profileKey: this.profileContext.activeProfileKey,
