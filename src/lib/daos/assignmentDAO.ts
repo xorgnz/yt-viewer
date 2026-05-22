@@ -1,5 +1,14 @@
 import { DAO } from '$lib/daos/shared/DAO';
-import { VirtualChannelAssignmentMode, type VirtualChannelAssignment} from '$lib/entities/virtualChannelAssignment';
+import { VirtualChannelAssignment, VirtualChannelAssignmentMode } from '$lib/entities/virtualChannelAssignment';
+
+type VirtualChannelAssignmentRow = {
+    id: string;
+    source_channel_id: string | number;
+    virtual_channel_id: string | number;
+    mode: VirtualChannelAssignmentMode;
+    created_at: number;
+    updated_at: number;
+};
 
 function parseAssignmentId(assignmentId: string | number): { sourceChannelId: string; virtualChannelId: string }
 {
@@ -53,7 +62,7 @@ export class AssignmentDAO extends DAO
     {
         const assignment = parseAssignmentId(id);
 
-        return this.getOne<VirtualChannelAssignment>(`
+        const row = await this.getOne<VirtualChannelAssignmentRow>(`
             SELECT
                 CONCAT(src_channel_id, '::', vchannel_id) AS id,
                 src_channel_id AS source_channel_id,
@@ -64,11 +73,13 @@ export class AssignmentDAO extends DAO
             FROM virtual_channel_assignments
             WHERE src_channel_id = ? AND vchannel_id = ?
         `, [assignment.sourceChannelId, assignment.virtualChannelId]);
+
+        return row ? new VirtualChannelAssignment(row) : undefined;
     }
 
     async listForSourceChannel(source_channel_id: string | number): Promise<VirtualChannelAssignment[]>
     {
-        return this.listRows<VirtualChannelAssignment>(
+        return (await this.listRows<VirtualChannelAssignmentRow>(
             `SELECT
                 CONCAT(src_channel_id, '::', vchannel_id) AS id,
                 src_channel_id AS source_channel_id,
@@ -79,7 +90,7 @@ export class AssignmentDAO extends DAO
             FROM virtual_channel_assignments
             WHERE src_channel_id = ? ORDER BY vchannel_id, src_channel_id`,
             [String(source_channel_id)]
-        );
+        )).map((row) => new VirtualChannelAssignment(row));
     }
 
     async listForChannel(source_channel_id: string | number): Promise<VirtualChannelAssignment[]>
@@ -89,7 +100,7 @@ export class AssignmentDAO extends DAO
 
     async listForVirtualChannel(virtual_channel_id: string | number): Promise<VirtualChannelAssignment[]>
     {
-        return this.listRows<VirtualChannelAssignment>(
+        return (await this.listRows<VirtualChannelAssignmentRow>(
             `SELECT
                 CONCAT(src_channel_id, '::', vchannel_id) AS id,
                 src_channel_id AS source_channel_id,
@@ -100,7 +111,7 @@ export class AssignmentDAO extends DAO
             FROM virtual_channel_assignments
             WHERE vchannel_id = ? ORDER BY src_channel_id, vchannel_id`,
             [String(virtual_channel_id)]
-        );
+        )).map((row) => new VirtualChannelAssignment(row));
     }
 }
 // apply-patch-anchor - do not delete
