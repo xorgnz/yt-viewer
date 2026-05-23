@@ -9,7 +9,7 @@ export class VirtualChannel
 {
     readonly id: string | number;
     readonly name: string;
-    readonly dailyTimerMax: number | null;
+    dailyTimerMax: number | null;
     readonly extraTimerSecondsRemaining: number;
 
     constructor(data: VirtualChannelFields) {

@@ -1,4 +1,4 @@
-import { VirtualChannel, type VirtualChannelFields } from '$lib/entities/virtualChannel';
+import { VirtualChannel } from '$lib/entities/virtualChannel';
 
 export enum ViewerVirtualChannelTimerState
 {
@@ -13,7 +13,7 @@ export type ViewerVirtualChannelTimerWindow = {
 };
 
 export type ViewerVirtualChannelTimerFields = {
-    virtualChannel: VirtualChannelFields;
+    virtualChannel: VirtualChannel;
     timerState: ViewerVirtualChannelTimerState;
     timerUsageSeconds: number;
     timerRemainingSeconds: number | null;
@@ -38,7 +38,7 @@ export class ViewerVirtualChannelTimer
 
     constructor(fields: ViewerVirtualChannelTimerFields)
     {
-        this.virtualChannel = new VirtualChannel(fields.virtualChannel);
+        this.virtualChannel = fields.virtualChannel;
         this.timerState = fields.timerState;
         this.timerUsageSeconds = fields.timerUsageSeconds;
         this.timerRemainingSeconds = fields.timerRemainingSeconds;
@@ -77,7 +77,7 @@ export class ViewerVirtualChannelTimer
 
         if (virtualChannel.dailyTimerMax == null) {
             return new ViewerVirtualChannelTimer({
-                virtualChannel: virtualChannel.toFields(),
+                virtualChannel,
                 timerState: ViewerVirtualChannelTimerState.Unlimited,
                 timerUsageSeconds: normalizedUsageSeconds,
                 timerRemainingSeconds: null,
@@ -94,10 +94,7 @@ export class ViewerVirtualChannelTimer
         const combinedTimerRemainingSeconds = dailyTimerRemainingSeconds + normalizedExtraTimerSecondsRemaining;
 
         return new ViewerVirtualChannelTimer({
-            virtualChannel: new VirtualChannel({
-                ...virtualChannel.toFields(),
-                dailyTimerMax: normalizedDailyTimerMax
-            }).toFields(),
+            virtualChannel,
             timerState: combinedTimerRemainingSeconds === 0
                 ? ViewerVirtualChannelTimerState.Capped
                 : ViewerVirtualChannelTimerState.Available,
@@ -140,7 +137,7 @@ export class ViewerVirtualChannelTimer
         );
 
         return new ViewerVirtualChannelTimer({
-            virtualChannel: virtualChannel.toFields(),
+            virtualChannel,
             timerState: candidate.timerState === ViewerVirtualChannelTimerState.Unlimited
                 || candidate.timerState === ViewerVirtualChannelTimerState.Available
                 || candidate.timerState === ViewerVirtualChannelTimerState.Capped
@@ -167,7 +164,7 @@ export class ViewerVirtualChannelTimer
     toFields(): ViewerVirtualChannelTimerFields
     {
         return {
-            virtualChannel: this.virtualChannel.toFields(),
+            virtualChannel: this.virtualChannel,
             timerState: this.timerState,
             timerUsageSeconds: this.timerUsageSeconds,
             timerRemainingSeconds: this.timerRemainingSeconds,
@@ -210,7 +207,7 @@ export class ViewerVirtualChannelTimer
         const nextCombinedTimerRemainingSeconds = nextDailyTimerRemainingSeconds + nextExtraTimerSecondsRemaining;
 
         return new ViewerVirtualChannelTimer({
-            virtualChannel: this.virtualChannel.toFields(),
+            virtualChannel: this.virtualChannel,
             timerState: nextCombinedTimerRemainingSeconds === 0
                 ? ViewerVirtualChannelTimerState.Capped
                 : ViewerVirtualChannelTimerState.Available,
