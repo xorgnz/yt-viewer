@@ -8,8 +8,10 @@ import type { ViewerQueryFilters } from '$lib/server/viewer/ViewerQueryParser';
 import { ViewerRecommendationService } from '$lib/server/viewer/ViewerRecommendationService';
 import type { ViewerVirtualChannelService } from '$lib/server/viewer/ViewerVirtualChannelService';
 import type { ServerProfileContext } from '$lib/server/ServerProfileContext';
-import type { VirtualChannel, VirtualChannelFields } from '$lib/entities/virtualChannel';
-import { viewerVirtualChannelTimer } from '$lib/viewer/ViewerVirtualChannelTimer';
+import {
+    ViewerVirtualChannelTimer,
+    type ViewerVirtualChannelTimerFields
+} from '$lib/viewer/ViewerVirtualChannelTimer';
 
 const HISTORY_SESSION_GAP_MS = 5 * 60 * 1000;
 
@@ -21,7 +23,7 @@ export type ViewerWatchLoadModel = {
     previousVideoYoutubeId: string | null;
     nextVideoYoutubeId: string | null;
     currentVirtualChannelId: string | number | null;
-    activeVirtualChannel: VirtualChannelFields | null;
+    activeVirtualChannel: ViewerVirtualChannelTimerFields | null;
     playbackBlockedMessage: string | null;
     activeHistorySessionWatchSecondsBaseline: number;
     activeHistorySessionLastUpdatedAt: number | null;
@@ -82,7 +84,7 @@ export class ViewerWatchService
     async load(videoYoutubeId: string, filters: ViewerQueryFilters): Promise<ViewerWatchLoadResult>
     {
         let playbackBlockedMessage: string | null = null;
-        let activeVirtualChannel: VirtualChannel | null = null;
+        let activeVirtualChannel: ViewerVirtualChannelTimer | null = null;
 
         const video = await this.loadVideo(videoYoutubeId);
         if (!video) {
@@ -90,7 +92,9 @@ export class ViewerWatchService
         }
 
         if (filters.virtualChannelId != null) {
-            const virtualChannel = await this.virtualChannelService.getVirtualChannelById(filters.virtualChannelId);
+            const virtualChannel = ViewerVirtualChannelTimer.normalizeViewModel(
+                await this.virtualChannelService.getVirtualChannelById(filters.virtualChannelId)
+            );
 
             if (!virtualChannel) {
                 return { ok: false, status: 404, message: 'Virtual channel not found' };
@@ -99,7 +103,7 @@ export class ViewerWatchService
             activeVirtualChannel = virtualChannel;
 
             if (
-                viewerVirtualChannelTimer.isPlaybackCapped(virtualChannel)
+                virtualChannel.isPlaybackCapped()
                 || await this.shouldBlockReloadForNearlyCappedSession(video.id, virtualChannel)
             ) {
                 playbackBlockedMessage = 'Daily timer limit reached for this virtual channel.';
@@ -148,7 +152,7 @@ export class ViewerWatchService
                 previousVideoYoutubeId: adjacent.previousYoutubeId,
                 nextVideoYoutubeId: adjacent.nextYoutubeId,
                 currentVirtualChannelId: filters.virtualChannelId,
-                activeVirtualChannel: viewerVirtualChannelTimer.normalizeViewModel(activeVirtualChannel)?.toFields() ?? null,
+                activeVirtualChannel: activeVirtualChannel?.toFields() ?? null,
                 playbackBlockedMessage,
                 activeHistorySessionWatchSecondsBaseline,
                 activeHistorySessionLastUpdatedAt,
@@ -187,7 +191,9 @@ export class ViewerWatchService
 
         const preWriteVirtualChannel = virtualChannelId == null
             ? null
-            : await this.virtualChannelService.getVirtualChannelById(virtualChannelId);
+            : ViewerVirtualChannelTimer.normalizeViewModel(
+                await this.virtualChannelService.getVirtualChannelById(virtualChannelId)
+            );
         const latestSession = await this.historyDAO.findMostRecentSession(video.id, this.profileContext.activeProfileId);
         const timeWatchedSeconds = Math.floor(watchSeconds);
         const previousWatchSeconds = latestSession && (now - latestSession.last_updated_at) <= HISTORY_SESSION_GAP_MS
@@ -239,11 +245,12 @@ export class ViewerWatchService
 
         if (virtualChannelId != null) {
             const postWriteVirtualChannel = await this.virtualChannelService.getVirtualChannelById(virtualChannelId);
+            const normalizedPostWriteVirtualChannel = ViewerVirtualChannelTimer.normalizeViewModel(postWriteVirtualChannel);
             console.info('[viewer-watch.createHistorySession.complete]', {
                 virtualChannelId,
-                activeVirtualChannelUsageSeconds: postWriteVirtualChannel?.timerUsageSeconds ?? null,
-                activeVirtualChannelRemainingSeconds: postWriteVirtualChannel?.timerRemainingSeconds ?? null,
-                activeVirtualChannelState: postWriteVirtualChannel?.timerState ?? null
+                activeVirtualChannelUsageSeconds: normalizedPostWriteVirtualChannel?.timerUsageSeconds ?? null,
+                activeVirtualChannelRemainingSeconds: normalizedPostWriteVirtualChannel?.timerRemainingSeconds ?? null,
+                activeVirtualChannelState: normalizedPostWriteVirtualChannel?.timerState ?? null
             });
         }
 
@@ -277,7 +284,9 @@ export class ViewerWatchService
 
         const preWriteVirtualChannel = virtualChannelId == null
             ? null
-            : await this.virtualChannelService.getVirtualChannelById(virtualChannelId);
+            : ViewerVirtualChannelTimer.normalizeViewModel(
+                await this.virtualChannelService.getVirtualChannelById(virtualChannelId)
+            );
         const session = await this.historyDAO.findMostRecentSession(video.id, this.profileContext.activeProfileId);
         if (!session) {
             return {
@@ -327,11 +336,12 @@ export class ViewerWatchService
 
         if (virtualChannelId != null) {
             const postWriteVirtualChannel = await this.virtualChannelService.getVirtualChannelById(virtualChannelId);
+            const normalizedPostWriteVirtualChannel = ViewerVirtualChannelTimer.normalizeViewModel(postWriteVirtualChannel);
             console.info('[viewer-watch.updateHistoryProgress.complete]', {
                 virtualChannelId,
-                activeVirtualChannelUsageSeconds: postWriteVirtualChannel?.timerUsageSeconds ?? null,
-                activeVirtualChannelRemainingSeconds: postWriteVirtualChannel?.timerRemainingSeconds ?? null,
-                activeVirtualChannelState: postWriteVirtualChannel?.timerState ?? null
+                activeVirtualChannelUsageSeconds: normalizedPostWriteVirtualChannel?.timerUsageSeconds ?? null,
+                activeVirtualChannelRemainingSeconds: normalizedPostWriteVirtualChannel?.timerRemainingSeconds ?? null,
+                activeVirtualChannelState: normalizedPostWriteVirtualChannel?.timerState ?? null
             });
         }
 
@@ -366,7 +376,9 @@ export class ViewerWatchService
             return { ok: true };
         }
 
-        const virtualChannel = await this.virtualChannelService.getVirtualChannelById(virtualChannelId);
+        const virtualChannel = ViewerVirtualChannelTimer.normalizeViewModel(
+            await this.virtualChannelService.getVirtualChannelById(virtualChannelId)
+        );
         if (!virtualChannel) {
             return {
                 ok: false,
@@ -376,7 +388,7 @@ export class ViewerWatchService
             };
         }
 
-        if (viewerVirtualChannelTimer.isPlaybackCapped(virtualChannel)) {
+        if (virtualChannel.isPlaybackCapped()) {
             return {
                 ok: false,
                 status: 409,
@@ -390,11 +402,11 @@ export class ViewerWatchService
 
     private async shouldBlockReloadForNearlyCappedSession(
         videoId: string | number,
-        virtualChannel: VirtualChannel,
+        virtualChannel: ViewerVirtualChannelTimer,
         now = Date.now()
     ): Promise<boolean>
     {
-        if (!viewerVirtualChannelTimer.shouldBlockActiveSessionReload(virtualChannel, 1)) {
+        if (!virtualChannel.shouldBlockActiveSessionReload(1)) {
             return false;
         }
 

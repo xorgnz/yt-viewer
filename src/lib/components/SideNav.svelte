@@ -2,7 +2,7 @@
     import { page } from '$app/stores';
     import SideNavVirtualChannelPanel from '$lib/components/SideNavVirtualChannelPanel.svelte';
     import type { SideNavVirtualChannelViewModel } from '$lib/components/SideNavVirtualChannelPanelViewModel';
-    import { viewerVirtualChannelTimer } from '$lib/viewer/ViewerVirtualChannelTimer';
+    import { ViewerVirtualChannelTimer } from '$lib/viewer/ViewerVirtualChannelTimer';
 
     // Simple side navigation used across all pages
     export let appName: string = 'YT Viewer';
@@ -24,7 +24,7 @@
 
     function readActiveVirtualChannel(value: unknown): SideNavVirtualChannelViewModel | null
     {
-        return viewerVirtualChannelTimer.normalizeViewModel(value);
+        return ViewerVirtualChannelTimer.normalizeViewModel(value);
     }
 
     $: activeVirtualChannel = readActiveVirtualChannel($page.data.activeVirtualChannel);

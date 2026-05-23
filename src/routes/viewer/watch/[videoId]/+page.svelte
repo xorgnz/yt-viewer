@@ -2,12 +2,15 @@
     import VideoCard from '$lib/components/VideoCard.svelte';
     import { Video } from '$lib/entities/video';
     import type { VideoFields } from '$lib/entities/video';
-    import type { VirtualChannelFields } from '$lib/entities/virtualChannel';
     import {onMount, onDestroy} from 'svelte';
     import type { ViewerFilters } from '$lib/viewer/ViewerFilters';
     import { ViewerPageNavigation } from '$lib/viewer/ViewerPageNavigation';
     import { VideoMutationService } from '$lib/viewer/VideoMutationService';
-    import { viewerVirtualChannelTimer } from '$lib/viewer/ViewerVirtualChannelTimer';
+    import {
+        ViewerVirtualChannelTimer,
+        ViewerVirtualChannelTimerState,
+        type ViewerVirtualChannelTimerFields
+    } from '$lib/viewer/ViewerVirtualChannelTimer';
 
     export let data: {
         video: VideoFields;
@@ -19,7 +22,7 @@
         previousVideoYoutubeId: string | null;
         nextVideoYoutubeId: string | null;
         currentVirtualChannelId: string | number | null;
-        activeVirtualChannel: VirtualChannelFields | null;
+        activeVirtualChannel: ViewerVirtualChannelTimerFields | null;
         playbackBlockedMessage: string | null;
         activeHistorySessionWatchSecondsBaseline: number;
         activeHistorySessionLastUpdatedAt: number | null;
@@ -53,7 +56,7 @@
     let activeHistorySessionWatchSecondsBaseline = data.activeHistorySessionWatchSecondsBaseline ?? 0;
     let localActiveVirtualChannel = data.activeVirtualChannel == null
         ? null
-        : viewerVirtualChannelTimer.normalizeViewModel(data.activeVirtualChannel);
+        : ViewerVirtualChannelTimer.normalizeViewModel(data.activeVirtualChannel);
     let recommendations = data.recommendations.map((video) => new Video(video));
     let pageNavigation = new ViewerPageNavigation(data.navigationFilters);
     let lastDebugEvent = 'init';
@@ -171,7 +174,7 @@
         activeHistorySessionWatchSecondsBaseline = historySessionWatchSecondsBaseline;
         localActiveVirtualChannel = data.activeVirtualChannel == null
             ? null
-            : viewerVirtualChannelTimer.normalizeViewModel({
+            : ViewerVirtualChannelTimer.normalizeViewModel({
                 ...data.activeVirtualChannel,
                 timerUsageSeconds: usageBaselineSeconds
             });
@@ -189,7 +192,7 @@
 
     function shouldLocallyCapPlayback(): boolean
     {
-        return viewerVirtualChannelTimer.isPlaybackCapped(localActiveVirtualChannel);
+        return localActiveVirtualChannel?.isPlaybackCapped() ?? false;
     }
 
     function startPolling()
@@ -211,10 +214,7 @@
                     elapsedWatchSeconds += deltaSeconds;
 
                     if (localActiveVirtualChannel && deltaSeconds > 0) {
-                        localActiveVirtualChannel = viewerVirtualChannelTimer.advanceSnapshot(
-                            localActiveVirtualChannel,
-                            deltaSeconds
-                        ).virtualChannel;
+                        localActiveVirtualChannel = localActiveVirtualChannel.advance(deltaSeconds);
                     }
 
                     if (data.currentVirtualChannelId != null && deltaSeconds > 0) {

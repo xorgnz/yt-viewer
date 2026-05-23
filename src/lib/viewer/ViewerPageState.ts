@@ -1,8 +1,8 @@
 import type { SourceChannelFields } from '$lib/entities/sourceChannel';
 import type { VideoFields } from '$lib/entities/video';
-import type { VirtualChannelFields } from '$lib/entities/virtualChannel';
 import type { ViewerFilters } from '$lib/viewer/ViewerFilters';
 import { ViewerPageNavigation } from '$lib/viewer/ViewerPageNavigation';
+import type { ViewerVirtualChannelTimerFields } from '$lib/viewer/ViewerVirtualChannelTimer';
 
 export enum ViewerVisiblePageMarker
 {
@@ -22,8 +22,8 @@ export type ViewerPageStateFields = {
     videos: VideoFields[];
     totalCount: number;
     channels: SourceChannelFields[];
-    virtualChannels: VirtualChannelFields[];
-    activeVirtualChannel: VirtualChannelFields | null;
+    virtualChannels: ViewerVirtualChannelTimerFields[];
+    activeVirtualChannel: ViewerVirtualChannelTimerFields | null;
     profileId: string | number;
     profileKey: string;
     profileName: string;
@@ -35,8 +35,8 @@ export class ViewerPageState
     readonly videos: VideoFields[];
     readonly totalCount: number;
     readonly channels: SourceChannelFields[];
-    readonly virtualChannels: VirtualChannelFields[];
-    readonly activeVirtualChannel: VirtualChannelFields | null;
+    readonly virtualChannels: ViewerVirtualChannelTimerFields[];
+    readonly activeVirtualChannel: ViewerVirtualChannelTimerFields | null;
     readonly profileId: string | number;
     readonly profileKey: string;
     readonly profileName: string;

@@ -2,17 +2,24 @@ import { describe, expect, it } from 'vitest';
 import { SideNavVirtualChannelPanelPresenter } from '../../src/lib/components/SideNavVirtualChannelPanelPresenter';
 import type { SideNavVirtualChannelViewModel } from '../../src/lib/components/SideNavVirtualChannelPanelViewModel';
 import { VirtualChannel } from '../../src/lib/entities/virtualChannel';
-import { ViewerVirtualChannelTimerState } from '../../src/lib/viewer/ViewerVirtualChannelTimer';
+import {
+    ViewerVirtualChannelTimer,
+    ViewerVirtualChannelTimerState,
+    type ViewerVirtualChannelTimerFields
+} from '../../src/lib/viewer/ViewerVirtualChannelTimer';
 
 describe('SideNavVirtualChannelPanelPresenter', () => {
     function createViewModel(
-        overrides: Partial<SideNavVirtualChannelViewModel> = {}
+        overrides: Partial<ViewerVirtualChannelTimerFields> = {}
     ): SideNavVirtualChannelViewModel
     {
-        return new VirtualChannel({
-            id: 'vc_demo',
-            name: 'Timers',
-            dailyTimerMax: 60,
+        return new ViewerVirtualChannelTimer({
+            virtualChannel: new VirtualChannel({
+                id: 'vc_demo',
+                name: 'Timers',
+                dailyTimerMax: 60,
+                extraTimerSecondsRemaining: 0
+            }).toFields(),
             timerState: ViewerVirtualChannelTimerState.Available,
             timerUsageSeconds: 1200,
             timerRemainingSeconds: 2400,
@@ -27,7 +34,12 @@ describe('SideNavVirtualChannelPanelPresenter', () => {
 
     it('formats unlimited virtual channel status and usage', () => {
         const presenter = new SideNavVirtualChannelPanelPresenter(createViewModel({
-            dailyTimerMax: null,
+            virtualChannel: new VirtualChannel({
+                id: 'vc_demo',
+                name: 'Timers',
+                dailyTimerMax: null,
+                extraTimerSecondsRemaining: 0
+            }).toFields(),
             timerState: ViewerVirtualChannelTimerState.Unlimited,
             timerUsageSeconds: 1860,
             timerRemainingSeconds: null
@@ -42,7 +54,12 @@ describe('SideNavVirtualChannelPanelPresenter', () => {
 
     it('shows split daily and extra timer details when split mode is enabled', () => {
         const presenter = new SideNavVirtualChannelPanelPresenter(createViewModel({
-            dailyTimerMax: 120,
+            virtualChannel: new VirtualChannel({
+                id: 'vc_demo',
+                name: 'Timers',
+                dailyTimerMax: 120,
+                extraTimerSecondsRemaining: 180
+            }).toFields(),
             timerState: ViewerVirtualChannelTimerState.Available,
             timerUsageSeconds: 60,
             timerRemainingSeconds: 60,
@@ -60,7 +77,12 @@ describe('SideNavVirtualChannelPanelPresenter', () => {
 
     it('hides split timer details when split mode is disabled', () => {
         const presenter = new SideNavVirtualChannelPanelPresenter(createViewModel({
-            dailyTimerMax: 120,
+            virtualChannel: new VirtualChannel({
+                id: 'vc_demo',
+                name: 'Timers',
+                dailyTimerMax: 120,
+                extraTimerSecondsRemaining: 180
+            }).toFields(),
             timerState: ViewerVirtualChannelTimerState.Available,
             timerUsageSeconds: 60,
             timerRemainingSeconds: 60,
@@ -76,7 +98,12 @@ describe('SideNavVirtualChannelPanelPresenter', () => {
 
     it('formats capped virtual channel status and consumed usage', () => {
         const presenter = new SideNavVirtualChannelPanelPresenter(createViewModel({
-            dailyTimerMax: 45,
+            virtualChannel: new VirtualChannel({
+                id: 'vc_demo',
+                name: 'Timers',
+                dailyTimerMax: 45,
+                extraTimerSecondsRemaining: 0
+            }).toFields(),
             timerState: ViewerVirtualChannelTimerState.Capped,
             timerUsageSeconds: 45,
             timerRemainingSeconds: 0,

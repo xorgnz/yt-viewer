@@ -25,6 +25,7 @@
         ViewerWatchedFilter
     } from '$lib/viewer/ViewerFilters';
     import {
+        ViewerVirtualChannelTimer,
         ViewerVirtualChannelTimerState,
     } from '$lib/viewer/ViewerVirtualChannelTimer';
     import type {
@@ -49,7 +50,9 @@
     let pageState = new ViewerPageState(data);
 
     let f = pageState.filters;
-    let activeVirtualChannel = pageState.activeVirtualChannel;
+    let activeVirtualChannel = pageState.activeVirtualChannel == null
+        ? null
+        : ViewerVirtualChannelTimer.normalizeViewModel(pageState.activeVirtualChannel);
     let activeVirtualChannelIsCapped = false;
     const today = new Date().toISOString().slice(0, 10);
     let totalPages = 1;
@@ -321,7 +324,9 @@
     $: currentPageSelectionVideos = viewerPageSelection.createSnapshots(visibleVideos);
     $: ({ termInput, dateFromInput, dateToInput, channelIdInput, sortMode, limitInput, watchedMode, showIgnored } =
         pageState.navigation.deriveFilterInputState());
-    $: activeVirtualChannel = pageState.activeVirtualChannel;
+    $: activeVirtualChannel = pageState.activeVirtualChannel == null
+        ? null
+        : ViewerVirtualChannelTimer.normalizeViewModel(pageState.activeVirtualChannel);
     $: activeVirtualChannelIsCapped = activeVirtualChannel?.timerState === ViewerVirtualChannelTimerState.Capped;
     $: ({ totalPages, currentPage, visiblePages } = pageState.derivePaginationState());
     $: ({ hasActiveSelection, selectedCount, offPageSelectedCount, watchedControlState, favoriteControlState, ignoredControlState } =

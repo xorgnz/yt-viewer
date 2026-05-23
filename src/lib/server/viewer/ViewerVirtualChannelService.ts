@@ -3,7 +3,7 @@ import type { VirtualChannelDAO } from '$lib/daos/virtualChannelDAO';
 import type { VirtualChannel } from '$lib/entities/virtualChannel';
 import { AppTimezonePolicy } from '$lib/server/AppTimezonePolicy';
 import type { ServerProfileContext } from '$lib/server/ServerProfileContext';
-import { viewerVirtualChannelTimer } from '$lib/viewer/ViewerVirtualChannelTimer';
+import { ViewerVirtualChannelTimer } from '$lib/viewer/ViewerVirtualChannelTimer';
 
 export class ViewerVirtualChannelService
 {
@@ -33,7 +33,7 @@ export class ViewerVirtualChannelService
         };
     }
 
-    async loadVirtualChannels(): Promise<VirtualChannel[]>
+    async loadVirtualChannels(): Promise<ViewerVirtualChannelTimer[]>
     {
         const virtualChannels = await this.virtualChannelDAO.list();
         const timezone = AppTimezonePolicy.configuredTimezone;
@@ -43,7 +43,7 @@ export class ViewerVirtualChannelService
         return await Promise.all(virtualChannels.map((virtualChannel) => this.buildVirtualChannelView(virtualChannel, window)));
     }
 
-    async getVirtualChannelById(virtualChannelId: string | number): Promise<VirtualChannel | null>
+    async getVirtualChannelById(virtualChannelId: string | number): Promise<ViewerVirtualChannelTimer | null>
     {
         const virtualChannel = await this.virtualChannelDAO.get(virtualChannelId);
         if (!virtualChannel) {
@@ -80,30 +80,22 @@ export class ViewerVirtualChannelService
 
     async consumeExtraTimerSecondsForWatchDelta(
         virtualChannelId: string | number,
-        virtualChannel: VirtualChannel | null,
+        virtualChannelTimer: ViewerVirtualChannelTimer | null,
         consumedSecondsDelta: number
     ): Promise<void>
     {
-        if (!virtualChannel || virtualChannel.dailyTimerMax == null) {
+        if (!virtualChannelTimer || virtualChannelTimer.dailyTimerMax == null) {
             return;
         }
 
-        const advanceResult = viewerVirtualChannelTimer.advanceSnapshot(
-            virtualChannel,
-            consumedSecondsDelta
-        );
-        if (advanceResult.extraTimerSecondsConsumed === 0) {
-            return;
-        }
-
-        const nextExtraTimerSecondsRemaining = advanceResult.virtualChannel.extraTimerSecondsRemaining;
-        if (nextExtraTimerSecondsRemaining === virtualChannel.extraTimerSecondsRemaining) {
+        const nextVirtualChannelTimer = virtualChannelTimer.advance(consumedSecondsDelta);
+        if (nextVirtualChannelTimer.extraTimerSecondsRemaining === virtualChannelTimer.extraTimerSecondsRemaining) {
             return;
         }
 
         await this.virtualChannelDAO.updateExtraTimerSecondsRemaining(
             virtualChannelId,
-            nextExtraTimerSecondsRemaining
+            nextVirtualChannelTimer.extraTimerSecondsRemaining
         );
     }
 
@@ -204,10 +196,10 @@ export class ViewerVirtualChannelService
     private async buildVirtualChannelView(
         virtualChannel: VirtualChannel,
         window: { startMs: number; endMs: number }
-    ): Promise<VirtualChannel>
+    ): Promise<ViewerVirtualChannelTimer>
     {
         if (virtualChannel.dailyTimerMax == null) {
-            return viewerVirtualChannelTimer.createSnapshot(virtualChannel, 0, window);
+            return ViewerVirtualChannelTimer.createSnapshot(virtualChannel, 0, window);
         }
 
         const timerUsageSeconds = Number(await this.historyDAO.getVirtualChannelWatchSecondsInWindow(
@@ -217,7 +209,7 @@ export class ViewerVirtualChannelService
             window.endMs
         ));
 
-        return viewerVirtualChannelTimer.createSnapshot(virtualChannel, timerUsageSeconds, window);
+        return ViewerVirtualChannelTimer.createSnapshot(virtualChannel, timerUsageSeconds, window);
     }
 }
 // apply-patch-anchor - do not delete

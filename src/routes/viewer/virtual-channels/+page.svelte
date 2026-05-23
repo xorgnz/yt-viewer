@@ -1,8 +1,8 @@
 <script lang="ts">
-    import type { VirtualChannelFields } from '$lib/entities/virtualChannel';
+    import type { ViewerVirtualChannelTimerFields } from '$lib/viewer/ViewerVirtualChannelTimer';
 
     export let data: {
-        virtualChannels: VirtualChannelFields[];
+        virtualChannels: ViewerVirtualChannelTimerFields[];
         profileKey: string;
     };
 </script>
@@ -17,12 +17,12 @@
                 {#each data.virtualChannels as g}
                     {#if g.timerState === 'capped'}
                         <div class="virtual-channel-card virtual-channel-card-capped" aria-disabled="true">
-                            <div class="name">{g.name}</div>
+                            <div class="name">{g.virtualChannel.name}</div>
                             <div class="hint">Daily timer limit reached</div>
                         </div>
                     {:else}
-                        <a class="virtual-channel-card" href={`/viewer?${new URLSearchParams({ virtualChannelId: String(g.id) }).toString()}`}>
-                            <div class="name">{g.name}</div>
+                        <a class="virtual-channel-card" href={`/viewer?${new URLSearchParams({ virtualChannelId: String(g.virtualChannel.id) }).toString()}`}>
+                            <div class="name">{g.virtualChannel.name}</div>
                             <div class="hint">View videos from this virtual channel</div>
                         </a>
                     {/if}

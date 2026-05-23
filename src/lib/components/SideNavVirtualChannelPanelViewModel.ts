@@ -1,3 +1,3 @@
-import type { VirtualChannel } from '$lib/entities/virtualChannel';
+import type { ViewerVirtualChannelTimer } from '$lib/viewer/ViewerVirtualChannelTimer';
 
-export type SideNavVirtualChannelViewModel = VirtualChannel;
+export type SideNavVirtualChannelViewModel = ViewerVirtualChannelTimer;

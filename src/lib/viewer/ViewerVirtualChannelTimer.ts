@@ -1,5 +1,4 @@
-import { VirtualChannel } from '$lib/entities/virtualChannel';
-import type { VirtualChannelFields } from '$lib/entities/virtualChannel';
+import { VirtualChannel, type VirtualChannelFields } from '$lib/entities/virtualChannel';
 
 export enum ViewerVirtualChannelTimerState
 {
@@ -8,34 +7,77 @@ export enum ViewerVirtualChannelTimerState
     Capped = 'capped'
 }
 
-type ViewerVirtualChannelTimerWindow = {
+export type ViewerVirtualChannelTimerWindow = {
     startMs: number;
     endMs: number;
 };
 
-type ViewerVirtualChannelTimerAdvanceResult = {
-    virtualChannel: VirtualChannel;
-    extraTimerSecondsConsumed: number;
+export type ViewerVirtualChannelTimerFields = {
+    virtualChannel: VirtualChannelFields;
+    timerState: ViewerVirtualChannelTimerState;
+    timerUsageSeconds: number;
+    timerRemainingSeconds: number | null;
+    dailyTimerRemainingSeconds: number | null;
+    extraTimerSecondsRemaining: number;
+    combinedTimerRemainingSeconds: number | null;
+    timerWindowStartMs: number;
+    timerWindowEndMs: number;
 };
 
 export class ViewerVirtualChannelTimer
 {
-    createSnapshot(
+    readonly virtualChannel: VirtualChannel;
+    readonly timerState: ViewerVirtualChannelTimerState;
+    readonly timerUsageSeconds: number;
+    readonly timerRemainingSeconds: number | null;
+    readonly dailyTimerRemainingSeconds: number | null;
+    readonly extraTimerSecondsRemaining: number;
+    readonly combinedTimerRemainingSeconds: number | null;
+    readonly timerWindowStartMs: number;
+    readonly timerWindowEndMs: number;
+
+    constructor(fields: ViewerVirtualChannelTimerFields)
+    {
+        this.virtualChannel = new VirtualChannel(fields.virtualChannel);
+        this.timerState = fields.timerState;
+        this.timerUsageSeconds = fields.timerUsageSeconds;
+        this.timerRemainingSeconds = fields.timerRemainingSeconds;
+        this.dailyTimerRemainingSeconds = fields.dailyTimerRemainingSeconds;
+        this.extraTimerSecondsRemaining = fields.extraTimerSecondsRemaining;
+        this.combinedTimerRemainingSeconds = fields.combinedTimerRemainingSeconds;
+        this.timerWindowStartMs = fields.timerWindowStartMs;
+        this.timerWindowEndMs = fields.timerWindowEndMs;
+    }
+
+    get id(): string | number
+    {
+        return this.virtualChannel.id;
+    }
+
+    get name(): string
+    {
+        return this.virtualChannel.name;
+    }
+
+    get dailyTimerMax(): number | null
+    {
+        return this.virtualChannel.dailyTimerMax;
+    }
+
+    static createSnapshot(
         virtualChannel: VirtualChannel,
         timerUsageSeconds: number,
         timerWindow: ViewerVirtualChannelTimerWindow
-    ): VirtualChannel
+    ): ViewerVirtualChannelTimer
     {
-        const normalizedUsageSeconds = this.normalizeWholeSeconds(timerUsageSeconds);
-        const normalizedExtraTimerSecondsRemaining = this.normalizeWholeSeconds(
+        const normalizedUsageSeconds = ViewerVirtualChannelTimer.normalizeWholeSeconds(timerUsageSeconds);
+        const normalizedExtraTimerSecondsRemaining = ViewerVirtualChannelTimer.normalizeWholeSeconds(
             virtualChannel.extraTimerSecondsRemaining
         );
 
         if (virtualChannel.dailyTimerMax == null) {
-            return new VirtualChannel({
-                id: virtualChannel.id,
-                name: virtualChannel.name,
-                dailyTimerMax: null,
+            return new ViewerVirtualChannelTimer({
+                virtualChannel: virtualChannel.toFields(),
                 timerState: ViewerVirtualChannelTimerState.Unlimited,
                 timerUsageSeconds: normalizedUsageSeconds,
                 timerRemainingSeconds: null,
@@ -47,14 +89,15 @@ export class ViewerVirtualChannelTimer
             });
         }
 
-        const normalizedDailyTimerMax = this.normalizeWholeSeconds(virtualChannel.dailyTimerMax);
+        const normalizedDailyTimerMax = ViewerVirtualChannelTimer.normalizeWholeSeconds(virtualChannel.dailyTimerMax);
         const dailyTimerRemainingSeconds = Math.max(0, normalizedDailyTimerMax - normalizedUsageSeconds);
         const combinedTimerRemainingSeconds = dailyTimerRemainingSeconds + normalizedExtraTimerSecondsRemaining;
 
-        return new VirtualChannel({
-            id: virtualChannel.id,
-            name: virtualChannel.name,
-            dailyTimerMax: normalizedDailyTimerMax,
+        return new ViewerVirtualChannelTimer({
+            virtualChannel: new VirtualChannel({
+                ...virtualChannel.toFields(),
+                dailyTimerMax: normalizedDailyTimerMax
+            }).toFields(),
             timerState: combinedTimerRemainingSeconds === 0
                 ? ViewerVirtualChannelTimerState.Capped
                 : ViewerVirtualChannelTimerState.Available,
@@ -68,30 +111,92 @@ export class ViewerVirtualChannelTimer
         });
     }
 
-    advanceSnapshot(
-        virtualChannel: VirtualChannel,
-        consumedSecondsDelta: number
-    ): ViewerVirtualChannelTimerAdvanceResult
+    static normalizeViewModel(value: unknown): ViewerVirtualChannelTimer | null
     {
-        const normalizedDeltaSeconds = this.normalizeWholeSeconds(consumedSecondsDelta);
-        if (virtualChannel.dailyTimerMax == null || normalizedDeltaSeconds === 0) {
-            return {
-                virtualChannel,
-                extraTimerSecondsConsumed: 0
-            };
+        if (!value || typeof value !== 'object') {
+            return null;
+        }
+
+        const candidate = value as Partial<ViewerVirtualChannelTimerFields> & {
+            id?: string | number;
+            name?: string;
+            dailyTimerMax?: number | null;
+        };
+
+        const virtualChannel = ViewerVirtualChannelTimer.readVirtualChannel(candidate);
+        if (!virtualChannel) {
+            return null;
+        }
+
+        const timerUsageSeconds = ViewerVirtualChannelTimer.normalizeWholeSeconds(candidate.timerUsageSeconds ?? 0);
+        const timerWindow = {
+            startMs: ViewerVirtualChannelTimer.normalizeWholeSeconds(candidate.timerWindowStartMs ?? 0),
+            endMs: ViewerVirtualChannelTimer.normalizeWholeSeconds(candidate.timerWindowEndMs ?? 0)
+        };
+        const fallbackSnapshot = ViewerVirtualChannelTimer.createSnapshot(
+            virtualChannel,
+            timerUsageSeconds,
+            timerWindow
+        );
+
+        return new ViewerVirtualChannelTimer({
+            virtualChannel: virtualChannel.toFields(),
+            timerState: candidate.timerState === ViewerVirtualChannelTimerState.Unlimited
+                || candidate.timerState === ViewerVirtualChannelTimerState.Available
+                || candidate.timerState === ViewerVirtualChannelTimerState.Capped
+                ? candidate.timerState
+                : fallbackSnapshot.timerState,
+            timerUsageSeconds: fallbackSnapshot.timerUsageSeconds,
+            timerRemainingSeconds: typeof candidate.timerRemainingSeconds === 'number'
+                ? ViewerVirtualChannelTimer.normalizeWholeSeconds(candidate.timerRemainingSeconds)
+                : fallbackSnapshot.timerRemainingSeconds,
+            dailyTimerRemainingSeconds: typeof candidate.dailyTimerRemainingSeconds === 'number'
+                ? ViewerVirtualChannelTimer.normalizeWholeSeconds(candidate.dailyTimerRemainingSeconds)
+                : fallbackSnapshot.dailyTimerRemainingSeconds,
+            extraTimerSecondsRemaining: typeof candidate.extraTimerSecondsRemaining === 'number'
+                ? ViewerVirtualChannelTimer.normalizeWholeSeconds(candidate.extraTimerSecondsRemaining)
+                : fallbackSnapshot.extraTimerSecondsRemaining,
+            combinedTimerRemainingSeconds: typeof candidate.combinedTimerRemainingSeconds === 'number'
+                ? ViewerVirtualChannelTimer.normalizeWholeSeconds(candidate.combinedTimerRemainingSeconds)
+                : fallbackSnapshot.combinedTimerRemainingSeconds,
+            timerWindowStartMs: fallbackSnapshot.timerWindowStartMs,
+            timerWindowEndMs: fallbackSnapshot.timerWindowEndMs
+        });
+    }
+
+    toFields(): ViewerVirtualChannelTimerFields
+    {
+        return {
+            virtualChannel: this.virtualChannel.toFields(),
+            timerState: this.timerState,
+            timerUsageSeconds: this.timerUsageSeconds,
+            timerRemainingSeconds: this.timerRemainingSeconds,
+            dailyTimerRemainingSeconds: this.dailyTimerRemainingSeconds,
+            extraTimerSecondsRemaining: this.extraTimerSecondsRemaining,
+            combinedTimerRemainingSeconds: this.combinedTimerRemainingSeconds,
+            timerWindowStartMs: this.timerWindowStartMs,
+            timerWindowEndMs: this.timerWindowEndMs
+        };
+    }
+
+    advance(consumedSecondsDelta: number): ViewerVirtualChannelTimer
+    {
+        const normalizedDeltaSeconds = ViewerVirtualChannelTimer.normalizeWholeSeconds(consumedSecondsDelta);
+        if (this.dailyTimerMax == null || normalizedDeltaSeconds === 0) {
+            return this;
         }
 
         const previousDailyTimerRemainingSeconds = Math.max(
             0,
-            this.normalizeWholeSeconds(virtualChannel.dailyTimerRemainingSeconds ?? 0)
+            ViewerVirtualChannelTimer.normalizeWholeSeconds(this.dailyTimerRemainingSeconds ?? 0)
         );
         const previousExtraTimerSecondsRemaining = Math.max(
             0,
-            this.normalizeWholeSeconds(virtualChannel.extraTimerSecondsRemaining)
+            ViewerVirtualChannelTimer.normalizeWholeSeconds(this.extraTimerSecondsRemaining)
         );
         const nextUsageSeconds = Math.max(
             0,
-            this.normalizeWholeSeconds(virtualChannel.timerUsageSeconds ?? 0) + normalizedDeltaSeconds
+            ViewerVirtualChannelTimer.normalizeWholeSeconds(this.timerUsageSeconds) + normalizedDeltaSeconds
         );
         const nextDailyTimerRemainingSeconds = Math.max(0, previousDailyTimerRemainingSeconds - normalizedDeltaSeconds);
         const extraTimerSecondsConsumed = Math.min(
@@ -104,49 +209,55 @@ export class ViewerVirtualChannelTimer
         );
         const nextCombinedTimerRemainingSeconds = nextDailyTimerRemainingSeconds + nextExtraTimerSecondsRemaining;
 
-        return {
-            virtualChannel: new VirtualChannel({
-                ...virtualChannel,
-                timerState: nextCombinedTimerRemainingSeconds === 0
-                    ? ViewerVirtualChannelTimerState.Capped
-                    : ViewerVirtualChannelTimerState.Available,
-                timerUsageSeconds: nextUsageSeconds,
-                timerRemainingSeconds: nextDailyTimerRemainingSeconds,
-                dailyTimerRemainingSeconds: nextDailyTimerRemainingSeconds,
-                extraTimerSecondsRemaining: nextExtraTimerSecondsRemaining,
-                combinedTimerRemainingSeconds: nextCombinedTimerRemainingSeconds
-            }),
-            extraTimerSecondsConsumed
-        };
+        return new ViewerVirtualChannelTimer({
+            virtualChannel: this.virtualChannel.toFields(),
+            timerState: nextCombinedTimerRemainingSeconds === 0
+                ? ViewerVirtualChannelTimerState.Capped
+                : ViewerVirtualChannelTimerState.Available,
+            timerUsageSeconds: nextUsageSeconds,
+            timerRemainingSeconds: nextDailyTimerRemainingSeconds,
+            dailyTimerRemainingSeconds: nextDailyTimerRemainingSeconds,
+            extraTimerSecondsRemaining: nextExtraTimerSecondsRemaining,
+            combinedTimerRemainingSeconds: nextCombinedTimerRemainingSeconds,
+            timerWindowStartMs: this.timerWindowStartMs,
+            timerWindowEndMs: this.timerWindowEndMs
+        });
     }
 
-    isPlaybackCapped(virtualChannel: VirtualChannel | null): boolean
+    getExtraTimerSecondsConsumedForAdvance(consumedSecondsDelta: number): number
     {
-        return virtualChannel?.timerState === ViewerVirtualChannelTimerState.Capped;
+        return Math.max(0, this.extraTimerSecondsRemaining - this.advance(consumedSecondsDelta).extraTimerSecondsRemaining);
     }
 
-    shouldBlockActiveSessionReload(
-        virtualChannel: VirtualChannel,
-        remainingSecondsThreshold = 1
-    ): boolean
+    isPlaybackCapped(): boolean
     {
-        if (virtualChannel.dailyTimerMax == null || this.isPlaybackCapped(virtualChannel)) {
+        return this.timerState === ViewerVirtualChannelTimerState.Capped;
+    }
+
+    shouldBlockActiveSessionReload(remainingSecondsThreshold = 1): boolean
+    {
+        if (this.dailyTimerMax == null || this.isPlaybackCapped()) {
             return false;
         }
 
         return Math.max(
             0,
-            this.normalizeWholeSeconds(virtualChannel.combinedTimerRemainingSeconds ?? 0)
-        ) <= this.normalizeWholeSeconds(remainingSecondsThreshold);
+            ViewerVirtualChannelTimer.normalizeWholeSeconds(this.combinedTimerRemainingSeconds ?? 0)
+        ) <= ViewerVirtualChannelTimer.normalizeWholeSeconds(remainingSecondsThreshold);
     }
 
-    normalizeViewModel(value: unknown): VirtualChannel | null
+    private static readVirtualChannel(candidate: Partial<ViewerVirtualChannelTimerFields> & {
+        id?: string | number;
+        name?: string;
+        dailyTimerMax?: number | null;
+    }): VirtualChannel | null
     {
-        if (!value || typeof value !== 'object') {
-            return null;
+        if (candidate.virtualChannel && VirtualChannel.validate(candidate.virtualChannel)) {
+            return candidate.virtualChannel instanceof VirtualChannel
+                ? candidate.virtualChannel
+                : new VirtualChannel(candidate.virtualChannel);
         }
 
-        const candidate = value as Partial<VirtualChannelFields>;
         if (
             (typeof candidate.id !== 'string' && typeof candidate.id !== 'number')
             || typeof candidate.name !== 'string'
@@ -154,52 +265,19 @@ export class ViewerVirtualChannelTimer
             return null;
         }
 
-        const dailyTimerMax = typeof candidate.dailyTimerMax === 'number'
-            ? this.normalizeWholeSeconds(candidate.dailyTimerMax)
-            : null;
-        const timerUsageSeconds = this.normalizeWholeSeconds(candidate.timerUsageSeconds ?? 0);
-        const extraTimerSecondsRemaining = this.normalizeWholeSeconds(candidate.extraTimerSecondsRemaining ?? 0);
-        const timerWindow = {
-            startMs: this.normalizeWholeSeconds(candidate.timerWindowStartMs ?? 0),
-            endMs: this.normalizeWholeSeconds(candidate.timerWindowEndMs ?? 0)
-        };
-
-        if (dailyTimerMax == null) {
-            return this.createSnapshot(new VirtualChannel({
-                id: candidate.id,
-                name: candidate.name,
-                dailyTimerMax: null,
-                extraTimerSecondsRemaining
-            }), timerUsageSeconds, timerWindow);
-        }
-
-        const fallbackSnapshot = this.createSnapshot(new VirtualChannel({
+        return new VirtualChannel({
             id: candidate.id,
             name: candidate.name,
-            dailyTimerMax,
-            extraTimerSecondsRemaining
-        }), timerUsageSeconds, timerWindow);
-
-        return new VirtualChannel({
-            ...fallbackSnapshot,
-            timerState: candidate.timerState === ViewerVirtualChannelTimerState.Unlimited
-                || candidate.timerState === ViewerVirtualChannelTimerState.Available
-                || candidate.timerState === ViewerVirtualChannelTimerState.Capped
-                ? candidate.timerState
-                : fallbackSnapshot.timerState,
-            timerRemainingSeconds: typeof candidate.timerRemainingSeconds === 'number'
-                ? this.normalizeWholeSeconds(candidate.timerRemainingSeconds)
-                : fallbackSnapshot.timerRemainingSeconds,
-            dailyTimerRemainingSeconds: typeof candidate.dailyTimerRemainingSeconds === 'number'
-                ? this.normalizeWholeSeconds(candidate.dailyTimerRemainingSeconds)
-                : fallbackSnapshot.dailyTimerRemainingSeconds,
-            combinedTimerRemainingSeconds: typeof candidate.combinedTimerRemainingSeconds === 'number'
-                ? this.normalizeWholeSeconds(candidate.combinedTimerRemainingSeconds)
-                : fallbackSnapshot.combinedTimerRemainingSeconds
+            dailyTimerMax: typeof candidate.dailyTimerMax === 'number'
+                ? ViewerVirtualChannelTimer.normalizeWholeSeconds(candidate.dailyTimerMax)
+                : null,
+            extraTimerSecondsRemaining: typeof candidate.extraTimerSecondsRemaining === 'number'
+                ? ViewerVirtualChannelTimer.normalizeWholeSeconds(candidate.extraTimerSecondsRemaining)
+                : 0
         });
     }
 
-    private normalizeWholeSeconds(value: number): number
+    private static normalizeWholeSeconds(value: number): number
     {
         if (!Number.isFinite(value)) {
             return 0;
@@ -208,6 +286,3 @@ export class ViewerVirtualChannelTimer
         return Math.max(0, Math.floor(value));
     }
 }
-
-export const viewerVirtualChannelTimer = new ViewerVirtualChannelTimer();
-// apply-patch-anchor - do not delete

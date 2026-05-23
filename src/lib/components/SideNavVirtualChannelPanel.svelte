@@ -4,7 +4,6 @@
     import { SideNavVirtualChannelPanelPresenter } from '$lib/components/SideNavVirtualChannelPanelPresenter';
     import type { SideNavVirtualChannelViewModel } from '$lib/components/SideNavVirtualChannelPanelViewModel';
     import { ViewerVirtualChannelTimerState } from '$lib/viewer/ViewerVirtualChannelTimer';
-    import { viewerVirtualChannelTimer } from '$lib/viewer/ViewerVirtualChannelTimer';
 
     export let virtualChannel: SideNavVirtualChannelViewModel | null;
     export let splitTimerModeEnabled = true;
@@ -29,10 +28,7 @@
                 return;
             }
 
-            liveVirtualChannel = viewerVirtualChannelTimer.advanceSnapshot(
-                liveVirtualChannel,
-                detail.deltaSeconds || 0
-            ).virtualChannel;
+            liveVirtualChannel = liveVirtualChannel.advance(detail.deltaSeconds || 0);
         };
 
         window.addEventListener('viewer:playback-tick', onPlaybackTick as EventListener);
