@@ -6,7 +6,13 @@ export const load: PageServerLoad = async ({ cookies }) =>
 {
     return ServerDatabaseContext.run(async ({ db }) => {
         const serviceContext = await ViewerServiceContext.resolve(db, cookies);
-        return serviceContext.virtualChannelService.loadNavigation();
+        const navigation = await serviceContext.virtualChannelService.loadNavigation();
+        const virtualChannels = await serviceContext.virtualChannelService.loadVirtualChannels();
+
+        return {
+            profileKey: navigation.profileKey,
+            virtualChannels: virtualChannels.map((virtualChannel) => virtualChannel.toFields())
+        };
     });
 };
 // apply-patch-anchor - do not delete

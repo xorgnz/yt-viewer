@@ -5,6 +5,18 @@ import { AppTimezonePolicy } from '$lib/server/AppTimezonePolicy';
 import type { ServerProfileContext } from '$lib/server/ServerProfileContext';
 import { ViewerVirtualChannelTimer } from '$lib/viewer/ViewerVirtualChannelTimer';
 
+export class ViewerVirtualChannelNavigation
+{
+    readonly virtualChannels: VirtualChannel[];
+    readonly profileKey: string;
+
+    constructor(virtualChannels: VirtualChannel[], profileKey: string)
+    {
+        this.virtualChannels = virtualChannels;
+        this.profileKey = profileKey;
+    }
+}
+
 export class ViewerVirtualChannelService
 {
     private readonly virtualChannelDAO: VirtualChannelDAO;
@@ -25,12 +37,12 @@ export class ViewerVirtualChannelService
         this.nowProvider = nowProvider;
     }
 
-    async loadNavigation()
+    async loadNavigation(): Promise<ViewerVirtualChannelNavigation>
     {
-        return {
-            virtualChannels: (await this.loadVirtualChannels()).map((virtualChannel) => virtualChannel.toFields()),
-            profileKey: this.profileContext.activeProfileKey
-        };
+        return new ViewerVirtualChannelNavigation(
+            await this.virtualChannelDAO.list(),
+            this.profileContext.activeProfileKey
+        );
     }
 
     async loadVirtualChannels(): Promise<ViewerVirtualChannelTimer[]>

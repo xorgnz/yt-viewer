@@ -19,7 +19,7 @@ describe('SideNavVirtualChannelPanelPresenter', () => {
                 name: 'Timers',
                 dailyTimerMax: 60,
                 extraTimerSecondsRemaining: 0
-            }).toFields(),
+            }),
             timerState: ViewerVirtualChannelTimerState.Available,
             timerUsageSeconds: 1200,
             timerRemainingSeconds: 2400,
@@ -39,7 +39,7 @@ describe('SideNavVirtualChannelPanelPresenter', () => {
                 name: 'Timers',
                 dailyTimerMax: null,
                 extraTimerSecondsRemaining: 0
-            }).toFields(),
+            }),
             timerState: ViewerVirtualChannelTimerState.Unlimited,
             timerUsageSeconds: 1860,
             timerRemainingSeconds: null
@@ -59,7 +59,7 @@ describe('SideNavVirtualChannelPanelPresenter', () => {
                 name: 'Timers',
                 dailyTimerMax: 120,
                 extraTimerSecondsRemaining: 180
-            }).toFields(),
+            }),
             timerState: ViewerVirtualChannelTimerState.Available,
             timerUsageSeconds: 60,
             timerRemainingSeconds: 60,
@@ -82,7 +82,7 @@ describe('SideNavVirtualChannelPanelPresenter', () => {
                 name: 'Timers',
                 dailyTimerMax: 120,
                 extraTimerSecondsRemaining: 180
-            }).toFields(),
+            }),
             timerState: ViewerVirtualChannelTimerState.Available,
             timerUsageSeconds: 60,
             timerRemainingSeconds: 60,
@@ -103,7 +103,7 @@ describe('SideNavVirtualChannelPanelPresenter', () => {
                 name: 'Timers',
                 dailyTimerMax: 45,
                 extraTimerSecondsRemaining: 0
-            }).toFields(),
+            }),
             timerState: ViewerVirtualChannelTimerState.Capped,
             timerUsageSeconds: 45,
             timerRemainingSeconds: 0,

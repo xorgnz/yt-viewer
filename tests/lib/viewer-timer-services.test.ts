@@ -51,7 +51,7 @@ function createViewerVirtualChannel(overrides: Partial<ViewerVirtualChannelTimer
             name: 'Timers',
             dailyTimerMax: 120,
             extraTimerSecondsRemaining: 30
-        }).toFields(),
+        }),
         timerState: ViewerVirtualChannelTimerState.Available,
         timerUsageSeconds: 110,
         timerRemainingSeconds: 10,
@@ -96,7 +96,7 @@ describe('viewer timer services', () => {
                 name: 'Timers',
                 dailyTimerMax: 120,
                 extraTimerSecondsRemaining: 30
-            }).toFields(),
+            }),
             timerUsageSeconds: 60,
             extraTimerSecondsRemaining: 30,
             timerWindowStartMs: 100,
