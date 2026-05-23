@@ -123,7 +123,7 @@ export class ViewerVirtualChannelTimer
             dailyTimerMax?: number | null;
         };
 
-        const virtualChannel = ViewerVirtualChannelTimer.readVirtualChannel(candidate);
+        const virtualChannel = VirtualChannel.fromUnknown(candidate.virtualChannel ?? candidate);
         if (!virtualChannel) {
             return null;
         }
@@ -244,37 +244,6 @@ export class ViewerVirtualChannelTimer
             0,
             ViewerVirtualChannelTimer.normalizeWholeSeconds(this.combinedTimerRemainingSeconds ?? 0)
         ) <= ViewerVirtualChannelTimer.normalizeWholeSeconds(remainingSecondsThreshold);
-    }
-
-    private static readVirtualChannel(candidate: Partial<ViewerVirtualChannelTimerFields> & {
-        id?: string | number;
-        name?: string;
-        dailyTimerMax?: number | null;
-    }): VirtualChannel | null
-    {
-        if (candidate.virtualChannel && VirtualChannel.validate(candidate.virtualChannel)) {
-            return candidate.virtualChannel instanceof VirtualChannel
-                ? candidate.virtualChannel
-                : new VirtualChannel(candidate.virtualChannel);
-        }
-
-        if (
-            (typeof candidate.id !== 'string' && typeof candidate.id !== 'number')
-            || typeof candidate.name !== 'string'
-        ) {
-            return null;
-        }
-
-        return new VirtualChannel({
-            id: candidate.id,
-            name: candidate.name,
-            dailyTimerMax: typeof candidate.dailyTimerMax === 'number'
-                ? ViewerVirtualChannelTimer.normalizeWholeSeconds(candidate.dailyTimerMax)
-                : null,
-            extraTimerSecondsRemaining: typeof candidate.extraTimerSecondsRemaining === 'number'
-                ? ViewerVirtualChannelTimer.normalizeWholeSeconds(candidate.extraTimerSecondsRemaining)
-                : 0
-        });
     }
 
     private static normalizeWholeSeconds(value: number): number
