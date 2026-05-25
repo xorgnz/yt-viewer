@@ -285,6 +285,16 @@
         border: 0;
         border-radius: 0;
         background: transparent;
+        color: var(--text);
+    }
+
+    .boxed-field select {
+        background-color: var(--bg-soft);
+    }
+
+    .boxed-field select option {
+        background-color: var(--bg-elevated);
+        color: var(--text);
     }
 
     .compact-search-field,
