@@ -6,6 +6,7 @@
         ViewerWatchedFilter
     } from '$lib/viewer/ViewerFilters';
     import type {
+        ViewerFilterInputState,
         ViewerFilters,
     } from '$lib/viewer/ViewerFilters';
 
@@ -13,23 +14,140 @@
     export let channels: SourceChannel[] = [];
     export let activeVirtualChannelName: string | null = null;
     export let today = '';
-    export let termInput = '';
-    export let dateFromInput = '';
-    export let dateToInput = '';
-    export let channelIdInput = '';
-    export let sortMode: ViewerSort = ViewerSort.Newest;
-    export let limitInput = '';
-    export let watchedMode: ViewerFilters['watched'] = ViewerWatchedFilter.All;
-    export let showIgnored = false;
-    export let onSubmit: (event: SubmitEvent) => void = () => undefined;
-    export let onTermInput: () => void = () => undefined;
-    export let onTextKeydown: (event: KeyboardEvent) => void = () => undefined;
-    export let onDateCommit: () => void = () => undefined;
-    export let onChannelChange: () => void = () => undefined;
-    export let onSortChange: () => void = () => undefined;
-    export let onLimitInput: () => void = () => undefined;
-    export let onWatchedOnlyChange: (event: Event) => void = () => undefined;
-    export let onShowIgnoredChange: () => void = () => undefined;
+    export let onApplyFilters: (inputState: ViewerFilterInputState) => void = () => undefined;
+
+    let termInput = '';
+    let dateFromInput = '';
+    let dateToInput = '';
+    let channelIdInput = '';
+    let sortMode: ViewerSort = ViewerSort.Newest;
+    let limitInput = '';
+    let watchedMode: ViewerFilters['watched'] = ViewerWatchedFilter.All;
+    let showIgnored = false;
+    let lastAppliedFiltersKey = '';
+    let debounceTimer: ReturnType<typeof setTimeout> | null = null;
+    const FILTER_DEBOUNCE_MS = 450;
+
+    function buildFiltersKey(nextFilters: ViewerFilters): string
+    {
+        return JSON.stringify({
+            term: nextFilters.term || '',
+            watched: nextFilters.watched,
+            ignored: nextFilters.ignored,
+            dateFromInput: nextFilters.dateFromInput,
+            dateToInput: nextFilters.dateToInput,
+            channelId: nextFilters.channelId != null ? String(nextFilters.channelId) : '',
+            sort: nextFilters.sort,
+            limit: String(nextFilters.limit)
+        });
+    }
+
+    function toInputState(): ViewerFilterInputState
+    {
+        return {
+            termInput,
+            dateFromInput,
+            dateToInput,
+            channelIdInput,
+            sortMode,
+            limitInput,
+            watchedMode,
+            showIgnored
+        };
+    }
+
+    function clearPendingApply()
+    {
+        if (debounceTimer) {
+            clearTimeout(debounceTimer);
+            debounceTimer = null;
+        }
+    }
+
+    function applyNow()
+    {
+        clearPendingApply();
+        onApplyFilters(toInputState());
+    }
+
+    function scheduleApply()
+    {
+        clearPendingApply();
+        debounceTimer = setTimeout(() => {
+            applyNow();
+        }, FILTER_DEBOUNCE_MS);
+    }
+
+    function handleSubmit(event: SubmitEvent)
+    {
+        event.preventDefault();
+        applyNow();
+    }
+
+    function handleTermInput()
+    {
+        scheduleApply();
+    }
+
+    function handleTextKeydown(event: KeyboardEvent)
+    {
+        if (event.key !== 'Enter') {
+            return;
+        }
+
+        event.preventDefault();
+        applyNow();
+    }
+
+    function handleDateCommit()
+    {
+        applyNow();
+    }
+
+    function handleChannelChange()
+    {
+        applyNow();
+    }
+
+    function handleSortChange()
+    {
+        applyNow();
+    }
+
+    function handleLimitInput()
+    {
+        scheduleApply();
+    }
+
+    function handleWatchedOnlyChange(event: Event)
+    {
+        const checked = (event.currentTarget as HTMLInputElement).checked;
+        watchedMode = checked
+            ? ViewerWatchedFilter.Unwatched
+            : (watchedMode === ViewerWatchedFilter.Unwatched ? ViewerWatchedFilter.All : watchedMode);
+        applyNow();
+    }
+
+    function handleShowIgnoredChange()
+    {
+        applyNow();
+    }
+
+    $: {
+        const nextFiltersKey = buildFiltersKey(filters);
+
+        if (nextFiltersKey !== lastAppliedFiltersKey) {
+            termInput = filters.term || '';
+            dateFromInput = filters.dateFromInput;
+            dateToInput = filters.dateToInput;
+            channelIdInput = filters.channelId != null ? String(filters.channelId) : '';
+            sortMode = filters.sort;
+            limitInput = String(filters.limit);
+            watchedMode = filters.watched;
+            showIgnored = filters.ignored !== undefined && filters.ignored !== null && filters.ignored !== 'hide';
+            lastAppliedFiltersKey = nextFiltersKey;
+        }
+    }
 </script>
 
 <section class="panel">
@@ -37,7 +155,7 @@
     {#if activeVirtualChannelName}
         <p class="muted">Virtual channel: {activeVirtualChannelName}</p>
     {/if}
-    <form method="GET" class="stack" on:submit={onSubmit}>
+    <form method="GET" class="stack" on:submit={handleSubmit}>
         <div class="fields filter-row">
             <label class="boxed-field compact-search-field">
                 <span class="boxed-field-label">Search</span>
@@ -45,8 +163,8 @@
                     name="term"
                     bind:value={termInput}
                     placeholder="title/description"
-                    on:input={onTermInput}
-                    on:keydown={onTextKeydown}
+                    on:input={handleTermInput}
+                    on:keydown={handleTextKeydown}
                 />
             </label>
             <div class="compact-date-field">
@@ -55,7 +173,7 @@
                     name="dateFrom"
                     bind:value={dateFromInput}
                     max={today}
-                    onCommit={onDateCommit}
+                    onCommit={handleDateCommit}
                 />
             </div>
             <div class="compact-date-field">
@@ -64,12 +182,12 @@
                     name="dateTo"
                     bind:value={dateToInput}
                     max={today}
-                    onCommit={onDateCommit}
+                    onCommit={handleDateCommit}
                 />
             </div>
             <label class="boxed-field compact-channel-field">
                 <span class="boxed-field-label">Source Channel</span>
-                <select name="channelId" bind:value={channelIdInput} on:change={onChannelChange}>
+                <select name="channelId" bind:value={channelIdInput} on:change={handleChannelChange}>
                     <option value="">Any</option>
                     {#each channels as channel}
                         <option value={channel.id}>{channel.title}</option>
@@ -78,7 +196,7 @@
             </label>
             <label class="boxed-field compact-sort-field">
                 <span class="boxed-field-label">Sort</span>
-                <select name="sort" bind:value={sortMode} on:change={onSortChange}>
+                <select name="sort" bind:value={sortMode} on:change={handleSortChange}>
                     <option value={ViewerSort.Newest}>Newest first</option>
                     <option value={ViewerSort.Oldest}>Oldest first</option>
                     <option value={ViewerSort.TitleAsc}>Title A-Z</option>
@@ -93,8 +211,8 @@
                     min="1"
                     max="1000"
                     bind:value={limitInput}
-                    on:input={onLimitInput}
-                    on:keydown={onTextKeydown}
+                    on:input={handleLimitInput}
+                    on:keydown={handleTextKeydown}
                 />
             </label>
             <input
@@ -108,7 +226,7 @@
                     name="unwatchedOnly"
                     value="1"
                     checked={watchedMode === ViewerWatchedFilter.Unwatched}
-                    on:change={onWatchedOnlyChange}
+                    on:change={handleWatchedOnlyChange}
                 />
                 <span>Unwatched only</span>
             </label>
@@ -118,7 +236,7 @@
                     name="showIgnored"
                     value="1"
                     bind:checked={showIgnored}
-                    on:change={onShowIgnoredChange}
+                    on:change={handleShowIgnoredChange}
                 />
                 <span>Show ignored</span>
             </label>

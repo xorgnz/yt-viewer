@@ -20,10 +20,7 @@
     import {
         BulkActionFeedbackTone,
     } from '$lib/viewer/BulkActionFeedback';
-    import {
-        ViewerSort,
-        ViewerWatchedFilter
-    } from '$lib/viewer/ViewerFilters';
+    import type { ViewerFilterInputState } from '$lib/viewer/ViewerFilters';
     import {
         ViewerVirtualChannelTimer,
         ViewerVirtualChannelTimerState,
@@ -58,15 +55,6 @@
     let totalPages = 1;
     let currentPage = 1;
     let visiblePages: ViewerVisiblePage[] = [];
-    let termInput = '';
-    let dateFromInput = '';
-    let dateToInput = '';
-    let channelIdInput = '';
-    let sortMode: ViewerSort = ViewerSort.Newest;
-    let limitInput = '';
-    let watchedMode: ViewerWatchedFilter = ViewerWatchedFilter.All;
-    let showIgnored = false;
-    let debounceTimer: ReturnType<typeof setTimeout> | null = null;
     let selectionState: ViewerSelectionState = viewerSelectionStateManager.create('', []);
     let hydratedSelectionContextKey: string | null = null;
     let hasActiveSelection = false;
@@ -80,7 +68,6 @@
     let bulkActionPending = false;
     let bulkActionFeedback: BulkActionFeedback | null = null;
     let sortPreferenceInitialized = false;
-    const FILTER_DEBOUNCE_MS = 450;
     const videoMutationService = new VideoMutationService();
     let sourceChannels = pageState.channels.map((channel) => new SourceChannel(channel));
 
@@ -94,78 +81,17 @@
         return pageState.navigation.buildWatchHref(String(video.id));
     }
 
-    function clearPendingApply()
+    function buildFilterQuery(inputState: ViewerFilterInputState): string
     {
-        if (debounceTimer) {
-            clearTimeout(debounceTimer);
-            debounceTimer = null;
-        }
+        return pageState.navigation.buildFilterQuery(inputState);
     }
 
-    function buildFilterQuery(): string
+    async function handleApplyFilters(inputState: ViewerFilterInputState)
     {
-        return pageState.navigation.buildFilterQuery({
-            termInput,
-            dateFromInput,
-            dateToInput,
-            channelIdInput,
-            sortMode,
-            limitInput,
-            watchedMode,
-            showIgnored
-        });
-    }
-
-    async function applyFiltersNow()
-    {
-        clearPendingApply();
-        await goto(`?${buildFilterQuery()}`, {
+        await goto(`?${buildFilterQuery(inputState)}`, {
             keepFocus: true,
             noScroll: true
         });
-    }
-
-    function scheduleApply()
-    {
-        clearPendingApply();
-        debounceTimer = setTimeout(() => {
-            void applyFiltersNow();
-        }, FILTER_DEBOUNCE_MS);
-    }
-
-    function handleImmediateFilterChange()
-    {
-        void applyFiltersNow();
-    }
-
-    function handleSortChange()
-    {
-        void applyFiltersNow();
-    }
-
-    function handleFilterSubmit(event: SubmitEvent)
-    {
-        event.preventDefault();
-        void applyFiltersNow();
-    }
-
-    function handleFilterKeydown(event: KeyboardEvent)
-    {
-        if (event.key !== 'Enter') {
-            return;
-        }
-
-        event.preventDefault();
-        void applyFiltersNow();
-    }
-
-    function handleWatchedOnlyChange(event: Event)
-    {
-        const checked = (event.currentTarget as HTMLInputElement).checked;
-        watchedMode = checked
-            ? ViewerWatchedFilter.Unwatched
-            : (watchedMode === ViewerWatchedFilter.Unwatched ? ViewerWatchedFilter.All : watchedMode);
-        void applyFiltersNow();
     }
 
     function handleCardClick(event: MouseEvent | KeyboardEvent, videoId: string | number)
@@ -322,8 +248,6 @@
     $: visibleVideos = pageState.videos.map((video) => new Video(video));
     $: sourceChannels = pageState.channels.map((channel) => new SourceChannel(channel));
     $: currentPageSelectionVideos = viewerPageSelection.createSnapshots(visibleVideos);
-    $: ({ termInput, dateFromInput, dateToInput, channelIdInput, sortMode, limitInput, watchedMode, showIgnored } =
-        pageState.navigation.deriveFilterInputState());
     $: activeVirtualChannel = pageState.activeVirtualChannel == null
         ? null
         : ViewerVirtualChannelTimer.deserialize(pageState.activeVirtualChannel);
@@ -391,16 +315,15 @@
         const storedSort = viewerSortSession.load();
 
         if (!hasSortParam && storedSort && storedSort !== f.sort) {
-            sortMode = storedSort;
             void goto(`?${pageState.navigation.buildFilterQuery({
-                termInput,
-                dateFromInput,
-                dateToInput,
-                channelIdInput,
+                termInput: f.term || '',
+                dateFromInput: f.dateFromInput,
+                dateToInput: f.dateToInput,
+                channelIdInput: f.channelId != null ? String(f.channelId) : '',
                 sortMode: storedSort,
-                limitInput,
-                watchedMode,
-                showIgnored
+                limitInput: String(f.limit),
+                watchedMode: f.watched,
+                showIgnored: f.ignored !== 'hide'
             })}`, {
                 replaceState: true,
                 keepFocus: true,
@@ -425,23 +348,7 @@
         channels={sourceChannels}
         activeVirtualChannelName={activeVirtualChannel?.name ?? null}
         {today}
-        bind:termInput
-        bind:dateFromInput
-        bind:dateToInput
-        bind:channelIdInput
-        bind:sortMode
-        bind:limitInput
-        bind:watchedMode
-        bind:showIgnored
-        onSubmit={handleFilterSubmit}
-        onTermInput={scheduleApply}
-        onTextKeydown={handleFilterKeydown}
-        onDateCommit={handleImmediateFilterChange}
-        onChannelChange={handleImmediateFilterChange}
-        onSortChange={handleSortChange}
-        onLimitInput={scheduleApply}
-        onWatchedOnlyChange={handleWatchedOnlyChange}
-        onShowIgnoredChange={handleImmediateFilterChange}
+        onApplyFilters={handleApplyFilters}
     />
 
     <ViewerBulkActionBar
