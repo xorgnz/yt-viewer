@@ -5,6 +5,14 @@ import { ServerActionForm } from '$lib/server/ServerActionForm';
 import { AdminSourceChannelServiceContext } from '$lib/server/admin/AdminSourceChannelServiceContext';
 import type { AdminSourceChannelPageService } from '$lib/server/admin/AdminSourceChannelPageService';
 
+function serializePageData(pageData: Awaited<ReturnType<AdminSourceChannelPageService['loadPageData']>>)
+{
+    return {
+        ...pageData,
+        channels: pageData.channels.map((channel) => channel.serialize())
+    };
+}
+
 function withPageService<T>(work: (pageService: AdminSourceChannelPageService) => T | Promise<T>): Promise<T>
 {
     return ServerDatabaseContext.run(({ db }) => {
@@ -15,7 +23,7 @@ function withPageService<T>(work: (pageService: AdminSourceChannelPageService) =
 export const load: PageServerLoad = async () =>
 {
     return withPageService((pageService) => {
-        return pageService.loadPageData();
+        return pageService.loadPageData().then((pageData) => serializePageData(pageData));
     });
 };
 

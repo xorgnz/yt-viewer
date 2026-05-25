@@ -1,20 +1,9 @@
 <script lang="ts">
     import ThumbnailImage from '$lib/components/ThumbnailImage.svelte';
+    import type { SourceChannelWithVideoStatsSFO } from '$lib/entities/SourceChannelWithVideoStats';
 
     export let data: {
-        channels: Array<{
-            id: number;
-            youtube_id: string;
-            title: string;
-            description: string;
-            thumbnail_url: string | null;
-            published_at: number | null;
-            last_refreshed_at: number | null;
-            video_count: number;
-            watched_count: number;
-            favorite_count: number;
-            ignored_count: number;
-        }>
+        channels: SourceChannelWithVideoStatsSFO[]
     };
 
     let creating = false;
@@ -161,28 +150,28 @@
                         {#each data.channels as ch}
                             <tr>
                                 <td class="td-icon">
-                                    {#if ch.thumbnail_url}
-                                        <ThumbnailImage src={ch.thumbnail_url} alt={`${ch.title} thumbnail`} className="thumb-preview" />
+                                    {#if ch.sourceChannel.thumbnailUrl}
+                                        <ThumbnailImage src={ch.sourceChannel.thumbnailUrl} alt={`${ch.sourceChannel.title} thumbnail`} className="thumb-preview" />
                                     {:else}
                                         <span class="muted">No image</span>
                                     {/if}
                                 </td>
-                                <td class="td-title">{ch.title}</td>
-                                <td class="desc">{ch.description}</td>
-                                <td>{fmtDate(ch.published_at)}</td>
-                                <td class="td-count td-count-total">{ch.video_count}</td>
-                                <td class="td-count td-count-watched">{ch.watched_count}</td>
-                                <td class="td-count td-count-favorite">{ch.favorite_count}</td>
-                                <td class="td-count td-count-ignored">{ch.ignored_count}</td>
-                                <td>{fmtDateTime(ch.last_refreshed_at)}</td>
+                                <td class="td-title">{ch.sourceChannel.title}</td>
+                                <td class="desc">{ch.sourceChannel.description}</td>
+                                <td>{fmtDate(ch.sourceChannel.publishedAt ?? null)}</td>
+                                <td class="td-count td-count-total">{ch.videoCount}</td>
+                                <td class="td-count td-count-watched">{ch.watchedCount}</td>
+                                <td class="td-count td-count-favorite">{ch.favoriteCount}</td>
+                                <td class="td-count td-count-ignored">{ch.ignoredCount}</td>
+                                <td>{fmtDateTime(ch.sourceChannel.lastRefreshedAt ?? null)}</td>
                                 <td>
                                     <div class="inline-actions">
                                         <form method="post" action="?/refresh" class="inline-form">
-                                            <input type="hidden" name="id" value={ch.id} />
+                                            <input type="hidden" name="id" value={ch.sourceChannel.id} />
                                             <button type="submit">Refresh</button>
                                         </form>
                                         <form method="post" action="?/delete" class="inline-form">
-                                            <input type="hidden" name="id" value={ch.id} />
+                                            <input type="hidden" name="id" value={ch.sourceChannel.id} />
                                             <button type="submit" class="btn-danger">Delete</button>
                                         </form>
                                     </div>

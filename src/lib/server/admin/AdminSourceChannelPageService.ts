@@ -1,5 +1,6 @@
-import { SourceChannelDAO, type SourceChannelWithVideoStats } from '$lib/daos/sourceChannelDAO';
+import { SourceChannelDAO } from '$lib/daos/sourceChannelDAO';
 import type { DatabasePool } from '$lib/daos/shared/DatabasePool';
+import type { SourceChannelWithVideoStats } from '$lib/entities/SourceChannelWithVideoStats';
 import { VideoDAO } from '$lib/daos/videoDAO';
 import { SourceChannel } from '$lib/entities/sourceChannel';
 import { ErrorResult, type ErrorFields, type ServiceResult } from '$lib/server/Error';
