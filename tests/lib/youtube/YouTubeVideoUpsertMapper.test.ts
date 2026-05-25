@@ -30,7 +30,6 @@ describe('youtube mapper (task 3.3)', () => {
         const video = YouTubeVideoUpsertMapper.toVideo(item, 'channel-42', videoMetadata);
         expect(video).toMatchObject({
             id: 'vid123',
-            youtube_id: 'vid123',
             channel_id: 'channel-42',
             title: 'Video A (canonical)',
             description: 'Canonical desc',
@@ -96,7 +95,6 @@ describe('youtube mapper (task 3.3)', () => {
         const video = YouTubeVideoUpsertMapper.toVideo(item, 'channel-7');
         expect(video).toMatchObject({
             id: 'vid-missing-metadata',
-            youtube_id: 'vid-missing-metadata',
             channel_id: 'channel-7',
             title: 'Playlist fallback title',
             description: 'Playlist fallback description',

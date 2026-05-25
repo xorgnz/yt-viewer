@@ -46,22 +46,21 @@ export class YouTubeChannelImportService
         const publishedAt = snippet.publishedAt ? Date.parse(snippet.publishedAt) : null;
         const channelData = {
             id: channel.id,
-            youtubeId: channel.id,
             title: snippet.title || '',
             description: snippet.description || '',
             thumbnailUrl: this.getBestThumbnailUrl(snippet.thumbnails as Record<string, { url?: string }> | undefined),
             publishedAt: Number.isFinite(publishedAt as any) ? (publishedAt as number) : null
         };
-        const existingSourceChannel = await this.sourceChannelDAO.getByExternalId(channelData.youtubeId);
+        const existingSourceChannel = await this.sourceChannelDAO.getByExternalId(String(channelData.id));
         if (existingSourceChannel) {
             await this.sourceChannelDAO.update(existingSourceChannel.with(new SourceChannel({ ...channelData, lastRefreshedAt: null })));
         } else {
             await this.sourceChannelDAO.create(new SourceChannel({ ...channelData, lastRefreshedAt: null }));
         }
 
-        const sourceChannel = await this.sourceChannelDAO.getByExternalId(channelData.youtubeId);
+        const sourceChannel = await this.sourceChannelDAO.getByExternalId(String(channelData.id));
         if (!sourceChannel) {
-            throw new Error(`Failed to resolve imported channel ${channelData.youtubeId}.`);
+            throw new Error(`Failed to resolve imported channel ${channelData.id}.`);
         }
 
         let videosUpserted = 0;
@@ -73,11 +72,11 @@ export class YouTubeChannelImportService
                 videoMetadataById.get(videoId)
             );
 
-            if (!video.youtube_id) {
+            if (!video.id) {
                 continue;
             }
 
-            const existingVideo = await this.videoDAO.getByExternalId(video.youtube_id);
+            const existingVideo = await this.videoDAO.getByExternalId(String(video.id));
             if (existingVideo) {
                 await this.videoDAO.update(existingVideo.with(video));
             } else {

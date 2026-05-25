@@ -272,7 +272,7 @@
                     <select name="source_channel_id" required>
                         <option value="" disabled selected>Select a source channel</option>
                         {#each availableForAssociation as channel}
-                            <option value={channel.id}>{channel.title} ({channel.youtubeId})</option>
+                            <option value={channel.id}>{channel.title} ({channel.id})</option>
                         {/each}
                     </select>
                 </label>
@@ -331,7 +331,7 @@
                                         <button type="submit">Update Mode</button>
                                     </form>
                                 </td>
-                                <td><code>{item.sourceChannel?.youtubeId || 'missing'}</code></td>
+                                <td><code>{item.sourceChannel?.id || 'missing'}</code></td>
                                 <td>
                                     <form method="post" action="?/removeAssociation" class="inline-form">
                                         <input type="hidden" name="assignment_id" value={item.assignment.id} />
@@ -690,7 +690,7 @@
                         {#each data.availableSourceChannels as channel}
                             <tr>
                                 <td>{channel.title}</td>
-                                <td><code>{channel.youtubeId}</code></td>
+                                <td><code>{channel.id}</code></td>
                                 <td>{channel.lastRefreshedAt ?? 'Never'}</td>
                             </tr>
                         {/each}

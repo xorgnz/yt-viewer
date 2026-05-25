@@ -35,14 +35,14 @@ export class ViewerRecommendationService
             'recommend',
             String(this.profileId),
             String(virtualChannelId ?? currentVideo.channel_id),
-            currentVideo.youtube_id
+            String(currentVideo.id)
         ].join(':'));
 
         return candidates
             .filter((video) => video.id !== currentVideo.id)
             .map((video) => ({
                 video,
-                rank: ViewerRecommendationService.hashString(`${recommendationSeed}:${video.id}:${video.youtube_id}`)
+                rank: ViewerRecommendationService.hashString(`${recommendationSeed}:${video.id}`)
             }))
             .sort((left, right) => {
                 if (left.rank !== right.rank) {

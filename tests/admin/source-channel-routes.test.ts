@@ -62,7 +62,6 @@ describe('admin source channel routes', () => {
                     serialize: vi.fn(() => ({
                         sourceChannel: {
                             id: 'UC_ROUTE_LOAD',
-                            youtubeId: 'UC_ROUTE_LOAD',
                             title: 'Loaded Channel'
                         },
                         videoCount: 0,
@@ -81,7 +80,6 @@ describe('admin source channel routes', () => {
                 {
                     sourceChannel: {
                         id: 'UC_ROUTE_LOAD',
-                        youtubeId: 'UC_ROUTE_LOAD',
                         title: 'Loaded Channel'
                     },
                     videoCount: 0,

@@ -52,7 +52,7 @@
     let watchMutationPending = false;
     let timerPlaybackBlocked = false;
     let timerStatusMessage: string | null = data.playbackBlockedMessage;
-    let activeVideoYoutubeId = currentVideo.youtube_id;
+    let activeVideoYoutubeId = String(currentVideo.id);
     let activeVirtualChannelId = data.currentVirtualChannelId;
     let activeVirtualChannelUsageBaselineSeconds = data.activeVirtualChannelTimer?.timerUsageSeconds ?? 0;
     let activeHistorySessionWatchSecondsBaseline = data.activeHistorySessionWatchSecondsBaseline ?? 0;
@@ -77,7 +77,7 @@
     $: timerStatusMessage = data.playbackBlockedMessage;
     $: timerPlaybackBlocked = !!timerStatusMessage;
 
-    $: if (currentVideo.youtube_id !== activeVideoYoutubeId)
+    $: if (String(currentVideo.id) !== activeVideoYoutubeId)
     {
         const previousVirtualChannelId = activeVirtualChannelId;
         const previousUsageSeconds = previousVirtualChannelId == null
@@ -91,7 +91,7 @@
 
         lastDebugEvent = `route-change: flush ${activeVideoYoutubeId}`;
         flushPendingHistory(activeVideoYoutubeId, false, previousVirtualChannelId);
-        activeVideoYoutubeId = currentVideo.youtube_id;
+        activeVideoYoutubeId = String(currentVideo.id);
         resetForVideoChange(
             !!currentVideo.watched,
             data.playbackBlockedMessage,
@@ -105,7 +105,7 @@
         {
             try
             {
-                player.cueVideoById(data.video.youtube_id);
+                player.cueVideoById(String(data.video.id));
             }
             catch
             {
@@ -152,7 +152,7 @@
         historySessionLastUpdatedAt: number | null
     )
     {
-        lastDebugEvent = `resetForVideoChange: ${currentVideo.youtube_id}`;
+        lastDebugEvent = `resetForVideoChange: ${currentVideo.id}`;
         stopPolling();
         watched = serverWatched;
         favorite = !!currentVideo.favorite;
@@ -645,7 +645,7 @@
             if ((window as any).YT && (window as any).YT.Player)
             {
                 player = new (window as any).YT.Player('player', {
-                    videoId: currentVideo.youtube_id,
+                    videoId: String(currentVideo.id),
                     width: '100%',
                     height: '100%',
                     playerVars: {
@@ -842,7 +842,7 @@
                 {#each recommendations as recommendation}
                     <VideoCard
                         video={recommendation}
-                        watchHref={buildWatchHref(recommendation.youtube_id)}
+                        watchHref={buildWatchHref(String(recommendation.id))}
                         {videoMutationService}
                         on:videochange={(event) => handleRecommendationVideoChange(event.detail)}
                     />

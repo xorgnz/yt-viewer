@@ -7,8 +7,7 @@ describe('ViewerVideoDisplayPresenter', () => {
     function createVideo(overrides: Partial<Video> = {}): Video
     {
         return new Video({
-            id: 1,
-            youtube_id: 'abc123',
+            id: 'abc123',
             channel_id: 10,
             title: 'Sample Video',
             description: 'Sample Description',
@@ -17,7 +16,6 @@ describe('ViewerVideoDisplayPresenter', () => {
             thumbnail_url: 'https://example.test/thumb.jpg',
             length_classification: VideoLengthClassification.Short,
             channel_title: 'Channel',
-            channel_youtube_id: 'chan123',
             watched: 0,
             favorite: 0,
             ignored: 0,

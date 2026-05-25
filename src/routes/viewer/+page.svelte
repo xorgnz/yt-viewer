@@ -91,7 +91,7 @@
 
     function buildVideoWatchHref(video: Video): string
     {
-        return pageState.navigation.buildWatchHref(video.youtube_id);
+        return pageState.navigation.buildWatchHref(String(video.id));
     }
 
     function clearPendingApply()

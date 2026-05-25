@@ -75,7 +75,6 @@ export class AdminSourceChannelPageService
 
             await this.sourceChannelDAO.create(new SourceChannel({
                 id: resolved.channelId,
-                youtubeId: resolved.channelId,
                 title: title || snippet.title || '',
                 description: description || snippet.description || '',
                 thumbnailUrl: thumbnailUrl || metadataThumbnailUrl,
@@ -159,7 +158,7 @@ export class AdminSourceChannelPageService
                 youTubeChannelService,
                 new SourceChannelDAO(database),
                 new VideoDAO(database)
-            ).importChannel(existing.youtubeId);
+            ).importChannel(String(existing.id));
 
             if (result.channelId === null) {
                 return this.buildError(
@@ -175,7 +174,7 @@ export class AdminSourceChannelPageService
                 data: AdminSourceChannelPageService.INDEX_PATH
             };
         } catch (error: unknown) {
-            console.error('Refresh failed for channel', existing.youtubeId, error);
+            console.error('Refresh failed for channel', existing.id, error);
             return this.mapYouTubeRequestFailure(
                 error,
                 'Invalid request to YouTube. Please verify the channel ID and try again.'

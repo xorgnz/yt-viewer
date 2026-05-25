@@ -20,7 +20,6 @@ export class YouTubeVideoUpsertMapper
 
         return new Video({
             id: videoId,
-            youtube_id: videoId,
             channel_id: channelId,
             title: metadataSnippet.title || snippet.title || '',
             description: metadataSnippet.description || snippet.description || '',

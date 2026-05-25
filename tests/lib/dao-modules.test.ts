@@ -31,7 +31,6 @@ describe('DAO modules', () => {
 
         await new SourceChannelDAO(provider).create(new SourceChannel({
             id: 'channel-1',
-            youtubeId: 'channel-1',
             title: 'Channel',
             description: '',
             thumbnailUrl: null,
@@ -40,7 +39,6 @@ describe('DAO modules', () => {
         }));
         await new VideoDAO(provider).create(new Video({
             id: 'video-1',
-            youtube_id: 'video-1',
             channel_id: 'channel-1',
             title: 'Video',
             description: '',
@@ -63,7 +61,7 @@ describe('DAO modules', () => {
             time_watched_seconds: 30,
         });
         await new FlagsDAO(provider).set('video-1', 'default', { watched: 1 });
-        await new ViewerVideoReadRepository(provider).findAdjacentYoutubeIds({ youtube_id: 'video-1' }, {}, 'default');
+        await new ViewerVideoReadRepository(provider).findAdjacentYoutubeIds({ id: 'video-1' }, {}, 'default');
         await new ViewerVideoReadRepository(provider).list({}, 'default');
         await new ViewerVideoReadRepository(provider).count({ term: 'demo' }, 'default');
         await new HistoryReadRepository(provider).listVideoSummaries({ profileId: 'default' });

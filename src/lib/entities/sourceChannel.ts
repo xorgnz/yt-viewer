@@ -1,6 +1,5 @@
 export type SourceChannelFields = {
     id: string | number;
-    youtubeId: string;
     title: string;
     description?: string;
     thumbnailUrl?: string | null;
@@ -14,7 +13,6 @@ export type SourceChannelSFO = SourceChannelFields;
 export class SourceChannel
 {
     readonly id: string | number; // stable source channel id
-    readonly youtubeId: string; // YouTube channel ID, same stable value as id
     readonly title: string;
     readonly description?: string;
     readonly thumbnailUrl?: string | null;
@@ -24,7 +22,6 @@ export class SourceChannel
     constructor(data: SourceChannelFields)
     {
         this.id = data.id;
-        this.youtubeId = data.youtubeId;
         this.title = data.title;
         this.description = data.description;
         this.thumbnailUrl = data.thumbnailUrl;
@@ -36,7 +33,6 @@ export class SourceChannel
     {
         return {
             id: this.id,
-            youtubeId: this.youtubeId,
             title: this.title,
             description: this.description,
             thumbnailUrl: this.thumbnailUrl,
@@ -49,7 +45,6 @@ export class SourceChannel
     {
         return new SourceChannel({
             id: serialFormObject.id,
-            youtubeId: serialFormObject.youtubeId,
             title: serialFormObject.title,
             description: serialFormObject.description,
             thumbnailUrl: serialFormObject.thumbnailUrl,
@@ -65,7 +60,6 @@ export class SourceChannel
             value !== null &&
             typeof value === 'object' &&
             (typeof (value as any).id === 'string' || typeof (value as any).id === 'number') &&
-            typeof (value as any).youtubeId === 'string' &&
             typeof (value as any).title === 'string' &&
             ((value as any).description === undefined || typeof (value as any).description === 'string') &&
             ((value as any).thumbnailUrl === undefined || (value as any).thumbnailUrl === null || typeof (value as any).thumbnailUrl === 'string') &&
@@ -78,7 +72,6 @@ export class SourceChannel
     {
         return new SourceChannel({
             id: (patch as any).id ?? this.id,
-            youtubeId: (patch as any).youtubeId ?? this.youtubeId,
             title: (patch as any).title ?? this.title,
             description: (patch as any).description ?? this.description,
             thumbnailUrl: (patch as any).thumbnailUrl ?? this.thumbnailUrl,

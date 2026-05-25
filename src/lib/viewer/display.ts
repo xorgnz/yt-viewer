@@ -48,7 +48,7 @@ export class ViewerVideoDisplayPresenter
             isFavoriteOnly: !isIgnored && isFavorite && !isWatched,
             isWatchedOnly: !isIgnored && isWatched && !isFavorite,
             publishedDate: this.formatDate(this.video.published_at),
-            watchHref: `/viewer/watch/${this.video.youtube_id}`,
+            watchHref: `/viewer/watch/${this.video.id}`,
             openLabel: `Open ${this.video.title}`
         };
     }

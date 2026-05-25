@@ -40,7 +40,7 @@ export class SourceChannelDAO extends DAO
     async get(id: string | number): Promise<SourceChannel | undefined>
     {
         const fields = await this.getOne<SourceChannelFields>(
-            `SELECT src_channel_id AS id, src_channel_id AS youtubeId, title, description, thumbnail_url as thumbnailUrl, published_at as publishedAt, last_refreshed_at as lastRefreshedAt FROM source_channels WHERE src_channel_id = ?`,
+            `SELECT src_channel_id AS id, title, description, thumbnail_url as thumbnailUrl, published_at as publishedAt, last_refreshed_at as lastRefreshedAt FROM source_channels WHERE src_channel_id = ?`,
             [id]
         );
 
@@ -50,7 +50,7 @@ export class SourceChannelDAO extends DAO
     async getByExternalId(external_id: string): Promise<SourceChannel | undefined>
     {
         const fields = await this.getOne<SourceChannelFields>(
-            `SELECT src_channel_id AS id, src_channel_id AS youtubeId, title, description, thumbnail_url as thumbnailUrl, published_at as publishedAt, last_refreshed_at as lastRefreshedAt FROM source_channels WHERE src_channel_id = ?`,
+            `SELECT src_channel_id AS id, title, description, thumbnail_url as thumbnailUrl, published_at as publishedAt, last_refreshed_at as lastRefreshedAt FROM source_channels WHERE src_channel_id = ?`,
             [external_id]
         );
 
@@ -60,7 +60,7 @@ export class SourceChannelDAO extends DAO
     async list(): Promise<SourceChannel[]>
     {
         const rows = await this.listRows<SourceChannelFields>(
-            `SELECT src_channel_id AS id, src_channel_id AS youtubeId, title, description, thumbnail_url as thumbnailUrl, published_at as publishedAt, last_refreshed_at as lastRefreshedAt  FROM source_channels ORDER BY title`
+            `SELECT src_channel_id AS id, title, description, thumbnail_url as thumbnailUrl, published_at as publishedAt, last_refreshed_at as lastRefreshedAt  FROM source_channels ORDER BY title`
         );
 
         return rows.map((row) => new SourceChannel(row));
@@ -71,7 +71,6 @@ export class SourceChannelDAO extends DAO
         const rows = await this.listRows<SourceChannelWithVideoStatsRow>(`
             SELECT
                 sc.src_channel_id AS id,
-                sc.src_channel_id AS youtubeId,
                 sc.title,
                 sc.description,
                 sc.thumbnail_url AS thumbnailUrl,

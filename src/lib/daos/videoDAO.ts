@@ -53,7 +53,7 @@ export class VideoDAO extends DAO
     async get(id: string | number): Promise<Video | undefined>
     {
         const fields = await this.getOne<VideoFields>(`
-            SELECT video_id AS id, video_id AS youtube_id, src_channel_id AS channel_id, title, description, published_at, duration_seconds, thumbnail_url, length_classification FROM videos 
+            SELECT video_id AS id, src_channel_id AS channel_id, title, description, published_at, duration_seconds, thumbnail_url, length_classification FROM videos 
             WHERE video_id = ?`,
             [id]
         );
@@ -80,7 +80,7 @@ export class VideoDAO extends DAO
     async getByExternalId(external_id: string): Promise<Video | undefined>
     {
         const fields = await this.getOne<VideoFields>(`
-            SELECT video_id AS id, video_id AS youtube_id, src_channel_id AS channel_id, title, description, published_at, duration_seconds, thumbnail_url, length_classification FROM videos 
+            SELECT video_id AS id, src_channel_id AS channel_id, title, description, published_at, duration_seconds, thumbnail_url, length_classification FROM videos 
             WHERE video_id = ?`,
             [external_id]
         );
@@ -91,7 +91,7 @@ export class VideoDAO extends DAO
     async listByChannel(channel_id: string | number): Promise<Video[]>
     {
         const rows = await this.listRows<VideoFields>(`
-            SELECT video_id AS id, video_id AS youtube_id, src_channel_id AS channel_id, title, description, published_at, duration_seconds, thumbnail_url, length_classification FROM videos 
+            SELECT video_id AS id, src_channel_id AS channel_id, title, description, published_at, duration_seconds, thumbnail_url, length_classification FROM videos 
             WHERE src_channel_id = ? 
             ORDER BY published_at IS NULL ASC, published_at DESC, video_id DESC`,
             [channel_id]

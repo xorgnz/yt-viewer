@@ -12,7 +12,6 @@ describe('YouTubeChannelImportService', () => {
                 .mockResolvedValueOnce(undefined)
                 .mockResolvedValueOnce(new SourceChannel({
                     id: 'UC123',
-                    youtubeId: 'UC123',
                     title: 'Demo Channel',
                     description: '',
                     thumbnailUrl: null,
@@ -73,13 +72,11 @@ describe('YouTubeChannelImportService', () => {
         expect(sourceChannelDAO.getByExternalId).toHaveBeenNthCalledWith(1, 'UC123');
         expect(sourceChannelDAO.getByExternalId).toHaveBeenNthCalledWith(2, 'UC123');
         expect(sourceChannelDAO.create).toHaveBeenCalledWith(expect.objectContaining({
-            id: 'UC123',
-            youtubeId: 'UC123'
+            id: 'UC123'
         }));
         expect(videoDAO.getByExternalId).toHaveBeenCalledWith('vid-1');
         expect(videoDAO.create).toHaveBeenCalledWith(expect.objectContaining({
             id: 'vid-1',
-            youtube_id: 'vid-1',
             channel_id: 'UC123',
             length_classification: VideoLengthClassification.Short
         }));

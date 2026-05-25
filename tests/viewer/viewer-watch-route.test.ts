@@ -74,7 +74,6 @@ describe('viewer watch route', () => {
             data: {
                 video: {
                     id: 'video-1',
-                    youtube_id: 'video-1',
                     channel_id: 'channel-2',
                     title: 'Blocked Video',
                     description: '',
@@ -82,7 +81,6 @@ describe('viewer watch route', () => {
                     duration_seconds: 60,
                     thumbnail_url: null,
                     channel_title: 'Channel',
-                    channel_youtube_id: 'channel-2',
                     watched: 0,
                     favorite: 0,
                     ignored: 0

@@ -129,7 +129,7 @@ export class ViewerWatchService
         });
 
         const adjacent = await this.viewerVideoReadRepository.findAdjacentYoutubeIds(
-            { youtube_id: video.youtube_id },
+            { id: String(video.id) },
             {
                 term: filters.term,
                 dateFrom: filters.dateFrom,

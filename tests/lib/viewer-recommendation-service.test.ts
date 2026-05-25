@@ -6,7 +6,6 @@ function createVideo(id: number): ViewerVideoRecord
 {
     return {
         id: `video-${id}`,
-        youtube_id: `video-${id}`,
         channel_id: 'channel-7',
         title: `Video ${id}`,
         description: '',
@@ -15,7 +14,6 @@ function createVideo(id: number): ViewerVideoRecord
         thumbnail_url: null,
         length_classification: 'short',
         channel_title: 'Channel',
-        channel_youtube_id: 'channel-7',
         watched: 0,
         favorite: 0,
         ignored: 0

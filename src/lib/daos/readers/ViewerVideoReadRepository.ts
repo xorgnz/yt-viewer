@@ -7,7 +7,6 @@ import {
 export interface ViewerVideoRecord
 {
     id: string | number;
-    youtube_id: string;
     channel_id: string | number;
     title: string;
     description: string;
@@ -16,7 +15,6 @@ export interface ViewerVideoRecord
     thumbnail_url: string | null;
     length_classification: 'long' | 'short' | 'unknown' | null;
     channel_title: string;
-    channel_youtube_id: string;
     watched: number;
     favorite: number;
     ignored: number;
@@ -25,7 +23,7 @@ export interface ViewerVideoRecord
 export class ViewerVideoReadRepository extends DAO
 {
     async findAdjacentYoutubeIds(
-        video: Pick<ViewerVideoRecord, 'youtube_id'>,
+        video: Pick<ViewerVideoRecord, 'id'>,
         filters: ViewerVideoQueryFilters,
         profileId: string | number
     ): Promise<{ previousYoutubeId: string | null; nextYoutubeId: string | null }>
@@ -40,7 +38,7 @@ export class ViewerVideoReadRepository extends DAO
                 ordered.next_youtube_id AS next_youtube_id
             FROM (
                 SELECT
-                    v.video_id AS youtube_id,
+                    v.video_id AS id,
                     LAG(v.video_id) OVER (ORDER BY ${orderBySql}) AS previous_youtube_id,
                     LEAD(v.video_id) OVER (ORDER BY ${orderBySql}) AS next_youtube_id
                 FROM videos v
@@ -50,7 +48,7 @@ export class ViewerVideoReadRepository extends DAO
                 ${selectionJoin}
                 ${whereSql}
             ) ordered
-            WHERE ordered.youtube_id = :currentYoutubeId
+            WHERE ordered.id = :currentYoutubeId
             LIMIT 1
         `;
 
@@ -59,7 +57,7 @@ export class ViewerVideoReadRepository extends DAO
             next_youtube_id: string | null;
         }>(sql, {
             ...params,
-            currentYoutubeId: video.youtube_id
+            currentYoutubeId: String(video.id)
         });
 
         return {
@@ -73,7 +71,6 @@ export class ViewerVideoReadRepository extends DAO
         const sql = `
             SELECT
                 v.video_id AS id,
-                v.video_id AS youtube_id,
                 v.src_channel_id AS channel_id,
                 v.title,
                 v.description,
@@ -82,7 +79,6 @@ export class ViewerVideoReadRepository extends DAO
                 v.thumbnail_url,
                 v.length_classification,
                 c.title AS channel_title,
-                c.src_channel_id AS channel_youtube_id,
                 COALESCE(vf.watched, 0) AS watched,
                 COALESCE(vf.favorite, 0) AS favorite,
                 COALESCE(vf.ignored, 0) AS ignored
@@ -105,7 +101,6 @@ export class ViewerVideoReadRepository extends DAO
         const sql = `
             SELECT
                 v.video_id AS id,
-                v.video_id AS youtube_id,
                 v.src_channel_id AS channel_id,
                 v.title,
                 v.description,
@@ -114,7 +109,6 @@ export class ViewerVideoReadRepository extends DAO
                 v.thumbnail_url,
                 v.length_classification,
                 c.title AS channel_title,
-                c.src_channel_id AS channel_youtube_id,
                 COALESCE(vf.watched, 0) AS watched,
                 COALESCE(vf.favorite, 0) AS favorite,
                 COALESCE(vf.ignored, 0) AS ignored
