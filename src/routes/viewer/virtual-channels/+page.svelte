@@ -1,8 +1,8 @@
 <script lang="ts">
-    import type { ViewerVirtualChannelTimerFields } from '$lib/viewer/ViewerVirtualChannelTimer';
+    import type { ViewerVirtualChannelTimerSFO } from '$lib/viewer/ViewerVirtualChannelTimer';
 
     export let data: {
-        virtualChannels: ViewerVirtualChannelTimerFields[];
+        virtualChannels: ViewerVirtualChannelTimerSFO[];
         profileKey: string;
     };
 </script>

@@ -13,17 +13,17 @@ export class SourceChannelDAO extends DAO
 {
     async create(channel: SourceChannel): Promise<void>
     {
-        const fields = channel.toFields();
+        const fields = channel.serialize();
 
         await this.run(
             `INSERT INTO source_channels(src_channel_id, title, description, thumbnail_url, published_at) VALUES(?,?,?,?,?)`,
-            [String(fields.id), fields.title, fields.description, fields.thumbnail_url, fields.published_at]
+            [String(fields.id), fields.title, fields.description, fields.thumbnailUrl, fields.publishedAt]
         );
     }
 
     async update(channel: SourceChannel): Promise<void>
     {
-        const fields = channel.toFields();
+        const fields = channel.serialize();
 
         await this.run(`
             UPDATE source_channels
@@ -33,13 +33,13 @@ export class SourceChannelDAO extends DAO
                 thumbnail_url = ?,
                 published_at = ?
             WHERE src_channel_id = ?
-        `, [String(fields.id), fields.title, fields.description, fields.thumbnail_url, fields.published_at, String(fields.id)]);
+        `, [String(fields.id), fields.title, fields.description, fields.thumbnailUrl, fields.publishedAt, String(fields.id)]);
     }
 
     async get(id: string | number): Promise<SourceChannel | undefined>
     {
         const fields = await this.getOne<SourceChannelFields>(
-            `SELECT src_channel_id AS id, src_channel_id AS youtube_id, title, description, thumbnail_url, published_at, last_refreshed_at FROM source_channels WHERE src_channel_id = ?`,
+            `SELECT src_channel_id AS id, src_channel_id AS youtube_id, title, description, thumbnail_url as thumbnailUrl, published_at as publishedAt, last_refreshed_at as lastRefreshedAt FROM source_channels WHERE src_channel_id = ?`,
             [id]
         );
 
@@ -49,7 +49,7 @@ export class SourceChannelDAO extends DAO
     async getByExternalId(external_id: string): Promise<SourceChannel | undefined>
     {
         const fields = await this.getOne<SourceChannelFields>(
-            `SELECT src_channel_id AS id, src_channel_id AS youtube_id, title, description, thumbnail_url, published_at, last_refreshed_at FROM source_channels WHERE src_channel_id = ?`,
+            `SELECT src_channel_id AS id, src_channel_id AS youtubeId, title, description, thumbnail_url as thumbnailUrl, published_at as publishedAt, last_refreshed_at as lastRefreshedAt FROM source_channels WHERE src_channel_id = ?`,
             [external_id]
         );
 
@@ -59,7 +59,7 @@ export class SourceChannelDAO extends DAO
     async list(): Promise<SourceChannel[]>
     {
         const rows = await this.listRows<SourceChannelFields>(
-            `SELECT src_channel_id AS id, src_channel_id AS youtube_id, title, description, thumbnail_url, published_at, last_refreshed_at FROM source_channels ORDER BY title`
+            `SELECT src_channel_id AS id, src_channel_id AS youtubeId, title, description, thumbnail_url as thumbnailUrl, published_at as publishedAt, last_refreshed_at as lastRefreshedAt  FROM source_channels ORDER BY title`
         );
 
         return rows.map((row) => new SourceChannel(row));
@@ -69,7 +69,6 @@ export class SourceChannelDAO extends DAO
     {
         const rows = await this.listRows<SourceChannelFields & Omit<SourceChannelWithVideoStats, keyof SourceChannel>>(`
             SELECT
-                sc.id,
                 sc.src_channel_id AS youtube_id,
                 sc.src_channel_id AS id,
                 sc.title,

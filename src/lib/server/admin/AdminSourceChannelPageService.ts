@@ -74,14 +74,14 @@ export class AdminSourceChannelPageService
 
             await this.sourceChannelDAO.create(new SourceChannel({
                 id: resolved.channelId,
-                youtube_id: resolved.channelId,
+                youtubeId: resolved.channelId,
                 title: title || snippet.title || '',
                 description: description || snippet.description || '',
-                thumbnail_url: thumbnailUrl || metadataThumbnailUrl,
-                published_at: publishedAt ?? (
+                thumbnailUrl: thumbnailUrl || metadataThumbnailUrl,
+                publishedAt: publishedAt ?? (
                     Number.isFinite(metadataPublishedAt as number) ? (metadataPublishedAt as number) : null
                 ),
-                last_refreshed_at: null
+                lastRefreshedAt: null
             }));
 
             return {

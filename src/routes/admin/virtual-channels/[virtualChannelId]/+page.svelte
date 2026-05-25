@@ -45,7 +45,7 @@
         : '';
 
     const associatedSourceChannelIds = new Set(
-        data.associatedSourceChannels.map((item) => item.assignment.sourceChannelId)
+        data.associatedSourceChannels.map((item) => item.assignment.source_channel_id)
     );
 
     const availableForAssociation = data.availableSourceChannels.filter(

@@ -3,9 +3,24 @@ import { ViewerVideoReadRepository } from '$lib/daos/readers/ViewerVideoReadRepo
 import { SourceChannelDAO } from '$lib/daos/sourceChannelDAO';
 import type { DatabasePool } from '$lib/daos/shared/DatabasePool';
 import { VirtualChannelDAO } from '$lib/daos/virtualChannelDAO';
+import type { SourceChannelSFO} from '$lib/entities/sourceChannel';
 import type { ServerProfileContext } from '$lib/server/ServerProfileContext';
 import type { ViewerQueryFilters } from '$lib/server/viewer/ViewerQueryParser';
+import type { ViewerVirtualChannelTimer } from '$lib/viewer/ViewerVirtualChannelTimer';
 import { ViewerVirtualChannelService } from '$lib/server/viewer/ViewerVirtualChannelService';
+
+export interface ViewerPageLoadModel
+{
+    filters: ViewerQueryFilters;
+    videos: Awaited<ReturnType<ViewerVideoReadRepository['list']>>;
+    totalCount: number;
+    channels: SourceChannelSFO[];
+    virtualChannels: ViewerVirtualChannelTimer[];
+    activeVirtualChannel: ViewerVirtualChannelTimer | null;
+    profileId: string | number;
+    profileKey: string;
+    profileName: string;
+}
 
 export class ViewerPageLoader
 {
@@ -22,7 +37,7 @@ export class ViewerPageLoader
         this.historyDAO = new HistoryDAO(db);
     }
 
-    async load(filters: ViewerQueryFilters, profileContext: ServerProfileContext)
+    async load(filters: ViewerQueryFilters, profileContext: ServerProfileContext): Promise<ViewerPageLoadModel>
     {
         const virtualChannelService = new ViewerVirtualChannelService(
             this.virtualChannelDAO,
@@ -45,9 +60,9 @@ export class ViewerPageLoader
             filters,
             videos,
             totalCount,
-            channels: channels.map((channel) => channel.toFields()),
-            virtualChannels: virtualChannels.map((virtualChannel) => virtualChannel.toFields()),
-            activeVirtualChannel: activeVirtualChannel?.toFields() ?? null,
+            channels: channels.map((channel) => channel.serialize()),
+            virtualChannels,
+            activeVirtualChannel,
             profileId: profileContext.activeProfileId,
             profileKey: profileContext.activeProfileKey,
             profileName: profileContext.activeProfileName

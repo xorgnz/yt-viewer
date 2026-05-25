@@ -11,7 +11,7 @@ export const load: PageServerLoad = async ({ cookies }) =>
 
         return {
             profileKey: navigation.profileKey,
-            virtualChannels: virtualChannels.map((virtualChannel) => virtualChannel.toFields())
+            virtualChannels: virtualChannels.map((virtualChannel) => virtualChannel.serialize())
         };
     });
 };

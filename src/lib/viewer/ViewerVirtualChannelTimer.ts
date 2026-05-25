@@ -1,4 +1,7 @@
-import { VirtualChannel } from '$lib/entities/virtualChannel';
+import {
+    VirtualChannel,
+    type VirtualChannelSFO
+} from '$lib/entities/virtualChannel';
 
 export enum ViewerVirtualChannelTimerState
 {
@@ -12,8 +15,20 @@ export type ViewerVirtualChannelTimerWindow = {
     endMs: number;
 };
 
-export type ViewerVirtualChannelTimerFields = {
+export interface ViewerVirtualChannelTimerFields {
     virtualChannel: VirtualChannel;
+    timerState: ViewerVirtualChannelTimerState;
+    timerUsageSeconds: number;
+    timerRemainingSeconds: number | null;
+    dailyTimerRemainingSeconds: number | null;
+    extraTimerSecondsRemaining: number;
+    combinedTimerRemainingSeconds: number | null;
+    timerWindowStartMs: number;
+    timerWindowEndMs: number;
+};
+
+export interface ViewerVirtualChannelTimerSFO {
+    virtualChannel: VirtualChannelSFO;
     timerState: ViewerVirtualChannelTimerState;
     timerUsageSeconds: number;
     timerRemainingSeconds: number | null;
@@ -161,10 +176,25 @@ export class ViewerVirtualChannelTimer
         });
     }
 
-    toFields(): ViewerVirtualChannelTimerFields
+    static deserialize(serialFormObject: ViewerVirtualChannelTimerSFO): ViewerVirtualChannelTimer
+    {
+        return new ViewerVirtualChannelTimer({
+            virtualChannel: VirtualChannel.deserialize(serialFormObject.virtualChannel),
+            timerState: serialFormObject.timerState,
+            timerUsageSeconds: serialFormObject.timerUsageSeconds,
+            timerRemainingSeconds: serialFormObject.timerRemainingSeconds,
+            dailyTimerRemainingSeconds: serialFormObject.dailyTimerRemainingSeconds,
+            extraTimerSecondsRemaining: serialFormObject.extraTimerSecondsRemaining,
+            combinedTimerRemainingSeconds: serialFormObject.combinedTimerRemainingSeconds,
+            timerWindowStartMs: serialFormObject.timerWindowStartMs,
+            timerWindowEndMs: serialFormObject.timerWindowEndMs
+        });
+    }
+
+    serialize(): ViewerVirtualChannelTimerSFO
     {
         return {
-            virtualChannel: this.virtualChannel,
+            virtualChannel: this.virtualChannel.serialize(),
             timerState: this.timerState,
             timerUsageSeconds: this.timerUsageSeconds,
             timerRemainingSeconds: this.timerRemainingSeconds,

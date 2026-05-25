@@ -1,31 +1,30 @@
 import type { AssignmentDAO } from '$lib/daos/assignmentDAO';
 import type { SourceChannelDAO } from '$lib/daos/sourceChannelDAO';
 import type { VirtualChannelDAO } from '$lib/daos/virtualChannelDAO';
-import type { SourceChannel, SourceChannelFields } from '$lib/entities/sourceChannel';
+import type {SourceChannel, SourceChannelSFO} from '$lib/entities/sourceChannel';
 import { ErrorResult, type ErrorFields, type ServiceResult } from '$lib/server/Error';
 import type { VirtualChannel } from '$lib/entities/virtualChannel';
 import type { VirtualChannelAssignmentFields } from '$lib/entities/virtualChannelAssignment';
-import type { VirtualChannelFields } from '$lib/entities/virtualChannel';
 
 type AdminAssignmentRows = Awaited<ReturnType<AssignmentDAO['listForVirtualChannel']>>;
 
 interface AdminInlineAssociation
 {
     assignment: VirtualChannelAssignmentFields;
-    sourceChannel: SourceChannelFields | null;
+    sourceChannel: SourceChannelSFO | null;
 }
 
 interface AdminVirtualChannelRow
 {
-    virtualChannel: VirtualChannelFields;
+    virtualChannel: VirtualChannel;
     associatedSourceChannels: AdminInlineAssociation[];
-    availableSourceChannels: SourceChannelFields[];
+    availableSourceChannels: SourceChannelSFO[];
 }
 
 interface AdminVirtualChannelIndexPageData
 {
     virtualChannels: AdminVirtualChannelRow[];
-    availableSourceChannels: SourceChannelFields[];
+    availableSourceChannels: SourceChannelSFO[];
 }
 
 interface AdminVirtualChannelInlineMutationData
@@ -65,7 +64,7 @@ export class AdminVirtualChannelIndexService
 
         return {
             virtualChannels: virtualChannelRows,
-            availableSourceChannels: allSourceChannels.map((channel) => channel.toFields())
+            availableSourceChannels: allSourceChannels.map((channel) => channel.serialize())
         };
     }
 
@@ -271,12 +270,12 @@ export class AdminVirtualChannelIndexService
         const availableSourceChannels = allSourceChannels.filter((channel) => !associatedSourceChannelIds.has(channel.id));
 
         return {
-            virtualChannel: virtualChannel.toFields(),
+            virtualChannel,
             associatedSourceChannels: associatedSourceChannels.map((item) => ({
                 assignment: item.assignment.toFields(),
-                sourceChannel: item.sourceChannel ? item.sourceChannel.toFields() : null
+                sourceChannel: item.sourceChannel ? item.sourceChannel.serialize() : null
             })),
-            availableSourceChannels: availableSourceChannels.map((channel) => channel.toFields())
+            availableSourceChannels: availableSourceChannels.map((sc) => sc.serialize())
         };
     }
 

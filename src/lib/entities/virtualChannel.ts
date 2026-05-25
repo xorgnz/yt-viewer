@@ -1,4 +1,11 @@
-export type VirtualChannelFields = {
+export interface VirtualChannelFields {
+    id: string | number;
+    name: string;
+    dailyTimerMax: number | null;
+    extraTimerSecondsRemaining: number;
+};
+
+export interface VirtualChannelSFO {
     id: string | number;
     name: string;
     dailyTimerMax: number | null;
@@ -19,7 +26,7 @@ export class VirtualChannel
         this.extraTimerSecondsRemaining = data.extraTimerSecondsRemaining;
     }
 
-    toFields(): VirtualChannelFields
+    serialize(): VirtualChannelSFO
     {
         return {
             id: this.id,
@@ -38,6 +45,16 @@ export class VirtualChannel
                 extraTimerSecondsRemaining: patch.extraTimerSecondsRemaining ?? this.extraTimerSecondsRemaining
             }
         );
+    }
+
+    static deserialize(serialFormObject: VirtualChannelSFO): VirtualChannel
+    {
+        return new VirtualChannel({
+            id: serialFormObject.id,
+            name: serialFormObject.name,
+            dailyTimerMax: serialFormObject.dailyTimerMax,
+            extraTimerSecondsRemaining: serialFormObject.extraTimerSecondsRemaining
+        });
     }
 
     static fromUnknown(value: unknown): VirtualChannel | null

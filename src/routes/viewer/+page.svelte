@@ -52,7 +52,7 @@
     let f = pageState.filters;
     let activeVirtualChannel = pageState.activeVirtualChannel == null
         ? null
-        : ViewerVirtualChannelTimer.normalizeViewModel(pageState.activeVirtualChannel);
+        : ViewerVirtualChannelTimer.deserialize(pageState.activeVirtualChannel);
     let activeVirtualChannelIsCapped = false;
     const today = new Date().toISOString().slice(0, 10);
     let totalPages = 1;
@@ -326,7 +326,7 @@
         pageState.navigation.deriveFilterInputState());
     $: activeVirtualChannel = pageState.activeVirtualChannel == null
         ? null
-        : ViewerVirtualChannelTimer.normalizeViewModel(pageState.activeVirtualChannel);
+        : ViewerVirtualChannelTimer.deserialize(pageState.activeVirtualChannel);
     $: activeVirtualChannelIsCapped = activeVirtualChannel?.timerState === ViewerVirtualChannelTimerState.Capped;
     $: ({ totalPages, currentPage, visiblePages } = pageState.derivePaginationState());
     $: ({ hasActiveSelection, selectedCount, offPageSelectedCount, watchedControlState, favoriteControlState, ignoredControlState } =

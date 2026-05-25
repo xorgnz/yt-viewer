@@ -4,11 +4,29 @@ import { ServerDatabaseContext } from '$lib/server/ServerDatabaseContext';
 import { ServerActionForm } from '$lib/server/ServerActionForm';
 import { AdminVirtualChannelServiceContext } from '$lib/server/admin/AdminVirtualChannelServiceContext';
 
+function serializeVirtualChannelRow<
+    TSerializedVirtualChannel,
+    TVirtualChannelRow extends {
+        virtualChannel: { serialize(): TSerializedVirtualChannel };
+    }
+>(row: TVirtualChannelRow): Omit<TVirtualChannelRow, 'virtualChannel'> & { virtualChannel: TSerializedVirtualChannel }
+{
+    return {
+        ...row,
+        virtualChannel: row.virtualChannel.serialize()
+    };
+}
+
 export const load: PageServerLoad = async () =>
 {
     return ServerDatabaseContext.run(async ({ db }) => {
         const serviceContext = AdminVirtualChannelServiceContext.resolve(db);
-        return await serviceContext.indexService.loadPageData();
+        const pageData = await serviceContext.indexService.loadPageData();
+
+        return {
+            ...pageData,
+            virtualChannels: pageData.virtualChannels.map((row) => serializeVirtualChannelRow(row))
+        };
     });
 };
 
@@ -89,7 +107,10 @@ export const actions: Actions = {
                 });
             }
 
-            return result.data;
+            return {
+                ...result.data,
+                virtualChannelRow: serializeVirtualChannelRow(result.data.virtualChannelRow)
+            };
         });
     },
 
@@ -117,7 +138,10 @@ export const actions: Actions = {
                 });
             }
 
-            return result.data;
+            return {
+                ...result.data,
+                virtualChannelRow: serializeVirtualChannelRow(result.data.virtualChannelRow)
+            };
         });
     }
 };

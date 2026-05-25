@@ -9,8 +9,7 @@ import { ViewerRecommendationService } from '$lib/server/viewer/ViewerRecommenda
 import type { ViewerVirtualChannelService } from '$lib/server/viewer/ViewerVirtualChannelService';
 import type { ServerProfileContext } from '$lib/server/ServerProfileContext';
 import {
-    ViewerVirtualChannelTimer,
-    type ViewerVirtualChannelTimerFields
+    ViewerVirtualChannelTimer
 } from '$lib/viewer/ViewerVirtualChannelTimer';
 
 const HISTORY_SESSION_GAP_MS = 5 * 60 * 1000;
@@ -23,7 +22,7 @@ export type ViewerWatchLoadModel = {
     previousVideoYoutubeId: string | null;
     nextVideoYoutubeId: string | null;
     currentVirtualChannelId: string | number | null;
-    activeVirtualChannel: ViewerVirtualChannelTimerFields | null;
+    activeVirtualChannelTimer: ViewerVirtualChannelTimer | null;
     playbackBlockedMessage: string | null;
     activeHistorySessionWatchSecondsBaseline: number;
     activeHistorySessionLastUpdatedAt: number | null;
@@ -152,7 +151,7 @@ export class ViewerWatchService
                 previousVideoYoutubeId: adjacent.previousYoutubeId,
                 nextVideoYoutubeId: adjacent.nextYoutubeId,
                 currentVirtualChannelId: filters.virtualChannelId,
-                activeVirtualChannel: activeVirtualChannel?.toFields() ?? null,
+                activeVirtualChannelTimer: activeVirtualChannel,
                 playbackBlockedMessage,
                 activeHistorySessionWatchSecondsBaseline,
                 activeHistorySessionLastUpdatedAt,

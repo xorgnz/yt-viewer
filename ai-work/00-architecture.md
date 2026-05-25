@@ -150,6 +150,32 @@ Current standardized conventions include:
 
 These suffixes should be used deliberately rather than mechanically. If a type or class does not clearly fit the role implied by the suffix, rename the object or choose a more accurate boundary.
 
+### Constructor State Versus Transport State
+
+For real concepts that need both runtime behavior and serialization, keep these roles distinct:
+
+- `X`
+  - the actual object/class
+  - owns behavior, invariants, and object identity
+- `XFields`
+  - constructor/member state only
+  - used to create `X`
+  - not implicitly a transport contract
+- `XSFO`
+  - explicit serial form object
+  - used only when crossing real serialization boundaries such as SvelteKit page data, action payloads, HTTP, or other wire/storage formats
+  - do not create by default; add only when a real serialization boundary actually needs it
+
+Important implications:
+
+- do not overload `*Fields` to also serve as route/load transport data just because the shape happens to be serializable
+- if a runtime object and its constructor state are both needed, keep both and name them explicitly
+- do not introduce `*SFO` preemptively or as speculative architecture
+- if a serial form is needed, define it explicitly rather than reusing `*Fields` by habit
+- use `serialize()` and `deserialize()` for the explicit conversion points
+- convert objects to `*SFO` as close to the actual serialization boundary as practical
+- do not let transport-shaped objects spread through internal service and domain boundaries when real objects should be used there
+
 ## Important Constraints
 
 ### Stable-ID Pressure

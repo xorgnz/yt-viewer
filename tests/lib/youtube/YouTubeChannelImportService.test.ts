@@ -12,12 +12,12 @@ describe('YouTubeChannelImportService', () => {
                 .mockResolvedValueOnce(undefined)
                 .mockResolvedValueOnce(new SourceChannel({
                     id: 'UC123',
-                    youtube_id: 'UC123',
+                    youtubeId: 'UC123',
                     title: 'Demo Channel',
                     description: '',
-                    thumbnail_url: null,
-                    published_at: null,
-                    last_refreshed_at: null
+                    thumbnailUrl: null,
+                    publishedAt: null,
+                    lastRefreshedAt: null
                 })),
             create: vi.fn(async () => undefined),
             update: vi.fn(async () => undefined)

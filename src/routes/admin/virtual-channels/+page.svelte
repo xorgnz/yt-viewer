@@ -1,10 +1,21 @@
 <script lang="ts">
     import { enhance } from '$app/forms';
     import type { PageData, SubmitFunction } from './$types';
+    import type { SourceChannelSFO } from '$lib/entities/sourceChannel';
+    import type { VirtualChannelAssignmentFields } from '$lib/entities/virtualChannelAssignment';
+    import type { VirtualChannelSFO } from '$lib/entities/virtualChannel';
 
     export let data: PageData;
 
-    type VirtualChannelRow = (typeof data.virtualChannels)[number];
+    type InlineAssociationRow = {
+        assignment: VirtualChannelAssignmentFields;
+        sourceChannel: SourceChannelSFO | null;
+    };
+    type VirtualChannelRow = {
+        virtualChannel: VirtualChannelSFO;
+        associatedSourceChannels: InlineAssociationRow[];
+        availableSourceChannels: SourceChannelSFO[];
+    };
     type InlineStatus = { type: 'success' | 'error'; text: string };
     type VirtualChannelId = string | number;
     type InlineAssociationActionData = {
@@ -47,7 +58,7 @@
         return String(failureData.message || fallbackMessage);
     }
 
-    let virtualChannels = data.virtualChannels;
+    let virtualChannels: VirtualChannelRow[] = data.virtualChannels as VirtualChannelRow[];
     let newName = '';
     let inlineStatusByVirtualChannelId: Record<string, InlineStatus> = {};
 
@@ -175,7 +186,7 @@
                                                             <span>
                                                                 {item.sourceChannel?.title || 'Unknown source channel'}
                                                                 {#if item.sourceChannel}
-                                                                    <span class="muted">({item.sourceChannel.youtube_id})</span>
+                                                                    <span class="muted">({item.sourceChannel.youtubeId})</span>
                                                                 {/if}
                                                             </span>
                                                             <form
@@ -220,7 +231,7 @@
                                                         <select name="source_channel_id" required>
                                                         <option value="" selected disabled>Select source channel</option>
                                                         {#each g.availableSourceChannels as channel}
-                                                            <option value={channel.id}>{channel.title} ({channel.youtube_id})</option>
+                                                            <option value={channel.id}>{channel.title} ({channel.youtubeId})</option>
                                                         {/each}
                                                     </select>
                                                     <button type="submit">Add</button>

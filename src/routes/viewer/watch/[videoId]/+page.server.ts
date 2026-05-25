@@ -18,7 +18,10 @@ export const load = async ({ params, cookies, url }: { params: { videoId: string
             throw error(result.status, result.message);
         }
 
-        return result.data;
+        return {
+            ...result.data,
+            activeVirtualChannelTimer: result.data.activeVirtualChannelTimer?.serialize() ?? null
+        };
     });
 };
 

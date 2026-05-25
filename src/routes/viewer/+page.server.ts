@@ -8,7 +8,13 @@ import { ViewerServiceContext } from '$lib/server/viewer/ViewerServiceContext';
 export const load = async ({ url, cookies }: { url: URL; cookies: any }) =>
 {
     return ServerDatabaseContext.run(async ({ db }) => {
-        return new ViewerLoadService(db).load(url, cookies);
+        const pageData = await new ViewerLoadService(db).load(url, cookies);
+
+        return {
+            ...pageData,
+            virtualChannels: pageData.virtualChannels.map((virtualChannel) => virtualChannel.serialize()),
+            activeVirtualChannel: pageData.activeVirtualChannel?.serialize() ?? null
+        };
     });
 };
 

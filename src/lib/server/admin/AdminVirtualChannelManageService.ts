@@ -5,10 +5,10 @@ import type { VirtualChannelAssignmentVideoSelectionDAO } from '$lib/daos/virtua
 import type { VirtualChannelDAO } from '$lib/daos/virtualChannelDAO';
 import { VirtualChannelAssignmentMode, type VirtualChannelAssignment, type VirtualChannelAssignmentFields } from '$lib/entities/virtualChannelAssignment';
 import { VirtualChannelAssignmentVideoReviewState as ReviewState, type VirtualChannelAssignmentVideoReviewState } from '$lib/entities/virtualChannelAssignmentVideoSelection';
-import type { SourceChannel, SourceChannelFields } from '$lib/entities/sourceChannel';
+import type {SourceChannel, SourceChannelSFO} from '$lib/entities/sourceChannel';
 import { VideoLengthClassification, type VideoFields } from '$lib/entities/video';
 import { ErrorResult, type ErrorFields, type ServiceResult } from '$lib/server/Error';
-import type { VirtualChannelFields } from '$lib/entities/virtualChannel';
+import type { VirtualChannel } from '$lib/entities/virtualChannel';
 import { AdminReviewStateFilter as ReviewStateFilter, AdminVideoTypeFilter as VideoTypeFilter } from '$lib/admin/AdminVirtualChannelFilters';
 import type { AdminReviewStateFilter, AdminVideoTypeFilter } from '$lib/admin/AdminVirtualChannelFilters';
 
@@ -28,7 +28,7 @@ interface AdminSelectedOnlyCounts
 interface AdminAssociatedSourceChannelView
 {
     assignment: VirtualChannelAssignmentFields;
-    sourceChannel: SourceChannelFields | null;
+    sourceChannel: SourceChannelSFO | null;
     automaticVideos: VideoFields[];
     selectedOnlyVideos: AdminSelectedOnlyVideoViewModel[];
     selectedOnlyCounts: AdminSelectedOnlyCounts | null;
@@ -39,9 +39,9 @@ interface AdminAssociatedSourceChannelView
 
 interface AdminVirtualChannelManagePageData
 {
-    virtualChannel: VirtualChannelFields;
+    virtualChannel: VirtualChannel;
     associatedSourceChannels: AdminAssociatedSourceChannelView[];
-    availableSourceChannels: SourceChannelFields[];
+    availableSourceChannels: SourceChannelSFO[];
 }
 
 export class AdminVirtualChannelManageService
@@ -93,9 +93,9 @@ export class AdminVirtualChannelManageService
         return {
             ok: true,
             data: {
-                virtualChannel: virtualChannel.toFields(),
+                virtualChannel,
                 associatedSourceChannels,
-                availableSourceChannels: availableSourceChannels.map((channel) => channel.toFields())
+                availableSourceChannels: availableSourceChannels.map((channel) => channel.serialize())
             }
         };
     }
@@ -341,7 +341,7 @@ export class AdminVirtualChannelManageService
 
         return {
             assignment: assignment.toFields(),
-            sourceChannel: sourceChannelsById.get(assignment.sourceChannelId)?.toFields() ?? null,
+            sourceChannel: sourceChannelsById.get(assignment.sourceChannelId)?.serialize() ?? null,
             automaticVideos: automaticVideos.map((video) => video.toFields()),
             selectedOnlyVideos,
             selectedOnlyCounts,

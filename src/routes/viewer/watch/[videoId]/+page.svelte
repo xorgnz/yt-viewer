@@ -8,9 +8,11 @@
     import { VideoMutationService } from '$lib/viewer/VideoMutationService';
     import {
         ViewerVirtualChannelTimer,
-        ViewerVirtualChannelTimerState,
-        type ViewerVirtualChannelTimerFields
+        type ViewerVirtualChannelTimerSFO
     } from '$lib/viewer/ViewerVirtualChannelTimer';
+    import {
+        ViewerSelectionFlagKind
+    } from '$lib/viewer/selection/types';
 
     export let data: {
         video: VideoFields;
@@ -22,7 +24,7 @@
         previousVideoYoutubeId: string | null;
         nextVideoYoutubeId: string | null;
         currentVirtualChannelId: string | number | null;
-        activeVirtualChannel: ViewerVirtualChannelTimerFields | null;
+        activeVirtualChannelTimer: ViewerVirtualChannelTimerSFO | null;
         playbackBlockedMessage: string | null;
         activeHistorySessionWatchSecondsBaseline: number;
         activeHistorySessionLastUpdatedAt: number | null;
@@ -52,11 +54,11 @@
     let timerStatusMessage: string | null = data.playbackBlockedMessage;
     let activeVideoYoutubeId = currentVideo.youtube_id;
     let activeVirtualChannelId = data.currentVirtualChannelId;
-    let activeVirtualChannelUsageBaselineSeconds = data.activeVirtualChannel?.timerUsageSeconds ?? 0;
+    let activeVirtualChannelUsageBaselineSeconds = data.activeVirtualChannelTimer?.timerUsageSeconds ?? 0;
     let activeHistorySessionWatchSecondsBaseline = data.activeHistorySessionWatchSecondsBaseline ?? 0;
-    let localActiveVirtualChannel = data.activeVirtualChannel == null
+    let localActiveVirtualChannel = data.activeVirtualChannelTimer == null
         ? null
-        : ViewerVirtualChannelTimer.normalizeViewModel(data.activeVirtualChannel);
+        : ViewerVirtualChannelTimer.deserialize(data.activeVirtualChannelTimer);
     let recommendations = data.recommendations.map((video) => new Video(video));
     let pageNavigation = new ViewerPageNavigation(data.navigationFilters);
     let lastDebugEvent = 'init';
@@ -82,7 +84,7 @@
             ? 0
             : getLocalVirtualChannelUsageSeconds();
         const nextVirtualChannelId = data.currentVirtualChannelId;
-        const nextRouteUsageSeconds = data.activeVirtualChannel?.timerUsageSeconds ?? 0;
+        const nextRouteUsageSeconds = data.activeVirtualChannelTimer?.timerUsageSeconds ?? 0;
         const nextUsageBaselineSeconds = previousVirtualChannelId != null && nextVirtualChannelId === previousVirtualChannelId
             ? Math.max(nextRouteUsageSeconds, previousUsageSeconds)
             : nextRouteUsageSeconds;
@@ -172,10 +174,10 @@
         activeVirtualChannelId = virtualChannelId;
         activeVirtualChannelUsageBaselineSeconds = usageBaselineSeconds;
         activeHistorySessionWatchSecondsBaseline = historySessionWatchSecondsBaseline;
-        localActiveVirtualChannel = data.activeVirtualChannel == null
+        localActiveVirtualChannel = data.activeVirtualChannelTimer == null
             ? null
-            : ViewerVirtualChannelTimer.normalizeViewModel({
-                ...data.activeVirtualChannel,
+            : ViewerVirtualChannelTimer.deserialize({
+                ...data.activeVirtualChannelTimer,
                 timerUsageSeconds: usageBaselineSeconds
             });
     }
@@ -592,7 +594,7 @@
         }
     }
 
-    async function handleMetaFlagToggle(kind: 'favorite' | 'ignored' | 'watched')
+    async function handleMetaFlagToggle(kind: ViewerSelectionFlagKind)
     {
         if (kind === 'watched')
         {
@@ -600,7 +602,7 @@
             return;
         }
 
-        const nextValue = kind === 'favorite'
+        const nextValue = kind === ViewerSelectionFlagKind.Favorite
             ? (favorite ? 0 : 1)
             : (ignored ? 0 : 1);
 
@@ -612,7 +614,7 @@
                 return;
             }
 
-            if (kind === 'favorite') {
+            if (kind === ViewerSelectionFlagKind.Favorite) {
                 favorite = !!nextValue;
                 return;
             }
@@ -792,7 +794,7 @@
                         class:active={favorite}
                         aria-pressed={favorite}
                         title={favorite ? 'Clear favorite' : 'Mark favorite'}
-                        on:click={() => void handleMetaFlagToggle('favorite')}
+                        on:click={() => void handleMetaFlagToggle(ViewerSelectionFlagKind.Favorite)}
                     >
                         <span class="icon-glyph" aria-hidden="true">&#9733;</span>
                         <span class="sr-only">{favorite ? 'Clear favorite' : 'Mark favorite'}</span>
@@ -803,7 +805,7 @@
                         class:active={showWatched}
                         aria-pressed={showWatched}
                         title={showWatched ? 'Clear watched' : 'Mark watched'}
-                        on:click={() => void handleMetaFlagToggle('watched')}
+                        on:click={() => void handleMetaFlagToggle(ViewerSelectionFlagKind.Watched)}
                         disabled={watchMutationPending}
                     >
                         <span class="icon-glyph" aria-hidden="true">&#10003;</span>
@@ -815,7 +817,7 @@
                         class:active={ignored}
                         aria-pressed={ignored}
                         title={ignored ? 'Clear ignored' : 'Mark ignored'}
-                        on:click={() => void handleMetaFlagToggle('ignored')}
+                        on:click={() => void handleMetaFlagToggle(ViewerSelectionFlagKind.Ignored)}
                     >
                         <span class="icon-glyph" aria-hidden="true">&#10005;</span>
                         <span class="sr-only">{ignored ? 'Clear ignored' : 'Mark ignored'}</span>
@@ -858,8 +860,8 @@
             <div>lastPersistedWatchSeconds: {Math.floor(lastPersistedWatchSeconds)}</div>
             <div>historySessionCreated: {historySessionCreated ? 'true' : 'false'}</div>
             <div>isActivelyPlaying: {isActivelyPlaying ? 'true' : 'false'}</div>
-            <div>route active usage: {data.activeVirtualChannel?.timerUsageSeconds ?? 'null'}</div>
-            <div>route active remaining: {data.activeVirtualChannel?.timerRemainingSeconds ?? 'null'}</div>
+            <div>route active usage: {data.activeVirtualChannelTimer?.timerUsageSeconds ?? 'null'}</div>
+            <div>route active remaining: {data.activeVirtualChannelTimer?.timerRemainingSeconds ?? 'null'}</div>
             <div>lastDebugEvent: {lastDebugEvent}</div>
             <div>lastDebugResponse: {lastDebugResponse}</div>
         </div>

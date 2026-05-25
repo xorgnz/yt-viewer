@@ -31,12 +31,12 @@ describe('DAO modules', () => {
 
         await new SourceChannelDAO(provider).create(new SourceChannel({
             id: 'channel-1',
-            youtube_id: 'channel-1',
+            youtubeId: 'channel-1',
             title: 'Channel',
             description: '',
-            thumbnail_url: null,
-            published_at: null,
-            last_refreshed_at: null
+            thumbnailUrl: null,
+            publishedAt: null,
+            lastRefreshedAt: null
         }));
         await new VideoDAO(provider).create(new Video({
             id: 'video-1',

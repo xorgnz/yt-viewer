@@ -57,7 +57,7 @@ export const load = async ({ url, cookies }: { url: URL; cookies: any }) =>
             filters,
             items: await items,
             sessionItems,
-            channels: channels.map((channel) => channel.toFields()),
+            channels: channels.map((channel) => channel.serialize()),
             profileId: profileContext.activeProfileId,
             profileName: profileContext.activeProfileName
         };

@@ -1,12 +1,15 @@
 export type SourceChannelFields = {
     id: string | number;
-    youtube_id: string;
+    youtubeId: string;
     title: string;
     description?: string;
-    thumbnail_url?: string | null;
-    published_at?: number | null;
-    last_refreshed_at?: number | null;
+    thumbnailUrl?: string | null;
+    publishedAt?: number | null;
+    lastRefreshedAt?: number | null;
 };
+
+export type SourceChannelSFO = SourceChannelFields;
+
 
 export class SourceChannel
 {
@@ -21,25 +24,38 @@ export class SourceChannel
     constructor(data: SourceChannelFields)
     {
         this.id = data.id;
-        this.youtubeId = data.youtube_id;
+        this.youtubeId = data.youtubeId;
         this.title = data.title;
         this.description = data.description;
-        this.thumbnailUrl = data.thumbnail_url;
-        this.publishedAt = data.published_at;
-        this.lastRefreshedAt = data.last_refreshed_at;
+        this.thumbnailUrl = data.thumbnailUrl;
+        this.publishedAt = data.publishedAt;
+        this.lastRefreshedAt = data.lastRefreshedAt;
     }
 
-    toFields(): SourceChannelFields
+    serialize(): SourceChannelSFO
     {
         return {
             id: this.id,
-            youtube_id: this.youtubeId,
+            youtubeId: this.youtubeId,
             title: this.title,
             description: this.description,
-            thumbnail_url: this.thumbnailUrl,
-            published_at: this.publishedAt,
-            last_refreshed_at: this.lastRefreshedAt,
+            thumbnailUrl: this.thumbnailUrl,
+            publishedAt: this.publishedAt,
+            lastRefreshedAt: this.lastRefreshedAt,
         };
+    }
+
+    static deserialize(serialFormObject: SourceChannelSFO): SourceChannel
+    {
+        return new SourceChannel({
+            id: serialFormObject.id,
+            youtubeId: serialFormObject.youtubeId,
+            title: serialFormObject.title,
+            description: serialFormObject.description,
+            thumbnailUrl: serialFormObject.thumbnailUrl,
+            publishedAt: serialFormObject.publishedAt,
+            lastRefreshedAt: serialFormObject.lastRefreshedAt,
+        });
     }
 
     static validate(value: any): value is SourceChannel
@@ -62,12 +78,12 @@ export class SourceChannel
     {
         return new SourceChannel({
             id: (patch as any).id ?? this.id,
-            youtube_id: (patch as any).youtubeId ?? this.youtubeId,
+            youtubeId: (patch as any).youtubeId ?? this.youtubeId,
             title: (patch as any).title ?? this.title,
             description: (patch as any).description ?? this.description,
-            thumbnail_url: (patch as any).thumbnailUrl ?? this.thumbnailUrl,
-            published_at: (patch as any).publishedAt ?? this.publishedAt,
-            last_refreshed_at: (patch as any).lastRefreshedAt ?? this.lastRefreshedAt
+            thumbnailUrl: (patch as any).thumbnailUrl ?? this.thumbnailUrl,
+            publishedAt: (patch as any).publishedAt ?? this.publishedAt,
+            lastRefreshedAt: (patch as any).lastRefreshedAt ?? this.lastRefreshedAt
         });
     }
 }

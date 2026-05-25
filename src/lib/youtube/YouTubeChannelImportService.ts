@@ -46,22 +46,22 @@ export class YouTubeChannelImportService
         const publishedAt = snippet.publishedAt ? Date.parse(snippet.publishedAt) : null;
         const channelData = {
             id: channel.id,
-            youtube_id: channel.id,
+            youtubeId: channel.id,
             title: snippet.title || '',
             description: snippet.description || '',
-            thumbnail_url: this.getBestThumbnailUrl(snippet.thumbnails as Record<string, { url?: string }> | undefined),
-            published_at: Number.isFinite(publishedAt as any) ? (publishedAt as number) : null
+            thumbnailUrl: this.getBestThumbnailUrl(snippet.thumbnails as Record<string, { url?: string }> | undefined),
+            publishedAt: Number.isFinite(publishedAt as any) ? (publishedAt as number) : null
         };
-        const existingSourceChannel = await this.sourceChannelDAO.getByExternalId(channelData.youtube_id);
+        const existingSourceChannel = await this.sourceChannelDAO.getByExternalId(channelData.youtubeId);
         if (existingSourceChannel) {
-            await this.sourceChannelDAO.update(existingSourceChannel.with(new SourceChannel({ ...channelData, last_refreshed_at: null })));
+            await this.sourceChannelDAO.update(existingSourceChannel.with(new SourceChannel({ ...channelData, lastRefreshedAt: null })));
         } else {
-            await this.sourceChannelDAO.create(new SourceChannel({ ...channelData, last_refreshed_at: null }));
+            await this.sourceChannelDAO.create(new SourceChannel({ ...channelData, lastRefreshedAt: null }));
         }
 
-        const sourceChannel = await this.sourceChannelDAO.getByExternalId(channelData.youtube_id);
+        const sourceChannel = await this.sourceChannelDAO.getByExternalId(channelData.youtubeId);
         if (!sourceChannel) {
-            throw new Error(`Failed to resolve imported channel ${channelData.youtube_id}.`);
+            throw new Error(`Failed to resolve imported channel ${channelData.youtubeId}.`);
         }
 
         let videosUpserted = 0;

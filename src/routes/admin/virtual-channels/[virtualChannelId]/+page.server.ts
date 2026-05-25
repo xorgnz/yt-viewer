@@ -27,7 +27,10 @@ export const load: PageServerLoad = async ({ params, url }) =>
             throw error(result.error.status, result.error.message);
         }
 
-        return result.data;
+        return {
+            ...result.data,
+            virtualChannel: result.data.virtualChannel.serialize()
+        };
     });
 };
 
