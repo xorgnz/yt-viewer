@@ -14,6 +14,8 @@
     let open = false;
     let viewDate = parseDate(value) ?? parseDate(max) ?? new Date();
     let yearPageStart = startOfYearPage(viewDate.getFullYear());
+    let selectedDate: Date | null = parseDate(value);
+    let maxDate: Date = parseDate(max) ?? new Date();
 
     $: selectedDate = parseDate(value);
     $: maxDate = parseDate(max) ?? new Date();
