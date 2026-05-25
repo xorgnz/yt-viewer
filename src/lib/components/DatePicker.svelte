@@ -16,6 +16,7 @@
     let yearPageStart = startOfYearPage(viewDate.getFullYear());
     let selectedDate: Date | null = parseDate(value);
     let maxDate: Date = parseDate(max) ?? new Date();
+    let rootElement: HTMLDivElement | null = null;
 
     $: selectedDate = parseDate(value);
     $: maxDate = parseDate(max) ?? new Date();
@@ -145,9 +146,28 @@
         open = false;
         onCommit?.();
     }
+
+    function handleWindowClick(event: MouseEvent)
+    {
+        if (!open || !rootElement) {
+            return;
+        }
+
+        const target = event.target;
+
+        if (!(target instanceof Node)) {
+            return;
+        }
+
+        if (!rootElement.contains(target)) {
+            open = false;
+        }
+    }
 </script>
 
-<div class="date-picker">
+<svelte:window on:click={handleWindowClick} />
+
+<div class="date-picker" bind:this={rootElement}>
     <input type="hidden" {name} {value} />
     <details bind:open>
         <summary class="date-trigger">
