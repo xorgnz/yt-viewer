@@ -9,6 +9,7 @@ import { DatabaseMode } from '$lib/daos/shared/DatabaseMode';
 import { DatabasePool } from '$lib/daos/shared/DatabasePool';
 import { requireDatabaseUrlForRuntime } from '$lib/server/RuntimeDatabaseUrl';
 import type {MigrationDefinition} from "$lib/daos/migration/migrations/registry";
+import "dotenv/config";
 
 type ModeArg = DatabaseMode.Dev | DatabaseMode.Live;
 type DatabaseClientProvider = Pick<DatabasePool, 'query'>;
