@@ -22,8 +22,9 @@ function withPageService<T>(work: (pageService: AdminSourceChannelPageService) =
 
 export const load: PageServerLoad = async () =>
 {
-    return withPageService((pageService) => {
-        return pageService.loadPageData().then((pageData) => serializePageData(pageData));
+    return withPageService(async (pageService) => {
+        const pageData = await pageService.loadPageData();
+        return serializePageData(pageData);
     });
 };
 
@@ -54,7 +55,7 @@ export const actions: Actions = {
 
     update: async ({ request }) => {
         const form = await ServerActionForm.fromRequest(request);
-        const id = form.getPositiveInteger('id');
+        const id = form.getIdentifier('id');
         const title = form.getTrimmedString('title');
         const description = form.getString('description');
         const thumbnail_url = form.getString('thumbnail_url') || null;
@@ -78,7 +79,7 @@ export const actions: Actions = {
 
     delete: async ({ request }) => {
         const form = await ServerActionForm.fromRequest(request);
-        const id = form.getPositiveInteger('id');
+        const id = form.getIdentifier('id');
         if (id === null) return fail(400, { message: 'id is required.' });
 
         const result = await withPageService((pageService) => {
@@ -90,7 +91,7 @@ export const actions: Actions = {
 
     refresh: async ({ request }) => {
         const form = await ServerActionForm.fromRequest(request);
-        const id = form.getPositiveInteger('id');
+        const id = form.getIdentifier('id');
         if (id === null) return fail(400, { message: 'id is required.' });
 
         const result = await withPageService((pageService) => {

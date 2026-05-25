@@ -98,7 +98,7 @@ export class AdminSourceChannelPageService
     }
 
     async updateSourceChannel(
-        id: number,
+        id: string | number,
         title: string,
         description: string,
         thumbnailUrl: string | null,
@@ -126,13 +126,13 @@ export class AdminSourceChannelPageService
         };
     }
 
-    async deleteSourceChannel(id: number): Promise<string>
+    async deleteSourceChannel(id: string | number): Promise<string>
     {
         await this.sourceChannelDAO.remove(id);
         return AdminSourceChannelPageService.INDEX_PATH;
     }
 
-    async refreshSourceChannel(id: number): Promise<ServiceResult<
+    async refreshSourceChannel(id: string | number): Promise<ServiceResult<
         string,
         ErrorFields
     >>

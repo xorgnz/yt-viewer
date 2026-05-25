@@ -57,11 +57,19 @@ describe('admin source channel routes', () => {
 
     it('loads source channel page data from the page service', async () => {
         pageService.loadPageData.mockReturnValue({
-            sourceChannels: [
+            channels: [
                 {
-                    id: 1,
-                    youtube_id: 'UC_ROUTE_LOAD',
-                    title: 'Loaded Channel'
+                    serialize: vi.fn(() => ({
+                        sourceChannel: {
+                            id: 'UC_ROUTE_LOAD',
+                            youtubeId: 'UC_ROUTE_LOAD',
+                            title: 'Loaded Channel'
+                        },
+                        videoCount: 0,
+                        watchedCount: 0,
+                        favoriteCount: 0,
+                        ignoredCount: 0
+                    }))
                 }
             ]
         });
@@ -69,11 +77,17 @@ describe('admin source channel routes', () => {
         const result = await pageRoute.load({} as never);
 
         expect(result).toEqual({
-            sourceChannels: [
+            channels: [
                 {
-                    id: 1,
-                    youtube_id: 'UC_ROUTE_LOAD',
-                    title: 'Loaded Channel'
+                    sourceChannel: {
+                        id: 'UC_ROUTE_LOAD',
+                        youtubeId: 'UC_ROUTE_LOAD',
+                        title: 'Loaded Channel'
+                    },
+                    videoCount: 0,
+                    watchedCount: 0,
+                    favoriteCount: 0,
+                    ignoredCount: 0
                 }
             ]
         });
@@ -173,6 +187,28 @@ describe('admin source channel routes', () => {
         expect(resolveServiceContextMock).not.toHaveBeenCalled();
         expect(resolveLookupServiceMock).toHaveBeenCalledTimes(1);
         expect(lookupService.lookupSourceChannel).toHaveBeenCalledWith('@lookup');
+    });
+
+    it('redirects after a successful refresh action using a string source-channel identifier', async () => {
+        pageService.refreshSourceChannel.mockResolvedValue({
+            ok: true,
+            data: '/admin/source-channels'
+        });
+
+        const form = new FormData();
+        form.set('id', 'UC_REFRESH_ROUTE');
+
+        await expect(pageRoute.actions.refresh({
+            request: new Request('http://localhost/admin/source-channels', {
+                method: 'POST',
+                body: form
+            })
+        } as never)).rejects.toMatchObject({
+            status: 303,
+            location: '/admin/source-channels'
+        });
+
+        expect(pageService.refreshSourceChannel).toHaveBeenCalledWith('UC_REFRESH_ROUTE');
     });
 
     it('returns 400 for missing lookup input without touching lookup service dependencies', async () => {
