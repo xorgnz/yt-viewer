@@ -37,6 +37,14 @@ These services are the main orchestration layer for:
 
 Services should coordinate multiple DAOs/repositories when needed, but avoid embedding raw SQL directly.
 
+For page-facing and action-facing services, this layer is also the preferred place to package page payloads and serialize domain objects into transport-safe shapes. In other words:
+
+- lower-level domain and persistence code should keep using real runtime objects
+- page-facing services may convert those objects into serialized DTO/SFO/view-model data when preparing page or action payloads
+- `+page.server.ts` should stay focused on SvelteKit adapter concerns such as parsing request input, invoking services, and mapping service failures to `fail`, `redirect`, or thrown route errors
+
+Do not create runtime wrapper objects whose only purpose is to cross from a page-facing service into `+page.server.ts` and then be serialized immediately there. If a type exists solely to satisfy one page/action payload, prefer returning it from the service already packaged in its transport-safe form.
+
 ### Persistence Layer
 
 `src/lib/daos/` is split by responsibility:
@@ -175,6 +183,12 @@ Important implications:
 - use `serialize()` and `deserialize()` for the explicit conversion points
 - convert objects to `*SFO` as close to the actual serialization boundary as practical
 - do not let transport-shaped objects spread through internal service and domain boundaries when real objects should be used there
+
+For this repository, the practical serialization boundary is usually the page-facing service layer rather than `+page.server.ts` itself. That means:
+
+- serialize domain objects while assembling page/action payloads in the relevant service
+- let `+page.server.ts` pass through already-packaged payload data whenever possible
+- reserve direct route-layer serialization for trivial glue or truly route-local cases
 
 ## Important Constraints
 
