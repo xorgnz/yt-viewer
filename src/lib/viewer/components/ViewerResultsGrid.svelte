@@ -2,7 +2,8 @@
     import VideoCard from '$lib/components/VideoCard.svelte';
     import type { Video } from '$lib/entities/video';
     import { VideoMutationService } from '$lib/viewer/VideoMutationService';
-    import type { ViewerCardClickHandler, ViewerCardMouseDownHandler } from '$lib/components/VideoCard.svelte';
+    type ViewerCardClickHandler = (event: MouseEvent | KeyboardEvent, videoId: string | number) => void;
+    type ViewerCardMouseDownHandler = (event: MouseEvent, videoId: string | number) => void;
 
     export let videos: Video[] = [];
     export let selectedVideoIds: Array<string | number> = [];

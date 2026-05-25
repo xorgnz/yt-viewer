@@ -6,10 +6,11 @@
         ViewerVideoDisplayPresenter
     } from '$lib/viewer/display';
     import { VideoMutationService } from '$lib/viewer/VideoMutationService';
-    import type { ViewerSelectionFlagKind, ViewerSelectionFlagValue } from '$lib/viewer/selection/types';
+    import { ViewerSelectionFlagKind } from '$lib/viewer/selection/types';
+    import type { ViewerSelectionFlagValue } from '$lib/viewer/selection/types';
 
-    export type ViewerCardClickHandler = (event: MouseEvent | KeyboardEvent, videoId: string | number) => void;
-    export type ViewerCardMouseDownHandler = (event: MouseEvent, videoId: string | number) => void;
+    type ViewerCardClickHandler = (event: MouseEvent | KeyboardEvent, videoId: string | number) => void;
+    type ViewerCardMouseDownHandler = (event: MouseEvent, videoId: string | number) => void;
 
     export let video: Video;
     export let watchHref: string | null = null;
@@ -150,11 +151,15 @@
                     class:active={!!currentVideo.favorite}
                     aria-pressed={!!currentVideo.favorite}
                     disabled={disabled || flagMutationPending || !videoMutationService}
-                    title={presenter.getToggleTitle('favorite')}
-                    on:click={(event) => handleFlagClick(event, 'favorite', presenter.getNextFlagValue('favorite'))}
+                    title={presenter.getToggleTitle(ViewerSelectionFlagKind.Favorite)}
+                    on:click={(event) => handleFlagClick(
+                        event,
+                        ViewerSelectionFlagKind.Favorite,
+                        presenter.getNextFlagValue(ViewerSelectionFlagKind.Favorite)
+                    )}
                 >
                     <span class="icon-glyph" aria-hidden="true">&#9733;</span>
-                    <span class="sr-only">{presenter.getToggleLabel('favorite')}</span>
+                    <span class="sr-only">{presenter.getToggleLabel(ViewerSelectionFlagKind.Favorite)}</span>
                 </button>
                 <button
                     type="button"
@@ -162,11 +167,15 @@
                     class:active={!!currentVideo.watched}
                     aria-pressed={!!currentVideo.watched}
                     disabled={disabled || flagMutationPending || !videoMutationService}
-                    title={presenter.getToggleTitle('watched')}
-                    on:click={(event) => handleFlagClick(event, 'watched', presenter.getNextFlagValue('watched'))}
+                    title={presenter.getToggleTitle(ViewerSelectionFlagKind.Watched)}
+                    on:click={(event) => handleFlagClick(
+                        event,
+                        ViewerSelectionFlagKind.Watched,
+                        presenter.getNextFlagValue(ViewerSelectionFlagKind.Watched)
+                    )}
                 >
                     <span class="icon-glyph" aria-hidden="true">&#10003;</span>
-                    <span class="sr-only">{presenter.getToggleLabel('watched')}</span>
+                    <span class="sr-only">{presenter.getToggleLabel(ViewerSelectionFlagKind.Watched)}</span>
                 </button>
                 <button
                     type="button"
@@ -174,11 +183,15 @@
                     class:active={!!currentVideo.ignored}
                     aria-pressed={!!currentVideo.ignored}
                     disabled={disabled || flagMutationPending || !videoMutationService}
-                    title={presenter.getToggleTitle('ignored')}
-                    on:click={(event) => handleFlagClick(event, 'ignored', presenter.getNextFlagValue('ignored'))}
+                    title={presenter.getToggleTitle(ViewerSelectionFlagKind.Ignored)}
+                    on:click={(event) => handleFlagClick(
+                        event,
+                        ViewerSelectionFlagKind.Ignored,
+                        presenter.getNextFlagValue(ViewerSelectionFlagKind.Ignored)
+                    )}
                 >
                     <span class="icon-glyph" aria-hidden="true">&#10005;</span>
-                    <span class="sr-only">{presenter.getToggleLabel('ignored')}</span>
+                    <span class="sr-only">{presenter.getToggleLabel(ViewerSelectionFlagKind.Ignored)}</span>
                 </button>
             </div>
             <div class="chan">{currentVideo.channel_title}</div>
