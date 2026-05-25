@@ -36,3 +36,8 @@ coverage/
 *.sqlite-shm
 *.db-wal
 *.db-shm
+
+
+# AI
+ai-rules
+AGENTS.md
