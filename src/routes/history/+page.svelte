@@ -1,4 +1,8 @@
 <script lang="ts">
+    import { goto } from '$app/navigation';
+    import HistoryFilterPanel from './HistoryFilterPanel.svelte';
+    import type { HistoryFilterInputState } from './HistoryFilterInputState';
+
     export let data: {
         filters: {
             profileKey: string;
@@ -50,7 +54,9 @@
         profileName: string;
     };
 
-    const f = data.filters;
+    let f = data.filters;
+
+    $: f = data.filters;
 
     function fmtDate(ms: number): string
     {
@@ -105,6 +111,23 @@
         }).toString();
     }
 
+    async function handleApplyFilters(inputState: HistoryFilterInputState)
+    {
+        const query = new URLSearchParams({
+            mode: inputState.mode,
+            channelId: inputState.channelIdInput,
+            dateFrom: inputState.dateFromInput,
+            dateTo: inputState.dateToInput,
+            limit: inputState.limitInput,
+            offset: '0'
+        }).toString();
+
+        await goto(`?${query}`, {
+            keepFocus: true,
+            noScroll: true
+        });
+    }
+
     function sessionsForVideo(videoId: string | number)
     {
         return data.sessionItems.filter((it) => it.video_id === videoId);
@@ -112,52 +135,12 @@
 </script>
 
 <div class="page stack">
-    <section class="panel">
-        <h1>History</h1>
-        <details class="help-box">
-            <summary>How history works</summary>
-            <div class="help-copy">
-                <p>History sessions are created after more than 5 seconds of active watch time.</p>
-                <p>While playback continues, the current session is updated about every 10 seconds.</p>
-                <p>If you resume the same video within 5 minutes of the last history update, the same session is reused. Longer gaps start a new session.</p>
-                <p>Time watched reflects time spent actively watching, including replays, not the furthest timestamp reached.</p>
-                <p>The watched flag is separate from history. A video can appear in history without being marked watched, and manual watched toggles do not create history rows.</p>
-            </div>
-        </details>
-        <form method="GET" class="fields">
-            <div>
-                <div class="muted">Active Profile</div>
-                <div>{data.profileName}</div>
-            </div>
-            <label>View
-                <select name="mode" value={f.mode}>
-                    <option value="sessions" selected={f.mode === 'sessions'}>Sessions</option>
-                    <option value="videos" selected={f.mode === 'videos'}>By video</option>
-                </select>
-            </label>
-            <label>Channel
-                <select name="channelId" value={f.channelId ?? ''}>
-                    <option value="">Any</option>
-                    {#each data.channels as ch}
-                        <option value={ch.id} selected={f.channelId === ch.id}>{ch.title}</option>
-                    {/each}
-                </select>
-            </label>
-            <label>Date from (ms)
-                <input type="number" name="dateFrom" value={f.dateFrom ?? ''} />
-            </label>
-            <label>Date to (ms)
-                <input type="number" name="dateTo" value={f.dateTo ?? ''} />
-            </label>
-            <label>Per page
-                <input type="number" name="limit" min="1" max="1000" value={f.limit} />
-            </label>
-            <input type="hidden" name="offset" value={f.offset} />
-            <div class="inline-actions">
-                <button type="submit">Apply</button>
-            </div>
-        </form>
-    </section>
+    <HistoryFilterPanel
+        filters={f}
+        channels={data.channels}
+        profileName={data.profileName}
+        onApplyFilters={handleApplyFilters}
+    />
 
     <section class="stack">
         <div class="toolbar">
@@ -309,28 +292,6 @@
 
     .nested-history {
         margin-top: 0.5rem;
-    }
-
-    .help-box {
-        margin-bottom: 1rem;
-        border: 1px solid var(--border);
-        border-radius: var(--radius);
-        background: var(--bg-soft);
-        padding: 0.75rem 1rem;
-    }
-
-    .help-box summary {
-        cursor: pointer;
-        font-weight: 600;
-    }
-
-    .help-copy {
-        margin-top: 0.75rem;
-        color: var(--text-muted);
-    }
-
-    .help-copy p {
-        margin: 0 0 0.5rem 0;
     }
 </style>
 <!-- apply-patch-anchor - do not delete -->
