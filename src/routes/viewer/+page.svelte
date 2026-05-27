@@ -8,10 +8,10 @@
     import {
         viewerBulkActions
     } from '$lib/viewer/bulkActions';
-    import ViewerBulkActionBar from '$lib/viewer/components/ViewerBulkActionBar.svelte';
-    import ViewerFilterPanel from '$lib/viewer/components/ViewerFilterPanel.svelte';
-    import ViewerPagination from '$lib/viewer/components/ViewerPagination.svelte';
-    import ViewerResultsGrid from '$lib/viewer/components/ViewerResultsGrid.svelte';
+    import ViewerBulkActionBar from './ViewerBulkActionBar.svelte';
+    import ViewerFilterPanel from './ViewerFilterPanel.svelte';
+    import ViewerPagination from './ViewerPagination.svelte';
+    import ViewerResultsGrid from './ViewerResultsGrid.svelte';
     import { ViewerSelectionControlState, viewerPageSelection } from '$lib/viewer/ViewerPageSelection';
     import { viewerSortSession } from '$lib/viewer/sortSession';
     import {
