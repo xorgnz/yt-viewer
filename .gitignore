@@ -1,43 +1,55 @@
+# Dependencies
 node_modules/
-build/
-dist/
+
+# Build and generated outputs
+.generated/
 .svelte-kit/
 .vite/
+build/
+dist/
+
+# Environment files
 .env
 .env.*
 !.env.example
 !.env.sample
 
-# Logs
+# Logs and runtime artifacts
+logs/
+*.log
+lerna-debug.log*
 npm-debug.log*
+pnpm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-pnpm-debug.log*
-lerna-debug.log*
 
-# OS files
-.DS_Store
-Thumbs.db
+# TypeScript build metadata
+*.tsbuildinfo
 
-# IDEs
-.idea/
-.vscode/
-
-# Testing
+# Test coverage
 coverage/
+*.lcov
 
-# SQLite
-*.sqlite
-*.sqlite3
+# Local database files
 *.db
 *.db-journal
-*.sqlite-journal
-*.sqlite-wal
-*.sqlite-shm
-*.db-wal
 *.db-shm
+*.db-wal
+*.sqlite
+*.sqlite-journal
+*.sqlite-shm
+*.sqlite-wal
+*.sqlite3
 
+# Editor and OS files
+.DS_Store
+.idea/
+.vscode/
+Thumbs.db
+*.orig
+*.swo
+*.swp
 
-# AI
-ai-rules
+# AI and local agent files
 AGENTS.md
+ai-rules
