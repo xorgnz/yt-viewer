@@ -10,16 +10,17 @@ export const load = async ({ params, cookies, url }: { params: { videoId: string
     const videoId = String(params.videoId || '').trim();
     if (!videoId) throw error(400, 'Missing videoId');
 
-    return ServerDatabaseContext.run(async ({ db }) => {
-        const serviceContext = await ViewerServiceContext.resolve(db, cookies);
-        const filters = ViewerQueryParser.parse(url, serviceContext.profileContext.activeProfileKey);
-        const result = await serviceContext.watchService.load(videoId, filters);
-        if (!result.ok) {
+        return ServerDatabaseContext.run(async ({ db }) => {
+            const serviceContext = await ViewerServiceContext.resolve(db, cookies);
+            const filters = ViewerQueryParser.parse(url, serviceContext.profileContext.activeProfileKey);
+            const result = await serviceContext.watchService.load(videoId, filters);
+            if (!result.ok) {
             throw error(result.status, result.message);
         }
 
         return {
             ...result.data,
+            activeVirtualChannel: result.data.activeVirtualChannelTimer?.serialize() ?? null,
             activeVirtualChannelTimer: result.data.activeVirtualChannelTimer?.serialize() ?? null
         };
     });

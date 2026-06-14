@@ -89,6 +89,16 @@ describe('viewer watch route', () => {
                 previousVideoYoutubeId: null,
                 nextVideoYoutubeId: null,
                 currentVirtualChannelId: 'vc_queue',
+                activeVirtualChannelTimer: {
+                    serialize: vi.fn(() => ({
+                        id: 'vc_queue',
+                        name: 'Queue',
+                        dailyTimerMax: 3600,
+                        timerUsageSeconds: 3600,
+                        timerRemainingSeconds: 0,
+                        timerState: 'capped'
+                    }))
+                },
                 playbackBlockedMessage: 'Daily timer limit reached for this virtual channel.',
                 navigationFilters: parseFiltersMock(),
                 profileId: 'default',
@@ -104,6 +114,14 @@ describe('viewer watch route', () => {
         } as never);
 
         expect(result.playbackBlockedMessage).toBe('Daily timer limit reached for this virtual channel.');
+        expect(result.activeVirtualChannel).toEqual({
+            id: 'vc_queue',
+            name: 'Queue',
+            dailyTimerMax: 3600,
+            timerUsageSeconds: 3600,
+            timerRemainingSeconds: 0,
+            timerState: 'capped'
+        });
         expect(watchService.load).toHaveBeenCalledWith('video-1', expect.objectContaining({ virtualChannelId: 'vc_queue' }));
     });
 
