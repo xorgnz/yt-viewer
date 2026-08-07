@@ -154,7 +154,7 @@
                             <th class="th-count th-count-ignored">I</th>
                             <th>Last Refresh</th>
                             <th class="th-count th-count-virtual">VC</th>
-                            <th>Actions</th>
+                            <th class="th-actions">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -175,15 +175,30 @@
                                 <td class="td-count td-count-ignored">{ch.ignoredCount}</td>
                                 <td>{fmtDateTime(ch.sourceChannel.lastRefreshedAt ?? null)}</td>
                                 <td class="td-count td-count-virtual">{ch.virtualChannelCount}</td>
-                                <td>
+                                <td class="td-actions">
                                     <div class="inline-actions">
                                         <form method="post" action="?/refresh" class="inline-form">
                                             <input type="hidden" name="id" value={ch.sourceChannel.id} />
-                                            <button type="submit">Refresh</button>
+                                            <button type="submit" class="icon-action" title="Refresh">
+                                                <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                                                    <path d="M21 12a9 9 0 1 1-2.64-6.36"></path>
+                                                    <path d="M21 3v6h-6"></path>
+                                                </svg>
+                                                <span class="sr-only">Refresh</span>
+                                            </button>
                                         </form>
                                         <form method="post" action="?/delete" class="inline-form">
                                             <input type="hidden" name="id" value={ch.sourceChannel.id} />
-                                            <button type="submit" class="btn-danger">Delete</button>
+                                            <button type="submit" class="icon-action btn-danger" title="Delete">
+                                                <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                                                    <path d="M3 6h18"></path>
+                                                    <path d="M8 6V4h8v2"></path>
+                                                    <path d="M19 6l-1 14H6L5 6"></path>
+                                                    <path d="M10 11v5"></path>
+                                                    <path d="M14 11v5"></path>
+                                                </svg>
+                                                <span class="sr-only">Delete</span>
+                                            </button>
                                         </form>
                                     </div>
                                 </td>
@@ -338,6 +353,13 @@
     .td-count {
         font-family: monospace;
         text-align: center;
+    }
+
+    .th-actions,
+    .td-actions {
+        width: 98px;
+        max-width: 98px;
+        min-width: 98px;
     }
 
     .th-count-total,

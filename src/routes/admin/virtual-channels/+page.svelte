@@ -163,7 +163,7 @@
                         <tr>
                             <th>Name</th>
                             <th>Inline Assignments</th>
-                            <th>Actions</th>
+                            <th class="th-actions">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -246,25 +246,50 @@
                                         {/if}
                                     </div>
                                 </td>
-                                <td>
+                                <td class="td-actions">
                                     <div class="inline-actions">
-                                        <a href={`/admin/virtual-channels/${g.virtualChannel.id}`} class="btn btn-secondary">Manage</a>
+                                        <a
+                                            href={`/admin/virtual-channels/${g.virtualChannel.id}`}
+                                            class="btn btn-secondary icon-action"
+                                            title="Manage"
+                                        >
+                                            <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                                                <path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z"></path>
+                                                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06A1.65 1.65 0 0 0 15 19.4a1.65 1.65 0 0 0-1 .6 1.65 1.65 0 0 0-.4 1.08V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-.6-1 1.65 1.65 0 0 0-1.08-.4H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-.6 1.65 1.65 0 0 0 .4-1.08V3a2 2 0 0 1 4 0v.09A1.65 1.65 0 0 0 15 4.6a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9c.14.38.37.72.6 1 .3.25.68.4 1.08.4H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51.6Z"></path>
+                                            </svg>
+                                            <span class="sr-only">Manage</span>
+                                        </a>
                                         <form method="post" action="?/rename" id={`rename-${g.virtualChannel.id}`} class="inline-form">
                                             <input type="hidden" name="id" value={g.virtualChannel.id} />
-                                            <button type="submit">Save</button>
+                                            <button type="submit" class="icon-action" title="Save">
+                                                <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                                                    <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2Z"></path>
+                                                    <path d="M17 21v-8H7v8"></path>
+                                                    <path d="M7 3v5h8"></path>
+                                                </svg>
+                                                <span class="sr-only">Save</span>
+                                            </button>
                                         </form>
                                         <form method="post" action="?/delete" class="inline-form">
                                             <input type="hidden" name="id" value={g.virtualChannel.id} />
                                             <button
                                                 type="submit"
-                                                class="btn-danger"
+                                                class="icon-action btn-danger"
+                                                title="Delete"
                                                 on:click={(event) => {
                                                     if (!confirm('Delete this virtual channel?')) {
                                                         event.preventDefault();
                                                     }
                                                 }}
                                             >
-                                                Delete
+                                                <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                                                    <path d="M3 6h18"></path>
+                                                    <path d="M8 6V4h8v2"></path>
+                                                    <path d="M19 6l-1 14H6L5 6"></path>
+                                                    <path d="M10 11v5"></path>
+                                                    <path d="M14 11v5"></path>
+                                                </svg>
+                                                <span class="sr-only">Delete</span>
                                             </button>
                                         </form>
                                     </div>
@@ -277,4 +302,13 @@
         {/if}
     </section>
 </div>
+
+<style>
+    .th-actions,
+    .td-actions {
+        width: 148px;
+        max-width: 148px;
+        min-width: 148px;
+    }
+</style>
 <!-- apply-patch-anchor - do not delete -->
