@@ -753,7 +753,7 @@
             {#if data.previousVideoYoutubeId}
                 <a id="a_player_nav_prev" href={buildWatchHref(data.previousVideoYoutubeId)}
                    aria-label="Previous video">
-                    <svg id="svg_player_nav_prev" viewBox="0 0 24 96" aria-hidden="true" focusable="false">
+                    <svg id="svg_player_nav_prev" viewBox="0 0 24 96" preserveAspectRatio="none" aria-hidden="true" focusable="false">
                         <polyline points="18,8 6,48 18,88"></polyline>
                     </svg>
                 </a>
@@ -773,7 +773,7 @@
 
             {#if data.nextVideoYoutubeId}
                 <a id="a_player_nav_next" href={buildWatchHref(data.nextVideoYoutubeId)} aria-label="Next video">
-                    <svg id="svg_player_nav_next" viewBox="0 0 24 96" aria-hidden="true" focusable="false">
+                    <svg id="svg_player_nav_next" viewBox="0 0 24 96" preserveAspectRatio="none" aria-hidden="true" focusable="false">
                         <polyline points="6,8 18,48 6,88"></polyline>
                     </svg>
                 </a>
@@ -878,6 +878,10 @@
 </div>
 
 <style>
+    :global(body) {
+        min-width: 300px;
+    }
+
     #div_viewer_panel {
         height: 100%;
         display: flex;
@@ -1173,6 +1177,8 @@
         font-family: var(--font-body);
         font-size: 0.95rem;
         line-height: 1.5;
+        overflow-wrap: anywhere;
+        word-break: break-word;
         white-space: pre-wrap;
     }
 
@@ -1199,19 +1205,44 @@
             text-align: left;
         }
 
+        #div_player_flex_wrapper {
+            min-width: 0;
+        }
+
+        #div_player_frame {
+            --free-width: 100%;
+            --managed-width: 100%;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        #div_player_surface {
+            order: 1;
+            width: 100%;
+            flex: 0 0 100%;
+        }
+
         #a_player_nav_prev,
         #a_player_nav_next {
-            width: 3.6rem;
-            min-width: 3.6rem;
+            width: calc(50% - 0.25rem);
+            height: 3.2rem;
+            min-width: 0;
+            order: 2;
+        }
+
+        #svg_player_nav_prev,
+        #svg_player_nav_next {
+            width: 2.1rem;
+            height: 1.25rem;
+            stroke-width: 5;
         }
 
         #player {
             width: 100%;
             height: 100%;
             min-height: calc(300px / 16 * 9);
-            min-width: 300px;
-            max-width: min(100vw - 40px, (100vh - 520px) * 16 / 9);
-            max-height: min(100vh - 520px, (100vw - 40px) * 9 / 16);
+            min-width: 0;
+            max-width: 100%;
         }
 
         #div_video_meta_panel {
