@@ -262,6 +262,10 @@ main {
         var(--bg);
 }
 
+.mobile-nav-toggle {
+    display: none;
+}
+
 .app-content {
     flex: 1;
     min-width: 0;
@@ -687,12 +691,44 @@ main {
         flex-direction: column;
     }
 
+    .mobile-nav-toggle {
+        width: 2.75rem;
+        height: 2.75rem;
+        display: inline-flex;
+        position: fixed;
+        top: calc(var(--space-4) + 8px);
+        right: calc(var(--space-4) + 8px);
+        z-index: 20;
+        align-items: center;
+        flex-direction: column;
+        justify-content: center;
+        gap: 0.28rem;
+        margin: 0;
+        padding: 0;
+        border-color: var(--border-strong);
+        border-radius: var(--radius-sm);
+        background: var(--bg-elevated);
+        box-shadow: var(--shadow-sm);
+    }
+
+    .mobile-nav-toggle span {
+        width: 1.25rem;
+        height: 0.14rem;
+        border-radius: 999px;
+        background: currentColor;
+    }
+
     .side-nav {
         position: static;
+        display: none;
         width: 100%;
         min-height: auto;
         border-right: 0;
         border-bottom: 1px solid var(--border);
+    }
+
+    .app-layout.mobile-nav-open .side-nav {
+        display: flex;
     }
 
     .app-content {
