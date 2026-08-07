@@ -9,17 +9,6 @@
     let creating = false;
     let lookupStatus: string = '';
 
-    function fmtDate(ms: number | null): string
-    {
-        if (!ms) return '';
-        try {
-            const d = new Date(ms);
-            return d.toISOString().slice(0, 10);
-        } catch {
-            return '';
-        }
-    }
-
     function fmtDateTime(ms: number | null): string
     {
         if (!ms) return '';
@@ -137,12 +126,12 @@
                             <th class="th-icon">Icon</th>
                             <th class="th-title">Title</th>
                             <th>Description</th>
-                            <th>Published</th>
                             <th class="th-count th-count-total">#</th>
                             <th class="th-count th-count-watched">W</th>
                             <th class="th-count th-count-favorite">F</th>
                             <th class="th-count th-count-ignored">I</th>
-                            <th>Last Refreshed</th>
+                            <th>Last Refresh</th>
+                            <th class="th-count th-count-virtual">VC</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
@@ -158,12 +147,12 @@
                                 </td>
                                 <td class="td-title">{ch.sourceChannel.title}</td>
                                 <td class="desc">{ch.sourceChannel.description}</td>
-                                <td>{fmtDate(ch.sourceChannel.publishedAt ?? null)}</td>
                                 <td class="td-count td-count-total">{ch.videoCount}</td>
                                 <td class="td-count td-count-watched">{ch.watchedCount}</td>
                                 <td class="td-count td-count-favorite">{ch.favoriteCount}</td>
                                 <td class="td-count td-count-ignored">{ch.ignoredCount}</td>
                                 <td>{fmtDateTime(ch.sourceChannel.lastRefreshedAt ?? null)}</td>
+                                <td class="td-count td-count-virtual">{ch.virtualChannelCount}</td>
                                 <td>
                                     <div class="inline-actions">
                                         <form method="post" action="?/refresh" class="inline-form">
@@ -187,25 +176,30 @@
 
 <style>
     :global(.thumb-preview) {
-        width: 160px;
+        width: 100%;
         height: auto;
+        min-width: 80px;
+        max-width: 100px;
         display: block;
         border: 1px solid var(--border);
         border-radius: var(--radius-sm);
     }
 
+    td, th {
+        padding: 0.33rem;
+    }
+
     .th-icon,
     .td-icon {
-        width: 160px;
-        min-width: 160px;
-        max-width: 160px;
+        min-width: 80px;
+        max-width: 100px;
         padding: 0;
     }
 
     .th-title,
     .td-title {
         width: 300px;
-        min-width: 300px;
+        min-width: 200px;
         max-width: 300px;
     }
 
@@ -241,12 +235,17 @@
 
     .td-count {
         font-family: monospace;
-        text-align: right;
+        text-align: center;
     }
 
     .th-count-total,
     .td-count-total {
         background-color: rgba(255, 255, 255, 0.10);
+    }
+
+    .th-count-virtual,
+    .td-count-virtual {
+        background-color: rgba(116, 180, 255, 0.18);
     }
 
     .th-count-watched,

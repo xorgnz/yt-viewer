@@ -37,6 +37,7 @@ describe('DAO modules', () => {
             publishedAt: null,
             lastRefreshedAt: null
         }));
+        await new SourceChannelDAO(provider).listWithVideoStats();
         await new VideoDAO(provider).create(new Video({
             id: 'video-1',
             channel_id: 'channel-1',
@@ -80,6 +81,7 @@ describe('DAO modules', () => {
         expect(provider.calls.some((call) => call.text.includes('UNIX_TIMESTAMP(CURRENT_TIMESTAMP(3)) * 1000'))).toBe(true);
         expect(provider.calls.some((call) => call.text.includes('ORDER BY v.published_at IS NULL ASC'))).toBe(true);
         expect(provider.calls.some((call) => call.text.includes('COUNT(DISTINCT v.video_id) AS count'))).toBe(true);
+        expect(provider.calls.some((call) => call.text.includes('COUNT(DISTINCT vchannel_id) AS virtualChannelCount'))).toBe(true);
         expect(provider.calls.some((call) => call.text.includes('JOIN source_channels c ON c.src_channel_id = v.src_channel_id'))).toBe(true);
         expect(provider.calls.some((call) => call.text.includes('LAG(v.video_id) OVER'))).toBe(true);
         expect(provider.calls.some((call) => call.text.includes('LEAD(v.video_id) OVER'))).toBe(true);

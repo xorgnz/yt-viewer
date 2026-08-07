@@ -65,6 +65,7 @@ describe('admin source channel routes', () => {
                             title: 'Loaded Channel'
                         },
                         videoCount: 0,
+                        virtualChannelCount: 2,
                         watchedCount: 0,
                         favoriteCount: 0,
                         ignoredCount: 0
@@ -83,6 +84,7 @@ describe('admin source channel routes', () => {
                         title: 'Loaded Channel'
                     },
                     videoCount: 0,
+                    virtualChannelCount: 2,
                     watchedCount: 0,
                     favoriteCount: 0,
                     ignoredCount: 0
