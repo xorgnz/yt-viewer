@@ -21,6 +21,7 @@ export interface ViewerVideoDisplayState
     isFavoriteOnly: boolean;
     isWatchedOnly: boolean;
     publishedDate: string;
+    duration: string;
     watchHref: string;
     openLabel: string;
 }
@@ -48,6 +49,7 @@ export class ViewerVideoDisplayPresenter
             isFavoriteOnly: !isIgnored && isFavorite && !isWatched,
             isWatchedOnly: !isIgnored && isWatched && !isFavorite,
             publishedDate: this.formatDate(this.video.published_at),
+            duration: this.formatDuration(this.video.duration_seconds),
             watchHref: `/viewer/watch/${this.video.id}`,
             openLabel: `Open ${this.video.title}`
         };
@@ -89,6 +91,24 @@ export class ViewerVideoDisplayPresenter
         } catch {
             return '';
         }
+    }
+
+    private formatDuration(seconds: number | null | undefined): string
+    {
+        if (!seconds || !Number.isFinite(seconds) || seconds < 0) {
+            return '';
+        }
+
+        const duration = Math.floor(seconds);
+        const hours = Math.floor(duration / 3600);
+        const minutes = Math.floor((duration % 3600) / 60);
+        const remainingSeconds = duration % 60;
+
+        if (hours > 0) {
+            return `${hours}:${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
+        }
+
+        return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
     }
 }
 // apply-patch-anchor - do not delete

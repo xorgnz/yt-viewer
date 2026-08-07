@@ -37,6 +37,7 @@ describe('ViewerVideoDisplayPresenter', () => {
             isFavoriteOnly: false,
             isWatchedOnly: false,
             publishedDate: '2026-04-10',
+            duration: '2:00',
             watchHref: '/viewer/watch/abc123',
             openLabel: 'Open Sample Video'
         });
@@ -61,6 +62,22 @@ describe('ViewerVideoDisplayPresenter', () => {
         }));
 
         expect(presenter.getState().publishedDate).toBe('');
+    });
+
+    it('formats display duration when video duration is available', () => {
+        const shortPresenter = new ViewerVideoDisplayPresenter(createVideo({
+            duration_seconds: 65
+        }));
+        const longPresenter = new ViewerVideoDisplayPresenter(createVideo({
+            duration_seconds: 7384
+        }));
+        const unknownPresenter = new ViewerVideoDisplayPresenter(createVideo({
+            duration_seconds: null
+        }));
+
+        expect(shortPresenter.getState().duration).toBe('1:05');
+        expect(longPresenter.getState().duration).toBe('2:03:04');
+        expect(unknownPresenter.getState().duration).toBe('');
     });
 });
 // apply-patch-anchor - do not delete

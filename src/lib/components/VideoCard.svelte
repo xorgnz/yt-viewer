@@ -132,6 +132,11 @@
         {:else}
             <div class="placeholder"></div>
         {/if}
+        {#if displayState.duration}
+            <span class="duration-badge" aria-label={`Duration ${displayState.duration}`}>
+                {displayState.duration}
+            </span>
+        {/if}
     </a>
     <div class="meta">
         <a
@@ -426,6 +431,20 @@
         font-weight: 800;
         line-height: 1;
         box-shadow: 0 0.35rem 0.9rem rgba(8, 47, 73, 0.45);
+    }
+
+    .duration-badge {
+        position: absolute;
+        right: 0.5rem;
+        bottom: 0.5rem;
+        z-index: 2;
+        padding: 0.18rem 0.38rem;
+        border-radius: 4px;
+        background: rgba(0, 0, 0, 0.82);
+        color: #fff;
+        font-size: 0.78rem;
+        font-weight: 700;
+        line-height: 1.15;
     }
 
     .meta {
