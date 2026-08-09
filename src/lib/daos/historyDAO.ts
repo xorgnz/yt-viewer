@@ -9,6 +9,7 @@ export class HistoryDAO extends DAO
         session_started_at: number;
         last_updated_at: number;
         time_watched_seconds: number;
+        last_position_seconds?: number | null;
     }): Promise<number>
     {
         return this.insert(`
@@ -17,14 +18,16 @@ export class HistoryDAO extends DAO
                 profile_id,
                 session_started_at,
                 last_updated_at,
-                time_watched_seconds
-            ) VALUES(?,?,?,?,?)
+                time_watched_seconds,
+                last_position_seconds
+            ) VALUES(?,?,?,?,?,?)
         `, [
             String(entry.video_id),
             String(entry.profile_id),
             entry.session_started_at,
             entry.last_updated_at,
-            entry.time_watched_seconds
+            entry.time_watched_seconds,
+            entry.last_position_seconds ?? null
         ]);
     }
 
@@ -34,6 +37,7 @@ export class HistoryDAO extends DAO
         session_started_at: number;
         last_updated_at: number;
         time_watched_seconds: number;
+        last_position_seconds?: number | null;
     }): Promise<number>
     {
         return this.createSession(entry);
@@ -61,14 +65,16 @@ export class HistoryDAO extends DAO
     async updateSessionProgress(id: number, patch: {
         last_updated_at: number;
         time_watched_seconds: number;
+        last_position_seconds?: number | null;
     }): Promise<void>
     {
         await this.run(`
             UPDATE watch_history
             SET last_updated_at = ?,
-                time_watched_seconds = ?
+                time_watched_seconds = ?,
+                last_position_seconds = ?
             WHERE id = ?
-        `, [patch.last_updated_at, patch.time_watched_seconds, id]);
+        `, [patch.last_updated_at, patch.time_watched_seconds, patch.last_position_seconds ?? null, id]);
     }
 
     async listByProfile(profile_id: string | number, limit = 100): Promise<WatchHistory[]>

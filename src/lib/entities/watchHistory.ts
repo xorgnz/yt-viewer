@@ -5,6 +5,7 @@ export type WatchHistoryFields = {
     session_started_at: number;
     last_updated_at: number;
     time_watched_seconds: number;
+    last_position_seconds: number | null;
 };
 
 export class WatchHistory
@@ -15,6 +16,7 @@ export class WatchHistory
     readonly session_started_at: number;   // unix epoch ms
     readonly last_updated_at: number;      // unix epoch ms
     readonly time_watched_seconds: number; // accumulated seconds
+    readonly last_position_seconds: number | null; // playback position seconds
 
     constructor(data: WatchHistoryFields)
     {
@@ -24,6 +26,7 @@ export class WatchHistory
         this.session_started_at = data.session_started_at;
         this.last_updated_at = data.last_updated_at;
         this.time_watched_seconds = data.time_watched_seconds;
+        this.last_position_seconds = data.last_position_seconds;
     }
 
     static validate(value: any): value is WatchHistory
@@ -37,7 +40,8 @@ export class WatchHistory
             (typeof (value as any).profile_id === 'string' || typeof (value as any).profile_id === 'number') &&
             typeof (value as any).session_started_at === 'number' &&
             typeof (value as any).last_updated_at === 'number' &&
-            typeof (value as any).time_watched_seconds === 'number'
+            typeof (value as any).time_watched_seconds === 'number' &&
+            ((value as any).last_position_seconds === null || typeof (value as any).last_position_seconds === 'number')
         );
     }
 
@@ -49,7 +53,8 @@ export class WatchHistory
             profile_id: (patch as any).profile_id ?? this.profile_id,
             session_started_at: (patch as any).session_started_at ?? this.session_started_at,
             last_updated_at: (patch as any).last_updated_at ?? this.last_updated_at,
-            time_watched_seconds: (patch as any).time_watched_seconds ?? this.time_watched_seconds
+            time_watched_seconds: (patch as any).time_watched_seconds ?? this.time_watched_seconds,
+            last_position_seconds: (patch as any).last_position_seconds ?? this.last_position_seconds
         });
     }
 }

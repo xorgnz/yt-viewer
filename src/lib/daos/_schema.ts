@@ -1,7 +1,7 @@
 // DDL statements for database schema and aggregated list.
 // Note: This file intentionally contains only schema DDL, not database creation/connection code.
 
-export const SCHEMA_VERSION = 11;
+export const SCHEMA_VERSION = 12;
 
 export const CREATE_TABLE_SOURCE_CHANNELS = `
 CREATE TABLE IF NOT EXISTS source_channels (
@@ -94,6 +94,7 @@ CREATE TABLE IF NOT EXISTS watch_history (
     session_started_at BIGINT NOT NULL,
     last_updated_at BIGINT NOT NULL,
     time_watched_seconds INT NOT NULL DEFAULT 0,
+    last_position_seconds INT DEFAULT NULL,
     FOREIGN KEY (video_id) REFERENCES videos(video_id) ON DELETE CASCADE ON UPDATE CASCADE,
     FOREIGN KEY (profile_id) REFERENCES profiles(profile_id) ON DELETE CASCADE ON UPDATE CASCADE
 );`;

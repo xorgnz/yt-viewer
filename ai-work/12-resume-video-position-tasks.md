@@ -17,11 +17,11 @@
 
 ## Tasks
 
-- [ ] 1 - Add playback-position storage to watch history
-  - [ ] 1.1 - Add nullable `last_position_seconds` to the latest `watch_history` schema.
-  - [ ] 1.2 - Add and register a forward migration for existing databases.
-  - [ ] 1.3 - Extend the watch-history entity field shape with the new persisted position.
-  - [ ] 1.4 - Update `HistoryDAO` create, update, and row-mapping paths to read and write the position without changing timer aggregate queries.
+- [x] 1 - Add playback-position storage to watch history
+  - [x] 1.1 - Add nullable `last_position_seconds` to the latest `watch_history` schema.
+  - [x] 1.2 - Add and register a forward migration for existing databases.
+  - [x] 1.3 - Extend the watch-history entity field shape with the new persisted position.
+  - [x] 1.4 - Update `HistoryDAO` create, update, and row-mapping paths to read and write the position without changing timer aggregate queries.
 
 - [ ] 2 - Surface a valid resume position from the viewer service
   - [ ] 2.1 - Keep the active-session timer baseline logic based on the existing session age rules.
