@@ -40,8 +40,8 @@
   - [x] 4.3 - Reset the one-time seek guard when route-driven video changes load a different video.
   - [x] 4.4 - Preserve the existing timer, watched-threshold, and pending-flush behavior.
 
-- [ ] 5 - Validate the feature
-  - [ ] 5.1 - Add or update migration tests for upgraded databases and fresh schema setup.
-  - [ ] 5.2 - Add service coverage for stored position, watched-video suppression, and invalid-position filtering.
-  - [ ] 5.3 - Add route coverage for playback-position form parsing.
-  - [ ] 5.4 - Run targeted tests and the existing Svelte/TypeScript check command that fits this change.
+- [x] 5 - Validate the feature
+  - [x] 5.1 - Add or update migration tests for upgraded databases and fresh schema setup.
+  - [x] 5.2 - Add service coverage for stored position, watched-video suppression, and invalid-position filtering.
+  - [x] 5.3 - Add route coverage for playback-position form parsing.
+  - [x] 5.4 - Run targeted tests and the existing Svelte/TypeScript check command that fits this change.

@@ -62,6 +62,23 @@ function createViewerVirtualChannel(overrides: Partial<ViewerVirtualChannelTimer
     });
 }
 
+function createWatchFilters(virtualChannelId: string | number | null = null)
+{
+    return {
+        watched: ViewerWatchedFilter.All,
+        ignored: ViewerIgnoredFilter.Hide,
+        dateFrom: null,
+        dateTo: null,
+        dateFromInput: '',
+        dateToInput: '',
+        channelId: null,
+        virtualChannelId,
+        sort: ViewerSort.Newest,
+        limit: 200,
+        offset: 0
+    };
+}
+
 describe('viewer timer services', () => {
     it('advances a timer snapshot through daily time and then extra time in one place', () => {
         const advanced = createViewerVirtualChannel({
@@ -445,6 +462,123 @@ describe('viewer timer services', () => {
             expect(result.data.activeHistorySessionLastUpdatedAt).toBe(5000);
         } finally {
             vi.useRealTimers();
+        }
+    });
+
+    it('exposes a valid profile-specific resume position without changing the active-session baseline', async () => {
+        vi.useFakeTimers();
+        vi.setSystemTime(301001);
+
+        try {
+            const video = createVideo(14);
+            const viewerVideoReadRepository = {
+                getByYoutubeId: vi.fn(async () => video),
+                findAdjacentYoutubeIds: vi.fn(async () => ({
+                    previousYoutubeId: null,
+                    nextYoutubeId: null
+                })),
+                list: vi.fn(async () => [])
+            };
+            const recommendationService = new ViewerRecommendationService(
+                { list: viewerVideoReadRepository.list } as never,
+                11
+            );
+            const historyDAO = {
+                findMostRecentSession: vi.fn(async () => ({
+                    id: 141,
+                    video_id: video.id,
+                    profile_id: 11,
+                    session_started_at: 1000,
+                    last_updated_at: 1000,
+                    time_watched_seconds: 120,
+                    last_position_seconds: 45
+                }))
+            };
+            const service = new ViewerWatchService(
+                viewerVideoReadRepository as never,
+                {} as never,
+                historyDAO as never,
+                createProfileContext(),
+                recommendationService,
+                {} as never
+            );
+
+            const result = await service.load('video-14', createWatchFilters());
+
+            expect(result.ok).toBe(true);
+            if (!result.ok) {
+                throw new Error('Expected successful watch load.');
+            }
+
+            expect(result.data.activeHistorySessionWatchSecondsBaseline).toBe(0);
+            expect(result.data.activeHistorySessionLastUpdatedAt).toBeNull();
+            expect(result.data.resumePositionSeconds).toBe(45);
+        } finally {
+            vi.useRealTimers();
+        }
+    });
+
+    it('suppresses resume positions for watched videos and invalid saved positions', async () => {
+        const baseVideo = createVideo(15);
+        const cases = [
+            {
+                name: 'watched video',
+                video: { ...baseVideo, watched: 1 },
+                lastPositionSeconds: 45
+            },
+            {
+                name: 'zero position',
+                video: baseVideo,
+                lastPositionSeconds: 0
+            },
+            {
+                name: 'past duration',
+                video: baseVideo,
+                lastPositionSeconds: 91
+            }
+        ];
+
+        for (const testCase of cases) {
+            const viewerVideoReadRepository = {
+                getByYoutubeId: vi.fn(async () => testCase.video),
+                findAdjacentYoutubeIds: vi.fn(async () => ({
+                    previousYoutubeId: null,
+                    nextYoutubeId: null
+                })),
+                list: vi.fn(async () => [])
+            };
+            const recommendationService = new ViewerRecommendationService(
+                { list: viewerVideoReadRepository.list } as never,
+                11
+            );
+            const historyDAO = {
+                findMostRecentSession: vi.fn(async () => ({
+                    id: 151,
+                    video_id: testCase.video.id,
+                    profile_id: 11,
+                    session_started_at: 1000,
+                    last_updated_at: 1000,
+                    time_watched_seconds: 20,
+                    last_position_seconds: testCase.lastPositionSeconds
+                }))
+            };
+            const service = new ViewerWatchService(
+                viewerVideoReadRepository as never,
+                {} as never,
+                historyDAO as never,
+                createProfileContext(),
+                recommendationService,
+                {} as never
+            );
+
+            const result = await service.load(String(testCase.video.id), createWatchFilters());
+
+            expect(result.ok, testCase.name).toBe(true);
+            if (!result.ok) {
+                throw new Error('Expected successful watch load.');
+            }
+
+            expect(result.data.resumePositionSeconds, testCase.name).toBeNull();
         }
     });
 

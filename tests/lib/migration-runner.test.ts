@@ -104,7 +104,7 @@ class MockTransactionalMigrationProvider extends MockMigrationProvider
 describe('MigrationRunner', () => {
     it('returns the current version when the schema is already at the latest version', async () => {
         const provider = new MockMigrationProvider({
-            schemaVersion: '11',
+            schemaVersion: '12',
             historyTableExists: true,
             migrationRows: [
                 {
@@ -116,6 +116,11 @@ describe('MigrationRunner', () => {
                     version: 11,
                     name: 'add_profile_split_timer_mode_enabled',
                     success: 1,
+                },
+                {
+                    version: 12,
+                    name: 'add_watch_history_last_position_seconds',
+                    success: 1,
                 }
             ],
         });
@@ -124,10 +129,10 @@ describe('MigrationRunner', () => {
         const result = await runner.runToLatest();
 
         expect(result).toEqual({
-            currentVersion: 11,
-            targetVersion: 11,
+            currentVersion: 12,
+            targetVersion: 12,
             appliedMigrations: [],
-            finalVersion: 11,
+            finalVersion: 12,
         });
         expect(provider.calls.map((call) => call.sql)).not.toContain('START TRANSACTION');
         expect(provider.calls.map((call) => call.sql)).not.toContain('COMMIT');
@@ -135,7 +140,7 @@ describe('MigrationRunner', () => {
 
     it('accepts legacy migration rows when the schema is already at version 10', async () => {
         const provider = new MockMigrationProvider({
-            schemaVersion: '11',
+            schemaVersion: '12',
             historyTableExists: true,
             migrationRows: [
                 {
@@ -157,6 +162,11 @@ describe('MigrationRunner', () => {
                     version: 11,
                     name: 'add_profile_split_timer_mode_enabled',
                     success: 1,
+                },
+                {
+                    version: 12,
+                    name: 'add_watch_history_last_position_seconds',
+                    success: 1,
                 }
             ],
         });
@@ -165,10 +175,10 @@ describe('MigrationRunner', () => {
         const result = await runner.runToLatest();
 
         expect(result).toEqual({
-            currentVersion: 11,
-            targetVersion: 11,
+            currentVersion: 12,
+            targetVersion: 12,
             appliedMigrations: [],
-            finalVersion: 11,
+            finalVersion: 12,
         });
     });
 
@@ -223,7 +233,7 @@ describe('MigrationRunner', () => {
         });
     });
 
-    it('runs the registered extra timer and profile split-timer migrations from version 9 to 11', async () => {
+    it('runs the registered extra timer, profile split-timer, and resume-position migrations from version 9 to 12', async () => {
         const provider = new MockMigrationProvider({
             schemaVersion: '9',
             historyTableExists: true,
@@ -235,7 +245,7 @@ describe('MigrationRunner', () => {
 
         expect(result).toEqual({
             currentVersion: 9,
-            targetVersion: 11,
+            targetVersion: 12,
             appliedMigrations: [
                 {
                     version: 10,
@@ -244,14 +254,19 @@ describe('MigrationRunner', () => {
                 {
                     version: 11,
                     name: 'add_profile_split_timer_mode_enabled',
+                },
+                {
+                    version: 12,
+                    name: 'add_watch_history_last_position_seconds',
                 }
             ],
-            finalVersion: 11,
+            finalVersion: 12,
         });
         expect(provider.calls.map((call) => call.sql)).toContain('START TRANSACTION');
         expect(provider.calls.map((call) => call.sql)).toContain('COMMIT');
         expect(provider.calls.some((call) => call.sql.includes('ALTER TABLE virtual_channels'))).toBe(true);
         expect(provider.calls.some((call) => call.sql.includes('ALTER TABLE profiles'))).toBe(true);
+        expect(provider.calls.some((call) => call.sql.includes('ALTER TABLE watch_history'))).toBe(true);
     });
 
     it('accepts legacy migration history when migrating from version 9 to 11', async () => {
@@ -277,7 +292,7 @@ describe('MigrationRunner', () => {
 
         expect(result).toEqual({
             currentVersion: 9,
-            targetVersion: 11,
+            targetVersion: 12,
             appliedMigrations: [
                 {
                     version: 10,
@@ -286,9 +301,13 @@ describe('MigrationRunner', () => {
                 {
                     version: 11,
                     name: 'add_profile_split_timer_mode_enabled',
+                },
+                {
+                    version: 12,
+                    name: 'add_watch_history_last_position_seconds',
                 }
             ],
-            finalVersion: 11,
+            finalVersion: 12,
         });
     });
 
@@ -308,11 +327,12 @@ describe('MigrationRunner', () => {
 
         const result = await runner.runToLatest();
 
-        expect(result.finalVersion).toBe(11);
+        expect(result.finalVersion).toBe(12);
         expect(provider.connectionCalls.map((call) => call.sql)).toContain('START TRANSACTION');
         expect(provider.connectionCalls.map((call) => call.sql)).toContain('COMMIT');
         expect(provider.connectionCalls.some((call) => call.sql.includes('ALTER TABLE virtual_channels'))).toBe(true);
         expect(provider.connectionCalls.some((call) => call.sql.includes('ALTER TABLE profiles'))).toBe(true);
+        expect(provider.connectionCalls.some((call) => call.sql.includes('ALTER TABLE watch_history'))).toBe(true);
         expect(provider.connectionCalls.some((call) => call.sql.includes('INSERT INTO migration_history'))).toBe(true);
         expect(provider.connectionCalls.some((call) => call.sql.includes('INSERT INTO _meta'))).toBe(true);
         expect(provider.poolCalls.map((call) => call.sql)).not.toContain('START TRANSACTION');

@@ -100,6 +100,9 @@ describe('viewer watch route', () => {
                     }))
                 },
                 playbackBlockedMessage: 'Daily timer limit reached for this virtual channel.',
+                activeHistorySessionWatchSecondsBaseline: 0,
+                activeHistorySessionLastUpdatedAt: null,
+                resumePositionSeconds: null,
                 navigationFilters: parseFiltersMock(),
                 profileId: 'default',
                 profileKey: 'default',
@@ -157,6 +160,54 @@ describe('viewer watch route', () => {
             timerState: 'capped'
         });
         expect(watchService.createHistorySession).toHaveBeenCalledWith('video-1', 30, 'vc_queue');
+    });
+
+    it('passes a valid playback position through the history-session create action', async () => {
+        watchService.createHistorySession.mockResolvedValue({ ok: true });
+
+        const form = new FormData();
+        form.set('watchSeconds', '30');
+        form.set('lastPositionSeconds', '42.9');
+        form.set('virtualChannelId', 'vc_queue');
+
+        const result = await routeModule.actions.createHistorySession({
+            request: new Request('http://localhost/viewer/watch/video-1', {
+                method: 'POST',
+                body: form
+            }),
+            params: { videoId: 'video-1' },
+            cookies: {}
+        } as never);
+
+        expect(result).toEqual({ ok: true });
+        expect(watchService.createHistorySession).toHaveBeenCalledWith(
+            'video-1',
+            30,
+            'vc_queue',
+            undefined,
+            42
+        );
+    });
+
+    it('treats invalid playback positions as absent on progress updates', async () => {
+        watchService.updateHistoryProgress.mockResolvedValue({ ok: true });
+
+        const form = new FormData();
+        form.set('watchSeconds', '31');
+        form.set('lastPositionSeconds', '-5');
+        form.set('virtualChannelId', 'vc_queue');
+
+        const result = await routeModule.actions.updateHistoryProgress({
+            request: new Request('http://localhost/viewer/watch/video-1', {
+                method: 'POST',
+                body: form
+            }),
+            params: { videoId: 'video-1' },
+            cookies: {}
+        } as never);
+
+        expect(result).toEqual({ ok: true });
+        expect(watchService.updateHistoryProgress).toHaveBeenCalledWith('video-1', 31, 'vc_queue');
     });
 });
 // apply-patch-anchor - do not delete
