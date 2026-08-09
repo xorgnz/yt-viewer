@@ -8,6 +8,7 @@ import type { ViewerQueryFilters } from '$lib/server/viewer/ViewerQueryParser';
 import { ViewerRecommendationService } from '$lib/server/viewer/ViewerRecommendationService';
 import type { ViewerVirtualChannelService } from '$lib/server/viewer/ViewerVirtualChannelService';
 import type { ServerProfileContext } from '$lib/server/ServerProfileContext';
+import type { WatchHistory } from '$lib/entities/watchHistory';
 import {
     ViewerVirtualChannelTimer
 } from '$lib/viewer/ViewerVirtualChannelTimer';
@@ -26,6 +27,7 @@ export type ViewerWatchLoadModel = {
     playbackBlockedMessage: string | null;
     activeHistorySessionWatchSecondsBaseline: number;
     activeHistorySessionLastUpdatedAt: number | null;
+    resumePositionSeconds: number | null;
     navigationFilters: ViewerQueryFilters;
     profileId: string | number;
     profileKey: string;
@@ -118,6 +120,7 @@ export class ViewerWatchService
         const activeHistorySessionLastUpdatedAt = hasActiveHistorySession
             ? latestSession.last_updated_at
             : null;
+        const resumePositionSeconds = this.getResumePositionSeconds(latestSession, video);
 
         console.info('[viewer-watch.load]', {
             videoYoutubeId,
@@ -155,6 +158,7 @@ export class ViewerWatchService
                 playbackBlockedMessage,
                 activeHistorySessionWatchSecondsBaseline,
                 activeHistorySessionLastUpdatedAt,
+                resumePositionSeconds,
                 navigationFilters: filters,
                 profileId: this.profileContext.activeProfileId,
                 profileKey: this.profileContext.activeProfileKey,
@@ -367,6 +371,35 @@ export class ViewerWatchService
     private async loadVideo(videoYoutubeId: string): Promise<ViewerWatchVideo | null>
     {
         return await this.viewerVideoReadRepository.getByYoutubeId(videoYoutubeId, this.profileContext.activeProfileId) || null;
+    }
+
+    private getResumePositionSeconds(latestSession: WatchHistory | null, video: ViewerWatchVideo): number | null
+    {
+        if (!latestSession || Number(video.watched) === 1) {
+            return null;
+        }
+
+        const savedPositionSeconds = latestSession.last_position_seconds;
+        if (savedPositionSeconds == null || !Number.isFinite(savedPositionSeconds)) {
+            return null;
+        }
+
+        const resumePositionSeconds = Math.floor(savedPositionSeconds);
+        if (resumePositionSeconds <= 0) {
+            return null;
+        }
+
+        const durationSeconds = video.duration_seconds;
+        if (
+            durationSeconds != null
+            && Number.isFinite(durationSeconds)
+            && durationSeconds > 0
+            && resumePositionSeconds > Math.floor(durationSeconds)
+        ) {
+            return null;
+        }
+
+        return resumePositionSeconds;
     }
 
     private async ensureVirtualChannelAllowsPlayback(virtualChannelId: string | number | null): Promise<ViewerWatchResult>

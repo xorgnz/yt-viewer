@@ -23,11 +23,11 @@
   - [x] 1.3 - Extend the watch-history entity field shape with the new persisted position.
   - [x] 1.4 - Update `HistoryDAO` create, update, and row-mapping paths to read and write the position without changing timer aggregate queries.
 
-- [ ] 2 - Surface a valid resume position from the viewer service
-  - [ ] 2.1 - Keep the active-session timer baseline logic based on the existing session age rules.
-  - [ ] 2.2 - Derive `resumePositionSeconds` separately from the latest profile-specific watch-history session for the current video.
-  - [ ] 2.3 - Suppress resume data when the video is already marked watched.
-  - [ ] 2.4 - Ignore resume positions that are missing, non-positive, non-finite, or beyond the known video duration.
+- [x] 2 - Surface a valid resume position from the viewer service
+  - [x] 2.1 - Keep the active-session timer baseline logic based on the existing session age rules.
+  - [x] 2.2 - Derive `resumePositionSeconds` separately from the latest profile-specific watch-history session for the current video.
+  - [x] 2.3 - Suppress resume data when the video is already marked watched.
+  - [x] 2.4 - Ignore resume positions that are missing, non-positive, non-finite, or beyond the known video duration.
 
 - [ ] 3 - Pass playback position through watch-page actions
   - [ ] 3.1 - Parse a playback-position form value independently from `watchSeconds`.
