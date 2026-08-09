@@ -34,11 +34,11 @@
   - [x] 3.2 - Pass the parsed position into create-session and update-progress service calls.
   - [x] 3.3 - Treat invalid or missing position values as absent so existing history requests continue to work.
 
-- [ ] 4 - Resume playback in the Svelte watch page
-  - [ ] 4.1 - Include `player.getCurrentTime()` in create, update, and flush history requests.
-  - [ ] 4.2 - Seek once to the server-provided resume position when the YouTube player is ready.
-  - [ ] 4.3 - Reset the one-time seek guard when route-driven video changes load a different video.
-  - [ ] 4.4 - Preserve the existing timer, watched-threshold, and pending-flush behavior.
+- [x] 4 - Resume playback in the Svelte watch page
+  - [x] 4.1 - Include `player.getCurrentTime()` in create, update, and flush history requests.
+  - [x] 4.2 - Seek once to the server-provided resume position when the YouTube player is ready.
+  - [x] 4.3 - Reset the one-time seek guard when route-driven video changes load a different video.
+  - [x] 4.4 - Preserve the existing timer, watched-threshold, and pending-flush behavior.
 
 - [ ] 5 - Validate the feature
   - [ ] 5.1 - Add or update migration tests for upgraded databases and fresh schema setup.

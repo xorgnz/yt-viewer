@@ -28,6 +28,7 @@
         playbackBlockedMessage: string | null;
         activeHistorySessionWatchSecondsBaseline: number;
         activeHistorySessionLastUpdatedAt: number | null;
+        resumePositionSeconds: number | null;
     };
 
     let currentVideo = new Video(data.video);
@@ -53,6 +54,7 @@
     let timerPlaybackBlocked = false;
     let timerStatusMessage: string | null = data.playbackBlockedMessage;
     let activeVideoYoutubeId = String(currentVideo.id);
+    let resumeSeekAppliedVideoId: string | null = null;
     let activeVirtualChannelId = data.currentVirtualChannelId;
     let activeVirtualChannelUsageBaselineSeconds = data.activeVirtualChannelTimer?.timerUsageSeconds ?? 0;
     let activeHistorySessionWatchSecondsBaseline = data.activeHistorySessionWatchSecondsBaseline ?? 0;
@@ -106,6 +108,7 @@
             try
             {
                 player.cueVideoById(String(data.video.id));
+                seekToResumePositionIfNeeded();
             }
             catch
             {
@@ -174,6 +177,7 @@
         activeVirtualChannelId = virtualChannelId;
         activeVirtualChannelUsageBaselineSeconds = usageBaselineSeconds;
         activeHistorySessionWatchSecondsBaseline = historySessionWatchSecondsBaseline;
+        resumeSeekAppliedVideoId = null;
         localActiveVirtualChannel = data.activeVirtualChannelTimer == null
             ? null
             : ViewerVirtualChannelTimer.deserialize({
@@ -192,6 +196,66 @@
         return activeHistorySessionWatchSecondsBaseline + Math.floor(elapsedWatchSeconds);
     }
 
+    function getCurrentPlaybackPositionSeconds(): number | null
+    {
+        try
+        {
+            if (!player || typeof player.getCurrentTime !== 'function') {
+                return null;
+            }
+
+            const currentPositionSeconds = Number(player.getCurrentTime());
+            if (!Number.isFinite(currentPositionSeconds) || currentPositionSeconds <= 0) {
+                return null;
+            }
+
+            return Math.floor(currentPositionSeconds);
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    function getResumePositionSeconds(): number | null
+    {
+        const resumePositionSeconds = Number(data.resumePositionSeconds);
+        if (!Number.isFinite(resumePositionSeconds) || resumePositionSeconds <= 0 || watched) {
+            return null;
+        }
+
+        const durationSeconds = Number(currentVideo.duration_seconds ?? 0);
+        if (Number.isFinite(durationSeconds) && durationSeconds > 0 && resumePositionSeconds > Math.floor(durationSeconds)) {
+            return null;
+        }
+
+        return Math.floor(resumePositionSeconds);
+    }
+
+    function seekToResumePositionIfNeeded()
+    {
+        const videoYoutubeId = String(currentVideo.id);
+        if (resumeSeekAppliedVideoId === videoYoutubeId || !player || typeof player.seekTo !== 'function') {
+            return;
+        }
+
+        const resumePositionSeconds = getResumePositionSeconds();
+        if (resumePositionSeconds == null) {
+            return;
+        }
+
+        try
+        {
+            player.seekTo(resumePositionSeconds, true);
+            resumeSeekAppliedVideoId = videoYoutubeId;
+            lastDebugEvent = `resume seek: ${resumePositionSeconds}s`;
+        }
+        catch
+        {
+            // Retry on the next player-ready or route-driven cue opportunity.
+        }
+    }
+
     function shouldLocallyCapPlayback(): boolean
     {
         return localActiveVirtualChannel?.isPlaybackCapped() ?? false;
@@ -200,6 +264,7 @@
     function startPolling()
     {
         stopPolling();
+        seekToResumePositionIfNeeded();
         lastPlaybackTickAt = Date.now();
         pollTimer = setInterval(() =>
         {
@@ -367,11 +432,7 @@
 
     async function createHistorySession()
     {
-        const formData = new FormData();
-        formData.set('watchSeconds', String(getCurrentHistorySessionWatchSeconds()));
-        if (data.currentVirtualChannelId != null) {
-            formData.set('virtualChannelId', String(data.currentVirtualChannelId));
-        }
+        const formData = buildHistoryProgressFormData(data.currentVirtualChannelId);
 
         try
         {
@@ -432,6 +493,11 @@
 
         if (virtualChannelId != null) {
             formData.set('virtualChannelId', String(virtualChannelId));
+        }
+
+        const lastPositionSeconds = getCurrentPlaybackPositionSeconds();
+        if (lastPositionSeconds != null) {
+            formData.set('lastPositionSeconds', String(lastPositionSeconds));
         }
 
         return formData;
@@ -659,6 +725,7 @@
                                 return;
                             }
 
+                            seekToResumePositionIfNeeded();
                             startPolling();
                         },
                         onStateChange: (e: any) =>
