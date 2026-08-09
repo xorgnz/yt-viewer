@@ -57,17 +57,26 @@ export const actions = {
         const form = await ServerActionForm.fromRequest(request);
         const virtualChannelId = form.getIdentifier('virtualChannelId');
         const watchSeconds = form.getNumber('watchSeconds', 0);
+        const lastPositionSeconds = getLastPositionSeconds(form);
         if (!Number.isFinite(watchSeconds) || watchSeconds < 1) {
             return fail(400, { message: 'Insufficient watch time for history session' });
         }
 
         return ServerDatabaseContext.run(async ({ db }) => {
             const serviceContext = await ViewerServiceContext.resolve(db, cookies);
-            const result = await serviceContext.watchService.createHistorySession(
-                videoYoutubeId,
-                watchSeconds,
-                virtualChannelId
-            );
+            const result = lastPositionSeconds == null
+                ? await serviceContext.watchService.createHistorySession(
+                    videoYoutubeId,
+                    watchSeconds,
+                    virtualChannelId
+                )
+                : await serviceContext.watchService.createHistorySession(
+                    videoYoutubeId,
+                    watchSeconds,
+                    virtualChannelId,
+                    undefined,
+                    lastPositionSeconds
+                );
 
             if (!result.ok) {
                 return fail(result.status, {
@@ -92,17 +101,26 @@ export const actions = {
         const form = await ServerActionForm.fromRequest(request);
         const virtualChannelId = form.getIdentifier('virtualChannelId');
         const watchSeconds = form.getNumber('watchSeconds', 0);
+        const lastPositionSeconds = getLastPositionSeconds(form);
         if (!Number.isFinite(watchSeconds) || watchSeconds < 0) {
             return fail(400, { message: 'Invalid watch time' });
         }
 
         return ServerDatabaseContext.run(async ({ db }) => {
             const serviceContext = await ViewerServiceContext.resolve(db, cookies);
-            const result = await serviceContext.watchService.updateHistoryProgress(
-                videoYoutubeId,
-                watchSeconds,
-                virtualChannelId
-            );
+            const result = lastPositionSeconds == null
+                ? await serviceContext.watchService.updateHistoryProgress(
+                    videoYoutubeId,
+                    watchSeconds,
+                    virtualChannelId
+                )
+                : await serviceContext.watchService.updateHistoryProgress(
+                    videoYoutubeId,
+                    watchSeconds,
+                    virtualChannelId,
+                    undefined,
+                    lastPositionSeconds
+                );
 
             if (!result.ok) {
                 return fail(result.status, {
@@ -139,4 +157,19 @@ export const actions = {
         });
     }
 };
+
+function getLastPositionSeconds(form: ServerActionForm): number | null
+{
+    const rawValue = form.getRaw('lastPositionSeconds');
+    if (rawValue == null) {
+        return null;
+    }
+
+    const parsed = Number(String(rawValue).trim());
+    if (!Number.isFinite(parsed) || parsed <= 0) {
+        return null;
+    }
+
+    return Math.floor(parsed);
+}
 // apply-patch-anchor - do not delete

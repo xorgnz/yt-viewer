@@ -171,13 +171,15 @@ export class ViewerWatchService
         videoYoutubeId: string,
         watchSeconds: number,
         virtualChannelId: string | number | null,
-        now = Date.now()
+        now = Date.now(),
+        lastPositionSeconds: number | null = null
     ): Promise<ViewerWatchResult>
     {
         console.info('[viewer-watch.createHistorySession.start]', {
             videoYoutubeId,
             virtualChannelId,
             watchSeconds: Math.floor(watchSeconds),
+            lastPositionSeconds,
             now
         });
 
@@ -213,7 +215,8 @@ export class ViewerWatchService
             });
             await this.historyDAO.updateSessionProgress(latestSession.id, {
                 last_updated_at: now,
-                time_watched_seconds: timeWatchedSeconds
+                time_watched_seconds: timeWatchedSeconds,
+                ...(lastPositionSeconds == null ? {} : { last_position_seconds: lastPositionSeconds })
             });
         }
         else
@@ -228,7 +231,8 @@ export class ViewerWatchService
                 profile_id: this.profileContext.activeProfileId,
                 session_started_at: now,
                 last_updated_at: now,
-                time_watched_seconds: timeWatchedSeconds
+                time_watched_seconds: timeWatchedSeconds,
+                ...(lastPositionSeconds == null ? {} : { last_position_seconds: lastPositionSeconds })
             });
         }
 
@@ -264,13 +268,15 @@ export class ViewerWatchService
         videoYoutubeId: string,
         watchSeconds: number,
         virtualChannelId: string | number | null,
-        now = Date.now()
+        now = Date.now(),
+        lastPositionSeconds: number | null = null
     ): Promise<ViewerWatchResult>
     {
         console.info('[viewer-watch.updateHistoryProgress.start]', {
             videoYoutubeId,
             virtualChannelId,
             watchSeconds: Math.floor(watchSeconds),
+            lastPositionSeconds,
             now
         });
 
@@ -315,7 +321,8 @@ export class ViewerWatchService
 
         await this.historyDAO.updateSessionProgress(session.id, {
             last_updated_at: now,
-            time_watched_seconds: nextWatchSeconds
+            time_watched_seconds: nextWatchSeconds,
+            ...(lastPositionSeconds == null ? {} : { last_position_seconds: lastPositionSeconds })
         });
 
         console.info('[viewer-watch.updateHistoryProgress.updated]', {

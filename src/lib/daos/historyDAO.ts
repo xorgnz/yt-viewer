@@ -68,6 +68,16 @@ export class HistoryDAO extends DAO
         last_position_seconds?: number | null;
     }): Promise<void>
     {
+        if (patch.last_position_seconds === undefined) {
+            await this.run(`
+                UPDATE watch_history
+                SET last_updated_at = ?,
+                    time_watched_seconds = ?
+                WHERE id = ?
+            `, [patch.last_updated_at, patch.time_watched_seconds, id]);
+            return;
+        }
+
         await this.run(`
             UPDATE watch_history
             SET last_updated_at = ?,

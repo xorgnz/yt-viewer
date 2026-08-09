@@ -29,10 +29,10 @@
   - [x] 2.3 - Suppress resume data when the video is already marked watched.
   - [x] 2.4 - Ignore resume positions that are missing, non-positive, non-finite, or beyond the known video duration.
 
-- [ ] 3 - Pass playback position through watch-page actions
-  - [ ] 3.1 - Parse a playback-position form value independently from `watchSeconds`.
-  - [ ] 3.2 - Pass the parsed position into create-session and update-progress service calls.
-  - [ ] 3.3 - Treat invalid or missing position values as absent so existing history requests continue to work.
+- [x] 3 - Pass playback position through watch-page actions
+  - [x] 3.1 - Parse a playback-position form value independently from `watchSeconds`.
+  - [x] 3.2 - Pass the parsed position into create-session and update-progress service calls.
+  - [x] 3.3 - Treat invalid or missing position values as absent so existing history requests continue to work.
 
 - [ ] 4 - Resume playback in the Svelte watch page
   - [ ] 4.1 - Include `player.getCurrentTime()` in create, update, and flush history requests.
