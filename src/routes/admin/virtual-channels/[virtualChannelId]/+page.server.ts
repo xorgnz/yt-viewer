@@ -67,6 +67,28 @@ export const actions: Actions = {
         const form = await ServerActionForm.fromRequest(request);
         const timerMode = parseDailyTimerMode(form.getRaw('timer_mode'));
         const dailyTimerMaxInput = form.getTrimmedString('daily_timer_max');
+        const extraTimerSecondsInput = form.getTrimmedString('extra_timer_seconds_remaining');
+
+        if (!extraTimerSecondsInput) {
+            return fail(400, {
+                action: 'saveTimerSettings',
+                message: 'Extra timer seconds are required.',
+                timerMode,
+                dailyTimerMaxInput,
+                extraTimerSecondsInput
+            });
+        }
+
+        const parsedExtraTimerSeconds = Number(extraTimerSecondsInput);
+        if (!Number.isInteger(parsedExtraTimerSeconds) || parsedExtraTimerSeconds < 0) {
+            return fail(400, {
+                action: 'saveTimerSettings',
+                message: 'Extra timer seconds must be a non-negative whole number.',
+                timerMode,
+                dailyTimerMaxInput,
+                extraTimerSecondsInput
+            });
+        }
 
         if (timerMode === 'capped') {
             if (!dailyTimerMaxInput) {
@@ -74,7 +96,8 @@ export const actions: Actions = {
                     action: 'saveTimerSettings',
                     message: 'Daily timer seconds are required when the timer is enabled.',
                     timerMode,
-                    dailyTimerMaxInput
+                    dailyTimerMaxInput,
+                    extraTimerSecondsInput
                 });
             }
 
@@ -84,7 +107,8 @@ export const actions: Actions = {
                     action: 'saveTimerSettings',
                     message: 'Daily timer seconds must be a positive whole number.',
                     timerMode,
-                    dailyTimerMaxInput
+                    dailyTimerMaxInput,
+                    extraTimerSecondsInput
                 });
             }
 
@@ -92,67 +116,41 @@ export const actions: Actions = {
                 const serviceContext = AdminVirtualChannelServiceContext.resolve(db);
                 const result = await serviceContext.manageService.updateTimerSettings(
                     virtualChannelId,
-                    parsedDailyTimerMax
+                    parsedDailyTimerMax,
+                    parsedExtraTimerSeconds
                 );
 
                 if (!result.ok) {
                     throw error(result.error.status, result.error.message);
                 }
 
-                throw redirect(303, result.data);
+                return {
+                    action: 'saveTimerSettings',
+                    timerMode,
+                    dailyTimerMaxInput: String(parsedDailyTimerMax),
+                    extraTimerSecondsInput: String(parsedExtraTimerSeconds)
+                };
             });
         }
 
         return ServerDatabaseContext.run(async ({ db }) => {
             const serviceContext = AdminVirtualChannelServiceContext.resolve(db);
-            const result = await serviceContext.manageService.updateTimerSettings(virtualChannelId, null);
-
-            if (!result.ok) {
-                throw error(result.error.status, result.error.message);
-            }
-
-            throw redirect(303, result.data);
-        });
-    },
-
-    grantExtraTime: async ({ params, request }) => {
-        const virtualChannelId = parseVirtualChannelId(params.virtualChannelId);
-        if (!virtualChannelId) {
-            throw error(404, 'Virtual channel not found');
-        }
-
-        const form = await ServerActionForm.fromRequest(request);
-        const grantExtraSecondsInput = form.getTrimmedString('grant_extra_seconds');
-
-        if (!grantExtraSecondsInput) {
-            return fail(400, {
-                action: 'grantExtraTime',
-                message: 'Extra timer seconds are required.',
-                grantExtraSecondsInput
-            });
-        }
-
-        const parsedGrantSeconds = Number(grantExtraSecondsInput);
-        if (!Number.isInteger(parsedGrantSeconds) || parsedGrantSeconds <= 0) {
-            return fail(400, {
-                action: 'grantExtraTime',
-                message: 'Extra timer seconds must be a positive whole number.',
-                grantExtraSecondsInput
-            });
-        }
-
-        return ServerDatabaseContext.run(async ({ db }) => {
-            const serviceContext = AdminVirtualChannelServiceContext.resolve(db);
-            const result = await serviceContext.manageService.grantExtraTimerSeconds(
+            const result = await serviceContext.manageService.updateTimerSettings(
                 virtualChannelId,
-                parsedGrantSeconds
+                null,
+                parsedExtraTimerSeconds
             );
 
             if (!result.ok) {
                 throw error(result.error.status, result.error.message);
             }
 
-            throw redirect(303, result.data);
+            return {
+                action: 'saveTimerSettings',
+                timerMode,
+                dailyTimerMaxInput: '',
+                extraTimerSecondsInput: String(parsedExtraTimerSeconds)
+            };
         });
     },
 

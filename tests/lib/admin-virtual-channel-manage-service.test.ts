@@ -6,19 +6,19 @@ function createService(options?: {
     virtualChannel?: VirtualChannel | undefined;
 })
 {
-    const calls: Array<{ id: string | number; additionalSeconds: number }> = [];
+    const calls: Array<{ method: string; id: string | number; value: number | null }> = [];
     const virtualChannelDAO = {
         async get()
         {
             return options?.virtualChannel;
         },
-        async updateDailyTimerMax()
+        async updateDailyTimerMax(id: string | number, dailyTimerMax: number | null)
         {
-            return;
+            calls.push({ method: 'daily', id, value: dailyTimerMax });
         },
-        async incrementExtraTimerSecondsRemaining(id: string | number, additionalSeconds: number)
+        async updateExtraTimerSecondsRemaining(id: string | number, extraTimerSecondsRemaining: number)
         {
-            calls.push({ id, additionalSeconds });
+            calls.push({ method: 'extra', id, value: extraTimerSecondsRemaining });
         }
     };
 
@@ -34,7 +34,7 @@ function createService(options?: {
 }
 
 describe('AdminVirtualChannelManageService', () => {
-    it('increments the persisted extra timer balance for an existing virtual channel', async () => {
+    it('updates the persisted daily and extra timer balances for an existing virtual channel', async () => {
         const { service, calls } = createService({
             virtualChannel: new VirtualChannel({
                 id: 'vc_demo',
@@ -44,7 +44,7 @@ describe('AdminVirtualChannelManageService', () => {
             })
         });
 
-        const result = await service.grantExtraTimerSeconds('vc_demo', 45);
+        const result = await service.updateTimerSettings('vc_demo', 120, 45);
 
         expect(result).toEqual({
             ok: true,
@@ -52,16 +52,22 @@ describe('AdminVirtualChannelManageService', () => {
         });
         expect(calls).toEqual([
             {
+                method: 'daily',
                 id: 'vc_demo',
-                additionalSeconds: 45
+                value: 120
+            },
+            {
+                method: 'extra',
+                id: 'vc_demo',
+                value: 45
             }
         ]);
     });
 
-    it('returns a not-found error when granting extra time to a missing virtual channel', async () => {
+    it('returns a not-found error when updating extra time for a missing virtual channel', async () => {
         const { service, calls } = createService();
 
-        const result = await service.grantExtraTimerSeconds('vc_missing', 45);
+        const result = await service.updateTimerSettings('vc_missing', 120, 45);
 
         expect(result).toEqual({
             ok: false,

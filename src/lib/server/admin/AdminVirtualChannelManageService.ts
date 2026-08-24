@@ -263,7 +263,8 @@ export class AdminVirtualChannelManageService
 
     async updateTimerSettings(
         virtualChannelId: string | number,
-        dailyTimerMax: number | null
+        dailyTimerMax: number | null,
+        extraTimerSecondsRemaining: number
     ): Promise<ServiceResult<
         string,
         ErrorFields<'virtual_channel_not_found'>
@@ -274,26 +275,7 @@ export class AdminVirtualChannelManageService
         }
 
         await this.virtualChannelDAO.updateDailyTimerMax(virtualChannelId, dailyTimerMax);
-
-        return {
-            ok: true,
-            data: this.buildManagePath(virtualChannelId)
-        };
-    }
-
-    async grantExtraTimerSeconds(
-        virtualChannelId: string | number,
-        additionalSeconds: number
-    ): Promise<ServiceResult<
-        string,
-        ErrorFields<'virtual_channel_not_found'>
-    >>
-    {
-        if (!await this.virtualChannelDAO.get(virtualChannelId)) {
-            return this.buildError('virtual_channel_not_found', 404, 'Virtual channel not found');
-        }
-
-        await this.virtualChannelDAO.incrementExtraTimerSecondsRemaining(virtualChannelId, additionalSeconds);
+        await this.virtualChannelDAO.updateExtraTimerSecondsRemaining(virtualChannelId, extraTimerSecondsRemaining);
 
         return {
             ok: true,

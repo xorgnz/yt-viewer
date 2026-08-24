@@ -1,5 +1,6 @@
 <script lang="ts">
-    import type { ActionData, PageData } from './$types';
+    import { enhance } from '$app/forms';
+    import type { ActionData, PageData, SubmitFunction } from './$types';
     import {
         AdminReviewStateFilter,
         AdminVideoTypeFilter
@@ -18,19 +19,17 @@
         message?: string;
         timerMode?: 'unlimited' | 'capped';
         dailyTimerMaxInput?: string;
-    };
-
-    type GrantExtraTimeFormState = {
-        action?: string;
-        message?: string;
-        grantExtraSecondsInput?: string;
+        extraTimerSecondsInput?: string;
     };
 
     let timerFormState: TimerFormState | null = null;
     let timerFormMode: 'unlimited' | 'capped' = 'unlimited';
     let timerFormInput = '';
-    let grantExtraTimeFormState: GrantExtraTimeFormState | null = null;
-    let grantExtraTimeInput = '';
+    let extraTimeInput = String(data.virtualChannel.extraTimerSecondsRemaining);
+    let timerSaveStatus: 'idle' | 'saving' | 'saved' | 'error' = 'idle';
+    let timerSaveMessage = '';
+    let timerSaveDebounce: ReturnType<typeof setTimeout> | null = null;
+    let timerSavedIndicatorTimeout: ReturnType<typeof setTimeout> | null = null;
 
     $: timerFormState = form && typeof form === 'object' ? form as TimerFormState : null;
     $: timerFormMode = timerFormState?.action === 'saveTimerSettings'
@@ -39,10 +38,9 @@
     $: timerFormInput = timerFormState?.action === 'saveTimerSettings'
         ? (timerFormState.dailyTimerMaxInput ?? '')
         : (data.virtualChannel.dailyTimerMax == null ? '' : String(data.virtualChannel.dailyTimerMax));
-    $: grantExtraTimeFormState = form && typeof form === 'object' ? form as GrantExtraTimeFormState : null;
-    $: grantExtraTimeInput = grantExtraTimeFormState?.action === 'grantExtraTime'
-        ? (grantExtraTimeFormState.grantExtraSecondsInput ?? '')
-        : '';
+    $: extraTimeInput = timerFormState?.action === 'saveTimerSettings'
+        ? (timerFormState.extraTimerSecondsInput ?? '')
+        : String(data.virtualChannel.extraTimerSecondsRemaining);
 
     const associatedSourceChannelIds = new Set(
         data.associatedSourceChannels.map((item) => item.assignment.source_channel_id)
@@ -72,14 +70,46 @@
         return `${minutes}:${seconds.toString().padStart(2, '0')}`;
     }
 
-    function getCombinedTimerAllowanceSeconds(): number | null
+    function scheduleTimerSave(event: Event)
     {
-        if (data.virtualChannel.dailyTimerMax == null) {
-            return null;
+        if (timerSaveDebounce) {
+            clearTimeout(timerSaveDebounce);
         }
 
-        return data.virtualChannel.dailyTimerMax + data.virtualChannel.extraTimerSecondsRemaining;
+        if (timerSavedIndicatorTimeout) {
+            clearTimeout(timerSavedIndicatorTimeout);
+            timerSavedIndicatorTimeout = null;
+        }
+
+        timerSaveStatus = 'idle';
+        timerSaveMessage = '';
+        const formElement = (event.currentTarget as HTMLInputElement | HTMLSelectElement).form;
+
+        timerSaveDebounce = setTimeout(() => {
+            formElement?.requestSubmit();
+        }, 1000);
     }
+
+    const enhanceTimerSave: SubmitFunction = () => {
+        timerSaveStatus = 'saving';
+        timerSaveMessage = '';
+
+        return async ({ result }) => {
+            if (result.type === 'success') {
+                timerSaveStatus = 'saved';
+                timerSavedIndicatorTimeout = setTimeout(() => {
+                    timerSaveStatus = 'idle';
+                    timerSavedIndicatorTimeout = null;
+                }, 2000);
+                return;
+            }
+
+            timerSaveStatus = 'error';
+            timerSaveMessage = result.type === 'failure' && result.data && 'message' in result.data
+                ? String(result.data.message)
+                : 'Failed to save timer settings.';
+        };
+    };
 
     function formatLengthClassification(lengthClassification: VideoLengthClassification): string
     {
@@ -197,63 +227,53 @@
             <p class="muted">Leave the channel uncapped or set a daily playback allowance in whole seconds.</p>
         </div>
 
-        <form method="post" action="?/saveTimerSettings" class="fields">
-            <label>
-                Timer mode
-                <select name="timer_mode">
+        <form method="post" action="?/saveTimerSettings" class="timer-settings-form" use:enhance={enhanceTimerSave}>
+            <div class="timer-controls">
+                <select name="timer_mode" aria-label="Timer mode" bind:value={timerFormMode} on:change={scheduleTimerSave}>
                     <option value="unlimited" selected={timerFormMode === 'unlimited'}>Unlimited</option>
                     <option value="capped" selected={timerFormMode === 'capped'}>Daily limit</option>
                 </select>
-            </label>
 
-            <label>
-                Daily seconds
+                <label for="daily-timer-max">Daily seconds</label>
                 <input
+                    id="daily-timer-max"
                     type="number"
                     name="daily_timer_max"
                     min="1"
                     step="1"
-                    value={timerFormInput}
-                    placeholder="Leave blank for unlimited"
+                    aria-label="Daily seconds"
+                    bind:value={timerFormInput}
+                    placeholder="Daily seconds"
+                    on:input={scheduleTimerSave}
                 />
-            </label>
-
-            {#if timerFormState?.action === 'saveTimerSettings' && timerFormState.message}
-                <p class="error-text">{timerFormState.message}</p>
-            {:else if data.virtualChannel.dailyTimerMax == null}
-                <p class="muted">This virtual channel is currently unlimited.</p>
-            {:else if data.activeProfileSplitTimerModeEnabled}
-                <p class="muted">Current daily limit: {data.virtualChannel.dailyTimerMax} second(s).</p>
-                <p class="muted">Extra time remaining: {data.virtualChannel.extraTimerSecondsRemaining} second(s).</p>
-            {:else}
-                <p class="muted">Current available time: {getCombinedTimerAllowanceSeconds()} second(s).</p>
-            {/if}
-
-            <div class="inline-actions">
-                <button type="submit">Save Timer Settings</button>
-            </div>
-        </form>
-
-        <form method="post" action="?/grantExtraTime" class="fields">
-            <label>
-                Grant extra seconds
+                <label for="extra-timer-seconds">Extra seconds remaining</label>
                 <input
+                    id="extra-timer-seconds"
                     type="number"
-                    name="grant_extra_seconds"
-                    min="1"
+                    name="extra_timer_seconds_remaining"
+                    min="0"
                     step="1"
-                    value={grantExtraTimeInput}
-                    placeholder="Add extra time"
+                    aria-label="Extra seconds remaining"
+                    bind:value={extraTimeInput}
+                    placeholder="Extra seconds remaining"
+                    on:input={scheduleTimerSave}
                 />
-            </label>
-
-            {#if grantExtraTimeFormState?.action === 'grantExtraTime' && grantExtraTimeFormState.message}
-                <p class="error-text">{grantExtraTimeFormState.message}</p>
-            {/if}
-
-            <div class="inline-actions">
-                <button type="submit">Grant Extra Time</button>
+                <span class="timer-save-indicator" aria-live="polite">
+                    {#if timerSaveStatus === 'saving'}
+                        <span class="timer-save-spinner" aria-hidden="true"></span>
+                        <span class="sr-only">Saving timer settings</span>
+                    {:else if timerSaveStatus === 'saved'}
+                        <span class="timer-save-check" aria-hidden="true">✓</span>
+                        <span class="sr-only">Timer settings saved</span>
+                    {/if}
+                </span>
             </div>
+
+            {#if timerSaveStatus === 'error'}
+                <p class="error-text">{timerSaveMessage}</p>
+            {:else if timerFormState?.action === 'saveTimerSettings' && timerFormState.message}
+                <p class="error-text">{timerFormState.message}</p>
+            {/if}
         </form>
     </section>
 
@@ -700,4 +720,68 @@
         {/if}
     </section>
 </div>
+
+<style>
+    .timer-settings-form {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .timer-controls {
+        max-width: 900px;
+        align-items: center;
+        display: flex;
+        flex-wrap: nowrap;
+        gap: 0.75rem;
+    }
+
+    .timer-controls label {
+        flex: 0 0 auto;
+        padding-left: 0.5rem;
+        text-align: right;
+        white-space: nowrap;
+    }
+
+    .timer-controls select {
+        min-width: 8rem;
+        flex: 0 1 10rem;
+    }
+
+    .timer-controls input {
+        min-width: 0;
+        flex: 1 1 8rem;
+    }
+
+    .timer-save-indicator {
+        width: 1.5rem;
+        height: 1.5rem;
+        align-items: center;
+        display: inline-flex;
+        flex: 0 0 1.5rem;
+        justify-content: center;
+    }
+
+    .timer-save-spinner {
+        width: 1rem;
+        height: 1rem;
+        border: 2px solid var(--border);
+        border-radius: 50%;
+        border-top-color: var(--accent);
+        animation: timer-save-spin 0.7s linear infinite;
+    }
+
+    .timer-save-check {
+        color: var(--accent);
+        font-size: 1.25rem;
+        font-weight: 700;
+        line-height: 1;
+    }
+
+    @keyframes timer-save-spin {
+        to {
+            transform: rotate(360deg);
+        }
+    }
+</style>
 <!-- apply-patch-anchor - do not delete -->
