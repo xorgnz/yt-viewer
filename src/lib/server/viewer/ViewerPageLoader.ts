@@ -44,12 +44,15 @@ export class ViewerPageLoader
             this.historyDAO,
             profileContext
         );
+        const sourceChannelsPromise = filters.virtualChannelId == null
+            ? this.sourceChannelDAO.list()
+            : this.sourceChannelDAO.listForVirtualChannel(filters.virtualChannelId);
 
         // Assemble the viewer page model from the normalized filters and current profile context.
         const [videos, totalCount, channels, virtualChannels] = await Promise.all([
             this.viewerVideoReadRepository.list(filters, profileContext.activeProfileId),
             this.viewerVideoReadRepository.count(filters, profileContext.activeProfileId),
-            this.sourceChannelDAO.list(),
+            sourceChannelsPromise,
             virtualChannelService.loadVirtualChannels()
         ]);
         const activeVirtualChannel = filters.virtualChannelId == null

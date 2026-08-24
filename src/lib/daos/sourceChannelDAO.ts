@@ -67,6 +67,25 @@ export class SourceChannelDAO extends DAO
         return rows.map((row) => new SourceChannel(row));
     }
 
+    async listForVirtualChannel(virtualChannelId: string | number): Promise<SourceChannel[]>
+    {
+        const rows = await this.listRows<SourceChannelFields>(`
+            SELECT
+                sc.src_channel_id AS id,
+                sc.title,
+                sc.description,
+                sc.thumbnail_url AS thumbnailUrl,
+                sc.published_at AS publishedAt,
+                sc.last_refreshed_at AS lastRefreshedAt
+            FROM source_channels sc
+            INNER JOIN virtual_channel_assignments vca ON vca.src_channel_id = sc.src_channel_id
+            WHERE vca.vchannel_id = ?
+            ORDER BY sc.title
+        `, [String(virtualChannelId)]);
+
+        return rows.map((row) => new SourceChannel(row));
+    }
+
     async listWithVideoStats(): Promise<SourceChannelWithVideoStats[]>
     {
         const rows = await this.listRows<SourceChannelWithVideoStatsRow>(`
